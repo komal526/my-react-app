@@ -1,4 +1,5 @@
-// LaunchBuilder v3 — lib.js
+// LaunchBuilder v8 — lib.js
+import { DESIGNS } from "./designs.js";
 // Helpers, page templates, saving/loading projects, leads and preview links
 
 
@@ -11,7 +12,8 @@ export const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/
 export const slugify = slug;
 export const uniqFile = (ps, name) => { let f = slug(name) + ".html", i = 2; while (ps.some((p) => p.file === f)) f = slug(name) + "-" + i++ + ".html"; return f; };
 export const ago = (t) => { const m = Math.floor((Date.now() - t) / 60000); return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.floor(m / 60)} hours ago` : `${Math.floor(m / 1440)} days ago`; };
-export const addr = (p) => (p.domain ? p.domain : `${p.slug}.launchbuilder.com`);
+/* the address people use: connected custom domain → Netlify link → (not live yet) */
+export const addr = (p) => (p.domain && p.domainStatus === "connected" ? p.domain : p.netlify && p.netlify.url ? p.netlify.url.replace(/^https?:\/\//, "") : p.domain || `${p.slug}.netlify.app`);
 export const pg = (name, file, html) => ({ id: uid(), name, file, html });
 
 
@@ -57,10 +59,11 @@ const site = (name) => {
   ];
 };
 export const TEMPLATES = [
-  { type: "landing", name: "Blank landing page", note: "One empty page", make: () => [pg("Home", "index.html", BLANK)] },
-  { type: "landing", name: "Workshop registration", note: "Two-column signup page with form", make: () => [pg("Home", "index.html", TEMPLATE)] },
-  { type: "website", name: "Business website", note: "Home, About and Contact pages with a shared menu", make: site },
-  { type: "website", name: "Blank website", note: "One empty page — add more pages in the editor", make: () => [pg("Home", "index.html", BLANK)] },
+  ...DESIGNS.map((d) => ({ ...d, make: () => d.pages().map((x) => pg(x.name, x.file, x.html)) })),
+  { key: "workshop", type: "landing", cat: "Events & courses", hidden: true, name: "Workshop registration", note: "Two-column signup page with form", make: () => [pg("Home", "index.html", TEMPLATE)] },
+  { key: "business", type: "website", cat: "Basics", hidden: true, name: "Business website", note: "Home, About and Contact pages with a shared menu", make: site },
+  { key: "blank-l", type: "landing", cat: "Basics", hidden: true, name: "Blank landing page", note: "One empty page", make: () => [pg("Home", "index.html", BLANK)] },
+  { key: "blank-w", type: "website", cat: "Basics", hidden: true, name: "Blank website", note: "One empty page — add more pages in the editor", make: () => [pg("Home", "index.html", BLANK)] },
 ];
 
 
@@ -82,6 +85,7 @@ export const saveLeads = (email, list) => {
   window.dispatchEvent(new Event("lb-leads"));
 };
 export const addLead = (email, lead) => saveLeads(email, [{ id: uid(), status: "new", note: "", ts: Date.now(), ...lead }, ...loadLeads(email)]);
+export const payLead = (email, lid, payment) => saveLeads(email, loadLeads(email).map((l) => (l.lid === lid ? { ...l, payment: { ...(l.payment || {}), ...payment } } : l)));
 export const LEAD_STATUS = [["new", "New"], ["contacted", "Contacted"], ["qualified", "Qualified"], ["won", "Won"], ["lost", "Lost"]];
 
 /* ---- temporary preview links: #/preview/<token>/<page.html> ---- */
@@ -121,6 +125,10 @@ export const FORM_TEMPLATES = [
   { key: "feedback", name: "Feedback", note: "Rating and comments", settings: { title: "How did we do?", submit: "Send feedback", success: "Thanks for your feedback!" }, fields: () => [f_("radio", "Your rating", { name: "rating", ...OPT("⭐ 1", "⭐ 2", "⭐ 3", "⭐ 4", "⭐ 5") }), f_("textarea", "What can we improve?", { name: "comments", required: false })] },
   { key: "rsvp", name: "Event RSVP", note: "Attending yes/no and guests", settings: { title: "Will you join us?", submit: "Send RSVP" }, fields: () => [f_("text", "Name", { name: "name" }), f_("email", "Email", { name: "email" }), f_("radio", "Attending?", { name: "attending", ...OPT("Yes", "No", "Maybe") }), f_("number", "Number of guests", { name: "guests", required: false })] },
   { key: "job", name: "Job application", note: "Role, experience and LinkedIn", settings: { title: "Apply now", submit: "Submit application" }, fields: () => [f_("text", "Full name", { name: "name" }), f_("email", "Email", { name: "email", width: "half" }), f_("tel", "Phone", { name: "phone", width: "half" }), f_("select", "Position", { name: "position", ...OPT("Designer", "Developer", "Marketing", "Sales") }), f_("number", "Years of experience", { name: "experience", width: "half" }), f_("url", "LinkedIn / portfolio", { name: "link", width: "half", required: false }), f_("textarea", "Why you?", { name: "cover" })] },
+  { key: "paid", name: "Paid registration (₹21)", note: "Workshop signup that collects payment first", settings: { title: "Book your seat — ₹21", subtitle: "Pay securely, get the joining link on WhatsApp.", submit: "Register now", success: "Payment received — you're registered! 🎉", pay: { enabled: true, amount: 21, mode: "razorpay" } }, fields: () => [f_("text", "Full name", { name: "name" }), f_("email", "Email", { name: "email", width: "half" }), f_("tel", "WhatsApp number", { name: "phone", width: "half" })] },
+  { key: "course", name: "Course enquiry", note: "Student, class and preferred batch", settings: { title: "Get course details", submit: "Send me details" }, fields: () => [f_("text", "Student name", { name: "name", width: "half" }), f_("tel", "Parent's phone", { name: "phone", width: "half" }), f_("select", "Course", { name: "course", ...OPT("JEE", "NEET", "Class 9–10", "Spoken English") }), f_("radio", "Preferred batch", { name: "batch", ...OPT("Morning", "Evening", "Weekend") })] },
+  { key: "property", name: "Property enquiry", note: "Budget, type and site-visit request", settings: { title: "Enquire about this property", submit: "Request a call back" }, fields: () => [f_("text", "Name", { name: "name", width: "half" }), f_("tel", "Phone", { name: "phone", width: "half" }), f_("select", "Looking for", { name: "type", width: "half", ...OPT("2 BHK", "3 BHK", "4 BHK", "Villa") }), f_("select", "Budget", { name: "budget", width: "half", ...OPT("Under ₹75 L", "₹75 L – 1.5 Cr", "Above ₹1.5 Cr") }), f_("consent", "I'd like a site visit", { name: "site_visit", required: false })] },
+  { key: "survey", name: "Customer survey", note: "Satisfaction, recommendation and comments", settings: { title: "Help us improve", subtitle: "Takes 30 seconds.", submit: "Submit survey", success: "Thank you for your feedback! 💛" }, fields: () => [f_("radio", "How satisfied are you?", { name: "satisfaction", ...OPT("😍 Very", "🙂 Somewhat", "😐 Neutral", "🙁 Not really") }), f_("radio", "Would you recommend us?", { name: "recommend", ...OPT("Yes", "Maybe", "No") }), f_("checkboxes", "What did you like?", { name: "liked", required: false, ...OPT("Quality", "Price", "Support", "Speed") }), f_("textarea", "Anything else?", { name: "comments", required: false })] },
   { key: "blank", name: "Blank form", note: "Start from scratch", settings: { title: "" }, fields: () => [f_("text", "Name", { name: "name" })] },
 ];
 export const newForm = (tpl) => ({ id: "f" + uid(), name: tpl.key === "blank" ? "Untitled form" : tpl.name, template: tpl.key, fields: tpl.fields(), settings: { ...FORM_DEF, ...tpl.settings }, created: Date.now(), updated: Date.now() });
@@ -172,4 +180,97 @@ export const verifyDomain = async (domain, host) => {
     } catch { checks.push({ ...r, found: [], ok: false, error: "Couldn't reach DNS — check your internet" }); }
   }
   return { ok: checks.length > 0 && checks.every((c) => c.ok), checks, ts: Date.now() };
+};
+
+/* ==================== integrations (WhatsApp, payments, AI) — saved in this browser only ==================== */
+const IK = (email) => "lb_integrations_" + email;
+export const INTEG_DEF = {
+  wa: { enabled: false, provider: "webhook", webhook: "", country: "91", template: "Hi {{name}}, thanks for registering! We'll share the details on WhatsApp soon." },
+  pay: { razorpayKey: "", upiId: "", payee: "", currency: "INR" },
+  ai: { provider: "claude", keys: {}, models: {} },
+  publish: { url: "", key: "" },
+  email: { provider: "gmail", serviceId: "", templateId: "", publicKey: "", webhook: "", ownerEmail: "", fromName: "" },
+};
+export const loadInteg = (email) => { try { const v = JSON.parse(localStorage.getItem(IK(email)) || "{}"); return { wa: { ...INTEG_DEF.wa, ...v.wa }, pay: { ...INTEG_DEF.pay, ...v.pay }, ai: { ...INTEG_DEF.ai, ...v.ai }, email: { ...INTEG_DEF.email, ...v.email }, publish: { ...INTEG_DEF.publish, ...v.publish } }; } catch { return JSON.parse(JSON.stringify(INTEG_DEF)); } };
+export const saveInteg = (email, v) => localStorage.setItem(IK(email), JSON.stringify(v));
+export const WA_PROVIDERS = [
+  ["webhook", "Any webhook (Pabbly, Make, Zapier, n8n)"], ["aisensy", "AiSensy"], ["wati", "WATI"], ["interakt", "Interakt"], ["gupshup", "Gupshup"], ["myappz", "My CRM / own automation"],
+];
+
+/* ---- AI providers: called straight from the browser with the user's own key ---- */
+export const AI_PROVIDERS = [
+  { id: "claude", name: "Claude (Anthropic)", model: "claude-sonnet-5-5", keyUrl: "https://console.anthropic.com/settings/keys", hint: "sk-ant-…" },
+  { id: "openai", name: "OpenAI (ChatGPT)", model: "gpt-4o", keyUrl: "https://platform.openai.com/api-keys", hint: "sk-…" },
+  { id: "gemini", name: "Google Gemini", model: "gemini-flash-latest", keyUrl: "https://aistudio.google.com/app/apikey", hint: "AIza…" },
+  { id: "deepseek", name: "DeepSeek", model: "deepseek-chat", keyUrl: "https://platform.deepseek.com/api_keys", hint: "sk-…" },
+];
+const strip = (t) => { let v = String(t || "").trim(); const m = v.match(/```(?:html)?[^\n]*\n([\s\S]*?)```/i); if (m) v = m[1]; return v.trim(); };
+export async function callAI(ai, system, prompt, maxTokens = 12000) {
+  const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0], key = (ai.keys || {})[pr.id], model = (ai.models || {})[pr.id] || pr.model;
+  if (!key) throw new Error(`Add your ${pr.name} API key in Integrations → AI first.`);
+  let r, j, text = "";
+  if (pr.id === "claude") {
+    r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: prompt }] }) });
+    j = await r.json(); if (!r.ok) throw new Error((j.error && j.error.message) || r.statusText);
+    text = (j.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
+  } else if (pr.id === "gemini") {
+    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens } }) });
+    j = await r.json(); if (!r.ok) throw new Error((j.error && j.error.message) || r.statusText);
+    text = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map((p) => p.text || "").join("");
+  } else {
+    const url = pr.id === "deepseek" ? "https://api.deepseek.com/chat/completions" : "https://api.openai.com/v1/chat/completions";
+    r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key }, body: JSON.stringify({ model, messages: [{ role: "system", content: system }, { role: "user", content: prompt }], max_tokens: Math.min(maxTokens, 8000) }) });
+    j = await r.json(); if (!r.ok) throw new Error((j.error && j.error.message) || r.statusText);
+    text = (((j.choices || [])[0] || {}).message || {}).content || "";
+  }
+  if (!text.trim()) throw new Error("The AI returned an empty answer. Try again or change the model.");
+  return text;
+}
+const AI_RULES = `Rules: plain HTML + CSS only, all CSS inside one <style> in <head>, no JavaScript, no external CSS frameworks. Fully responsive (mobile first, use flex/grid and a @media (max-width:767px) block). Use Google Fonts via <link> if you want. Images: use https://placehold.co/WIDTHxHEIGHT/e9e7ff/4f46e5?text=Label. Put each part in its own <section> with a meaningful id (hero, features, pricing, faq, contact…). Every form must be <form data-lb-form="Form name" data-lb-success="Thank-you text"> with name attributes on inputs (name, email, phone…). Buttons that link to sections use href="#id". Write real, specific, persuasive copy for the business described (no lorem ipsum).`;
+export async function aiWebsite(ai, brief, multi) {
+  const sys = multi
+    ? `You are a senior web designer. Create a small multi-page website. Output ONLY the pages, each one a complete HTML document (<!DOCTYPE html>…</html>) preceded by a line exactly like: ===PAGE Home|index.html=== . First page must be index.html. 3 to 5 pages. Every page has the same header with a <nav data-lb-autonav> containing links to every page file, and the same footer. ${AI_RULES}`
+    : `You are a senior web designer. Create ONE high-converting landing page. Output ONLY one complete HTML document (<!DOCTYPE html>…</html>), nothing else. ${AI_RULES}`;
+  const out = await callAI(ai, sys, brief, 16000);
+  if (!multi) { const h = strip(out), k = h.search(/<!doctype|<html/i); return [{ name: "Home", file: "index.html", html: k > 0 ? h.slice(k) : h }]; }
+  const parts = out.split(/^===PAGE\s+(.+?)\|(.+?)===\s*$/m), pages = [];
+  for (let i = 1; i < parts.length; i += 3) pages.push({ name: parts[i].trim(), file: parts[i + 1].trim().replace(/[^\w.-]/g, "-"), html: strip(parts[i + 2]) });
+  if (!pages.length) return [{ name: "Home", file: "index.html", html: strip(out) }];
+  return pages;
+}
+export const aiSection = (ai, brief) => callAI(ai, `You are a senior web designer. Output ONLY one HTML fragment: a single <section> element with ALL styling as inline style="" attributes (no <style>, no classes, no JavaScript). Responsive: use flex-wrap and max-width containers. Images: https://placehold.co/WIDTHxHEIGHT/e9e7ff/4f46e5?text=Label. Forms: <form data-lb-form="Form name"> with name attributes. Real, specific copy.`, brief, 6000).then((raw) => { const t = strip(raw), i = t.search(/<section/i), k = t.toLowerCase().lastIndexOf("</section>"); return i >= 0 && k > i ? t.slice(i, k + 10) : t; });
+
+/* ---- AI: change one selected section/element ---- */
+export async function aiEdit(ai, html, instruction) {
+  const imgs = [];   // uploaded images are huge data: URLs — swap them out, put them back after
+  const slim = html.replace(/data:[a-z]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, (m) => { imgs.push(m); return `LBIMG${imgs.length - 1}`; });
+  const sys = `You edit ONE element of a web page. You get its current HTML and an instruction. Return ONLY the full updated HTML of that element (same root tag), no markdown, no explanation. Keep styling as inline style="" attributes. Keep every data-lb-* attribute, id, form/input name attributes, links and LBIMG placeholders unless the instruction asks to change them. Make it responsive (flex-wrap, max-width). Images you add: https://placehold.co/WIDTHxHEIGHT/e9e7ff/4f46e5?text=Label.`;
+  const raw = await callAI(ai, sys, `Instruction: ${instruction}\n\nCurrent HTML:\n${slim}`, 8000);
+  let out = strip(raw); const k = out.search(/<[a-z]/i); if (k > 0) out = out.slice(k);
+  return out.replace(/LBIMG(\d+)/g, (m, i) => imgs[+i] || m);
+}
+
+/* ==================== publishing (Google Apps Script → Netlify) ==================== */
+/* Netlify blocks direct browser uploads, so your free Apps Script (same one that sends Gmail) does it server-side. */
+export const serverUrl = (integ) => (integ.publish && integ.publish.url) || (integ.email && integ.email.provider === "gmail" ? integ.email.webhook : "");
+export const publishReady = (integ) => !!(serverUrl(integ) && integ.publish && integ.publish.key);
+export async function serverCall(integ, body) {
+  const url = serverUrl(integ);
+  if (!url) throw new Error("Set up publishing first: Integrations → Publishing.");
+  let r;
+  try { r = await fetch(url, { method: "POST", body: JSON.stringify({ ...body, key: (integ.publish || {}).key || "" }) }); }
+  catch { throw new Error("Couldn't reach your Apps Script. Check the Web app URL and your internet."); }
+  let j; try { j = await r.json(); } catch { throw new Error("Your Apps Script didn't answer correctly. Paste the latest script, then Deploy → Manage deployments → Edit → New version."); }
+  if (!j.ok) throw new Error(j.error || "Publishing failed.");
+  return j;
+}
+export const blobToBase64 = (blob) => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1]); fr.onerror = rej; fr.readAsDataURL(blob); });
+export const NETLIFY_A = "75.2.60.5";
+/* checks that the domain's nameservers are the ones Netlify gave */
+export const verifyNS = async (domain, servers) => {
+  try {
+    const r = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(rootDomain(domain))}&type=NS`), j = await r.json();
+    const found = (j.Answer || []).filter((a) => a.type === 2).map((a) => String(a.data).replace(/\.$/, "").toLowerCase());
+    return { ok: servers.length > 0 && servers.every((x) => found.includes(x.toLowerCase())), found, ts: Date.now() };
+  } catch { return { ok: false, found: [], ts: Date.now(), error: "Couldn't reach DNS — check your internet" }; }
 };

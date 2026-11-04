@@ -1,4 +1,4 @@
-// LaunchBuilder v3 — Dashboard.jsx
+// LaunchBuilder v7 — Dashboard.jsx
 import { useState, useEffect, useRef } from "react";
 import Editor from "./Editor.jsx";
 import { Sidebar, NewModal, PublishModal } from "./parts.jsx";
@@ -8,17 +8,18 @@ import Domains from "./Domains.jsx";
 import Leads from "./Leads.jsx";
 import Forms from "./Forms.jsx";
 import Analytics from "./Analytics.jsx";
+import Integrations from "./Integrations.jsx";
 import Settings from "./Settings.jsx";
 import ImportPage from "./ImportPage.jsx";
-import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl } from "../lib.js";
+import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg } from "../lib.js";
 import { formHtml } from "./tools.js";
 
 /* replace every copy of a linked form inside a page with its latest version */
-const syncFormInHtml = (html, f) => {
+const syncFormInHtml = (html, f, integ) => {
   if (!html.includes(`data-lb-formbox="${f.id}"`)) return html;
   const d = new DOMParser().parseFromString(html, "text/html");
   d.querySelectorAll(`[data-lb-formbox="${f.id}"]`).forEach((n) => {
-    const t = d.createElement("template"); t.innerHTML = formHtml(f); const nn = t.content.firstElementChild;
+    const t = d.createElement("template"); t.innerHTML = formHtml(f, integ); const nn = t.content.firstElementChild;
     if (n.getAttribute("data-lb-id")) nn.setAttribute("data-lb-id", n.getAttribute("data-lb-id"));
     n.replaceWith(nn);
   });
@@ -31,6 +32,8 @@ export default function Dashboard({ user, onLogout }) {
   const [forms, setForms] = useState(() => loadForms(E)), [leads, setLeads] = useState(() => loadLeads(E)), [events, setEvents] = useState(() => loadEvents(E));
   const [view, setView] = useState("pages"), [openId, setOpenId] = useState(null), [modal, setModal] = useState(null);
   const syncT = useRef(0);
+  const [integ, setInteg] = useState(() => loadInteg(E));
+  const onInteg = (v) => { setInteg(v); saveInteg(E, v); };
   useEffect(() => { if (!saveProjects(E, projects)) alert("Browser storage is full. Delete some projects or use smaller images."); }, [projects, E]);
   /* leads / visits arrive from preview & form-link tabs */
   useEffect(() => {
@@ -67,12 +70,12 @@ export default function Dashboard({ user, onLogout }) {
     setForms(list); saveForms(E, list);
     if (!changed.length) return;
     clearTimeout(syncT.current);
-    syncT.current = setTimeout(() => setProjects((ps) => ps.map((p) => ({ ...p, pages: p.pages.map((x) => ({ ...x, html: changed.reduce((h, f) => syncFormInHtml(h, f), x.html) })) }))), 500);
+    syncT.current = setTimeout(() => setProjects((ps) => ps.map((p) => ({ ...p, pages: p.pages.map((x) => ({ ...x, html: changed.reduce((h, f) => syncFormInHtml(h, f, integ), x.html) })) }))), 500);
   };
   const addFormToPage = (form, pid, pageId) => patchPages(pid, (pages) => pages.map((x) => {
     if (x.id !== pageId) return x;
     const d = new DOMParser().parseFromString(x.html, "text/html"), t = d.createElement("template");
-    t.innerHTML = `<section data-lb-name="Form section" style="padding:64px 24px">${formHtml(form)}</section>`;
+    t.innerHTML = `<section data-lb-name="Form section" style="padding:64px 24px">${formHtml(form, integ)}</section>`;
     const sec = t.content.firstElementChild, foot = [...d.body.children].reverse().find((n) => n.tagName === "FOOTER");
     foot ? foot.before(sec) : d.body.appendChild(sec);
     return { ...x, html: "<!DOCTYPE html>\n" + d.documentElement.outerHTML };
@@ -81,11 +84,12 @@ export default function Dashboard({ user, onLogout }) {
 
   const open = projects.find((p) => p.id === openId);
   const pub = modal && modal.type === "publish" && projects.find((p) => p.id === modal.id);
-  const pubModal = pub && <PublishModal page={pub} onClose={() => setModal(null)} onDone={(o) => { patch(pub.id, o); setModal(null); }} />;
+  const goView = (v) => { setModal(null); setOpenId(null); setView(v); };
+  const pubModal = pub && <PublishModal page={pub} integ={integ} onClose={() => setModal(null)} onDone={(o, keep) => { patch(pub.id, o); if (!keep) setModal(null); }} onSetup={() => goView("integrations")} onDomains={() => goView("domains")} />;
 
   if (open) return (
     <>
-      <Editor key={open.id} page={open} user={user} forms={forms} onSave={(pid, h) => patchHtml(open.id, pid, h)} onPages={(fn) => patchPages(open.id, fn)} onType={(t) => patch(open.id, { type: t })}
+      <Editor key={open.id} page={open} user={user} forms={forms} integ={integ} onSave={(pid, h) => patchHtml(open.id, pid, h)} onPages={(fn) => patchPages(open.id, fn)} onType={(t) => patch(open.id, { type: t })}
         onBack={() => setOpenId(null)} onPublish={() => setModal({ type: "publish", id: open.id })} />
       {pubModal}
     </>
@@ -100,13 +104,14 @@ export default function Dashboard({ user, onLogout }) {
           leadCount={leads.length} visits={visits7} onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} />}
         {view === "import" && <ImportPage onBack={() => setView("pages")} onFile={importFile} />}
         {view === "templates" && <Templates onUse={(t) => !full() && create(t.name, t.make(t.name), t.type)} />}
-        {view === "forms" && <Forms forms={forms} onSave={onSaveForms} projects={projects} leads={leads} onAddToPage={addFormToPage} onLeads={() => setView("leads")} />}
-        {view === "leads" && <Leads user={user} projects={projects} forms={forms} leads={leads} setLeads={setLeads} />}
+        {view === "forms" && <Forms forms={forms} onSave={onSaveForms} projects={projects} leads={leads} onAddToPage={addFormToPage} onLeads={() => setView("leads")} integ={integ} onIntegrations={() => setView("integrations")} />}
+        {view === "integrations" && <Integrations integ={integ} onChange={onInteg} />}
+        {view === "leads" && <Leads user={user} projects={projects} forms={forms} leads={leads} setLeads={setLeads} integ={integ} />}
         {view === "analytics" && <Analytics projects={projects} events={events} leads={leads} onOpenProject={setOpenId} />}
-        {view === "domains" && <Domains projects={projects} onPatch={patch} onOpen={setOpenId} />}
+        {view === "domains" && <Domains projects={projects} onPatch={patch} onOpen={setOpenId} integ={integ} onSetup={() => setView("integrations")} onPublish={(p) => setModal({ type: "publish", id: p.id })} />}
         {view === "settings" && <Settings user={user} count={projects.length} onDeleteAll={() => setProjects([])} />}
       </section>
-      {modal && modal.type === "new" && <NewModal onClose={() => setModal(null)} onCreate={create} onImport={() => { setModal(null); setView("import"); }} />}
+      {modal && modal.type === "new" && <NewModal onClose={() => setModal(null)} onCreate={create} onImport={() => { setModal(null); setView("import"); }} ai={integ.ai} onSetupAI={() => { setModal(null); setView("integrations"); }} />}
       {pubModal}
     </div>
   );

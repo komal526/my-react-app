@@ -1,3 +1,4 @@
+// LaunchBuilder v8 — Forms.jsx
 // LaunchBuilder v3 — Forms.jsx
 import { useMemo, useRef, useState } from "react";
 import { FORM_TEMPLATES, FIELD_TYPES, newForm, newField, uid, ago, formUrl } from "../lib.js";
@@ -7,24 +8,40 @@ import { formHtml, formPageHtml } from "./tools.js";
 const TYPE_IC = { text: "Aa", email: "@", tel: "☎", number: "#", textarea: "¶", select: "▾", radio: "◉", checkboxes: "☑", date: "📅", time: "⏰", url: "🔗", consent: "✓", heading: "H" };
 const copy = async (t, done) => { try { await navigator.clipboard.writeText(t); done && done(); } catch { window.prompt("Copy this:", t); } };
 
-function Gallery({ onPick, onClose }) {
+function Gallery({ onPick, onClose, integ }) {
+  const forms = useMemo(() => Object.fromEntries(FORM_TEMPLATES.map((t) => [t.key, formPageHtml(newForm(t), integ)])), [integ]);
+  const [view, setView] = useState(null), [dev, setDev] = useState("desktop");
+  const cur = view && FORM_TEMPLATES.find((t) => t.key === view);
   return (
     <div className="ov" onClick={onClose}><div className="md fm-gal" onClick={(e) => e.stopPropagation()}>
-      <h3>Start a new form</h3><p className="mut">Pick a template — you can change every field afterwards.</p>
-      <div className="fm-tpls">{FORM_TEMPLATES.map((t) => (
-        <button key={t.key} onClick={() => onPick(t)}>
-          <div className="fm-mini">{t.fields().slice(0, 4).map((f) => <i key={f.id} className={f.width === "half" ? "half" : ""} />)}<em /></div>
-          <b>{t.name}</b><span>{t.note}</span>
-        </button>))}</div>
-      <div className="mrow"><div className="grow" /><button onClick={onClose}>Cancel</button></div>
+      {!cur ? <>
+        <div className="fm-gh"><div><h3>Start a new form</h3><p className="mut">{FORM_TEMPLATES.length} templates · hover to preview, change every field afterwards.</p></div><button onClick={onClose}>✕</button></div>
+        <div className="fm-tpls">{FORM_TEMPLATES.map((t) => (
+          <div key={t.key} className="fm-t">
+            <div className="fm-shot" onClick={() => setView(t.key)}><iframe title={t.name} srcDoc={forms[t.key]} sandbox="" tabIndex={-1} />
+              <div className="fm-hov"><button onClick={(e) => { e.stopPropagation(); setView(t.key); }}>👁 Preview</button><button className="pri" onClick={(e) => { e.stopPropagation(); onPick(t); }}>Use</button></div></div>
+            <b>{t.name}</b><span>{t.note}</span>
+          </div>))}</div>
+      </> : <div className="fm-prev">
+        <div className="fm-pbar"><button onClick={() => setView(null)}>← All templates</button><b>{cur.name}</b><div className="grow" />
+          <div className="seg2" style={{ width: 210 }}>{[["desktop", "Desktop"], ["mobile", "Mobile"]].map(([k, l]) => <button key={k} className={dev === k ? "on" : ""} onClick={() => setDev(k)}>{l}</button>)}</div>
+          <button className="pri" onClick={() => onPick(cur)}>Use this template</button></div>
+        <div className="fm-pstage"><iframe title={cur.name} srcDoc={forms[cur.key]} sandbox="" style={{ width: dev === "mobile" ? 390 : "100%" }} /></div>
+        <p className="mut sm">{cur.note}. After choosing it you can add/remove fields, change colours, button text, payment, WhatsApp and email automation.</p>
+      </div>}
     </div></div>
   );
 }
 
-function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leadCount }) {
+function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leadCount, integ, onIntegrations }) {
   const [sel, setSel] = useState(form.fields[0] ? form.fields[0].id : null), [tab, setTab] = useState("field"), [note, setNote] = useState("");
   const [dropAt, setDropAt] = useState(null), drag = useRef(null), [target, setTarget] = useState({ pid: "", page: "" });
   const s = form.settings, f = form.fields.find((x) => x.id === sel);
+  const bt = { full: true, align: "center", size: "md", bg: "", fg: "#ffffff", note: true, extra: false, extraText: "Chat on WhatsApp", extraUrl: "", ...(s.btn || {}) }, setB = (o) => setS({ btn: { ...bt, ...o } });
+  const em = s.email || {}, gem = (integ && integ.email) || {}, setE = (o) => setS({ email: { ...em, ...o } });
+  const mailReady = gem.provider === "emailjs" ? !!(gem.serviceId && gem.templateId && gem.publicKey) : !!gem.webhook;
+  const VARS = ["name", ...form.fields.filter((x) => x.type !== "heading" && x.name !== "name").map((x) => x.name), "form", "all_fields", ...(s.pay && s.pay.enabled ? ["amount", "payment_id"] : [])];
+  const pay = s.pay || {}, wa = s.wa || {}, gpay = (integ && integ.pay) || {}, gwa = (integ && integ.wa) || {};
   const flash = (t) => { setNote(t); setTimeout(() => setNote(""), 2200); };
   const up = (o) => onChange({ ...form, ...o, updated: Date.now() });
   const setS = (o) => up({ settings: { ...s, ...o } });
@@ -32,8 +49,8 @@ function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leadCo
   const insert = (type, at) => { const n = newField(type), list = [...form.fields]; list.splice(at ?? list.length, 0, n); up({ fields: list }); setSel(n.id); setTab("field"); };
   const moveTo = (id, at) => { const list = [...form.fields], i = list.findIndex((x) => x.id === id), [it] = list.splice(i, 1); list.splice(at > i ? at - 1 : at, 0, it); up({ fields: list }); };
   const onDrop = (at) => { const d = drag.current; drag.current = null; setDropAt(null); if (!d) return; d.type ? insert(d.type, at) : moveTo(d.id, at); };
-  const html = useMemo(() => formPageHtml(form), [form]);
-  const embed = formHtml(form), proj = projects.find((p) => p.id === target.pid);
+  const html = useMemo(() => formPageHtml(form, integ), [form, integ]);
+  const embed = formHtml(form, integ), proj = projects.find((p) => p.id === target.pid);
 
   return (
     <div className="fb">
@@ -74,7 +91,7 @@ function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leadCo
         <div className="fb-prev"><div className="fb-prev-bar"><span className="dot" /><span className="dot" /><span className="dot" /><code>{formUrl(form.id).replace(/^https?:\/\//, "")}</code></div><iframe title="Form preview" srcDoc={html} sandbox="" /></div>
         {/* ---- right: settings ---- */}
         <div className="fb-col">
-          <div className="fb-tabs">{[["field", "Field"], ["settings", "Settings"], ["design", "Design"], ["use", "Use it"]].map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</div>
+          <div className="fb-tabs">{[["field", "Field"], ["settings", "Settings"], ["pay", "Payment"], ["design", "Design"], ["use", "Use it"]].map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</div>
           {tab === "field" && (f ? <div className="fb-set">
             <label>Label<input value={f.label} onChange={(e) => setF(f.id, { label: e.target.value })} /></label>
             {f.type !== "heading" && <>
@@ -95,6 +112,52 @@ function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leadCo
             <label>Redirect after submit <span className="mut sm">(optional, e.g. thank-you.html)</span><input value={s.redirect} onChange={(e) => setS({ redirect: e.target.value.trim() })} /></label>
             <label>Send to webhook / CRM <span className="mut sm">(optional)</span><input value={s.webhook} placeholder="https://hooks.zapier.com/…" onChange={(e) => setS({ webhook: e.target.value.trim() })} /></label>
             <p className="mut sm">Every submission is always saved in <b>Leads</b>. The webhook also sends it (as JSON) to Google Sheets, Zapier, Make, Pabbly or another CRM.</p>
+            <hr />
+            <label className="chk"><input type="checkbox" checked={!!wa.enabled} onChange={(e) => setS({ wa: { ...wa, enabled: e.target.checked } })} />💬 Send an automatic WhatsApp message</label>
+            {wa.enabled && <>
+              {!wa.hook && !gwa.webhook && <p className="red sm">Add your WhatsApp webhook in <a href="#" onClick={(e) => { e.preventDefault(); onIntegrations(); }}>Integrations</a> first.</p>}
+              <label>Message <span className="mut sm">{"{{name}}"}, {"{{phone}}"}, or any field key</span><textarea rows={3} value={wa.msg ?? ""} placeholder={gwa.template} onChange={(e) => setS({ wa: { ...wa, msg: e.target.value } })} /></label>
+              <div className="fb-vars">{form.fields.filter((x) => x.type !== "heading").map((x) => <button key={x.id} onClick={() => setS({ wa: { ...wa, msg: (wa.msg ?? gwa.template ?? "") + ` {{${x.name}}}` } })}>{`{{${x.name}}}`}</button>)}</div>
+              <label>Webhook for this form <span className="mut sm">(optional — overrides Integrations)</span><input value={wa.hook || ""} placeholder={gwa.webhook || "https://…"} onChange={(e) => setS({ wa: { ...wa, hook: e.target.value.trim() } })} /></label>
+              <p className="mut sm">The form needs a phone field (key like <code>phone</code> or <code>whatsapp</code>). {pay.enabled ? "Because this form takes payment, the message is sent after payment." : ""}</p>
+            </>}
+          </div>}
+          {tab === "settings" && <div className="fb-set fb-mail">
+            <hr /><label className="chk"><input type="checkbox" checked={!!em.enabled} onChange={(e) => setE({ enabled: e.target.checked })} />✉️ Email automation</label>
+            {em.enabled && <>
+              {!mailReady && <p className="red sm">Connect an email service first in <a href="#" onClick={(e) => { e.preventDefault(); onIntegrations(); }}>Integrations → Email</a> (free with your Gmail — takes 3 minutes).</p>}
+              <label className="chk"><input type="checkbox" checked={em.auto !== false} onChange={(e) => setE({ auto: e.target.checked })} />Send an email to the person who submitted</label>
+              {em.auto !== false && <>
+                {!form.fields.some((x) => x.type === "email") && <div className="fb-fix"><span>This form has no <b>Email</b> field, so there's no address to send to.</span><button onClick={() => { const f = newField("email"); f.label = "Email"; f.name = "email"; up({ fields: [...form.fields.slice(0, 2), f, ...form.fields.slice(2)] }); }}>＋ Add Email field</button></div>}
+                <label>Subject<input value={em.subject ?? ""} placeholder="Thanks for registering, {{name}}!" onChange={(e) => setE({ subject: e.target.value })} /></label>
+                <label>Email message<textarea rows={7} value={em.body ?? ""} placeholder={"Hi {{name}},\n\nThank you! We received your details and will contact you soon.\n\nTeam " + (gem.fromName || form.name)} onChange={(e) => setE({ body: e.target.value })} /></label>
+                <div className="fb-vars">{VARS.map((v) => <button key={v} title="Insert" onClick={() => setE({ body: (em.body || "") + `{{${v}}}` })}>{`{{${v}}}`}</button>)}</div>
+                <details className="fb-mprev"><summary>Preview email</summary><div><b>{(em.subject || "Thanks for registering, {{name}}!").replace(/\{\{name\}\}/g, "Priya")}</b>
+                  <div dangerouslySetInnerHTML={{ __html: (em.body || "Hi {{name}},\n\nThank you! We received your details and will contact you soon.").replace(/[<>]/g, "").replace(/\{\{name\}\}/g, "Priya").replace(/\{\{all_fields\}\}/g, "[table of all answers]").replace(/\{\{(\w+)\}\}/g, "[$1]").replace(/\n/g, "<br>") }} /></div></details>
+              </>}
+              <label className="chk"><input type="checkbox" checked={!!em.notify} onChange={(e) => setE({ notify: e.target.checked })} />Also email me every new submission</label>
+              {em.notify && <label>Send to<input value={em.ownerEmail ?? ""} placeholder={gem.ownerEmail || "you@yourbrand.com"} onChange={(e) => setE({ ownerEmail: e.target.value.trim() })} /></label>}
+              <p className="mut sm">{s.pay && s.pay.enabled ? "This form takes payment, so emails go out after payment. " : ""}Emails are sent from Preview, form links and your live site.</p>
+            </>}
+          </div>}
+          {tab === "pay" && <div className="fb-set">
+            <label className="chk"><input type="checkbox" checked={!!pay.enabled} onChange={(e) => setS({ pay: { amount: 21, mode: gpay.razorpayKey ? "razorpay" : "upi", ...pay, enabled: e.target.checked } })} />💳 Collect a payment before registration</label>
+            {pay.enabled && <>
+              <label>Amount (₹)<input type="number" min="1" value={pay.amount || ""} onChange={(e) => setS({ pay: { ...pay, amount: +e.target.value } })} /></label>
+              <label>How people pay<select value={pay.mode || "razorpay"} onChange={(e) => setS({ pay: { ...pay, mode: e.target.value } })}>
+                <option value="razorpay">Razorpay checkout (UPI, cards, netbanking, wallets)</option><option value="upi">Direct UPI — GPay, PhonePe, Paytm (QR + button)</option><option value="link">Payment link (Razorpay / Paytm / Instamojo / Cashfree link)</option></select></label>
+              {(pay.mode || "razorpay") === "razorpay" && <>
+                {!(pay.key || gpay.razorpayKey) && <p className="red sm">Add your Razorpay Key ID in <a href="#" onClick={(e) => { e.preventDefault(); onIntegrations(); }}>Integrations</a>, or paste one below.</p>}
+                <label>Razorpay Key ID <span className="mut sm">(optional — uses Integrations)</span><input value={pay.key || ""} placeholder={gpay.razorpayKey || "rzp_live_…"} onChange={(e) => setS({ pay: { ...pay, key: e.target.value.trim() } })} /></label></>}
+              {pay.mode === "upi" && <>
+                {!(pay.upi || gpay.upiId) && <p className="red sm">Add your UPI ID here or in Integrations.</p>}
+                <label>UPI ID<input value={pay.upi || ""} placeholder={gpay.upiId || "yourname@okhdfcbank"} onChange={(e) => setS({ pay: { ...pay, upi: e.target.value.trim() } })} /></label>
+                <label>Payee name<input value={pay.payee || ""} placeholder={gpay.payee || form.name} onChange={(e) => setS({ pay: { ...pay, payee: e.target.value } })} /></label></>}
+              {pay.mode === "link" && <label>Payment link URL<input value={pay.link || ""} placeholder="https://rzp.io/l/your-link" onChange={(e) => setS({ pay: { ...pay, link: e.target.value.trim() } })} /></label>}
+              <label>Description (shown at checkout)<input value={pay.desc || ""} placeholder={form.name} onChange={(e) => setS({ pay: { ...pay, desc: e.target.value } })} /></label>
+              <p className="mut sm">Flow: visitor fills the form → the lead is saved as <b>Payment pending</b> → they pay → it becomes <b>Paid</b> (Razorpay) or <b>Payment claimed</b> (UPI / link, with their UTR) → thank-you message or redirect. The price is added to the button automatically, e.g. “Register now · ₹{(pay.amount || 0).toLocaleString("en-IN")}”.</p>
+              <p className="mut sm">Test it in <b>Open form</b>. Payment pop-ups don't run inside this small preview.</p>
+            </>}
           </div>}
           {tab === "design" && <div className="fb-set">
             <label>Button & accent color<div className="row"><input type="color" value={s.color} onChange={(e) => setS({ color: e.target.value })} /><input value={s.color} onChange={(e) => setS({ color: e.target.value })} /></div></label>
@@ -102,6 +165,18 @@ function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leadCo
             <label>Corner rounding: {s.radius}px<input type="range" min="0" max="24" value={s.radius} onChange={(e) => setS({ radius: +e.target.value })} /></label>
             <label>Max width: {s.width}px<input type="range" min="320" max="900" step="10" value={s.width} onChange={(e) => setS({ width: +e.target.value })} /></label>
             <div className="seg2">{[["card", "Card"], ["plain", "Plain"]].map(([v, l]) => <button key={v} className={s.style === v ? "on" : ""} onClick={() => setS({ style: v })}>{l}</button>)}</div>
+            <hr /><b>Submit button</b>
+            <label>Button text<input value={s.submit} onChange={(e) => setS({ submit: e.target.value })} /></label>
+            <label>Size</label><div className="seg2">{[["sm", "Small"], ["md", "Medium"], ["lg", "Large"]].map(([v, l]) => <button key={v} className={bt.size === v ? "on" : ""} onClick={() => setB({ size: v })}>{l}</button>)}</div>
+            <label>Width</label><div className="seg2">{[[true, "Full width"], [false, "Fit text"]].map(([v, l]) => <button key={l} className={bt.full === v ? "on" : ""} onClick={() => setB({ full: v })}>{l}</button>)}</div>
+            {!bt.full && <><label>Position</label><div className="seg2">{[["left", "Left"], ["center", "Center"], ["right", "Right"]].map(([v, l]) => <button key={v} className={bt.align === v ? "on" : ""} onClick={() => setB({ align: v })}>{l}</button>)}</div></>}
+            <div className="row"><label>Button color<div className="row"><input type="color" value={bt.bg || s.color} onChange={(e) => setB({ bg: e.target.value })} />{bt.bg && <button className="xs" onClick={() => setB({ bg: "" })}>Use accent</button>}</div></label>
+              <label>Text color<input type="color" value={bt.fg} onChange={(e) => setB({ fg: e.target.value })} /></label></div>
+            {pay.enabled && <label className="chk"><input type="checkbox" checked={bt.note} onChange={(e) => setB({ note: e.target.checked })} />Show “🔒 Secure payment” note</label>}
+            <hr /><label className="chk"><input type="checkbox" checked={bt.extra} onChange={(e) => setB({ extra: e.target.checked })} />Add a second button</label>
+            {bt.extra && <><label>Second button text<input value={bt.extraText} onChange={(e) => setB({ extraText: e.target.value })} /></label>
+              <label>Link <span className="mut sm">(WhatsApp, phone, any page)</span><input value={bt.extraUrl} placeholder="https://wa.me/919876543210" onChange={(e) => setB({ extraUrl: e.target.value.trim() })} /></label>
+              {!bt.extraUrl && <p className="red sm">Add a link to show the second button.</p>}</>}
           </div>}
           {tab === "use" && <div className="fb-set">
             <b>Add to one of your pages</b>
@@ -120,13 +195,13 @@ function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leadCo
   );
 }
 
-export default function Forms({ forms, onSave, projects, leads, onAddToPage, onLeads }) {
+export default function Forms({ forms, onSave, projects, leads, onAddToPage, onLeads, integ, onIntegrations }) {
   const [open, setOpen] = useState(null), [gal, setGal] = useState(false), [menu, setMenu] = useState(null);
   const cur = forms.find((x) => x.id === open);
   const countLeads = (f) => leads.filter((l) => l.formId === f.id).length;
   const usedOn = (f) => projects.reduce((n, p) => n + p.pages.filter((pg) => pg.html.includes(`data-lb-form-id="${f.id}"`)).length, 0);
   const put = (f) => onSave(forms.some((x) => x.id === f.id) ? forms.map((x) => (x.id === f.id ? f : x)) : [f, ...forms]);
-  if (cur) return <Builder form={cur} onChange={put} onBack={() => setOpen(null)} projects={projects} onAddToPage={onAddToPage} usedOn={usedOn(cur)} leadCount={countLeads(cur)} />;
+  if (cur) return <Builder form={cur} onChange={put} onBack={() => setOpen(null)} projects={projects} onAddToPage={onAddToPage} usedOn={usedOn(cur)} leadCount={countLeads(cur)} integ={integ} onIntegrations={onIntegrations} />;
   return (
     <div onClick={() => setMenu(null)}>
       <div className="top"><div><h1>Forms</h1><p className="mut">Build forms once, use them on any page, and collect every entry in Leads.</p></div><button className="pri big" onClick={() => setGal(true)}>＋ New form</button></div>
@@ -135,9 +210,9 @@ export default function Forms({ forms, onSave, projects, leads, onAddToPage, onL
       ) : (
         <div className="grid">{forms.map((f) => (
           <div key={f.id} className="card fm-card" onClick={() => setOpen(f.id)}>
-            <div className="fm-thumb"><iframe title={f.name} srcDoc={formPageHtml(f)} sandbox="" tabIndex={-1} /></div>
+            <div className="fm-thumb"><iframe title={f.name} srcDoc={formPageHtml(f, integ)} sandbox="" tabIndex={-1} /></div>
             <div className="cb">
-              <div className="ct"><b>{f.name}</b><span className="tag">{f.fields.length} fields</span></div>
+              <div className="ct"><b>{f.name}</b><span className="tag">{f.settings.pay && f.settings.pay.enabled ? `₹${f.settings.pay.amount} · ` : ""}{f.fields.length} fields</span></div>
               <div className="mut sm"><span onClick={(e) => { e.stopPropagation(); onLeads(); }} className="fm-leads">{countLeads(f)} leads</span> · used on {usedOn(f)} page{usedOn(f) === 1 ? "" : "s"} · edited {ago(f.updated)}</div>
             </div>
             <button className="dots" onClick={(e) => { e.stopPropagation(); setMenu(menu === f.id ? null : f.id); }}>⋯</button>
@@ -150,7 +225,7 @@ export default function Forms({ forms, onSave, projects, leads, onAddToPage, onL
             </div>}
           </div>))}</div>
       )}
-      {gal && <Gallery onClose={() => setGal(false)} onPick={(t) => { const f = newForm(t); f.name = f.name === "Untitled form" ? "Untitled form" : f.name; onSave([f, ...forms]); setGal(false); setOpen(f.id); }} />}
+      {gal && <Gallery integ={integ} onClose={() => setGal(false)} onPick={(t) => { const f = newForm(t); f.name = f.name === "Untitled form" ? "Untitled form" : f.name; onSave([f, ...forms]); setGal(false); setOpen(f.id); }} />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
-// LaunchBuilder v3 — Inspector.jsx
+// LaunchBuilder v7 — Inspector.jsx
 // Customize panel, Canva-style quick toolbar and icons
 import { useState, useLayoutEffect, useRef } from "react";
+import { aiEdit } from "../lib.js";
 import { INL, SH, GFONTS, SYSFONTS, ensureFont, fontStack, fontName, nameOf, readImage, putAsset, hydrate, field as fieldHtml } from "./tools.js";
 
 /* ==================== icons ==================== */
@@ -483,6 +484,7 @@ const docColors = (doc) => {
 
 export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
   const top = useRef(), bot = useRef(), [pop, setPop] = useState(""), [more, setMore] = useState(false);
+  const [aiQ, setAiQ] = useState(""), [aiBusy, setAiBusy] = useState(false), [aiErr, setAiErr] = useState("");
   const a = A.current, doc = el.ownerDocument, w = doc.defaultView, cs = w.getComputedStyle(el), tag = el.tagName;
   const st = (k) => a.getStyle(el, k) || "";
   const set = (o) => a.setStyle(el, o);
@@ -508,6 +510,18 @@ export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
     t.style.top = (y - t.offsetHeight - 12 >= 6 ? y - t.offsetHeight - 12 : Math.max(6, Math.min(H - 110, y + 10))) + "px";
     b.style.left = Math.max(8, Math.min(W - bw - 8, cx - bw / 2)) + "px";
     b.style.top = Math.max(60, Math.min(H - b.offsetHeight - 8, y + h + 12)) + "px";
+    /* pop-ups: open upward when there's no room below, and never leave the canvas */
+    const pw = t.querySelector(".qb-popwrap");
+    if (pw) {
+      pw.classList.remove("up"); pw.style.left = "0px";
+      const pr = pw.getBoundingClientRect(), roomUp = t.getBoundingClientRect().top - wr.top - 12;
+      if (pr.bottom > wr.bottom - 8 && roomUp > wr.bottom - t.getBoundingClientRect().bottom) pw.classList.add("up");
+      const p2 = pw.getBoundingClientRect();
+      pw.style.maxHeight = Math.max(160, pw.classList.contains("up") ? roomUp : wr.bottom - p2.top - 10) + "px";
+      if (p2.right > wr.right - 8) pw.style.left = Math.round(wr.right - 8 - p2.right) + "px";
+    }
+    const mm = b.querySelector(".qb-more");
+    if (mm) { mm.classList.remove("up"); if (mm.getBoundingClientRect().bottom > wr.bottom - 8) mm.classList.add("up"); }
   };
   useLayoutEffect(() => { posRef.current = place; place(); return () => { posRef.current = null; }; });
 
@@ -558,6 +572,24 @@ export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
       <small>Color</small><div className="qb-sw"><label className="qb-pick"><input type="color" value={hex(st("borderColor") || cs.borderColor) || "#000000"} onChange={(e) => set({ borderColor: e.target.value })} />+</label>{PRESETS.slice(0, 11).map((c) => <button key={c} className="qb-c" style={{ background: c }} onMouseDown={keep} onClick={() => set({ borderColor: c })} />)}</div>
     </div>,
     shadow: () => <div className="qb-pop qb-list"><b>Shadow</b>{Object.keys(SH).map((k) => <button key={k} className={(st("boxShadow") || "") === SH[k] ? "on" : ""} onMouseDown={keep} onClick={() => set({ boxShadow: SH[k] })}><i className="qb-shp" style={{ boxShadow: SH[k] }} />{k}</button>)}</div>,
+    ai: () => {
+      const ai = a.integ && a.integ.ai, ready = ai && ai.keys && ai.keys[ai.provider];
+      const IDEAS = ["Make it look more premium and modern", "Rewrite the text to be more persuasive", "Make it dark with white text", "Add 3 customer testimonials", "Translate the text to Hindi", "Make it better on mobile"];
+      const run = async () => {
+        if (aiQ.trim().length < 4) return setAiErr("Tell the AI what to change.");
+        setAiErr(""); setAiBusy(true);
+        try { const h = await aiEdit(ai, a.outer(el), aiQ.trim()); a.replaceEl(el, h); }
+        catch (e) { setAiErr(e.message); setAiBusy(false); }
+      };
+      return <div className="qb-pop qb-ai"><b>✨ Change this {nameOf(el).toLowerCase()} with AI</b>
+        {!ready ? <small>Connect Claude, ChatGPT, Gemini or DeepSeek in Dashboard → Integrations first.</small> : <>
+          <textarea rows={3} value={aiQ} disabled={aiBusy} placeholder="e.g. Make the background dark blue, bigger heading, add a WhatsApp button" onChange={(e) => setAiQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) run(); }} />
+          <div className="qb-chips">{IDEAS.map((x) => <button key={x} disabled={aiBusy} onMouseDown={keep} onClick={() => setAiQ(x)}>{x}</button>)}</div>
+          {aiErr && <small className="qb-err">{aiErr}</small>}
+          <button className="qb-go" disabled={aiBusy} onMouseDown={keep} onClick={run}>{aiBusy ? "✨ Working… (10–40 s)" : "✨ Apply change"}</button>
+          <small>Only this element changes. Don't like it? Press Undo (Ctrl+Z).</small></>}
+      </div>;
+    },
     anim: () => <div className="qb-pop"><b>Animate on scroll</b><div className="qb-anims">{ANIMS.map(([v, l]) => <button key={v} className={(el.getAttribute("data-lb-anim") || "") === v ? "on" : ""} onMouseDown={keep} onMouseEnter={() => play(v)} onClick={() => { v ? el.setAttribute("data-lb-anim", v) : el.removeAttribute("data-lb-anim"); play(v); a.changed(); }}><i className={"qb-ap " + (v || "none")} />{l}</button>)}</div><small>Hover to preview. Plays when visitors scroll to it.</small></div>,
     pos: () => <div className="qb-pop qb-grid"><b>Position</b>
       <button onMouseDown={keep} onClick={() => a.move(-1)}><Icon n="up" s={14} />Move up</button><button onMouseDown={keep} onClick={() => a.move(1)}><Icon n="down" s={14} />Move down</button>
@@ -612,7 +644,8 @@ export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
   return <>
     <div ref={top} className={"qb" + (locked ? " locked" : "")} onMouseDown={(e) => e.stopPropagation()}>
       {locked ? <><Icon n="lock" s={14} /><span className="qb-lk">Locked — unlock to edit</span><B ic="lock" label="Unlock" onClick={() => a.toggleLock(el)} /></> : bars[kind]}
-      <span className="qb-sep" /><B ic="sparkle" label="Style" title="All style options" onClick={() => onOpen("style")} />
+      <span className="qb-sep" /><B label="✨ AI" title="Change this with AI" on={pop === "ai"} cls="qb-aib" onClick={() => setPop(pop === "ai" ? "" : "ai")} />
+      <B ic="sparkle" label="Style" title="All style options" onClick={() => onOpen("style")} />
       {pop && !locked && pops[pop] && <div className="qb-popwrap">{pops[pop]()}</div>}
     </div>
     <div ref={bot} className="qb-mini" onMouseDown={(e) => e.stopPropagation()}>

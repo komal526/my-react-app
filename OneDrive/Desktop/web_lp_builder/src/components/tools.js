@@ -1,4 +1,4 @@
-// LaunchBuilder v3 — tools.js
+// LaunchBuilder v7 — tools.js
 // Editor toolbox: draggable elements, settings, site runtime, video storage, zip export
 
 
@@ -6,16 +6,16 @@
 // Editor helpers: canvas CSS, fonts, element names, cleaning, image compression, zip export
 
 /* ================= CSS injected into the page iframe (editor only, never exported) ================= */
-export const EDITOR_CSS = `.lb-hover{outline:1px dashed #7c6cff!important;outline-offset:-1px}
-.lb-sel{outline:2px solid #6c5cff!important;outline-offset:-2px}
+export const EDITOR_CSS = `.lb-hover{outline:1px dashed #3b6cff!important;outline-offset:-1px}
+.lb-sel{outline:2px solid #3b6cff!important;outline-offset:-2px}
 [contenteditable=true]{outline:2px solid #10b981!important;cursor:text}
-[data-lb-ph]:empty{min-height:90px;outline:1.5px dashed #c9c4ef;outline-offset:-6px;background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(108,92,255,.05) 10px 20px)}
-[data-lb-ph]:empty::before{content:"+ Drop elements here";color:#8f88c9;font:500 13px system-ui,sans-serif;display:block;padding:32px;text-align:center}
+[data-lb-ph]:empty{min-height:90px;outline:1.5px dashed #c3cde0;outline-offset:-6px;background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(59,108,255,.05) 10px 20px)}
+[data-lb-ph]:empty::before{content:"+ Drop elements here";color:#7d8aa3;font:500 13px system-ui,sans-serif;display:block;padding:32px;text-align:center}
 img:not(.lb-sel){-webkit-user-drag:none}
 [data-lb-video] iframe,[data-lb-video] video,[data-lb-map] iframe,[data-lb-embed] iframe{pointer-events:none}
-#lb-ind{position:fixed;z-index:2147483646;pointer-events:none;background:#6c5cff;border-radius:3px;display:none;box-shadow:0 0 0 3px rgba(108,92,255,.25)}
-#lb-ind.in{background:rgba(108,92,255,.10);outline:2px dashed #6c5cff;box-shadow:none}
-#lb-tools{position:fixed;z-index:2147483647;display:none;align-items:center;height:24px;background:#6c5cff;color:#fff;border-radius:6px 6px 6px 0;font:600 11px/1 system-ui,sans-serif;box-shadow:0 6px 16px rgba(60,40,200,.35);overflow:hidden;user-select:none}
+#lb-ind{position:fixed;z-index:2147483646;pointer-events:none;background:#3b6cff;border-radius:3px;display:none;box-shadow:0 0 0 3px rgba(59,108,255,.25)}
+#lb-ind.in{background:rgba(59,108,255,.10);outline:2px dashed #3b6cff;box-shadow:none}
+#lb-tools{position:fixed;z-index:2147483647;display:none;align-items:center;height:24px;background:#3b6cff;color:#fff;border-radius:6px 6px 6px 0;font:600 11px/1 system-ui,sans-serif;box-shadow:0 6px 16px rgba(30,70,200,.35);overflow:hidden;user-select:none}
 #lb-tools b{padding:0 8px;font-weight:600;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
 #lb-tools i{display:grid;place-items:center;width:24px;height:24px;cursor:pointer;font-style:normal;border-left:1px solid rgba(255,255,255,.18)}
 #lb-tools i:hover{background:rgba(255,255,255,.25)}
@@ -193,6 +193,13 @@ details.lbw-acc>summary::after{content:"+";font-size:22px;font-weight:400;transi
 details.lbw-acc[open]>summary::after{transform:rotate(45deg)}
 [data-lb-progress]{transition:width 1.4s cubic-bezier(.2,.7,.2,1)}
 .lbw-ok{padding:22px;border-radius:12px;background:#ecfdf5;color:#065f46;font-weight:600;text-align:center}
+.lbw-pay{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:22px;border:1px solid #e7e5f2;border-radius:14px;background:#fff}
+.lbw-pay p{margin:0;color:#5f5b7d;font-size:14px}.lbw-pay img{border-radius:10px;border:1px solid #eee}
+.lbw-pay-t{font-size:18px;color:#16142b}
+.lbw-paybtn{display:block;width:100%;box-sizing:border-box;padding:13px;border-radius:10px;background:#16a34a;color:#fff!important;text-decoration:none;font-weight:700}
+.lbw-upi{font-size:13px;color:#5f5b7d}.lbw-utr{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d9d7e8;border-radius:10px;font:inherit}
+.lbw-paid{width:100%;padding:13px;border:0;border-radius:10px;background:var(--lb-primary,#4f46e5);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.lbw-back{border:0;background:none;color:#5f5b7d;cursor:pointer;font:inherit;font-size:13px}
 .lb-h-lift{transition:transform .25s,box-shadow .25s}.lb-h-lift:hover{transform:translateY(-6px);box-shadow:0 22px 44px rgba(20,18,60,.16)}
 .lb-h-grow{transition:transform .25s}.lb-h-grow:hover{transform:scale(1.04)}
 .lb-h-glow{transition:box-shadow .25s}.lb-h-glow:hover{box-shadow:0 0 0 5px rgba(99,91,255,.25)}
@@ -262,16 +269,60 @@ all('[data-lb-totop]').forEach(function(b){var f=function(){b.classList.toggle('
 all('[data-lb-cookie]').forEach(function(c){try{if(localStorage.getItem('lb_cookie_ok'))c.classList.add('lb-hidden')}catch(e){}c.addEventListener('click',function(e){if(e.target.closest('[data-lb-accept]')){e.preventDefault();try{localStorage.setItem('lb_cookie_ok',1)}catch(x){}c.classList.add('lb-hidden')}})});
 all('[data-lb-countdown]').forEach(function(c){var end=new Date(c.getAttribute('data-lb-countdown')).getTime();function tick(){var s=Math.max(0,Math.floor((end-Date.now())/1000)),v={d:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};all('[data-lb-cd]',c).forEach(function(x){var k=x.getAttribute('data-lb-cd');x.textContent=k==='d'?v.d:('0'+v[k]).slice(-2)})}tick();setInterval(tick,1000)});
 function labelOf(el,i){var l=el.closest('label'),t='';if(l)Array.prototype.forEach.call(l.childNodes,function(n){if(n.nodeType===3)t+=n.textContent});t=(t||el.placeholder||el.getAttribute('aria-label')||('Field '+(i+1))).replace(/\\*/g,'').trim();return t}
+function post(u,o){try{if(u&&W.fetch)return fetch(u,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o)}).catch(function(){})}catch(x){}return Promise.resolve()}
+function fillT(t,data){return String(t||'').replace(/\\{\\{\\s*([\\w-]+)\\s*\\}\\}/g,function(m,k){return data[k]!=null?data[k]:''})}
+function phoneOf(data){for(var k in data){if(/phone|tel|mobile|whats/i.test(k))return String(data[k])}return ''}
+function jattr(f,a){try{return JSON.parse(f.getAttribute(a)||'null')}catch(x){return null}}
+function esc(v){return String(v==null?'':v).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.hasAttribute('data-lb-form'))return;e.preventDefault();
- var data={};Array.prototype.forEach.call(f.elements,function(el,i){if(!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)||/^(submit|button|reset|file|password)$/.test(el.type))return;var k=el.name||labelOf(el,i);
+ var btn=f.querySelector('[type=submit]'),pay=jattr(f,'data-lb-pay'),wa=jattr(f,'data-lb-wa'),hook=f.getAttribute('data-lb-webhook');
+ if(pay&&!(+pay.amount>0))pay=null;
+ var lead=f.__lead;
+ if(!lead){var data={};Array.prototype.forEach.call(f.elements,function(el,i){if(!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)||/^(submit|button|reset|file|password)$/.test(el.type))return;var k=el.name||labelOf(el,i);
   if(el.type==='checkbox'||el.type==='radio'){if(el.checked)data[k]=data[k]?data[k]+', '+(el.value==='on'?'Yes':el.value):(el.value==='on'?'Yes':el.value)}else if(el.value!=='')data[k]=el.value});
- var lead={form:f.getAttribute('data-lb-form')||'Form',formId:f.getAttribute('data-lb-form-id')||'',page:cur,url:location.href,data:data,ts:Date.now()};
- if(W.LB_PREVIEW)parent.postMessage({lb:'lead',lead:lead},'*');
- var btn=f.querySelector('[type=submit]');if(btn)btn.disabled=true;
+  lead={lid:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),form:f.getAttribute('data-lb-form')||'Form',formId:f.getAttribute('data-lb-form-id')||'',page:cur,url:location.href,data:data,ts:Date.now()};
+  if(pay)lead.payment={status:'pending',amount:+pay.amount,mode:pay.mode,currency:'INR'};
+  if(wa&&wa.hook){var ph=phoneOf(data).replace(/\\D/g,'');if(ph.length===10)ph=String(wa.cc||'91')+ph;lead.whatsapp={to:ph,message:fillT(wa.msg,data)}}
+  if(W.LB_PREVIEW)parent.postMessage({lb:'lead',lead:lead},'*');
+  post(hook,{event:'lead.created',lead:lead});
+  if(pay)f.__lead=lead}
+ var mail=jattr(f,'data-lb-mail');
+ var sendMail=function(){if(!mail)return;var dt=lead.data,to='',rows='';for(var k in dt){if(!to&&/mail/i.test(k))to=dt[k];rows+='<tr><td style="padding:6px 12px;border:1px solid #eee;font-weight:600">'+esc(k)+'</td><td style="padding:6px 12px;border:1px solid #eee">'+esc(dt[k])+'</td></tr>'}
+  var vars={};for(var k2 in dt)vars[k2]=esc(dt[k2]);vars.form=esc(lead.form);vars.page=esc(lead.page);vars.all_fields='<table style="border-collapse:collapse">'+rows+'</table>';
+  vars.amount=lead.payment?lead.payment.amount:'';vars.payment_id=lead.payment?(lead.payment.id||lead.payment.ref||''):'';
+  var nl=String.fromCharCode(10),html=function(t){return fillT(t,vars).split(nl).join('<br>')};
+  var send=function(toAddr,subj,body){if(!toAddr)return;var msg={to_email:toAddr,subject:fillT(subj,vars),message:html(body),from_name:mail.from||'',reply_to:mail.reply||''};
+   if(mail.p==='emailjs'&&mail.s&&mail.t&&mail.k&&W.fetch)fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_id:mail.s,template_id:mail.t,user_id:mail.k,template_params:msg})}).catch(function(){});
+   else if(mail.hook)post(mail.hook,{event:'email.send',to:msg.to_email,subject:msg.subject,html:msg.message,from:msg.from_name,replyTo:msg.reply_to,lead:lead})};
+  if(mail.auto)send(to,mail.subj,mail.body);
+  if(mail.owner)send(mail.owner,mail.osubj||'New lead: {{name}}','New submission on <b>{{form}}</b>'+nl+nl+'{{all_fields}}')};
+ var sendWA=function(){if(wa&&wa.hook&&lead.whatsapp)post(wa.hook,{event:'whatsapp.send',to:lead.whatsapp.to,message:lead.whatsapp.message,name:lead.data.name||'',lead:lead})};
  var done=function(){if(btn)btn.disabled=false;var r=f.getAttribute('data-lb-redirect');if(r){if(W.LB_PREVIEW&&!/^(https?:)?\\/\\//i.test(r))parent.postMessage({lb:'nav',href:r},'*');else location.href=r;return}
-  var m=d.createElement('div');m.className='lbw-ok';m.textContent=f.getAttribute('data-lb-success')||'Thank you! We will be in touch soon.';f.reset();f.style.display='none';f.parentNode.insertBefore(m,f.nextSibling)};
- var hook=f.getAttribute('data-lb-webhook');
- if(hook&&W.fetch)fetch(hook,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(lead)}).then(done,done);else done()},true);
+  var m=d.createElement('div');m.className='lbw-ok';m.textContent=f.getAttribute('data-lb-success')||'Thank you! We will be in touch soon.';f.reset();f.style.display='none';
+  var pp=f.parentNode.querySelector('.lbw-pay');if(pp)pp.remove();f.parentNode.insertBefore(m,f.nextSibling)};
+ if(!pay){sendWA();sendMail();done();return}
+ var paid=function(pm){lead.payment=Object.assign({},lead.payment,pm,{ts:Date.now()});f.__lead=null;
+  if(W.LB_PREVIEW)parent.postMessage({lb:'lead-pay',lid:lead.lid,payment:lead.payment},'*');
+  post(hook,{event:'payment.'+pm.status,lead:lead});sendWA();sendMail();done()};
+ var amt=(+pay.amount).toLocaleString('en-IN');
+ if(pay.mode==='razorpay'&&pay.key){if(btn)btn.disabled=true;
+  var go=function(){if(btn)btn.disabled=false;try{var o=new W.Razorpay({key:pay.key,amount:Math.round(+pay.amount*100),currency:'INR',name:pay.payee||'Payment',description:pay.desc||lead.form,
+   prefill:{name:lead.data.name||'',email:lead.data.email||'',contact:phoneOf(lead.data)},notes:{form:lead.form,lead_id:lead.lid},theme:{color:pay.color||'#4f46e5'},
+   handler:function(r){paid({status:'paid',id:r.razorpay_payment_id,mode:'razorpay'})}});
+   if(o.on)o.on('payment.failed',function(r){alert('Payment failed: '+((r.error&&r.error.description)||'please try again'))});o.open()}catch(x){alert('Razorpay could not start: '+x.message)}};
+  if(W.Razorpay)go();else{var sc=d.createElement('script');sc.src='https://checkout.razorpay.com/v1/checkout.js';sc.onload=go;sc.onerror=function(){if(btn)btn.disabled=false;alert('Could not load Razorpay. Check your internet connection.')};d.head.appendChild(sc)}
+  return}
+ var old=f.parentNode.querySelector('.lbw-pay');if(old)old.remove();
+ var box=d.createElement('div');box.className='lbw-pay';
+ var upi=pay.mode==='upi'&&pay.upi?'upi://pay?pa='+encodeURIComponent(pay.upi)+'&pn='+encodeURIComponent(pay.payee||'Payee')+'&am='+(+pay.amount)+'&cu=INR&tn='+encodeURIComponent((pay.desc||lead.form).slice(0,40)):'';
+ box.innerHTML='<b class="lbw-pay-t">Pay ₹'+amt+' to complete your registration</b>'+(upi?'<p>Scan with any UPI app, or tap the button on your phone.</p><img alt="UPI QR code" width="200" height="200" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data='+encodeURIComponent(upi)+'"><a class="lbw-paybtn" href="'+esc(upi)+'">Pay with GPay / PhonePe / Paytm</a><div class="lbw-upi">UPI ID: <b>'+esc(pay.upi)+'</b></div>'
+  :'<p>The payment page opened in a new tab. Finish paying there, then come back here.</p><a class="lbw-paybtn" target="_blank" rel="noopener" href="'+esc(pay.link||'#')+'">Open payment page again</a>')
+  +'<input class="lbw-utr" placeholder="Payment reference / UTR (optional)"><button type="button" class="lbw-paid">I have paid</button><button type="button" class="lbw-back">← Change my details</button>';
+ f.style.display='none';f.parentNode.insertBefore(box,f.nextSibling);
+ if(pay.mode==='link'&&pay.link)W.open(pay.link,'_blank','noopener');
+ box.querySelector('.lbw-paid').onclick=function(){paid({status:'claimed',mode:pay.mode,ref:box.querySelector('.lbw-utr').value})};
+ box.querySelector('.lbw-back').onclick=function(){box.remove();f.style.display=''};
+},true);
 })();`;
 
 const ok = (v) => /^[A-Za-z0-9_-]{3,40}$/.test(v || "");
@@ -466,7 +517,8 @@ export const PAGE_TPLS = [
 
 /* ==================== Forms → HTML (used by Forms builder, editor "My forms", share link) ==================== */
 const esc = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-export const formHtml = (form) => {
+export const formHtml = (form, integ) => {
+  const ig = integ || {}, gpay = ig.pay || {}, gwa = ig.wa || {};
   const s = { title: "", subtitle: "", submit: "Submit", success: "", redirect: "", webhook: "", color: "#4f46e5", radius: 10, style: "card", width: 560, ...(form.settings || {}) };
   const R = +s.radius || 0, C = s.color || "#4f46e5";
   const inp = `display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:12px 14px;border:1px solid #d9d7e8;border-radius:${R}px;font:inherit;font-size:15px;background:#fff;color:#16142b`;
@@ -486,16 +538,29 @@ export const formHtml = (form) => {
       default: return box(f, `<label style="${lab}">${esc(f.label)}${star(f)}<input type="${f.type}" name="${n}"${ph}${rq} style="${inp}"></label>`);
     }
   };
+  /* payment step + WhatsApp automation (form setting first, then global Integrations) */
+  const p = s.pay || {}, amt = +p.amount || 0, payOn = p.enabled && amt > 0;
+  const payCfg = payOn ? { amount: amt, mode: p.mode || "razorpay", key: p.key || gpay.razorpayKey || "", upi: p.upi || gpay.upiId || "", payee: p.payee || gpay.payee || form.name, link: p.link || "", desc: p.desc || form.name, color: C } : null;
+  const w = s.wa || {}, waHook = w.enabled ? w.hook || gwa.webhook || "" : "";
+  const waCfg = waHook ? { hook: waHook, msg: w.msg || gwa.template || "", cc: gwa.country || "91" } : null;
+  const ge = ig.email || {}, em = s.email || {};
+  const mailOk = ge.provider === "emailjs" ? !!(ge.serviceId && ge.templateId && ge.publicKey) : !!ge.webhook;
+  const mailCfg = em.enabled && mailOk && (em.auto !== false || em.notify) ? { p: ge.provider, s: ge.serviceId, t: ge.templateId, k: ge.publicKey, hook: ge.webhook, from: ge.fromName || form.name, reply: ge.ownerEmail || "",
+    auto: em.auto !== false, subj: em.subject || "Thanks for registering, {{name}}!", body: em.body || "Hi {{name}},\n\nThank you! We received your details and will contact you soon.\n\nTeam " + (ge.fromName || form.name),
+    owner: em.notify ? em.ownerEmail || ge.ownerEmail || "" : "", osubj: em.ownerSubject || "" } : null;
+  const bt = { full: true, align: "center", size: "md", bg: "", fg: "#ffffff", note: true, extra: false, extraText: "Chat on WhatsApp", extraUrl: "", ...(s.btn || {}) };
+  const pad = { sm: "10px 18px", md: "15px 22px", lg: "19px 28px" }[bt.size] || "15px 22px", fs = { sm: 14, md: 16, lg: 18 }[bt.size] || 16;
+  const price = `₹${amt.toLocaleString("en-IN")}`, btnText = !payOn ? s.submit || "Submit" : !s.submit || s.submit === "Submit" ? `Register for ${price}` : s.submit.includes("₹") ? s.submit : `${s.submit} · ${price}`;
   const card = s.style === "card" ? `background:#fff;border:1px solid #ecebf5;border-radius:${R + 8}px;padding:32px;box-shadow:0 18px 50px -24px rgba(30,20,90,.25);` : "";
   return `<div data-lb-formbox="${esc(form.id)}" data-lb-name="Form: ${esc(form.name)}" style="max-width:${+s.width || 560}px;margin:0 auto;box-sizing:border-box;${card}">`
     + (s.title ? `<h3 style="margin:0 0 6px;font-size:26px;color:#16142b;letter-spacing:-.01em">${esc(s.title)}</h3>` : "")
     + (s.subtitle ? `<p style="margin:0 0 20px;color:#5f5b7d;line-height:1.6">${esc(s.subtitle)}</p>` : s.title ? `<div style="height:14px"></div>` : "")
-    + `<form data-lb-form="${esc(form.name)}" data-lb-form-id="${esc(form.id)}" data-lb-success="${esc(s.success)}"${s.redirect ? ` data-lb-redirect="${esc(s.redirect)}"` : ""}${s.webhook ? ` data-lb-webhook="${esc(s.webhook)}"` : ""} style="display:flex;flex-wrap:wrap;gap:16px">`
+    + `<form data-lb-form="${esc(form.name)}" data-lb-form-id="${esc(form.id)}" data-lb-success="${esc(s.success)}"${s.redirect ? ` data-lb-redirect="${esc(s.redirect)}"` : ""}${s.webhook ? ` data-lb-webhook="${esc(s.webhook)}"` : ""}${mailCfg ? ` data-lb-mail="${esc(JSON.stringify(mailCfg))}"` : ""}${payCfg ? ` data-lb-pay="${esc(JSON.stringify(payCfg))}"` : ""}${waCfg ? ` data-lb-wa="${esc(JSON.stringify(waCfg))}"` : ""} style="display:flex;flex-wrap:wrap;gap:16px">`
     + (form.fields || []).map(one).join("")
-    + `<div style="flex:1 1 100%"><button type="submit" style="width:100%;padding:15px;border:0;border-radius:${R}px;background:${C};color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer">${esc(s.submit || "Submit")}</button></div></form></div>`;
+    + `<div style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:10px;justify-content:${bt.align === "left" ? "flex-start" : bt.align === "right" ? "flex-end" : "center"}"><button type="submit" style="${bt.full ? "flex:1 1 100%;" : ""}padding:${pad};border:0;border-radius:${R}px;background:${bt.bg || C};color:${bt.fg || "#fff"};font:inherit;font-size:${fs}px;font-weight:700;cursor:pointer">${esc(btnText)}</button>${bt.extra && bt.extraUrl ? `<a href="${esc(bt.extraUrl)}" target="_blank" rel="noopener" style="${bt.full ? "flex:1 1 100%;box-sizing:border-box;" : ""}display:inline-block;text-align:center;padding:${pad};border-radius:${R}px;border:1.5px solid ${bt.bg || C};color:${bt.bg || C};text-decoration:none;font-size:${fs}px;font-weight:700">${esc(bt.extraText || "Learn more")}</a>` : ""}${payOn && bt.note ? `<div style="flex:1 1 100%;text-align:center;font-size:12.5px;color:#77739a;margin-top:-2px">🔒 Secure payment via ${payCfg.mode === "razorpay" ? "Razorpay" : payCfg.mode === "upi" ? "UPI (GPay, PhonePe, Paytm)" : "payment link"}</div>` : ""}</div></form></div>`;
 };
 /* a full page that shows just the form (share link) */
-export const formPageHtml = (form) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(form.name)}</title><style>body{margin:0;min-height:100vh;background:#f4f3fb;font-family:Inter,system-ui,sans-serif;color:#16142b;display:flex;align-items:center;justify-content:center;padding:40px 16px;box-sizing:border-box}</style></head><body><div style="width:100%">${formHtml(form)}</div></body></html>`;
+export const formPageHtml = (form, integ) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(form.name)}</title><style>body{margin:0;min-height:100vh;background:#f4f3fb;font-family:Inter,system-ui,sans-serif;color:#16142b;display:flex;align-items:center;justify-content:center;padding:40px 16px;box-sizing:border-box}</style></head><body><div style="width:100%">${formHtml(form, integ)}</div></body></html>`;
 
 /* ==================== Elementor-style structures (section with columns) ==================== */
 export const STRUCTURES = [
@@ -503,3 +568,16 @@ export const STRUCTURES = [
   ["25 / 50 / 25", [1, 2, 1]], ["25 × 4", [1, 1, 1, 1]], ["25 / 75", [1, 3]], ["75 / 25", [3, 1]], ["20 × 5", [1, 1, 1, 1, 1]],
 ];
 export const structureHtml = (cols) => `<section data-lb-name="Section" style="padding:64px 24px"><div class="lbw-stack" data-lb-name="Row" style="max-width:1140px;margin:0 auto;display:flex;gap:28px;align-items:stretch">${cols.map((c, i) => `<div data-lb-ph data-lb-name="Column ${i + 1}" style="flex:${c} 1 0;min-width:0"></div>`).join("")}</div></section>`;
+
+/* ==================== build a whole site for publishing (all pages + uploaded videos + sitemap + 404) ==================== */
+export async function buildSite(pages, base = "") {
+  const out = [];
+  for (const p of pages) { const r = await finalize(p.html, { mode: "zip", page: p.file }); out.push({ name: p.file, data: r.html }); r.files.forEach((f) => !out.some((o) => o.name === f.name) && out.push(f)); }
+  if (!pages.some((p) => p.file === "index.html") && pages[0]) out.push({ name: "index.html", data: out[0].data });
+  if (!pages.some((p) => p.file === "404.html")) out.push({ name: "404.html", data: (await finalize(PAGE_TPLS.find((t) => t[0] === "404")[2]("Page not found"))).html });
+  if (base) {
+    out.push({ name: "sitemap.xml", data: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map((p) => `  <url><loc>${base}/${p.file === "index.html" ? "" : p.file}</loc></url>`).join("\n")}\n</urlset>` });
+    out.push({ name: "robots.txt", data: `User-agent: *\nAllow: /\nSitemap: ${base}/sitemap.xml\n` });
+  }
+  return out;
+}

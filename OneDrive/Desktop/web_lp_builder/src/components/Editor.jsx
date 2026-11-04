@@ -1,7 +1,7 @@
-// LaunchBuilder v3 — Editor.jsx
+// LaunchBuilder v5 — Editor.jsx
 // The builder: canvas, top bar, left panel (Add / Layers / Pages / Site / Edit)
 import { useState, useRef, useEffect } from "react";
-import { uid, slug, uniqFile, addr, previewToken, previewUrl } from "../lib.js";
+import { uid, slug, uniqFile, addr, previewToken, previewUrl, aiSection, AI_PROVIDERS } from "../lib.js";
 import { makeZip, EDITOR_CSS, CONT, WIDTH, cleanNode, nameOf, WIDGET_CSS, finalize, readCfg, LIB, PAGE_TPLS, hydrate, STRUCTURES, structureHtml, formHtml } from "./tools.js";
 import Inspector, { Icon, QuickBar } from "./Inspector.jsx";
 import PagesPanel, { Layers, SiteSettings, writeCfg } from "./PagesPanel.jsx";
@@ -12,11 +12,12 @@ const serialize = (d) => "<!DOCTYPE html>\n" + d.documentElement.outerHTML;
 const parse = (h) => new DOMParser().parseFromString(h, "text/html");
 const TABS = [["add", "plus", "Add"], ["layers", "layers", "Layers"], ["pages", "pages", "Pages"], ["site", "globe", "Site"], ["edit", "pen", "Edit"]];
 
-export default function Editor({ page, user, forms = [], onSave, onBack, onPublish, onPages, onType }) {
+export default function Editor({ page, user, forms = [], integ, onSave, onBack, onPublish, onPages, onType }) {
   const [src, setSrc] = useState(page.pages[0].html);
   const [ver, setVer] = useState(0), [mode, setMode] = useState("visual"), [dev, setDev] = useState("desktop"), [tab, setTab] = useState("add"), [itab, setItab] = useState("content");
   const [selEl, setSelEl] = useState(null), [selKey, setSelKey] = useState(0), [, setTick] = useState(0), [codeText, setCodeText] = useState("");
   const [box, setBox] = useState({ w: 900, h: 600 }), [q, setQ] = useState(""), [shut, setShut] = useState(() => new Set()), [panel, setPanel] = useState(true), [navFloat, setNavFloat] = useState(false);
+  const [aiQ, setAiQ] = useState(""), [aiBusy, setAiBusy] = useState(false);
   const [toast, setToast] = useState(""), [busy, setBusy] = useState(""), [editing, setEditing] = useState(false), [openLink, setOpenLink] = useState(false);
   const qbPos = useRef(null), devRef = useRef(dev); devRef.current = dev;
   const ifr = useRef(), wrap = useRef(), drag = useRef(null), H = useRef({ past: [], future: [], cur: "", t: 0, dirty: false }), A = useRef({}), selRef = useRef(null), clip = useRef(null), keyRef = useRef(() => {});
@@ -101,6 +102,12 @@ export default function Editor({ page, user, forms = [], onSave, onBack, onPubli
   const dup = () => { const e = selRef.current; if (!e || e.tagName === "BODY") return; const c = e.cloneNode(true); cleanNode(c); e.after(c); uniqIds(c); reId(c); hydrate(D()); select(c); commit(true); };
   const parent = () => { const e = selRef.current, p = e && e.parentElement; if (!e) return; select(p && p !== D().documentElement ? p : D().body); };
   const outer = (el) => { const c = el.cloneNode(true); cleanNode(c); return c.outerHTML; };
+  /* swap an element for new HTML (used by AI edit) and keep it selected */
+  const replaceEl = (el, html) => {
+    const t = D().createElement("template"); t.innerHTML = html.trim(); const n = t.content.firstElementChild;
+    if (!n) throw new Error("The AI didn't return valid HTML. Try again.");
+    el.replaceWith(n); uniqIds(n); hydrate(D()); select(n); commit(true); say("✨ Updated with AI — press Ctrl+Z to undo");
+  };
   const applyOuter = (el, v) => { el.outerHTML = v; hydrate(D()); select(null); commit(true); };
   const mkEl = (html) => { const t = D().createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
   const place = (n) => {
@@ -156,7 +163,7 @@ export default function Editor({ page, user, forms = [], onSave, onBack, onPubli
   };
   const copyStyle = (el) => { clip.current = el.getAttribute("style") || ""; say("Style copied"); setTick((x) => x + 1); };
   const pasteStyle = (el) => { if (clip.current === null) return; el.setAttribute("style", clip.current); commit(true); say("Style pasted"); };
-  A.current = { changed, commit: () => commit(true), move, dup, del, parent, outer, applyOuter, select, resp, css, sections, ensureAnchor, idsOf, copyStyle, pasteStyle, hasStyle: () => clip.current !== null, clean: cleanNode, setStyle, getStyle, toggleLock, editText };
+  A.current = { changed, commit: () => commit(true), move, dup, del, parent, outer, applyOuter, select, resp, css, sections, ensureAnchor, idsOf, copyStyle, pasteStyle, hasStyle: () => clip.current !== null, clean: cleanNode, setStyle, getStyle, toggleLock, editText, replaceEl, integ };
 
   /* ---------------- auto menus: [data-lb-autonav] always lists every page ---------------- */
   const links = (list) => list.map((p) => ({ name: p.name, file: p.file }));
@@ -388,10 +395,18 @@ export default function Editor({ page, user, forms = [], onSave, onBack, onPubli
                   <span className="st-prev">{cols.map((c, i) => <i key={i} style={{ flex: c }} />)}</span><small>{l}</small></button>))}</div>}
             </div>}
             {!qq && <div className="lg">
+              <button className={"lg-h" + (shut.has("AI") ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has("AI") ? n.delete("AI") : n.add("AI"); return n; })}><span>✨ AI section</span><em>{(AI_PROVIDERS.find((p) => p.id === ((integ && integ.ai.provider) || "claude")) || {}).name}</em><Icon n="chevd" s={13} /></button>
+              {!shut.has("AI") && (integ && integ.ai.keys && integ.ai.keys[integ.ai.provider] ? <div className="aibox">
+                <textarea rows={3} value={aiQ} disabled={aiBusy} onChange={(e) => setAiQ(e.target.value)} placeholder="e.g. Pricing section with 3 plans for an AI workshop: ₹21 trial, ₹999 course, ₹4,999 mentorship" />
+                <button className="btn pri sm" disabled={aiBusy || aiQ.trim().length < 8} onClick={async () => { setAiBusy(true); try { const h = await aiSection(integ.ai, aiQ.trim()); addEl(h); setAiQ(""); say("AI section added — edit it like any other section"); } catch (e) { alert(e.message); } setAiBusy(false); }}>{aiBusy ? "Generating…" : "✨ Generate & add"}</button>
+                <p className="hint">Added below the selected element.</p></div>
+                : <p className="hint pad">Connect Claude, ChatGPT, Gemini or DeepSeek in Dashboard → <b>Integrations</b> to generate sections from a prompt.</p>)}
+            </div>}
+            {!qq && <div className="lg">
               <button className={"lg-h" + (shut.has("My forms") ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has("My forms") ? n.delete("My forms") : n.add("My forms"); return n; })}><span>My forms</span><em>{forms.length}</em><Icon n="chevd" s={13} /></button>
               {!shut.has("My forms") && (forms.length ? <div className="myforms">{forms.map((f) => (
-                <div key={f.id} className="mf" draggable title="Drag onto the page, or click to add" onClick={() => addEl(`<section data-lb-name="Form section" style="padding:64px 24px">${formHtml(f)}</section>`)}
-                  onDragStart={(e) => { drag.current = { html: formHtml(f) }; e.dataTransfer.setData("text/plain", "n"); }} onDragEnd={() => { drag.current = null; hideInd(); }}>
+                <div key={f.id} className="mf" draggable title="Drag onto the page, or click to add" onClick={() => addEl(`<section data-lb-name="Form section" style="padding:64px 24px">${formHtml(f, integ)}</section>`)}
+                  onDragStart={(e) => { drag.current = { html: formHtml(f, integ) }; e.dataTransfer.setData("text/plain", "n"); }} onDragEnd={() => { drag.current = null; hideInd(); }}>
                   <Icon n="form" s={16} /><div><b>{f.name}</b><span>{f.fields.length} fields · stays linked</span></div></div>))}</div>
                 : <p className="hint pad">No saved forms yet. Create them in Dashboard → <b>Forms</b> (with templates), then add them here.</p>)}
             </div>}
@@ -427,7 +442,7 @@ export default function Editor({ page, user, forms = [], onSave, onBack, onPubli
             <div className="devin" style={{ width: OW, height: OH, transform: `scale(${sc})` }}>
               {isM && <div className="notch" />}
               {isM && <div className="pbar"><div className="st"><span>9:41</span><span>▂▄▆ ▮</span></div><div className="url">🔒 {page.slug || "yourpage"}.launchbuilder.com</div></div>}
-              <iframe key={ver} ref={ifr} srcDoc={src} onLoad={setup} title="page" sandbox="allow-same-origin allow-scripts allow-forms allow-popups" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; accelerometer; gyroscope"
+              <iframe key={ver} ref={ifr} srcDoc={src} onLoad={setup} title="page" sandbox="allow-same-origin allow-scripts allow-forms allow-popups" allow="payment; autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; accelerometer; gyroscope"
                 style={{ width: W, height: isM ? 658 : OH, border: 0, background: "#fff", display: "block" }} />
               {isM && <div className="pfoot"><span>‹</span><span>›</span><span>⇪</span><span>▯</span><span>⧉</span></div>}
             </div>
