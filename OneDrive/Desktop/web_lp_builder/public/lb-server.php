@@ -1,5 +1,5 @@
 <?php
-// LaunchBuilder server v6 — runs on your own hosting (Hostinger etc.), no extra service needed.
+// LaunchBuilder server v7 — runs on your own hosting (Hostinger etc.), no extra service needed.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
 // • Routes your own domains to a published site
@@ -38,6 +38,31 @@ function rrmdir($d) {
 /* Hostinger serves sites through a CDN / load balancer, so the address PHP sees is NOT the
    website's DNS address and changes between requests. Never guess it — the user copies it from hPanel. */
 function server_ips() { return array('ip' => '', 'ip6' => ''); }
+/* ---------- "Add website" mode: each domain is its own Hostinger website; we copy the published site into its folder ---------- */
+function domain_folder($domain) {
+  $base = dirname(dirname(__DIR__));            // /home/uXXXX/domains
+  foreach (array($base . '/' . $domain . '/public_html', $base . '/www.' . $domain . '/public_html') as $c) if (@is_dir($c)) return $c;
+  return '';
+}
+function copy_dir($src, $dst) {
+  if (!is_dir($dst)) @mkdir($dst, 0755, true);
+  foreach (scandir($src) as $x) { if ($x === '.' || $x === '..') continue; $a = $src . '/' . $x; $b = $dst . '/' . $x; if (is_dir($a)) copy_dir($a, $b); else @copy($a, $b); }
+}
+function deploy_to($domain, $target, $SITES) {
+  $parts = explode('/', $target, 2); $slug = $parts[0]; $pg = isset($parts[1]) ? $parts[1] : '';
+  $src = $SITES . '/' . $slug;
+  if (!is_dir($src)) return 'Publish this website first, then connect the domain.';
+  $dst = domain_folder($domain);
+  if ($dst === '') return 'nofolder';
+  if (@realpath($dst) === @realpath(__DIR__)) return 'This domain opens the builder itself. Use another domain for your website.';
+  if (!file_exists($dst . '/lb-site.txt') && (file_exists($dst . '/wp-config.php') || file_exists($dst . '/index.php'))) return 'That Hostinger website already has another site in it (WordPress or PHP). Delete those files in File Manager first, or use an empty website.';
+  if (!is_writable($dst)) return 'Hostinger did not allow writing to this domain\'s folder. In File Manager set its public_html permission to 755.';
+  if (file_exists($dst . '/default.php')) @rename($dst . '/default.php', $dst . '/default.php.bak');
+  copy_dir($src, $dst);
+  if ($pg !== '' && file_exists($src . '/' . $pg)) @copy($src . '/' . $pg, $dst . '/index.html');
+  @file_put_contents($dst . '/lb-site.txt', $target);
+  return '';
+}
 function clean_str($v, $max) { $v = is_scalar($v) ? (string)$v : ''; return function_exists('mb_substr') ? mb_substr($v, 0, $max) : substr($v, 0, $max); }
 
 $https  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
@@ -149,7 +174,9 @@ if ($act === 'publish') {
   $target = $SITES . '/' . $slug;
   rrmdir($target);
   if (!@rename($tmp, $target)) { rrmdir($tmp); fail('Could not save the site folder.'); }
-  out(array('ok' => true, 'slug' => $slug, 'url' => $BASE . '/sites/' . $slug . '/', 'folder' => 'public_html' . $prefix . '/sites/' . $slug));
+  $deploys = jread($DATA . '/deploys.json', array()); $updated = array();
+  foreach ($deploys as $dm => $tg) { $p0 = explode('/', $tg, 2); if ($p0[0] === $slug && deploy_to($dm, $tg, $SITES) === '') $updated[] = $dm; }
+  out(array('ok' => true, 'slug' => $slug, 'url' => $BASE . '/sites/' . $slug . '/', 'folder' => 'public_html' . $prefix . '/sites/' . $slug, 'domains' => $updated));
 }
 
 if ($act === 'unpublish') {
@@ -180,6 +207,22 @@ if ($act === 'deletelead') {
   out(array('ok' => true));
 }
 
+/* put a published site into the domain's own Hostinger website folder */
+if ($act === 'deploy') {
+  $domain = strtolower(trim(isset($d['domain']) ? (string)$d['domain'] : ''));
+  $slug = isset($d['slug']) ? $d['slug'] : '';
+  $page = isset($d['page']) ? preg_replace('/[^A-Za-z0-9._-]/', '', (string)$d['page']) : '';
+  if (!preg_match('/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/', $domain) || !valid_slug($slug)) fail('Invalid domain');
+  $target = $page !== '' && $page !== 'index.html' ? $slug . '/' . $page : $slug;
+  $deploys = jread($DATA . '/deploys.json', array());
+  foreach ($deploys as $dm => $tg) if ($tg === $target && $dm !== $domain) unset($deploys[$dm]);
+  $err = deploy_to($domain, $target, $SITES);
+  if ($err === 'nofolder') out(array('ok' => true, 'deployed' => false, 'reason' => 'nofolder'));
+  if ($err !== '') fail($err);
+  $deploys[$domain] = $target; jwrite($DATA . '/deploys.json', $deploys);
+  out(array('ok' => true, 'deployed' => true));
+}
+
 /* check from the server itself whether a domain really reaches THIS hosting folder */
 if ($act === 'probe') {
   $domain = strtolower(trim(isset($d['domain']) ? (string)$d['domain'] : ''));
@@ -202,6 +245,8 @@ if ($act === 'probe') {
   $j = json_decode($b1, true);
   $res['ours'] = is_array($j) && isset($j['app']) && $j['app'] === 'launchbuilder';
   if ($res['ours']) { list($c2, $b2) = $get('http://' . $domain . '/'); $res['page'] = $c2; }
+  $res['folder'] = domain_folder($domain) !== '';
+  if (!$res['ours']) { list($c3, $b3) = $get('http://' . $domain . '/lb-site.txt'); $res['site'] = $c3 === 200 && trim($b3) !== '' && strlen($b3) < 200; if ($res['site']) $res['code'] = 200; }
   out($res);
 }
 

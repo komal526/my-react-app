@@ -1,4 +1,4 @@
-// LaunchBuilder v18 — Domains.jsx
+// LaunchBuilder v19 — Domains.jsx
 import { useState, useEffect } from "react";
 import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS } from "../lib.js";
 
@@ -113,88 +113,97 @@ function DomainCard({ p, onPatch, onOpen, integ, onSetup, onPublish }) {
 
 /* ---------- sites published on your own hosting (lb-server.php) ---------- */
 /* one row = one target (whole website or a single page), each with its own domain */
-function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, integ, onSetup, onOpen }) {
-  const [open, setOpen] = useState(false), [kind, setKind] = useState(obj.domain && !isApex(obj.domain) ? "sub" : "domain");
-  const [val, setVal] = useState(obj.domain || ""), [busy, setBusy] = useState(""), [err, setErr] = useState(""), [note, setNote] = useState(""), [ns, setNs] = useState(false);
-  const srv = (integ && integ.server) || {}, [ip, setIpRaw] = useState(() => localStorage.getItem("lb_site_ip") || ""), st = STATUS[obj.domain ? obj.domainStatus || "pending" : "none"], chk = obj.domainCheck;
-  const d = cleanDomain(val).replace(/^www\./, ""), sub = d && !isApex(d) ? d.slice(0, -(rootDomain(d).length + 1)) : "offer";
-  const save = async () => {
-    setErr(""); setNote("");
-    if (!validDomain(d)) return setErr("Type a domain like mybrand.com or offer.mybrand.com");
-    const k = isApex(d) ? "domain" : "sub"; setKind(k); setVal(d);   // detect automatically — no wrong-tab errors
-    onSave({ domain: d, domainStatus: "pending", domainCheck: null });
-    if (!serverOn(integ)) { setNote(`✓ Saved ${d}. Publish this site once so it can be routed.`); return; }
-    setBusy("route");
-    try { await phpCall(srv, { action: "domain", domain: d, ...route }); setNote(`✓ ${d} is connected to this ${route.page ? "page" : "website"}. It opens as soon as the domain points to your hosting (steps below).`); }
-    catch (e) { setNote(`✓ Saved ${d}.`); setErr("Routing on the server didn't go through: " + e.message); }
+function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, integ, onOpen }) {
+  const srv = (integ && integ.server) || {};
+  const [open, setOpen] = useState(false), [val, setVal] = useState(obj.domain || ""), [where, setWhere] = useState(obj.domainWhere || "hostinger");
+  const [busy, setBusy] = useState(""), [err, setErr] = useState(""), [adv, setAdv] = useState(false);
+  const [ip, setIpRaw] = useState(() => localStorage.getItem("lb_site_ip") || ""), ipOk = /^\d{1,3}(\.\d{1,3}){3}$/.test(ip);
+  const setIp = (v) => { const x = v.trim(); setIpRaw(x); localStorage.setItem("lb_site_ip", x); };
+  const st = STATUS[obj.domain ? obj.domainStatus || "pending" : "none"], chk = obj.domainCheck || null;
+  const d = cleanDomain(val).replace(/^www\./, ""), isSub = d && !isApex(d), subName = isSub ? d.slice(0, -(rootDomain(d).length + 1)) : "offer";
+  const C = ({ v }) => <><code>{v}</code> <Copy v={v} /></>;
+
+  /* one button does everything: save → route (parked mode) → copy site into the domain's own website (Add-website mode) → check */
+  const check = async (dom = obj.domain) => {
+    if (!dom || !serverOn(integ)) return;
+    setBusy("check"); let state = "dns";
+    try {
+      let found = []; try { found = await dnsLookup(dom, "A"); } catch { found = []; }
+      const r = await phpCall(srv, { action: "probe", domain: dom });
+      if (r.ours && (!r.page || r.page < 400)) state = "live";
+      else if (r.site) state = "live";
+      else if (r.folder) state = "folder";
+      else if (r.code === 403 || r.code === 404) state = "attach";
+      else state = found.length ? "attach" : "dns";
+      onSave({ domainStatus: state === "live" ? "connected" : "pending", domainCheck: { state, found, ts: Date.now() } });
+    } catch (e) { setErr(e.message); }
     setBusy("");
+  };
+  const connect = async () => {
+    setErr("");
+    if (!validDomain(d)) return setErr("Type a domain like mybrand.com or offer.mybrand.com");
+    if (!serverOn(integ)) return setErr("Publish this website once first — then connect the domain.");
+    setVal(d); setBusy("connect");
+    onSave({ domain: d, domainWhere: where, domainStatus: "pending", domainCheck: null });
+    try {
+      await phpCall(srv, { action: "domain", domain: d, ...route });                 // works if the domain is parked
+      const r = await phpCall(srv, { action: "deploy", domain: d, ...route });       // works if the domain was added as its own website
+      if (r.deployed) onSave({ domainCopy: true });
+    } catch (e) { setErr(e.message); }
+    setBusy(""); await check(d);
   };
   const remove = async () => {
     if (!window.confirm(`Disconnect ${obj.domain}?`)) return;
     if (serverOn(integ)) { try { await phpCall(srv, { action: "domain", domain: "", ...route }); } catch { /* ignore */ } }
-    onSave({ domain: "", domainStatus: "", domainCheck: null }); setVal("");
+    onSave({ domain: "", domainStatus: "", domainCheck: null, domainCopy: false }); setVal("");
   };
-  const verify = async () => {
-    setBusy("verify"); let ok = false, found = [];
-    if (ns) { const r = await verifyNS(obj.domain, HOSTINGER_NS); ok = r.ok; found = r.found; }
-    else { try { found = await dnsLookup(obj.domain, "A"); ok = found.length > 0 && (!ipOk || found.includes(ip)); } catch { found = []; } }
-    /* DNS is only half of it — ask the server to open the domain and confirm it reaches this website */
-    let note = "";
-    if (ok && serverOn(integ)) {
-      try {
-        const r = await phpCall(srv, { action: "probe", domain: obj.domain });
-        if (!r.ours) { ok = false; note = r.code === 403 ? "dns-ok-403" : "dns-ok-other"; }
-        else if (r.page && r.page >= 400) { ok = false; note = "routing"; }
-      } catch { /* older server file without the check — keep the DNS result */ }
-    }
-    onSave({ domainCheck: { ok, found, ts: Date.now(), ns, note }, domainStatus: ok ? "connected" : "pending" }); setBusy("");
+  useEffect(() => { if (open && obj.domain) check(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const state = chk && chk.state;
+  const STEPS = where === "hostinger" ? [
+    ["Add the domain as a website in Hostinger", <>hPanel → <b>Websites</b> → <b>+ Add website</b> → choose <b>Empty website</b> (or “Skip, start with empty site”) → pick <b>{d || "your domain"}</b> → finish. Hostinger sets the DNS and free SSL for you automatically.
+      <div className="row" style={{ marginTop: 8 }}><a className="btn" href="https://hpanel.hostinger.com/websites" target="_blank" rel="noopener">Open hPanel → Websites ↗</a></div></>],
+    ["Come back and press “Connect & check”", <>LaunchBuilder copies your website into that domain and checks that it opens. Every time you publish again, the domain updates automatically.</>],
+  ] : [
+    ["Point the domain to Hostinger", <>At the company where you bought it (GoDaddy, Namecheap, BigRock…) → <b>Nameservers</b> → <b>Custom</b> → enter:<div className="dm-ns" style={{ margin: "8px 0" }}>{HOSTINGER_NS.map((x) => <div key={x}><C v={x} /></div>)}</div><span className="mut sm">Changes can take a few hours.</span></>],
+    ["Add the domain as a website in Hostinger", <>hPanel → <b>Websites</b> → <b>+ Add website</b> → <b>Empty website</b> → choose <b>“Use an existing domain”</b> → type <b>{d || "your domain"}</b> → finish.
+      <div className="row" style={{ marginTop: 8 }}><a className="btn" href="https://hpanel.hostinger.com/websites" target="_blank" rel="noopener">Open hPanel → Websites ↗</a></div></>],
+    ["Come back and press “Connect & check”", <>LaunchBuilder copies your website into that domain and checks that it opens.</>],
+  ];
+  const STATE = {
+    live: ["ok", "🎉 Live! " + (obj.domain || "") + " shows this " + (route.page ? "page" : "website") + "."],
+    folder: ["warn", "Almost there — the domain exists in Hostinger. Press “Connect & check” to put your website into it."],
+    attach: ["warn", "The domain reaches Hostinger, but isn't added as a website yet. Do step " + (where === "hostinger" ? "1" : "2") + ", then press “Connect & check”."],
+    dns: ["wait", "Waiting for the domain to point to Hostinger. " + (where === "hostinger" ? "If you just bought it, wait 10–30 minutes." : "Nameserver changes can take a few hours.") + " Then press “Check again”."],
   };
-  useEffect(() => { if (open && obj.domain && obj.domainCheck) verify(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-  const setIp = (v) => { const x = v.trim(); setIpRaw(x); localStorage.setItem("lb_site_ip", x); };
-  const ipOk = /^\d{1,3}(\.\d{1,3}){3}$/.test(ip);
-  const C = ({ v }) => <><code>{v}</code> <Copy v={v} /></>;
   return (
     <div className={"dr" + (open ? " open" : "")}>
       <div className="dr-h" onClick={() => setOpen(!open)}>
         <div className="dr-l"><b>{label}</b><span className="mut sm">{subLabel}</span></div>
-        <div className="dr-d">{obj.domain ? <><code className="dm-own">{obj.domain}</code><span className={"badge " + st[0]}>{st[1]}</span></> : <a href={url} target="_blank" rel="noopener" className="mut sm" onClick={(e) => e.stopPropagation()}>{url.replace(/^https?:\/\//, "")} ↗</a>}</div>
+        <div className="dr-d">{obj.domain ? <><code className="dm-own">{obj.domain}</code><span className={"badge " + st[0]}>{obj.domainStatus === "connected" ? "● Live" : "Setting up"}</span></> : <a href={url} target="_blank" rel="noopener" className="mut sm" onClick={(e) => e.stopPropagation()}>{url.replace(/^https?:\/\//, "")} ↗</a>}</div>
         <button className={obj.domain ? "" : "pri"} onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>{open ? "Close" : obj.domain ? "Manage" : "Connect domain"}</button>
       </div>
-      {open && <div className="dm-body">
-        <div className="dm-kind">{[["domain", "Domain", "mybrand.com"], ["sub", "Subdomain", "offer.mybrand.com"]].map(([k, l, ex]) => <button key={k} className={kind === k ? "on" : ""} onClick={() => { setKind(k); setErr(""); setNote(""); }}><b>{l}</b><span>{ex}</span></button>)}</div>
-        <div className="dm-step"><span className="dm-n">1</span><div className="grow"><b>Type your domain or subdomain</b> <span className="mut sm">— we detect which one it is</span>
-          <div className="row" style={{ marginTop: 8 }}><input value={val} placeholder="mybrand.com or offer.mybrand.com" onChange={(e) => { setVal(e.target.value); const c = cleanDomain(e.target.value).replace(/^www\./, ""); if (validDomain(c)) setKind(isApex(c) ? "domain" : "sub"); }} onKeyDown={(e) => e.key === "Enter" && save()} />
-            <button className="pri" disabled={busy === "route"} onClick={save}>{busy === "route" ? "Connecting…" : obj.domain ? "Update" : "Connect"}</button>{obj.domain && <button className="red" onClick={remove}>Disconnect</button>}</div>
-          {note && <p className="green sm">{note}</p>}{err && <p className="red sm">{err}</p>}</div></div>
-        {kind === "sub" ? <div className="dm-step"><span className="dm-n">2</span><div className="grow"><b>Create the subdomain in Hostinger</b>
-          <p className="mut sm">hPanel → <b>Domains → Subdomains</b> → name <C v={sub} /> → tick <b>Custom folder for subdomain</b> → folder <C v={folder.replace(/^public_html\//, "")} /> → <b>Create</b>.</p>
-          <p className="mut sm">Main domain's DNS somewhere else (GoDaddy, Namecheap…)? Add there: <b>A</b> record, host <C v={sub} />, value <C v={ipOk ? ip : "your Website IP (hPanel → Website Dashboard → IP address)"} />.</p></div></div>
-        : <>
-          <div className="dm-step"><span className="dm-n">2</span><div className="grow"><b>Point the domain to your hosting — pick one</b>
-            <div className="dm-methods" style={{ marginTop: 8 }}>
-              <button className={!ns ? "on" : ""} onClick={() => setNs(false)}><b>DNS records</b><span>Keep your DNS where it is — add 2 records</span></button>
-              <button className={ns ? "on" : ""} onClick={() => setNs(true)}><b>Nameservers</b><span>Easiest — change 2 nameservers once</span></button></div>
-            {ns ? <div className="dm-ns" style={{ marginTop: 10 }}>{HOSTINGER_NS.map((x) => <div key={x}><C v={x} /></div>)}<p className="mut sm">At your registrar → Nameservers → Custom → enter these two → Save.</p></div>
-              : <div className="ltable" style={{ marginTop: 10 }}><table><thead><tr><th>Type</th><th>Host</th><th>Points to</th></tr></thead><tbody>
-                <tr><td><b>A</b></td><td><C v="@" /></td><td>{ipOk ? <><C v={ip} /> <button className="xs" onClick={() => setIp("")}>Change</button></> : <span className="mut sm">paste your Website IP below first</span>}</td></tr>
-                <tr><td><b>CNAME</b></td><td><C v="www" /></td><td><C v={d || "mybrand.com"} /></td></tr></tbody></table>
-                <div className="dm-ip"><b>Your Website IP</b> <span className="mut sm">— copy it once from hPanel → <b>Websites</b> → {(srv.base || "").replace(/^https?:\/\//, "") || "your builder's site"} → <b>Dashboard</b> → “Website details” → <b>IP address</b> (4 numbers, e.g. 185.212.71.10). It never changes, so you only do this once.</span>
-                  <input value={ip} onChange={(e) => setIp(e.target.value)} placeholder="e.g. 185.212.71.10" className={ip && !ipOk ? "bad" : ""} /></div>
-                <p className="mut sm">🟢 <b>Domain bought on Hostinger?</b> Easiest: keep Hostinger's nameservers and do step 3 (Park) — Hostinger fills in the right A record automatically. Then just check here that the <b>A</b> record for <b>@</b> matches your Website IP.</p>
-                <p className="mut sm">Delete any other <b>A</b>/<b>AAAA</b> record on <b>@</b> and any old <b>CNAME</b> on <b>www</b> first (e.g. the registrar's “parking” records), so only these remain.</p></div>}
-          </div></div>
-          <div className="dm-step"><span className="dm-n">3</span><div className="grow"><b>Park the domain on this hosting</b>
-            <p className="mut sm">hPanel → <b>Websites</b> → your builder's site → <b>Domains → Parked domains</b> → enter <C v={d || "mybrand.com"} /> → <b>Park domain</b>. The routing to this {route.page ? "page" : "website"} is already done.</p></div></div>
-        </>}
-        {obj.domain && <div className="dm-step"><span className="dm-n">{kind === "sub" ? 3 : 4}</span><div className="grow"><b>Verify &amp; secure</b>
-          <div className="row" style={{ marginTop: 6 }}><button className="pri" disabled={busy === "verify"} onClick={verify}>{busy === "verify" ? "Checking…" : "Verify now"}</button>
-            {chk && !chk.note && <span className={chk.ok ? "green" : "mut"}>{chk.ok ? `✓ Connected — your domain opens this ${route.page ? "page" : "website"} (checked ${ago(chk.ts)})` : `Not yet — DNS shows ${(chk.found || []).join(", ") || "nothing"} (${ago(chk.ts)}). Can take a few hours.`}</span>}</div>
-          {chk && chk.note && <div className="dm-warn"><b>✓ DNS is correct — one step left.</b>{" "}
-            {chk.note === "routing" ? <>The domain reaches your hosting, but the page didn't load. Click <b>Update</b> in step 1 once, then republish this site.</>
-              : <>{chk.note === "dns-ok-403" ? "Hostinger shows “403 Forbidden” because " : "The domain reaches Hostinger, but "}it isn't attached to your builder's website yet. Do step 3: hPanel → <b>Websites</b> → <b>{(srv.base || "").replace(/^https?:\/\//, "") || "your builder's site"}</b> → <b>Domains → Parked domains</b> → add <b>{obj.domain}</b>.
-                If Hostinger says the domain already exists, it was added as a separate website — delete that website first (hPanel → Websites → {obj.domain} → ⋮ → Delete), then park it. Then click <b>Verify now</b> again.</>}</div>}
-          <p className="mut sm">Then hPanel → <b>Security → SSL</b> → install the free SSL for <b>{obj.domain}</b>.</p>
-          <div className="row"><a className="btn" href={`http://${obj.domain}`} target="_blank" rel="noopener">Visit {obj.domain}</a>{onOpen && <button onClick={onOpen}>Open in editor</button>}</div></div></div>}
+      {open && <div className="dm-body cw">
+        <div className="cw-field"><label>Your domain</label>
+          <div className="row"><input value={val} placeholder="mybrand.com  or  offer.mybrand.com" onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => e.key === "Enter" && connect()} />
+            {obj.domain && <button className="red" onClick={remove}>Disconnect</button>}</div></div>
+        <div className="cw-field"><label>Where did you buy this domain?</label>
+          <div className="dm-kind">{[["hostinger", "In my Hostinger account", "Easiest — 2 steps"], ["other", "Somewhere else", "GoDaddy, Namecheap, BigRock…"]].map(([k, l, ex]) => <button key={k} className={where === k ? "on" : ""} onClick={() => setWhere(k)}><b>{l}</b><span>{ex}</span></button>)}</div></div>
+        <ol className="cw-steps">{STEPS.map(([t, body], i) => <li key={i}><span className="dm-n">{i + 1}</span><div><b>{t}</b><div className="mut">{body}</div></div></li>)}</ol>
+        <div className="cw-go"><button className="pri big" disabled={!!busy || !d} onClick={connect}>{busy === "connect" ? "Connecting…" : busy === "check" ? "Checking…" : obj.domain ? "Connect & check again" : "Connect & check"}</button>
+          {obj.domain && <button disabled={!!busy} onClick={() => check()}>Check again</button>}</div>
+        {err && <div className="cw-st bad">✕ {err}</div>}
+        {state && STATE[state] && <div className={"cw-st " + STATE[state][0]}>{STATE[state][1]} <span className="mut sm">({ago(chk.ts)})</span>
+          {state === "live" && <div className="row" style={{ marginTop: 8 }}><a className="btn pri" href={`http://${obj.domain}`} target="_blank" rel="noopener">Open {obj.domain} ↗</a><span className="mut sm">“Not secure”? Hostinger adds free SSL within ~30 min — or hPanel → Security → SSL.</span></div>}</div>}
+
+        <button className="link cw-adv" onClick={() => setAdv(!adv)}>{adv ? "▾" : "▸"} Advanced: DNS records / park on the builder instead</button>
+        {adv && <div className="cw-advbox">
+          <p className="mut sm"><b>Option A — DNS records</b> (keep your DNS elsewhere): add an <b>A</b> record <C v="@" /> → your Website IP, and <b>CNAME</b> <C v="www" /> → <C v={d || "mybrand.com"} />. Website IP = hPanel → Websites → the domain's website → Dashboard → IP address.</p>
+          <div className="dm-ip"><b>Website IP</b><input value={ip} onChange={(e) => setIp(e.target.value)} placeholder="e.g. 2.57.91.91" className={ip && !ipOk ? "bad" : ""} />{ipOk && <span className="mut sm">A record: <C v={ip} /></span>}</div>
+          <p className="mut sm"><b>Option B — Park on the builder's site</b>: hPanel → Websites → {(srv.base || "").replace(/^https?:\/\//, "") || "your builder's site"} → Domains → Parked domains → add <C v={d || "mybrand.com"} />. Routing is already done.</p>
+          {isSub && <p className="mut sm"><b>Subdomain</b>: hPanel → Domains → Subdomains → name <C v={subName} /> → custom folder <C v={folder.replace(/^public_html\//, "")} />.</p>}
+        </div>}
+        {onOpen && <div className="row" style={{ marginTop: 6 }}><button onClick={onOpen}>Open in editor</button></div>}
       </div>}
     </div>
   );
