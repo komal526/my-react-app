@@ -1,5 +1,5 @@
 <?php
-// LaunchBuilder server v5 — runs on your own hosting (Hostinger etc.), no extra service needed.
+// LaunchBuilder server v6 — runs on your own hosting (Hostinger etc.), no extra service needed.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
 // • Routes your own domains to a published site
@@ -35,14 +35,9 @@ function rrmdir($d) {
   foreach (scandir($d) as $x) { if ($x === '.' || $x === '..') continue; $p = $d . '/' . $x; if (is_dir($p)) rrmdir($p); else @unlink($p); }
   @rmdir($d);
 }
-/* the server's public addresses: IPv4 for an A record, IPv6 for an AAAA record */
-function server_ips() {
-  $sa = isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '';
-  $v4 = filter_var($sa, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? $sa : '';
-  $v6 = filter_var($sa, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? $sa : '';
-  if ($v4 === '' && isset($_SERVER['HTTP_HOST'])) { $h = preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST']); $g = @gethostbyname($h); if ($g && $g !== $h && filter_var($g, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) $v4 = $g; }
-  return array('ip' => $v4, 'ip6' => $v6);
-}
+/* Hostinger serves sites through a CDN / load balancer, so the address PHP sees is NOT the
+   website's DNS address and changes between requests. Never guess it — the user copies it from hPanel. */
+function server_ips() { return array('ip' => '', 'ip6' => ''); }
 function clean_str($v, $max) { $v = is_scalar($v) ? (string)$v : ''; return function_exists('mb_substr') ? mb_substr($v, 0, $max) : substr($v, 0, $max); }
 
 $https  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');

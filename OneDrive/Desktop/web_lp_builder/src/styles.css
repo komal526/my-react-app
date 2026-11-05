@@ -1161,3 +1161,4 @@ html,body{zoom:1!important;transform:none!important;margin:0!important;padding:0
 }
 @media (min-width:1600px){ .dash>section{padding:40px 56px!important} }
 .dash .dm-warn{margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.6}
+.dash .dm-ip{margin-top:10px;padding:12px 14px;border:1px dashed #b9c7ff;border-radius:12px;background:#f6f8ff;display:flex;flex-direction:column;gap:6px}.dash .dm-ip input{padding:10px 12px;border:1px solid #cfd8f5;border-radius:9px;font:600 15px ui-monospace,monospace;max-width:260px}.dash .dm-ip input.bad{border-color:#ef4444;background:#fff5f5}

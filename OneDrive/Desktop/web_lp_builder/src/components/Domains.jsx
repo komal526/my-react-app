@@ -1,4 +1,4 @@
-// LaunchBuilder v17 — Domains.jsx
+// LaunchBuilder v18 — Domains.jsx
 import { useState, useEffect } from "react";
 import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS } from "../lib.js";
 
@@ -116,7 +116,7 @@ function DomainCard({ p, onPatch, onOpen, integ, onSetup, onPublish }) {
 function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, integ, onSetup, onOpen }) {
   const [open, setOpen] = useState(false), [kind, setKind] = useState(obj.domain && !isApex(obj.domain) ? "sub" : "domain");
   const [val, setVal] = useState(obj.domain || ""), [busy, setBusy] = useState(""), [err, setErr] = useState(""), [note, setNote] = useState(""), [ns, setNs] = useState(false);
-  const srv = (integ && integ.server) || {}, [ips, setIps] = useState({ ip: /^\d+\.\d+\.\d+\.\d+$/.test(srv.ip || "") ? srv.ip : "", ip6: srv.ip6 || (/:/.test(srv.ip || "") ? srv.ip : "") }), ip = ips.ip, st = STATUS[obj.domain ? obj.domainStatus || "pending" : "none"], chk = obj.domainCheck;
+  const srv = (integ && integ.server) || {}, [ip, setIpRaw] = useState(() => localStorage.getItem("lb_site_ip") || ""), st = STATUS[obj.domain ? obj.domainStatus || "pending" : "none"], chk = obj.domainCheck;
   const d = cleanDomain(val).replace(/^www\./, ""), sub = d && !isApex(d) ? d.slice(0, -(rootDomain(d).length + 1)) : "offer";
   const save = async () => {
     setErr(""); setNote("");
@@ -137,7 +137,7 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
   const verify = async () => {
     setBusy("verify"); let ok = false, found = [];
     if (ns) { const r = await verifyNS(obj.domain, HOSTINGER_NS); ok = r.ok; found = r.found; }
-    else { try { found = await dnsLookup(obj.domain, "A"); ok = found.length > 0 && (!ip || found.includes(ip)); } catch { found = []; } }
+    else { try { found = await dnsLookup(obj.domain, "A"); ok = found.length > 0 && (!ipOk || found.includes(ip)); } catch { found = []; } }
     /* DNS is only half of it — ask the server to open the domain and confirm it reaches this website */
     let note = "";
     if (ok && serverOn(integ)) {
@@ -149,7 +149,9 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
     }
     onSave({ domainCheck: { ok, found, ts: Date.now(), ns, note }, domainStatus: ok ? "connected" : "pending" }); setBusy("");
   };
-  useEffect(() => { if (open && serverOn(integ)) phpCall(srv, { action: "ping" }).then((r) => setIps({ ip: r.ip || "", ip6: r.ip6 || "" })).catch(() => {}); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (open && obj.domain && obj.domainCheck) verify(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const setIp = (v) => { const x = v.trim(); setIpRaw(x); localStorage.setItem("lb_site_ip", x); };
+  const ipOk = /^\d{1,3}(\.\d{1,3}){3}$/.test(ip);
   const C = ({ v }) => <><code>{v}</code> <Copy v={v} /></>;
   return (
     <div className={"dr" + (open ? " open" : "")}>
@@ -166,7 +168,7 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
           {note && <p className="green sm">{note}</p>}{err && <p className="red sm">{err}</p>}</div></div>
         {kind === "sub" ? <div className="dm-step"><span className="dm-n">2</span><div className="grow"><b>Create the subdomain in Hostinger</b>
           <p className="mut sm">hPanel → <b>Domains → Subdomains</b> → name <C v={sub} /> → tick <b>Custom folder for subdomain</b> → folder <C v={folder.replace(/^public_html\//, "")} /> → <b>Create</b>.</p>
-          <p className="mut sm">Main domain's DNS somewhere else (GoDaddy, Namecheap…)? Add there: <b>A</b> record, host <C v={sub} />, value <C v={ip || "your website IPv4 (hPanel → Website Dashboard → Website IP)"} />.</p></div></div>
+          <p className="mut sm">Main domain's DNS somewhere else (GoDaddy, Namecheap…)? Add there: <b>A</b> record, host <C v={sub} />, value <C v={ipOk ? ip : "your Website IP (hPanel → Website Dashboard → IP address)"} />.</p></div></div>
         : <>
           <div className="dm-step"><span className="dm-n">2</span><div className="grow"><b>Point the domain to your hosting — pick one</b>
             <div className="dm-methods" style={{ marginTop: 8 }}>
@@ -174,9 +176,11 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
               <button className={ns ? "on" : ""} onClick={() => setNs(true)}><b>Nameservers</b><span>Easiest — change 2 nameservers once</span></button></div>
             {ns ? <div className="dm-ns" style={{ marginTop: 10 }}>{HOSTINGER_NS.map((x) => <div key={x}><C v={x} /></div>)}<p className="mut sm">At your registrar → Nameservers → Custom → enter these two → Save.</p></div>
               : <div className="ltable" style={{ marginTop: 10 }}><table><thead><tr><th>Type</th><th>Host</th><th>Points to</th></tr></thead><tbody>
-                <tr><td><b>A</b></td><td><C v="@" /></td><td>{ip ? <C v={ip} /> : <span className="mut">your website's <b>IPv4</b> address — hPanel → Websites → this site → <b>Dashboard</b> → “Website IP” (looks like 185.212.71.10)</span>}</td></tr>
-                <tr><td><b>CNAME</b></td><td><C v="www" /></td><td><C v={d || "mybrand.com"} /></td></tr>
-                {ips.ip6 && <tr><td><b>AAAA</b> <span className="mut sm">(optional)</span></td><td><C v="@" /></td><td><C v={ips.ip6} /></td></tr>}</tbody></table>
+                <tr><td><b>A</b></td><td><C v="@" /></td><td>{ipOk ? <><C v={ip} /> <button className="xs" onClick={() => setIp("")}>Change</button></> : <span className="mut sm">paste your Website IP below first</span>}</td></tr>
+                <tr><td><b>CNAME</b></td><td><C v="www" /></td><td><C v={d || "mybrand.com"} /></td></tr></tbody></table>
+                <div className="dm-ip"><b>Your Website IP</b> <span className="mut sm">— copy it once from hPanel → <b>Websites</b> → {(srv.base || "").replace(/^https?:\/\//, "") || "your builder's site"} → <b>Dashboard</b> → “Website details” → <b>IP address</b> (4 numbers, e.g. 185.212.71.10). It never changes, so you only do this once.</span>
+                  <input value={ip} onChange={(e) => setIp(e.target.value)} placeholder="e.g. 185.212.71.10" className={ip && !ipOk ? "bad" : ""} /></div>
+                <p className="mut sm">🟢 <b>Domain bought on Hostinger?</b> Easiest: keep Hostinger's nameservers and do step 3 (Park) — Hostinger fills in the right A record automatically. Then just check here that the <b>A</b> record for <b>@</b> matches your Website IP.</p>
                 <p className="mut sm">Delete any other <b>A</b>/<b>AAAA</b> record on <b>@</b> and any old <b>CNAME</b> on <b>www</b> first (e.g. the registrar's “parking” records), so only these remain.</p></div>}
           </div></div>
           <div className="dm-step"><span className="dm-n">3</span><div className="grow"><b>Park the domain on this hosting</b>
