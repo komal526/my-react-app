@@ -1,4 +1,4 @@
-// LaunchBuilder v3 — MyPages.jsx
+// LaunchBuilder v12 — MyPages.jsx
 import { useState } from "react";
 import { Thumb } from "./parts.jsx";
 import { ago, addr } from "../lib.js";
@@ -10,7 +10,7 @@ export default function MyPages({ projects, onOpen, onNew, onImport, onRename, o
   const act = (fn, p) => () => { setMenu(null); fn(p); };
   return (
     <div onClick={() => setMenu(null)}>
-      <div className="top"><div><h1>My pages &amp; websites</h1><p className="mut">Build, publish and update pages without writing code.</p></div><button className="pri big" onClick={onNew}>＋ Create new</button></div>
+      <div className="top"><div><h1>Dashboard</h1><p className="mut">Your pages and websites — build, publish and update them without writing code.</p></div><button className="pri big" onClick={onNew}>＋ Create new</button></div>
       <div className="stats">
         <div className="stat"><span>Published</span><b>{live}</b></div>
         <div className="stat" style={{ cursor: "pointer" }} onClick={onAnalytics}><span>Visits, last 7 days</span><b>{visits}</b></div>

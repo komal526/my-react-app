@@ -1,6 +1,7 @@
-// LaunchBuilder v8 — Templates.jsx
+// LaunchBuilder v11 — Templates.jsx
 import { useMemo, useState } from "react";
 import { TEMPLATES } from "../lib.js";
+import { Icon } from "./Inspector.jsx";
 
 /* ================= Templates gallery: filters, search, hover-scroll previews, full-screen preview ================= */
 const W = { desktop: "100%", tablet: "820px", mobile: "390px" };
@@ -13,7 +14,7 @@ function PreviewModal({ t, onClose, onUse }) {
       <div className="tp-bar">
         <div className="tp-ttl"><i style={{ background: t.accent || "#3d6bff" }} /><b>{t.name}</b><span>{t.cat}</span></div>
         {pages.length > 1 && <div className="tp-pages">{pages.map((p, k) => <button key={p.id} className={i === k ? "on" : ""} onClick={() => setI(k)}>{p.name}</button>)}</div>}
-        <div className="tp-dev">{Object.keys(W).map((d) => <button key={d} className={dev === d ? "on" : ""} onClick={() => setDev(d)}>{d === "desktop" ? "🖥" : d === "tablet" ? "▭" : "📱"}</button>)}</div>
+        <div className="tp-dev">{Object.keys(W).map((d) => <button key={d} title={d[0].toUpperCase() + d.slice(1)} className={dev === d ? "on" : ""} onClick={() => setDev(d)}><Icon n={d} s={17} /></button>)}</div>
         <button className="pri" onClick={() => onUse(t)}>Use this template</button>
         <button className="tp-x" onClick={onClose} aria-label="Close">✕</button>
       </div>
@@ -23,11 +24,12 @@ function PreviewModal({ t, onClose, onUse }) {
 }
 
 export default function Templates({ onUse }) {
-  const [type, setType] = useState("all"), [cat, setCat] = useState(""), [q, setQ] = useState(""), [open, setOpen] = useState(null);
+  const [type, setType] = useState("landing"), [cat, setCat] = useState(""), [q, setQ] = useState(""), [open, setOpen] = useState(null);
   const ALL = TEMPLATES.filter((t) => !t.hidden);
   const thumbs = useMemo(() => Object.fromEntries(ALL.map((t) => [t.key || t.name, t.make(t.name)])), []);
-  const cats = [...new Set(ALL.map((t) => t.cat).filter(Boolean))];
-  const list = ALL.filter((t) => (type === "all" || t.type === type) && (!cat || t.cat === cat) && (!q || (t.name + " " + t.note + " " + t.cat).toLowerCase().includes(q.toLowerCase())));
+  const cats = [...new Set(ALL.filter((t) => t.type === type).map((t) => t.cat).filter(Boolean))];
+  const count = (k) => ALL.filter((t) => t.type === k).length;
+  const list = ALL.filter((t) => (q || type === "all" || t.type === type) && (!cat || t.cat === cat) && (!q || (t.name + " " + t.note + " " + t.cat).toLowerCase().includes(q.toLowerCase())));
   return (
     <>
       <div className="tg-hero">
@@ -35,8 +37,8 @@ export default function Templates({ onUse }) {
         <div className="tg-search"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search templates — e.g. clinic, workshop, SaaS…" /></div>
       </div>
       <div className="tg-filters">
-        <div className="chips" style={{ margin: 0 }}>{[["all", "All"], ["landing", "Landing pages"], ["website", "Websites"]].map(([k, l]) => <button key={k} className={type === k ? "on" : ""} onClick={() => setType(k)}>{l}</button>)}</div>
-        <div className="tg-cats">{cats.map((c) => <button key={c} className={cat === c ? "on" : ""} onClick={() => setCat(cat === c ? "" : c)}>{c}</button>)}</div>
+        <div className="tg-type-tabs">{[["landing", "Landing pages", "One focused page — offers, signups, events", "hero"], ["website", "Websites", "Several pages with a shared menu", "pages"]].map(([k, l, d, ic]) => <button key={k} className={type === k ? "on" : ""} onClick={() => { setType(k); setCat(""); }}><Icon n={ic} s={20} /><span><b>{l} <em>{count(k)}</em></b><small>{d}</small></span></button>)}</div>
+        <div className="tg-cats"><button className={!cat ? "on" : ""} onClick={() => setCat("")}>All {type === "website" ? "websites" : "landing pages"}</button>{cats.map((c) => <button key={c} className={cat === c ? "on" : ""} onClick={() => setCat(cat === c ? "" : c)}>{c}</button>)}</div>
       </div>
       {!list.length && <div className="empty"><b>No templates match</b><p className="mut">Try another word or clear the filters.</p></div>}
       <div className="tg-grid">{list.map((t) => { const pages = thumbs[t.key || t.name]; return (

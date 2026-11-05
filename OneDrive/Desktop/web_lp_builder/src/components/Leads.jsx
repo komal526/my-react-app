@@ -1,6 +1,6 @@
-// LaunchBuilder v4 — Leads.jsx
+// LaunchBuilder v9 — Leads.jsx
 import { useMemo, useState } from "react";
-import { saveLeads, LEAD_STATUS, ago } from "../lib.js";
+import { saveLeads, LEAD_STATUS, ago, serverOn, phpCall, syncServerLeads, loadLeads } from "../lib.js";
 
 /* ================= Leads / Form CRM: table + pipeline board, status, notes, CSV export ================= */
 const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
@@ -16,7 +16,14 @@ export default function Leads({ user, projects = [], forms = [], leads, setLeads
   const [view, setView] = useState("table"), [drag, setDrag] = useState(null), [over, setOver] = useState("");
   const update = (list) => { setLeads(list); saveLeads(user.email, list); };
   const patch = (id, o) => update(leads.map((l) => (l.id === id ? { ...l, ...o } : l)));
-  const remove = (id) => window.confirm("Delete this lead?") && (update(leads.filter((l) => l.id !== id)), setOpen(null));
+  const remove = (id) => {
+    if (!window.confirm("Delete this lead?")) return;
+    const l = leads.find((x) => x.id === id);
+    if (l && l.lid && l.source === "live-site" && serverOn(integ)) phpCall(integ.server, { action: "deletelead", lids: [l.lid] }).catch(() => {});
+    update(leads.filter((x) => x.id !== id)); setOpen(null);
+  };
+  const [syncing, setSyncing] = useState("");
+  const syncNow = async () => { setSyncing("…"); try { const n = await syncServerLeads(user.email, integ, projects); setLeads(loadLeads(user.email)); setSyncing(n ? `✓ ${n} new` : "✓ Up to date"); } catch (e) { setSyncing("✕ " + e.message); } setTimeout(() => setSyncing(""), 4000); };
 
   const formNames = [...new Set([...forms.map((f) => f.name), ...leads.map((l) => l.form)])];
   const shown = useMemo(() => leads.filter((l) => (!proj || l.projectId === proj) && (!form || l.form === form) && (!st || l.status === st) && (!q || JSON.stringify(l.data).toLowerCase().includes(q.toLowerCase()))), [leads, proj, form, st, q]);
@@ -34,6 +41,7 @@ export default function Leads({ user, projects = [], forms = [], leads, setLeads
     <>
       <div className="top"><div><h1>Leads</h1><p className="mut">Your form CRM — every submission from every page and form link.</p></div>
         <div className="row"><div className="chips" style={{ margin: 0 }}><button className={view === "table" ? "on" : ""} onClick={() => setView("table")}>Table</button><button className={view === "board" ? "on" : ""} onClick={() => setView("board")}>Pipeline</button></div>
+          {serverOn(integ) && <button onClick={syncNow} title="Fetch leads from your live sites">{syncing || "⟳ Sync live sites"}</button>}
           {leads.length > 0 && <button onClick={exportCsv}>Export CSV</button>}</div></div>
       <div className="stats">
         <div className="stat"><span>Total leads</span><b>{leads.length}</b></div>

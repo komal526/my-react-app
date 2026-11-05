@@ -1,6 +1,6 @@
-// LaunchBuilder v8 — Integrations.jsx
+// LaunchBuilder v10 — Integrations.jsx
 import { useState } from "react";
-import { WA_PROVIDERS, AI_PROVIDERS, callAI, serverCall, serverUrl } from "../lib.js";
+import { WA_PROVIDERS, AI_PROVIDERS, callAI, serverCall, serverUrl, phpCall, defaultServerUrl, lovableUrl, boltText } from "../lib.js";
 
 /* ================= Integrations: WhatsApp automation, payments, AI providers ================= */
 const WA_HELP = {
@@ -64,8 +64,9 @@ const Card = ({ id, sel, onClose, ic, t, sub, on, children }) => sel !== id ? nu
   </div></div>
 );
 
-export default function Integrations({ integ, onChange }) {
-  const [note, setNote] = useState(""), [show, setShow] = useState({}), [test, setTest] = useState({}), [sel, setSel] = useState(""), [sites, setSites] = useState(null);
+export default function Integrations({ integ, onChange, initial = "" }) {
+  const [note, setNote] = useState(""), [show, setShow] = useState({}), [test, setTest] = useState({}), [sel, setSel] = useState(initial), [sites, setSites] = useState(null);
+  const srv = integ.server || {}, [srvMsg, setSrvMsg] = useState(""), [srvBusy, setSrvBusy] = useState(false), [srvKey, setSrvKey] = useState(""), [srvSites, setSrvSites] = useState(null), [hand, setHand] = useState("");
   const close = () => setSel("");
   const set = (k, o) => onChange({ ...integ, [k]: { ...integ[k], ...o } });
   const flash = (t) => { setNote(t); setTimeout(() => setNote(""), 3000); };
@@ -88,6 +89,17 @@ export default function Integrations({ integ, onChange }) {
     try { await fetch(wa.webhook, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ ...SAMPLE, test: true }) }); flash("Test sent — check your automation's history"); }
     catch { flash("Couldn't send — check the URL"); }
   };
+  const srvConnect = async (existingKey) => {
+    setSrvBusy(true); setSrvMsg("");
+    const url = srv.url || defaultServerUrl();
+    const key = existingKey || "lbk_" + Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+    try {
+      const r = existingKey ? await phpCall({ url, key }, { action: "ping" }) : await phpCall({ url, key }, { action: "setup" });
+      set("server", { url, key, ok: true, ip: r.ip || "", base: r.base || "" }); setSrvMsg("✓ Connected — Publish now goes to your own hosting");
+    } catch (e) { setSrvMsg("✕ " + e.message); }
+    setSrvBusy(false);
+  };
+  const srvList = async () => { setSrvSites("loading"); try { const r = await phpCall(srv, { action: "sites" }); setSrvSites(r.sites || []); } catch (e) { setSrvSites({ error: e.message }); } };
   const loadSites = async () => { setSites("loading"); try { const r = await serverCall(integ, { event: "sites" }); setSites(r.sites || []); } catch (e) { setSites({ error: e.message }); } };
   const testAI = async (id) => {
     setTest({ ...test, [id]: "Testing…" });
@@ -105,16 +117,16 @@ export default function Integrations({ integ, onChange }) {
           { id: "email", cat: "Automation", ic: "✉", name: "Email automation", desc: "Auto-reply to every lead and get new-lead alerts — from your own Gmail.", on: emOk },
           { id: "wa", cat: "Automation", ic: "💬", name: "WhatsApp automation", desc: "Send an automatic WhatsApp message through AiSensy, WATI, Interakt, Pabbly or Make.", on: !!wa.webhook },
           { id: "pay", cat: "Payments", ic: "₹", name: "Razorpay & UPI", desc: "Collect payments before registration — cards, UPI, GPay, PhonePe, Paytm.", on: keyOk || upiOk, extra: pay.razorpayKey && pay.razorpayKey.includes("_test_") ? "Test mode" : "" },
-          { id: "ai", cat: "AI", ic: "✦", name: "AI providers", desc: "Generate websites and edit sections with Claude, ChatGPT, Gemini or DeepSeek.", on: aiOn, extra: aiOn ? (AI_PROVIDERS.find((p) => p.id === ai.provider) || {}).name : "" },
+          { id: "ai", cat: "AI", ic: "✦", name: "AI builders", desc: "Claude, ChatGPT, Gemini, DeepSeek — plus Lovable and Bolt.new.", on: aiOn, extra: aiOn ? (AI_PROVIDERS.find((p) => p.id === ai.provider) || {}).name : "" },
         ];
-        const n = APPS.filter((a) => a.on).length;
+        const n = APPS.filter((a) => a.on).length, total = APPS.filter((a) => !a.free).length;
         return <>
-          <div className="ig-sum"><div><b>{n} of {APPS.length} connected</b><span className="mut">Click an integration to set it up — each takes 2–5 minutes.</span></div><div className="ig-bar"><i style={{ width: (n / APPS.length) * 100 + "%" }} /></div></div>
+          <div className="ig-sum"><div><b>{n} of {total} connected</b><span className="mut">Click an integration to set it up — each takes 2–5 minutes.</span></div><div className="ig-bar"><i style={{ width: (n / total) * 100 + "%" }} /></div></div>
           <div className="ig-tiles">{APPS.map((a) => (
             <button key={a.id} className={"ig-tile" + (a.on ? " on" : "")} onClick={() => setSel(a.id)}>
               <div className="ig-top"><span className={"igd-ic ic-" + a.id}>{a.ic}</span><span className="ig-cat2">{a.cat}</span></div>
-              <div className="ig-tt"><b>{a.name}</b><span className={"ig-st" + (a.on ? " on" : "")}>{a.on ? "● Connected" + (a.extra ? " · " + a.extra : "") : "Not connected"}</span></div>
-              <p>{a.desc}</p><em>{a.on ? "Manage →" : "Connect →"}</em>
+              <div className="ig-tt"><b>{a.name}</b><span className={"ig-st" + (a.on ? " on" : "")}>{a.free ? "No setup needed" : a.on ? "● Connected" + (a.extra ? " · " + a.extra : "") : "Not connected"}</span></div>
+              <p>{a.desc}</p><em>{a.free ? "Open →" : a.on ? "Manage →" : "Connect →"}</em>
             </button>))}</div>
         </>;
       })()}
@@ -221,6 +233,17 @@ export default function Integrations({ integ, onChange }) {
             <div className="row"><button disabled={!k} onClick={() => testAI(p.id)}>Test</button>{test[p.id] && <span className={"sm " + (test[p.id].startsWith("✓") ? "green" : test[p.id].startsWith("✕") ? "red" : "mut")}>{test[p.id]}</span>}</div>
           </div>;
         })}</div>
+        <div className="ig-ext">
+          <div className="ig-ext-h"><b>Lovable &amp; Bolt.new</b><span className="mut sm">No API key needed — opens their site with your idea, then import the result here.</span></div>
+          <textarea rows={3} value={hand} onChange={(e) => setHand(e.target.value)} placeholder="Describe your page — e.g. Landing page for a ₹21 AI ads workshop, dark modern style, countdown, trainer bio, FAQ and registration form" />
+          <div className="ig-ai">
+            <div className="ig-p ig-lov"><div className="row between"><b>♥ Lovable</b><span className="badge draft">Free credits</span></div><p className="mut sm">Opens Lovable with your prompt already filled in — just press send.</p>
+              <a className={"btn pri" + (hand.trim() ? "" : " dis")} href={hand.trim() ? lovableUrl(hand) : undefined} target="_blank" rel="noopener">Build in Lovable ↗</a></div>
+            <div className="ig-p ig-bolt"><div className="row between"><b>⚡ Bolt.new</b><span className="badge draft">Free tier</span></div><p className="mut sm">Copies your prompt and opens Bolt — paste it (Ctrl+V) and press send.</p>
+              <button className="pri" disabled={!hand.trim()} onClick={() => { navigator.clipboard.writeText(boltText(hand)).then(() => flash("Prompt copied — paste it in Bolt"), () => {}); window.open("https://bolt.new", "_blank"); }}>Copy &amp; open Bolt ↗</button></div>
+          </div>
+          <p className="mut sm">When you like the result: download its code → in LaunchBuilder <b>My pages → Import HTML</b> → pick the <code>index.html</code>. Your prompt already asks them for a single static page so it imports cleanly.</p>
+        </div>
         <p className="mut sm">Use it: <b>+ Create new → Create with AI</b> for a full page or website, or in the editor <b>Add → AI section</b>. Keys stay in this browser and are sent only to that AI company. Each generation uses your API credits. If a provider shows a network/CORS error, it doesn't allow browser calls — use another one.</p>
       </Card>
     </>

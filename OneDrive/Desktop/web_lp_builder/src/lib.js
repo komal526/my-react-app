@@ -1,4 +1,4 @@
-// LaunchBuilder v8 — lib.js
+// LaunchBuilder v13 — lib.js
 import { DESIGNS } from "./designs.js";
 // Helpers, page templates, saving/loading projects, leads and preview links
 
@@ -6,7 +6,7 @@ import { DESIGNS } from "./designs.js";
 /* ==================== helpers, templates, saving/loading projects ==================== */
 /* ================= default page (TGAI workshop) ================= */
 // Helpers, default page templates and saving/loading of projects
-export const LIMIT = 5;
+export const LIMIT = 10;
 export const uid = () => Math.random().toString(36).slice(2, 9);
 export const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "page";
 export const slugify = slug;
@@ -165,6 +165,7 @@ export const dnsRecords = (domain, host) => {
   if (host.cname) r.push({ type: "CNAME", host: "www", name: "www." + domain, value: host.cname });
   return r;
 };
+export const dnsLookup = (name, type) => dns(name, type);
 const dns = async (name, type) => {
   const r = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(name)}&type=${type}`);
   const j = await r.json();
@@ -189,9 +190,10 @@ export const INTEG_DEF = {
   pay: { razorpayKey: "", upiId: "", payee: "", currency: "INR" },
   ai: { provider: "claude", keys: {}, models: {} },
   publish: { url: "", key: "" },
+  server: { url: "", key: "", ok: false, ip: "", base: "" },
   email: { provider: "gmail", serviceId: "", templateId: "", publicKey: "", webhook: "", ownerEmail: "", fromName: "" },
 };
-export const loadInteg = (email) => { try { const v = JSON.parse(localStorage.getItem(IK(email)) || "{}"); return { wa: { ...INTEG_DEF.wa, ...v.wa }, pay: { ...INTEG_DEF.pay, ...v.pay }, ai: { ...INTEG_DEF.ai, ...v.ai }, email: { ...INTEG_DEF.email, ...v.email }, publish: { ...INTEG_DEF.publish, ...v.publish } }; } catch { return JSON.parse(JSON.stringify(INTEG_DEF)); } };
+export const loadInteg = (email) => { try { const v = JSON.parse(localStorage.getItem(IK(email)) || "{}"); return { wa: { ...INTEG_DEF.wa, ...v.wa }, pay: { ...INTEG_DEF.pay, ...v.pay }, ai: { ...INTEG_DEF.ai, ...v.ai }, email: { ...INTEG_DEF.email, ...v.email }, publish: { ...INTEG_DEF.publish, ...v.publish }, server: { ...INTEG_DEF.server, ...v.server } }; } catch { return JSON.parse(JSON.stringify(INTEG_DEF)); } };
 export const saveInteg = (email, v) => localStorage.setItem(IK(email), JSON.stringify(v));
 export const WA_PROVIDERS = [
   ["webhook", "Any webhook (Pabbly, Make, Zapier, n8n)"], ["aisensy", "AiSensy"], ["wati", "WATI"], ["interakt", "Interakt"], ["gupshup", "Gupshup"], ["myappz", "My CRM / own automation"],
@@ -273,4 +275,119 @@ export const verifyNS = async (domain, servers) => {
     const found = (j.Answer || []).filter((a) => a.type === 2).map((a) => String(a.data).replace(/\.$/, "").toLowerCase());
     return { ok: servers.length > 0 && servers.every((x) => found.includes(x.toLowerCase())), found, ts: Date.now() };
   } catch { return { ok: false, found: [], ts: Date.now(), error: "Couldn't reach DNS — check your internet" }; }
+};
+
+/* ==================== your own server (lb-server.php on Hostinger / any PHP hosting) ==================== */
+/* Publishes to https://your-site/sites/<name>/ and collects leads from live sites — no third-party service. */
+export const defaultServerUrl = () => `${location.origin}${location.pathname.replace(/[^/]*$/, "")}lb-server.php`;
+export const serverOn = (integ) => !!(integ && integ.server && integ.server.ok && integ.server.key);
+export async function phpCall(srv, body) {
+  const url = (srv && srv.url) || defaultServerUrl();
+  let r;
+  try { r = await fetch(url, { method: "POST", body: JSON.stringify({ ...body, key: (srv && srv.key) || "" }) }); }
+  catch { throw new Error("Couldn't reach lb-server.php. Make sure it's uploaded next to your builder (public_html)."); }
+  if (r.status === 404) throw new Error("lb-server.php was not found at " + url + ". Upload it to the same folder as the builder.");
+  let j; try { j = await r.json(); } catch { throw new Error("The server didn't answer correctly. Does your hosting support PHP? (Hostinger web hosting does.)"); }
+  if (!j.ok) throw new Error(j.error || "Server error");
+  return j;
+}
+const bytes64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+export const filesForServer = (files) => files.map((f) => ({ name: f.name, b64: bytes64(typeof f.data === "string" ? new TextEncoder().encode(f.data) : f.data) }));
+/* pull leads collected by live sites into the CRM (merged by lead id) */
+const SK = (email) => "lb_leads_sync_" + email;
+export async function syncServerLeads(email, integ, projects = []) {
+  if (!serverOn(integ)) return 0;
+  const since = +(localStorage.getItem(SK(email)) || 0);
+  const r = await phpCall(integ.server, { action: "leads", since });
+  const list = loadLeads(email), byLid = new Map(list.filter((l) => l.lid).map((l) => [l.lid, l]));
+  let added = 0;
+  (r.leads || []).forEach((l) => {
+    const proj = projects.find((p) => p.host && p.host.slug === l.site), old = byLid.get(l.lid);
+    if (old) { if (l.payment) old.payment = { ...(old.payment || {}), ...l.payment }; return; }
+    const n = { id: uid(), status: "new", note: "", ...l, projectId: proj ? proj.id : "", projectName: proj ? proj.name : l.site || "Live site" };
+    list.unshift(n); byLid.set(l.lid, n); added++;
+  });
+  saveLeads(email, list.sort((a, b) => b.ts - a.ts));
+  localStorage.setItem(SK(email), String(r.now || Date.now()));
+  return added;
+}
+export const HOSTINGER_NS = ["ns1.dns-parking.com", "ns2.dns-parking.com"];
+
+/* ==================== Lovable / Bolt.new hand-off ==================== */
+const HANDOFF = "\n\nImportant: build it as a single static index.html file with all CSS inline (no React build step), so it can be imported into LaunchBuilder.";
+export const lovableUrl = (prompt) => "https://lovable.dev/#prompt=" + encodeURIComponent(prompt + HANDOFF);
+export const boltText = (prompt) => prompt + HANDOFF;
+
+/* ==================== Calendar: bookable event types ==================== */
+const CK = (email) => "lb_cal_" + email;
+export const loadCal = (email) => { try { return JSON.parse(localStorage.getItem(CK(email)) || "[]"); } catch { return []; } };
+export const saveCal = (email, list) => { try { localStorage.setItem(CK(email), JSON.stringify(list)); } catch { alert("Browser storage is full."); } };
+export const LOCATIONS = [["meet", "Google Meet"], ["zoom", "Zoom"], ["phone", "Phone call"], ["whatsapp", "WhatsApp call"], ["inperson", "In person"]];
+export const newEvent = (o = {}) => ({
+  id: "ev" + uid(), name: "30-minute call", slug: "", org: "", desc: "A quick call to understand your goals and answer your questions.", duration: 30, kind: "One-on-One",
+  location: "meet", locationNote: "", color: "#3d6bff", days: [1, 2, 3, 4, 5], start: "10:00", end: "17:00", step: 30, ahead: 30, notice: 2, tz: "Asia/Kolkata",
+  fields: { phone: true, company: false, notes: true, custom: "" }, success: "✅ You're booked! A confirmation is on its way.", redirect: "",
+  pay: { enabled: false, amount: 0, mode: "razorpay" }, email: { enabled: false }, wa: { enabled: false }, questions: [], blocked: [], maxPerDay: 0, button: "Confirm booking", created: Date.now(), updated: Date.now(), ...o,
+});
+export const EVENT_TEMPLATES = [
+  { key: "discovery", ic: "☎", label: "Discovery call", note: "Free 30-min intro call with new leads", o: { name: "Free discovery call", duration: 30, color: "#3d6bff", desc: "A 30-minute call to understand your goals and see if we're a good fit." } },
+  { key: "demo", ic: "🖥", label: "Product demo", note: "Walk prospects through your product", o: { name: "Product demo", duration: 45, color: "#0ea5e9", desc: "A live walkthrough of the product, tailored to your use case. Bring your questions!", fields: { phone: true, company: true, notes: true, custom: "" }, questions: [{ label: "Company size", type: "select", options: "1–10, 11–50, 51–200, 200+", required: true }] } },
+  { key: "consult", ic: "💼", label: "Paid consultation", note: "Charge before the meeting is confirmed", o: { name: "1:1 consultation", duration: 60, color: "#7c3aed", desc: "A focused 60-minute session with a personalised action plan.", pay: { enabled: true, amount: 499, mode: "razorpay" } } },
+  { key: "class", ic: "🎓", label: "Workshop seat", note: "Weekend group class, ₹21 entry", o: { name: "Live workshop seat", duration: 60, kind: "Group", color: "#f97316", desc: "Reserve your seat for the next live session.", days: [0, 6], start: "11:00", end: "13:00", step: 60, pay: { enabled: true, amount: 21, mode: "razorpay" } } },
+  { key: "sales", ic: "📈", label: "Sales call", note: "Qualify leads with budget questions", o: { name: "Sales call", duration: 30, color: "#16a34a", desc: "Let's discuss your requirements and find the right plan for you.", questions: [{ label: "Monthly budget", type: "select", options: "Under ₹10k, ₹10k–50k, ₹50k+", required: true }, { label: "What are you looking for?", type: "textarea", required: false }] } },
+  { key: "interview", ic: "🧑‍💼", label: "Job interview", note: "Candidates pick a slot with your team", o: { name: "Interview — first round", duration: 45, color: "#0f766e", desc: "A conversation about your experience and the role.", fields: { phone: true, company: false, notes: false, custom: "" }, questions: [{ label: "Position applying for", type: "text", required: true }, { label: "LinkedIn / portfolio link", type: "text", required: false }], maxPerDay: 6 } },
+  { key: "coaching", ic: "🌱", label: "Coaching session", note: "Weekly 1:1 sessions for clients", o: { name: "Coaching session", duration: 50, color: "#db2777", desc: "Your 1:1 coaching session. Come with one challenge you want to solve.", step: 60, pay: { enabled: true, amount: 1499, mode: "razorpay" } } },
+  { key: "clinic", ic: "🩺", label: "Clinic appointment", note: "15-min slots, 6 days a week", o: { name: "Doctor appointment", duration: 15, color: "#0f766e", location: "inperson", locationNote: "Main Bazaar, Hamirpur", desc: "Book a consultation slot at the clinic.", days: [1, 2, 3, 4, 5, 6], start: "09:00", end: "20:00", step: 15, notice: 1, questions: [{ label: "Reason for visit", type: "select", options: "General check-up, Follow-up, Dental, Child care, Other", required: true }] } },
+  { key: "salon", ic: "💇", label: "Salon / spa booking", note: "Pick a service and a time", o: { name: "Salon appointment", duration: 45, color: "#e11d48", location: "inperson", locationNote: "Mall Road, Shimla", desc: "Choose your service and a time that suits you.", days: [0, 1, 2, 3, 4, 5, 6], start: "10:00", end: "20:00", step: 30, questions: [{ label: "Service", type: "select", options: "Haircut, Hair colour, Facial, Manicure, Massage", required: true }] } },
+  { key: "property", ic: "🏡", label: "Property site visit", note: "Weekend visits with directions", o: { name: "Site visit", duration: 60, color: "#c9a45c", location: "inperson", locationNote: "Aurelia show apartment", desc: "Visit the show apartment with our relationship manager.", days: [0, 5, 6], start: "10:00", end: "18:00", step: 60, questions: [{ label: "Looking for", type: "select", options: "3 BHK, 4 BHK, Villa", required: true }] } },
+  { key: "tutor", ic: "📚", label: "Tutoring / demo class", note: "Free demo class for students", o: { name: "Free demo class", duration: 40, color: "#2563eb", desc: "Meet the teacher and try a class — free.", start: "16:00", end: "20:00", step: 60, fields: { phone: true, company: false, notes: false, custom: "" }, questions: [{ label: "Class / grade", type: "select", options: "Class 8, Class 9, Class 10, Class 11, Class 12", required: true }, { label: "Subject", type: "text", required: true }] } },
+];
+export const eventSlug = (e) => (e.slug || slug(e.name) || "event").slice(0, 40);
+export const eventUrl = (e, integ) => (e.host && e.host.url) || `${location.origin}${location.pathname}#/book/${e.id}`;
+export const gcalLink = (title, date, time, mins, details = "") => {
+  if (!date || !time) return "";
+  const [y, m, d] = date.split("-").map(Number), [hh, mm] = time.split(":").map(Number), a = new Date(y, m - 1, d, hh, mm), b = new Date(a.getTime() + (mins || 30) * 60000);
+  const f = (x) => x.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${f(a)}/${f(b)}&details=${encodeURIComponent(details)}`;
+};
+export const findEvent = (id) => { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("lb_cal_")) { try { const e = JSON.parse(localStorage.getItem(k)).find((x) => x.id === id); if (e) return { ev: e, email: k.slice(7) }; } catch { /* skip */ } } } return null; };
+/* first publish on your own hosting connects automatically (no setup screen) */
+export async function autoServer(integ, onInteg, urlOverride) {
+  if (serverOn(integ) && !urlOverride) return { ok: true, integ };
+  const url = urlOverride || (integ.server && integ.server.url) || defaultServerUrl();
+  const chk = await checkServer(url);
+  if (!chk.ok) return { ok: false, reason: urlOverride ? "diag" : "none", diag: chk.reason, url };
+  const info = chk.info;
+  if (info.configured) return { ok: false, reason: "key", url };
+  const key = "lbk_" + Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+  try { const r = await phpCall({ url, key }, { action: "setup" }); const next = { ...integ, server: { url, key, ok: true, ip: r.ip || "", base: r.base || "" } }; onInteg(next); return { ok: true, integ: next }; }
+  catch (e) { return { ok: false, reason: "error", error: e.message }; }
+}
+
+/* "darkgreen-crocodile-802080.hostingersite.com" or a full URL → the lb-server.php address */
+export const serverUrlFrom = (v) => { let u = String(v || "").trim(); if (!u) return ""; if (!/^https?:\/\//.test(u)) u = "https://" + u; u = u.replace(/\/+$/, ""); return /lb-server\.php$/.test(u) ? u : u + "/lb-server.php"; };
+
+/* find out exactly why a server address doesn't work, in plain words */
+export async function checkServer(url) {
+  let r;
+  try { r = await fetch(url, { method: "POST", body: JSON.stringify({ action: "info" }) }); }
+  catch {
+    let reachable = false;
+    try { await fetch(url, { mode: "no-cors" }); reachable = true; } catch { reachable = false; }
+    return reachable ? { ok: false, reason: "blocked" } : { ok: false, reason: "unreachable" };
+  }
+  if (r.status === 404) return { ok: false, reason: "missing" };
+  const txt = await r.text();
+  if (/^\s*<\?php/.test(txt)) return { ok: false, reason: "nophp" };
+  let j; try { j = JSON.parse(txt); } catch { return { ok: false, reason: "notjson" }; }
+  if (!j || j.app !== "launchbuilder") return { ok: false, reason: "other" };
+  return { ok: true, info: j };
+}
+export const SERVER_HELP = {
+  unreachable: "Can't reach this address at all. Open it in a new tab — if the website itself doesn't load, the domain isn't pointing to your hosting yet (or the address has a typo).",
+  blocked: "The website loads, but lb-server.php didn't answer. Most likely the file isn't uploaded there (the site shows its 404 page). Upload the latest dist folder contents to that website's folder.",
+  missing: "lb-server.php is not on this website (404). Upload the latest dist folder contents — it includes lb-server.php — into this website's folder (public_html, or the subdomain's folder).",
+  nophp: "The file is there but PHP isn't running — the server shows the code instead of running it. This needs Hostinger web hosting (not the Website Builder plan).",
+  notjson: "Something answered, but it isn't LaunchBuilder's server file. Make sure the file at this address is the latest lb-server.php.",
+  other: "Something answered, but it isn't LaunchBuilder's server file. Upload the latest lb-server.php.",
 };

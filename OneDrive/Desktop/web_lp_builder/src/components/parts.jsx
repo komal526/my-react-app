@@ -1,8 +1,8 @@
-// LaunchBuilder v8 — parts.jsx
+// LaunchBuilder v13 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
-import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64 } from "../lib.js";
-import { finalize, formPageHtml, buildSite, makeZip } from "./tools.js";
+import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP } from "../lib.js";
+import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
 import { Icon } from "./Inspector.jsx";
 
 /* ==================== Modal, Thumb, Sidebar, NewModal, PublishModal ==================== */
@@ -19,7 +19,7 @@ export function Thumb({ html }) {
 }
 
 
-const NAV = [["pages", "grid", "My pages"], ["templates", "card", "Templates"], ["forms", "form", "Forms"], ["leads", "inbox", "Leads"], ["analytics", "chart", "Analytics"], ["domains", "globe", "Domains"], ["integrations", "share", "Integrations"], ["settings", "gear", "Settings"]];
+const NAV = [["pages", "grid", "Dashboard"], ["templates", "card", "Templates"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "inbox", "Leads"], ["analytics", "chart", "Analytics"], ["domains", "globe", "Domains"], ["integrations", "share", "Integrations"], ["settings", "gear", "Settings"]];
 
 export function Sidebar({ view, onView, count, user, onLogout, badges = {} }) {
   return (
@@ -42,7 +42,7 @@ const AI_IDEAS = ["AI ad-creation workshop for beginners, ₹21 registration, Hi
 export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI }) {
   const [type, setType] = useState("landing"), [name, setName] = useState(""), [t, setT] = useState(0), [src, setSrc] = useState("tpl");
   const [brief, setBrief] = useState(""), [busy, setBusy] = useState(false), [err, setErr] = useState("");
-  const list = TEMPLATES.filter((x) => x.type === type);
+  const list = [...TEMPLATES.filter((x) => x.type === type && x.hidden).sort((a, b) => (/^blank/.test(b.key) ? 1 : 0) - (/^blank/.test(a.key) ? 1 : 0)), ...TEMPLATES.filter((x) => x.type === type && !x.hidden)];
   const prov = AI_PROVIDERS.find((p) => p.id === (ai && ai.provider)) || AI_PROVIDERS[0], hasKey = ai && ai.keys && ai.keys[prov.id];
   const gen = async () => {
     if (brief.trim().length < 15) return setErr("Describe your business in a sentence or two (what, who for, what you want visitors to do).");
@@ -64,11 +64,15 @@ export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI }) {
       <label>Name<input autoFocus value={name} placeholder="e.g. Autumn Sale Offer" onChange={(e) => setName(e.target.value)} /></label>
       <div className="chips nm-src"><button className={src === "tpl" ? "on" : ""} onClick={() => setSrc("tpl")}>Start from a template</button><button className={src === "ai" ? "on" : ""} onClick={() => setSrc("ai")}>✨ Create with AI</button></div>
       {src === "tpl" ? <div className="opts">{list.map((x, i) => <div key={x.name} className={"opt" + (t === i ? " on" : "")} onClick={() => setT(i)}><b>{x.name}</b><span>{x.note}</span></div>)}</div> : <div className="nm-ai">
-        {!hasKey ? <div className="nm-warn">Connect an AI first (Claude, ChatGPT, Gemini or DeepSeek) with your own API key. <button className="pri" onClick={onSetupAI}>Open Integrations</button></div> : <>
+        {!hasKey && <div className="nm-warn">Connect an AI first (Claude, ChatGPT, Gemini or DeepSeek) with your own API key. <button className="pri" onClick={onSetupAI}>Open Integrations</button></div>}<>
           <label>Describe the {type === "website" ? "website" : "page"}<textarea rows={4} value={brief} disabled={busy} onChange={(e) => setBrief(e.target.value)} placeholder="What is it, who is it for, what should visitors do (register, call, buy)? Mention price, city, language, colours, sections you want…" /></label>
           <div className="nm-ideas">{AI_IDEAS.map((x) => <button key={x} disabled={busy} onClick={() => setBrief(x)}>{x.slice(0, 48)}…</button>)}</div>
-          <p className="mut">Using <b>{prov.name}</b> · {(ai.models || {})[prov.id] || prov.model}. {type === "website" ? "Creates 3–5 linked pages." : "Creates one landing page."} Takes about 20–90 seconds. You can edit everything afterwards.</p>
-        </>}
+          <div className="nm-hand"><span className="mut sm">Or build it in:</span>
+            <a className="btn" href={lovableUrl(brief || "A modern landing page")} target="_blank" rel="noopener">Lovable ↗</a>
+            <button onClick={() => { navigator.clipboard.writeText(boltText(brief || "A modern landing page")).catch(() => {}); window.open("https://bolt.new", "_blank"); }}>Copy prompt &amp; open Bolt ↗</button>
+            <span className="mut sm">then download its index.html and use <b>Import HTML</b>.</span></div>
+          {hasKey && <p className="mut">Using <b>{prov.name}</b> · {(ai.models || {})[prov.id] || prov.model}. {type === "website" ? "Creates 3–5 linked pages." : "Creates one landing page."} Takes about 20–90 seconds. You can edit everything afterwards.</p>}
+        </>
         {err && <p className="red">{err}</p>}
       </div>}
       <div className="mrow"><button onClick={onImport} disabled={busy}>Import HTML instead</button><div className="grow" /><button onClick={onClose} disabled={busy}>Cancel</button>
@@ -79,50 +83,104 @@ export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI }) {
 }
 
 
-export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains }) {
-  const ready = !!integ && publishReady(integ), live = page.netlify && page.netlify.url;
-  const [busy, setBusy] = useState(""), [err, setErr] = useState(""), [copied, setCopied] = useState(false);
-  const [target, setTarget] = useState("new"), [sites, setSites] = useState(null), [siteId, setSiteId] = useState("");
-  const loadSites = async () => { setSites("loading"); try { const r = await serverCall(integ, { event: "sites" }); setSites(r.sites || []); } catch (e) { setSites([]); setErr(e.message); } };
-  const own = page.domain && page.domainStatus === "connected" ? "https://" + page.domain : "";
-  const url = own || live;
-  const publish = async () => {
-    setErr("");
-    try {
-      setBusy("Building your pages…");
-      const zip = makeZip(await buildSite(page.pages, url || ""));
-      if (zip.size > 35e6) throw new Error("Your site is bigger than 35 MB. Use smaller videos or YouTube links, then try again.");
-      setBusy("Uploading to the internet…");
-      const r = await serverCall(integ, { event: "publish", siteId: (page.netlify && page.netlify.siteId) || (target === "existing" ? siteId : undefined), zip: await blobToBase64(zip) });
-      onDone({ status: "published", netlify: { siteId: r.siteId, name: r.name, url: r.url, admin: r.admin, ts: Date.now() }, versions: [...(page.versions || []), { ts: Date.now(), pages: page.pages }].slice(-5) }, true);
-    } catch (e) { setErr(e.message); }
-    setBusy("");
+export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains, onInteg }) {
+  const srvOk = serverOn(integ), netOk = !!integ && publishReady(integ);
+  const [dest, setDest] = useState(page.host ? "server" : page.netlify ? "netlify" : srvOk ? "server" : netOk ? "netlify" : "");
+  /* your own hosting connects by itself the first time (no setup screen) */
+  const [auto, setAuto] = useState(srvOk ? "ok" : "checking"), [pkey, setPkey] = useState(""), [rurl, setRurl] = useState(""), [rbusy, setRbusy] = useState(false), [diag, setDiag] = useState(null);
+  /* publish from anywhere (even localhost) to your Hostinger: just type its address */
+  const connectRemote = async () => {
+    const url = serverUrlFrom(rurl); if (!url) return;
+    setErr(""); setDiag(null); setRbusy(true);
+    const a = await autoServer(integ, onInteg, url);
+    setRbusy(false);
+    if (a.ok) { setAuto("ok"); setDest("server"); }
+    else if (a.reason === "key") { onInteg({ ...integ, server: { ...(integ.server || {}), url, ok: false } }); setAuto("key"); }
+    else setDiag({ url, text: SERVER_HELP[a.diag] || SERVER_HELP.missing });
   };
+  useEffect(() => {
+    if (srvOk || !onInteg) { if (!srvOk) setAuto("none"); return; }
+    autoServer(integ, onInteg).then((a) => { setAuto(a.ok ? "ok" : a.reason); if (a.ok && !page.netlify) setDest("server"); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const useKey = async () => {
+    setErr("");
+    try { const url = serverUrlFrom(rurl) || (integ.server && integ.server.url) || defaultServerUrl(), r = await phpCall({ url, key: pkey.trim() }, { action: "ping" }); onInteg({ ...integ, server: { url, key: pkey.trim(), ok: true, ip: r.ip || "", base: r.base || "" } }); setAuto("ok"); setDest("server"); }
+    catch (e) { setErr(e.message); }
+  };
+  const [busy, setBusy] = useState(""), [err, setErr] = useState(""), [copied, setCopied] = useState(false);
+  const [slug, setSlug] = useState((page.host && page.host.slug) || slugify(page.slug || page.name) || "my-site");
+  const [target, setTarget] = useState("new"), [sites, setSites] = useState(null), [siteId, setSiteId] = useState("");
+  const own = page.domain && page.domainStatus === "connected" ? "https://" + page.domain : "";
+  const liveUrl = dest === "server" ? page.host && page.host.url : page.netlify && page.netlify.url;
+  const url = own || liveUrl;
+  const base = ((integ && integ.server && integ.server.base) || location.origin).replace(/\/$/, "");
+  const versions = [...(page.versions || []), { ts: Date.now(), pages: page.pages }].slice(-5);
+  const run = async (fn) => { setErr(""); try { await fn(); } catch (e) { setErr(e.message); } setBusy(""); };
+  const pubServer = () => run(async () => {
+    const sl = slugify(slug); if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(sl)) throw new Error("Link name: use 2+ lowercase letters, numbers or dashes.");
+    setBusy("Building your pages…");
+    const files = await buildSite(page.pages, own || `${base}/sites/${sl}`, { leadUrl: (integ.server.url || defaultServerUrl()), site: sl });
+    const payload = filesForServer(files), size = payload.reduce((n, f) => n + f.b64.length, 0);
+    if (size > 60e6) throw new Error("Your site is bigger than 45 MB. Use smaller videos or YouTube links.");
+    setBusy("Uploading to your hosting…");
+    const r = await phpCall(integ.server, { action: "publish", slug: sl, files: payload });
+    onDone({ status: "published", host: { slug: sl, url: r.url, folder: r.folder, ts: Date.now() }, versions }, true);
+  });
+  const unpublish = () => { if (window.confirm("Take this site offline? The link will stop working.")) run(async () => { setBusy("Taking it offline…"); await phpCall(integ.server, { action: "unpublish", slug: page.host.slug }); onDone({ status: "draft", host: null }, true); }); };
+  const pubNetlify = () => run(async () => {
+    setBusy("Building your pages…");
+    const zip = makeZip(await buildSite(page.pages, url || ""));
+    if (zip.size > 35e6) throw new Error("Your site is bigger than 35 MB. Use smaller videos or YouTube links, then try again.");
+    setBusy("Uploading to Netlify…");
+    const r = await serverCall(integ, { event: "publish", siteId: (page.netlify && page.netlify.siteId) || (target === "existing" ? siteId : undefined), zip: await blobToBase64(zip) });
+    onDone({ status: "published", netlify: { siteId: r.siteId, name: r.name, url: r.url, admin: r.admin, ts: Date.now() }, versions }, true);
+  });
+  const loadSites = async () => { setSites("loading"); try { const r = await serverCall(integ, { event: "sites" }); setSites(r.sites || []); } catch (e) { setSites([]); setErr(e.message); } };
   const copy = () => navigator.clipboard.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }, () => window.prompt("Copy:", url));
+  const live = <div className="pub-live">
+    <span className="badge published">● Live — anyone can open it</span>
+    <a className="pub-url" href={url} target="_blank" rel="noopener">{url && url.replace(/^https?:\/\//, "")} ↗</a>
+    <p className="mut">Last published {ago(((dest === "server" ? page.host : page.netlify) || {}).ts || Date.now())}. Edits appear after you click Update.</p>
+    <div className="mrow" style={{ marginTop: 6 }}><button onClick={copy}>{copied ? "✓ Copied" : "Copy link"}</button><a className="btn" href={url} target="_blank" rel="noopener">Open site</a>
+      {dest === "server" && <button className="red" onClick={unpublish}>Unpublish</button>}<div className="grow" /><button className="pri" onClick={dest === "server" ? pubServer : pubNetlify}>Update live site</button></div>
+    {dest === "server" && integ.server && <details className="pub-adv"><summary>Hosting key (to publish from another computer)</summary><div className="row"><code>{integ.server.key}</code><button className="xs" onClick={() => navigator.clipboard.writeText(integ.server.key)}>Copy</button></div></details>}
+    <div className="pub-dom"><div><b>{own ? "✓ Custom domain connected" : "Connect a domain or subdomain"}</b><span className="mut">{own ? page.domain : "e.g. mybrand.com or offer.mybrand.com"}</span></div><button onClick={onDomains}>{own ? "Manage" : "Connect domain →"}</button></div>
+  </div>;
   return (
     <Modal onClose={busy ? () => {} : onClose}>
       <div className="pub-h"><span className="pub-ic">🚀</span><div><h3>Publish {page.type === "website" ? "website" : "page"}</h3><p className="mut">{page.name} · {page.pages.length} page{page.pages.length > 1 ? "s" : ""}</p></div></div>
-      {!ready ? <div className="pub-setup">
-        <b>Put your site on the internet — free</b>
-        <p className="mut">Publishing uses a free Netlify account and the same free Google Apps Script that sends your Gmail emails. One-time setup, about 5 minutes. After that it's one click.</p>
-        <button className="pri" onClick={onSetup}>Set up free publishing →</button>
-      </div> : busy ? <div className="pub-busy"><span className="pub-spin" /><b>{busy}</b><p className="mut">Please keep this window open (usually 10–40 seconds).</p></div>
-        : url ? <div className="pub-live">
-          <span className="badge published">● Live</span>
-          <a className="pub-url" href={url} target="_blank" rel="noopener">{url.replace(/^https?:\/\//, "")} ↗</a>
-          <p className="mut">Anyone with this link can see your site. Last published {ago(page.netlify.ts)}.</p>
-          <div className="mrow" style={{ marginTop: 6 }}><button onClick={copy}>{copied ? "✓ Copied" : "Copy link"}</button><a className="btn" href={url} target="_blank" rel="noopener">Open site</a><div className="grow" /><button className="pri" onClick={publish}>Update live site</button></div>
-          <div className="pub-dom"><div><b>{own ? "✓ Custom domain connected" : "Use your own domain"}</b><span className="mut">{own ? page.domain : "e.g. mybrand.com — connect with DNS records or nameservers"}</span></div><button onClick={onDomains}>{own ? "Manage" : "Connect domain →"}</button></div>
+      {!srvOk && !netOk ? <div className="pub-setup">
+        {auto === "checking" ? <div className="pub-busy" style={{ border: 0, padding: 10 }}><span className="pub-spin" /><b>Connecting to your hosting…</b></div>
+          : auto === "key" ? <>
+            <b>Publishing from another computer?</b>
+            <p className="mut">Your hosting is already connected to LaunchBuilder from another browser. Paste the hosting key once (find it on the first computer: Publish → Live site → “Hosting key”).</p>
+            <div className="row"><input value={pkey} onChange={(e) => setPkey(e.target.value)} placeholder="lbk_…" style={{ flex: 1, padding: 11, border: "1px solid #d1d5db", borderRadius: 10, font: "inherit" }} /><button className="pri" disabled={pkey.trim().length < 16} onClick={useKey}>Connect</button></div>
+          </> : <>
+            <b>Put your site on the internet</b>
+            <p className="mut">{location.hostname === "localhost" || location.hostname === "127.0.0.1" ? "You're running the builder on your computer (localhost). Nobody else can open localhost, so publish to your Hostinger instead — just type its address:" : "Type the address of the Hostinger website where you uploaded LaunchBuilder:"}</p>
+            <div className="row"><input value={rurl} onChange={(e) => setRurl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && connectRemote()} placeholder="darkgreen-crocodile-802080.hostingersite.com" style={{ flex: 1, padding: 11, border: "1px solid #d1d5db", borderRadius: 10, font: "inherit" }} />
+              <button className="pri" disabled={!rurl.trim() || rbusy} onClick={connectRemote}>{rbusy ? "Connecting…" : "Connect"}</button></div>
+            {diag && <div className="pub-diag"><b>Not connected yet.</b> {diag.text}
+              <div className="row" style={{ marginTop: 8 }}><a className="btn" href={diag.url} target="_blank" rel="noopener">Test the file in a new tab ↗</a><span className="mut sm">Working = you see <code>{'{"ok":true,"app":"launchbuilder"…}'}</code></span></div></div>}
+            <p className="mut sm" style={{ margin: 0 }}>Your pages are published to <code>that-address/sites/your-page/</code> — a public link anyone can open — and you can connect any domain or subdomain to each page afterwards.</p>
+            <div className="pub-tg"><button onClick={() => onSetup("host")}><b>▲ Use Netlify instead</b><span>Free external hosting with a link like my-page.netlify.app</span></button></div>
+          </>}
+      </div> : busy ? <div className="pub-busy"><span className="pub-spin" /><b>{busy}</b><p className="mut">Please keep this window open (usually 5–30 seconds).</p></div> : <>
+        {srvOk && netOk && !page.host && !page.netlify && <div className="pub-dest">{[["server", "🏠 My hosting"], ["netlify", "▲ Netlify"]].map(([k, l]) => <button key={k} className={dest === k ? "on" : ""} onClick={() => setDest(k)}>{l}</button>)}</div>}
+        {liveUrl ? live : dest === "server" ? <div className="pub-first">
+          <label className="pub-slug">Link name<div className="pub-urlrow"><span>{base.replace(/^https?:\/\//, "")}/sites/</span><input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} /><span>/</span></div></label>
+          <p className="mut" style={{ margin: 0 }}>Anyone with this link can see your site immediately. Later you can connect your own domain or subdomain.</p>
+          <button className="pri big" onClick={pubServer}>🚀 Publish now</button>
         </div> : <div className="pub-first">
-          <p>Your {page.type === "website" ? "website" : "page"} will go live at a free public link like <code>brave-otter-12ab.netlify.app</code> with free HTTPS. You can connect your own domain right after.</p>
+          <p>Your site goes live at a free link like <code>brave-otter-12ab.netlify.app</code>.</p>
           <div className="pub-tg">
             <button className={target === "new" ? "on" : ""} onClick={() => setTarget("new")}><b>✨ New Netlify site</b><span>Get a fresh free link</span></button>
-            <button className={target === "existing" ? "on" : ""} onClick={() => { setTarget("existing"); if (!sites) loadSites(); }}><b>▲ My existing site</b><span>Replace a site you already have on Netlify</span></button>
+            <button className={target === "existing" ? "on" : ""} onClick={() => { setTarget("existing"); if (!sites) loadSites(); }}><b>▲ My existing site</b><span>Replace a site you already have</span></button>
           </div>
           {target === "existing" && (sites === "loading" ? <p className="mut">Loading your Netlify sites…</p> : Array.isArray(sites) && (sites.length ? <select value={siteId} onChange={(e) => setSiteId(e.target.value)}><option value="">Choose a site…</option>{sites.map((x) => <option key={x.id} value={x.id}>{x.name} — {(x.domain || x.url || "").replace(/^https?:\/\//, "")}</option>)}</select> : <p className="mut">No sites found on your Netlify account.</p>))}
-          {target === "existing" && siteId && <p className="red sm" style={{ margin: 0 }}>⚠️ This replaces everything currently on that site.</p>}
-          <button className="pri big" disabled={target === "existing" && !siteId} onClick={publish}>🚀 Publish now</button>
+          <button className="pri big" disabled={target === "existing" && !siteId} onClick={pubNetlify}>🚀 Publish now</button>
         </div>}
+      </>}
       {err && <div className="pub-err"><b>Couldn't publish.</b> {err}</div>}
       {!busy && <div className="mrow"><div className="grow" /><button onClick={onClose}>Close</button></div>}
     </Modal>
@@ -223,4 +281,22 @@ export function FormPage({ id }) {
   }, [found, id]);
   if (!found) return <div className="pv-dead"><div><h2>This form isn't available</h2><p>The link may be wrong, or the form was deleted. Form links work in the browser where the form was created until a backend is added.</p></div></div>;
   return <div className="fpage"><iframe ref={ifr} title={found.form.name} srcDoc={html} sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals" allow="payment" />{done && <div className="toast pv-toast">✓ Submission saved to Leads</div>}</div>;
+}
+
+
+/* ==================== Booking link (this browser): #/book/<id> ==================== */
+export function BookPage({ id }) {
+  const found = useMemo(() => findEvent(id), [id]);
+  const [html, setHtml] = useState(""), ifr = useRef();
+  useEffect(() => { if (found) { finalize(bookingPageHtml(found.ev, loadInteg(found.email)), { mode: "blob", preview: true, page: "booking" }).then((r) => setHtml(r.html)); document.title = found.ev.name; } }, [found]);
+  useEffect(() => {
+    const f = (e) => {
+      if (!found || !ifr.current || e.source !== ifr.current.contentWindow || !e.data) return;
+      if (e.data.lb === "lead") addLead(found.email, { ...e.data.lead, formId: id, projectId: "", projectName: "Booking link", page: "booking link", source: "booking-link" });
+      if (e.data.lb === "lead-pay") payLead(found.email, e.data.lid, e.data.payment);
+    };
+    window.addEventListener("message", f); return () => window.removeEventListener("message", f);
+  }, [found, id]);
+  if (!found) return <div className="pv-dead"><div><h2>This booking link isn't available</h2><p>Ask the organiser for the public booking link.</p></div></div>;
+  return <div className="fpage"><iframe ref={ifr} title={found.ev.name} srcDoc={html} sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals" allow="payment" /></div>;
 }

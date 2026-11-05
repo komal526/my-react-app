@@ -1,4 +1,4 @@
-// LaunchBuilder v7 — Inspector.jsx
+// LaunchBuilder v11 — Inspector.jsx
 // Customize panel, Canva-style quick toolbar and icons
 import { useState, useLayoutEffect, useRef } from "react";
 import { aiEdit } from "../lib.js";
@@ -8,6 +8,8 @@ import { INL, SH, GFONTS, SYSFONTS, ensureFont, fontStack, fontName, nameOf, rea
 // Lightweight stroke icons for the editor UI (no icon library needed)
 const ICON_PATHS = {
   section: <rect x="3" y="5" width="18" height="14" rx="2" />,
+  calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2" /></>,
+  apps: <><rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><path d="M17.5 14v7M14 17.5h7" /></>,
   container: <><rect x="3" y="4" width="18" height="16" rx="2" strokeDasharray="3 2" /><rect x="7" y="8" width="10" height="8" rx="1" /></>,
   columns: <><rect x="3" y="4" width="7.5" height="16" rx="1.5" /><rect x="13.5" y="4" width="7.5" height="16" rx="1.5" /></>,
   columns3: <><rect x="2.5" y="4" width="5" height="16" rx="1" /><rect x="9.5" y="4" width="5" height="16" rx="1" /><rect x="16.5" y="4" width="5" height="16" rx="1" /></>,
@@ -164,7 +166,7 @@ export default function Inspector({ el, A, pages = [], dev, itab, setItab, openL
   /* ---------- context: what kind of widget is this element part of? ---------- */
   const ctx = (attr) => el.closest(`[${attr}]`);
   const video = ctx("data-lb-video"), map = ctx("data-lb-map"), embed = ctx("data-lb-embed"), html = ctx("data-lb-html"), form = el.closest("form");
-  const countdown = ctx("data-lb-countdown"), counter = el.hasAttribute("data-lb-count") ? el : null, slider = ctx("data-lb-slider"), tabs = ctx("data-lb-tabs");
+  const calSlot = el.closest("[data-lb-calendar]"), formSlot = el.closest("[data-lb-formslot]"), booking = calSlot && calSlot.getAttribute("data-lb-calendar") ? null : ctx("data-lb-booking"), countdown = ctx("data-lb-countdown"), counter = el.hasAttribute("data-lb-count") ? el : null, slider = ctx("data-lb-slider"), tabs = ctx("data-lb-tabs");
   const popup = ctx("data-lb-popup"), gallery = ctx("data-lb-gallery"), wa = ctx("data-lb-wa"), prog = el.querySelector && (el.hasAttribute("data-lb-progress") ? el : null);
   const leaf = !/^(IMG|IFRAME|INPUT|TEXTAREA|SELECT|HR|BODY|SVG|VIDEO|AUDIO|CANVAS)$/.test(tag) && [...el.childNodes].every((c) => c.nodeType === 3 || c.nodeType === 8 || (c.nodeType === 1 && INL.has(c.tagName)));
 
@@ -327,6 +329,32 @@ export default function Inspector({ el, A, pages = [], dev, itab, setItab, openL
           {subBtn && <F l="Button text"><input value={subBtn.textContent} onChange={(e) => { subBtn.textContent = e.target.value; changed(); }} /></F>}
         </G>}
 
+        {calSlot && <G t="Calendar" open>
+          {!(a.events || []).length ? <p className="hint" style={{ marginTop: 0 }}>You haven't created a calendar yet. Go to <b>Dashboard → Calendar → Create event</b>, then come back and pick it here.</p> : <>
+            <F l="Which calendar?"><select value={calSlot.getAttribute("data-lb-calendar") || ""} onChange={(e) => { const ev = a.events.find((x) => x.id === e.target.value); if (!ev) return; calSlot.setAttribute("data-lb-calendar", ev.id); calSlot.removeAttribute("style"); calSlot.setAttribute("data-lb-name", "Calendar: " + ev.name); calSlot.innerHTML = a.bookingWidget(ev, a.integ); a.select(calSlot); a.commit(); }}>
+              <option value="">Choose a calendar…</option>{a.events.map((x) => <option key={x.id} value={x.id}>{x.name} · {x.duration} min{x.pay && x.pay.enabled ? ` · ₹${x.pay.amount}` : ""}</option>)}</select></F>
+            <p className="hint">Change availability, questions or payment in <b>Dashboard → Calendar</b> — every page using it updates automatically. Bookings appear in <b>Calendar → Meetings</b>.</p></>}
+        </G>}
+        {formSlot && <G t="Form" open>
+          {!(a.forms || []).length ? <p className="hint" style={{ marginTop: 0 }}>No saved forms yet. Create one in <b>Dashboard → Forms</b> (with templates), then pick it here.</p> : <>
+            <F l="Which form?"><select value={formSlot.getAttribute("data-lb-formslot") || ""} onChange={(e) => { const f = a.forms.find((x) => x.id === e.target.value); if (!f) return; formSlot.setAttribute("data-lb-formslot", f.id); formSlot.removeAttribute("style"); formSlot.setAttribute("data-lb-name", "Form: " + f.name); formSlot.innerHTML = a.formHtml(f, a.integ); a.select(formSlot); a.commit(); }}>
+              <option value="">Choose a form…</option>{a.forms.map((x) => <option key={x.id} value={x.id}>{x.name} · {x.fields.length} fields</option>)}</select></F>
+            <p className="hint">Edit fields, design, payment and automations in <b>Dashboard → Forms</b> — pages update automatically.</p></>}
+        </G>}
+        {booking && (() => {
+          let c = {}; try { c = JSON.parse(booking.getAttribute("data-lb-booking") || "{}"); } catch { c = {}; }
+          const up = (o) => { const n = { ...c, ...o }; booking.setAttribute("data-lb-booking", JSON.stringify(n)); changed(); };
+          const days = c.days || [1, 2, 3, 4, 5];
+          return <G t="Booking calendar" open>
+            <p className="hint" style={{ marginTop: 0 }}>Visitors pick a date and time, then fill the form. Every booking lands in <b>Leads</b> with the date &amp; time.</p>
+            <div className="g2"><F l="Meeting length (min)"><input type="number" min="5" step="5" value={c.duration || 30} onChange={(e) => up({ duration: +e.target.value || 30 })} /></F>
+              <F l="Gap between slots (min)"><input type="number" min="5" step="5" value={c.step || 30} onChange={(e) => up({ step: +e.target.value || 30 })} /></F></div>
+            <F l="Working days"><div className="bk-days">{["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <button key={i} className={days.includes(i) ? "on" : ""} onClick={() => up({ days: days.includes(i) ? days.filter((x) => x !== i) : [...days, i].sort() })}>{d}</button>)}</div></F>
+            <div className="g2"><F l="Day starts"><input type="time" value={c.start || "10:00"} onChange={(e) => up({ start: e.target.value })} /></F><F l="Day ends"><input type="time" value={c.end || "17:00"} onChange={(e) => up({ end: e.target.value })} /></F></div>
+            <div className="g2"><F l="Bookable days ahead"><input type="number" min="1" max="365" value={c.ahead || 30} onChange={(e) => up({ ahead: +e.target.value || 30 })} /></F><F l="Time zone label"><input value={c.tz || ""} placeholder="Asia/Kolkata" onChange={(e) => up({ tz: e.target.value })} /></F></div>
+            <p className="hint">Edit the title, description and form fields by clicking them on the page. The calendar becomes interactive in Preview and on the live site.</p>
+          </G>;
+        })()}
         {countdown && <G t="Countdown" open><F l="Ends at"><input type="datetime-local" value={countdown.getAttribute("data-lb-countdown")} onChange={(e) => attrSet("data-lb-countdown", e.target.value, countdown)} /></F></G>}
         {counter && <G t="Counter" open><div className="g2">
           <F l="Number"><input value={counter.getAttribute("data-lb-count")} onChange={(e) => { attrSet("data-lb-count", e.target.value, counter); counter.textContent = (counter.getAttribute("data-lb-prefix") || "") + Number(e.target.value || 0).toLocaleString("en-IN") + (counter.getAttribute("data-lb-suffix") || ""); }} /></F>

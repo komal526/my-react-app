@@ -1,4 +1,4 @@
-// LaunchBuilder v7 — Dashboard.jsx
+// LaunchBuilder v11 — Dashboard.jsx
 import { useState, useEffect, useRef } from "react";
 import Editor from "./Editor.jsx";
 import { Sidebar, NewModal, PublishModal } from "./parts.jsx";
@@ -9,11 +9,20 @@ import Leads from "./Leads.jsx";
 import Forms from "./Forms.jsx";
 import Analytics from "./Analytics.jsx";
 import Integrations from "./Integrations.jsx";
+import Calendar from "./Calendar.jsx";
 import Settings from "./Settings.jsx";
 import ImportPage from "./ImportPage.jsx";
-import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg } from "../lib.js";
-import { formHtml } from "./tools.js";
+import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads } from "../lib.js";
+import { formHtml, bookingWidget } from "./tools.js";
 
+/* replace every copy of a linked calendar inside a page with its latest version */
+const syncCalInHtml = (html, ev, integ) => {
+  if (!html.includes(ev.id)) return html;
+  const d = new DOMParser().parseFromString(html, "text/html"); let n = 0;
+  d.querySelectorAll(`[data-lb-calendar="${ev.id}"]`).forEach((w) => { w.innerHTML = bookingWidget(ev, integ); w.setAttribute("data-lb-name", "Calendar: " + ev.name); n++; });
+  d.querySelectorAll(`[data-lb-event="${ev.id}"]`).forEach((w) => { if (w.closest("[data-lb-calendar]")) return; const t = d.createElement("template"); t.innerHTML = bookingWidget(ev, integ); w.replaceWith(t.content.firstElementChild); n++; });
+  return n ? "<!DOCTYPE html>\n" + d.documentElement.outerHTML : html;
+};
 /* replace every copy of a linked form inside a page with its latest version */
 const syncFormInHtml = (html, f, integ) => {
   if (!html.includes(`data-lb-formbox="${f.id}"`)) return html;
@@ -34,6 +43,27 @@ export default function Dashboard({ user, onLogout }) {
   const syncT = useRef(0);
   const [integ, setInteg] = useState(() => loadInteg(E));
   const onInteg = (v) => { setInteg(v); saveInteg(E, v); };
+  const [igTile, setIgTile] = useState("");
+  const [cal, setCal] = useState(() => loadCal(E));
+  const calT = useRef(0);
+  const onSaveCal = (list) => {
+    const changed = list.filter((e) => { const o = cal.find((x) => x.id === e.id); return o && o.updated !== e.updated; });
+    setCal(list); saveCal(E, list);
+    if (!changed.length) return;
+    clearTimeout(calT.current);
+    calT.current = setTimeout(() => setProjects((ps) => ps.map((p) => ({ ...p, pages: p.pages.map((x) => ({ ...x, html: changed.reduce((h, e) => syncCalInHtml(h, e, integ), x.html) })) }))), 500);
+  };
+  const patchPage = (pid, pageId, o) => patchPages(pid, (pages) => pages.map((x) => (x.id === pageId ? { ...x, ...o } : x)));
+  const patchLead = (id, o) => setLeads((ls) => { const list = ls.map((l) => (l.id === id ? { ...l, ...o } : l)); saveLeads(E, list); return list; });
+  const deleteLead = (id) => setLeads((ls) => { const list = ls.filter((l) => l.id !== id); saveLeads(E, list); return list; });
+  /* leads from live sites on your own server → CRM (on load + every minute) */
+  const projRef = useRef(projects); projRef.current = projects;
+  const srv = serverOn(integ);
+  useEffect(() => {
+    if (!srv) return;
+    const run = () => syncServerLeads(E, integ, projRef.current).then((n) => { if (n) setLeads(loadLeads(E)); }).catch(() => {});
+    run(); const t = setInterval(run, 60000); return () => clearInterval(t);
+  }, [srv, E]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!saveProjects(E, projects)) alert("Browser storage is full. Delete some projects or use smaller images."); }, [projects, E]);
   /* leads / visits arrive from preview & form-link tabs */
   useEffect(() => {
@@ -72,24 +102,25 @@ export default function Dashboard({ user, onLogout }) {
     clearTimeout(syncT.current);
     syncT.current = setTimeout(() => setProjects((ps) => ps.map((p) => ({ ...p, pages: p.pages.map((x) => ({ ...x, html: changed.reduce((h, f) => syncFormInHtml(h, f, integ), x.html) })) }))), 500);
   };
-  const addFormToPage = (form, pid, pageId) => patchPages(pid, (pages) => pages.map((x) => {
+  const addHtmlToPage = (html, pid, pageId) => patchPages(pid, (pages) => pages.map((x) => {
     if (x.id !== pageId) return x;
     const d = new DOMParser().parseFromString(x.html, "text/html"), t = d.createElement("template");
-    t.innerHTML = `<section data-lb-name="Form section" style="padding:64px 24px">${formHtml(form, integ)}</section>`;
+    t.innerHTML = html;
     const sec = t.content.firstElementChild, foot = [...d.body.children].reverse().find((n) => n.tagName === "FOOTER");
     foot ? foot.before(sec) : d.body.appendChild(sec);
     return { ...x, html: "<!DOCTYPE html>\n" + d.documentElement.outerHTML };
   }));
+  const addFormToPage = (form, pid, pageId) => addHtmlToPage(`<section data-lb-name="Form section" style="padding:64px 24px">${formHtml(form, integ)}</section>`, pid, pageId);
   const visits7 = events.filter((e) => e.t === "view" && Date.now() - e.ts < 7 * 864e5).length;
 
   const open = projects.find((p) => p.id === openId);
   const pub = modal && modal.type === "publish" && projects.find((p) => p.id === modal.id);
-  const goView = (v) => { setModal(null); setOpenId(null); setView(v); };
-  const pubModal = pub && <PublishModal page={pub} integ={integ} onClose={() => setModal(null)} onDone={(o, keep) => { patch(pub.id, o); if (!keep) setModal(null); }} onSetup={() => goView("integrations")} onDomains={() => goView("domains")} />;
+  const goView = (v, tile = "") => { setModal(null); setOpenId(null); setIgTile(tile); setView(v); };
+  const pubModal = pub && <PublishModal page={pub} integ={integ} onInteg={onInteg} onClose={() => setModal(null)} onDone={(o, keep) => { patch(pub.id, o); if (!keep) setModal(null); }} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onDomains={() => goView("domains")} />;
 
   if (open) return (
     <>
-      <Editor key={open.id} page={open} user={user} forms={forms} integ={integ} onSave={(pid, h) => patchHtml(open.id, pid, h)} onPages={(fn) => patchPages(open.id, fn)} onType={(t) => patch(open.id, { type: t })}
+      <Editor key={open.id} page={open} user={user} forms={forms} events={cal} integ={integ} onSave={(pid, h) => patchHtml(open.id, pid, h)} onPages={(fn) => patchPages(open.id, fn)} onType={(t) => patch(open.id, { type: t })}
         onBack={() => setOpenId(null)} onPublish={() => setModal({ type: "publish", id: open.id })} />
       {pubModal}
     </>
@@ -97,7 +128,7 @@ export default function Dashboard({ user, onLogout }) {
 
   return (
     <div className="dash">
-      <Sidebar view={view} onView={setView} count={projects.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, forms: forms.length }} />
+      <Sidebar view={view} onView={setView} count={projects.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, forms: forms.length, calendar: cal.length }} />
       <section>
         {view === "pages" && <MyPages projects={projects} onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview}
@@ -105,10 +136,11 @@ export default function Dashboard({ user, onLogout }) {
         {view === "import" && <ImportPage onBack={() => setView("pages")} onFile={importFile} />}
         {view === "templates" && <Templates onUse={(t) => !full() && create(t.name, t.make(t.name), t.type)} />}
         {view === "forms" && <Forms forms={forms} onSave={onSaveForms} projects={projects} leads={leads} onAddToPage={addFormToPage} onLeads={() => setView("leads")} integ={integ} onIntegrations={() => setView("integrations")} />}
-        {view === "integrations" && <Integrations integ={integ} onChange={onInteg} />}
+        {view === "calendar" && <Calendar events={cal} onSave={onSaveCal} leads={leads} projects={projects} integ={integ} onInteg={onInteg} onAddToPage={addHtmlToPage} onPatchLead={patchLead} onDeleteLead={deleteLead} />}
+        {view === "integrations" && <Integrations key={igTile} initial={igTile} integ={integ} onChange={onInteg} />}
         {view === "leads" && <Leads user={user} projects={projects} forms={forms} leads={leads} setLeads={setLeads} integ={integ} />}
         {view === "analytics" && <Analytics projects={projects} events={events} leads={leads} onOpenProject={setOpenId} />}
-        {view === "domains" && <Domains projects={projects} onPatch={patch} onOpen={setOpenId} integ={integ} onSetup={() => setView("integrations")} onPublish={(p) => setModal({ type: "publish", id: p.id })} />}
+        {view === "domains" && <Domains projects={projects} onPatch={patch} onPatchPage={patchPage} onOpen={setOpenId} integ={integ} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onPublish={(p) => setModal({ type: "publish", id: p.id })} />}
         {view === "settings" && <Settings user={user} count={projects.length} onDeleteAll={() => setProjects([])} />}
       </section>
       {modal && modal.type === "new" && <NewModal onClose={() => setModal(null)} onCreate={create} onImport={() => { setModal(null); setView("import"); }} ai={integ.ai} onSetupAI={() => { setModal(null); setView("integrations"); }} />}

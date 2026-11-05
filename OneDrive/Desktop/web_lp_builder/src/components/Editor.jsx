@@ -1,8 +1,8 @@
-// LaunchBuilder v5 — Editor.jsx
+// LaunchBuilder v14 — Editor.jsx
 // The builder: canvas, top bar, left panel (Add / Layers / Pages / Site / Edit)
 import { useState, useRef, useEffect } from "react";
 import { uid, slug, uniqFile, addr, previewToken, previewUrl, aiSection, AI_PROVIDERS } from "../lib.js";
-import { makeZip, EDITOR_CSS, CONT, WIDTH, cleanNode, nameOf, WIDGET_CSS, finalize, readCfg, LIB, PAGE_TPLS, hydrate, STRUCTURES, structureHtml, formHtml } from "./tools.js";
+import { makeZip, EDITOR_CSS, CONT, WIDTH, cleanNode, nameOf, WIDGET_CSS, finalize, readCfg, LIB, PAGE_TPLS, hydrate, STRUCTURES, structureHtml, formHtml, bookingWidget } from "./tools.js";
 import Inspector, { Icon, QuickBar } from "./Inspector.jsx";
 import PagesPanel, { Layers, SiteSettings, writeCfg } from "./PagesPanel.jsx";
 
@@ -10,14 +10,19 @@ const MQ = { tablet: "(max-width:1024px)", mobile: "(max-width:767px)" };
 const kebab = (k) => k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
 const serialize = (d) => "<!DOCTYPE html>\n" + d.documentElement.outerHTML;
 const parse = (h) => new DOMParser().parseFromString(h, "text/html");
+/* which filter pill an element belongs to */
+const pillOf = (g, nm) => g === "Layout" ? "layout" : g === "Media" ? "media" : g === "Interactive" || g === "Forms & calendars" ? "apps"
+  : g === "Basic" ? (/Button|Hyperlink/.test(nm) ? "cta" : nm === "Icon" ? "media" : "text") : /Call to action|Banner|Payment button/.test(nm) ? "cta" : "prebuilt";
 const TABS = [["add", "plus", "Add"], ["layers", "layers", "Layers"], ["pages", "pages", "Pages"], ["site", "globe", "Site"], ["edit", "pen", "Edit"]];
 
-export default function Editor({ page, user, forms = [], integ, onSave, onBack, onPublish, onPages, onType }) {
+export default function Editor({ page, user, forms = [], events = [], integ, onSave, onBack, onPublish, onPages, onType }) {
   const [src, setSrc] = useState(page.pages[0].html);
   const [ver, setVer] = useState(0), [mode, setMode] = useState("visual"), [dev, setDev] = useState("desktop"), [tab, setTab] = useState("add"), [itab, setItab] = useState("content");
   const [selEl, setSelEl] = useState(null), [selKey, setSelKey] = useState(0), [, setTick] = useState(0), [codeText, setCodeText] = useState("");
   const [box, setBox] = useState({ w: 900, h: 600 }), [q, setQ] = useState(""), [shut, setShut] = useState(() => new Set()), [panel, setPanel] = useState(true), [navFloat, setNavFloat] = useState(false);
-  const [aiQ, setAiQ] = useState(""), [aiBusy, setAiBusy] = useState(false);
+  const [aiQ, setAiQ] = useState(""), [aiBusy, setAiBusy] = useState(false), [pill, setPill] = useState("all");
+  const [theme, setTheme] = useState(() => { const t = localStorage.getItem("lb_theme"); return t === "aurora" ? "aurora" : "clean"; });
+  const flipTheme = () => { const t = theme === "aurora" ? "clean" : "aurora"; setTheme(t); localStorage.setItem("lb_theme", t); };
   const [toast, setToast] = useState(""), [busy, setBusy] = useState(""), [editing, setEditing] = useState(false), [openLink, setOpenLink] = useState(false);
   const qbPos = useRef(null), devRef = useRef(dev); devRef.current = dev;
   const ifr = useRef(), wrap = useRef(), drag = useRef(null), H = useRef({ past: [], future: [], cur: "", t: 0, dirty: false }), A = useRef({}), selRef = useRef(null), clip = useRef(null), keyRef = useRef(() => {});
@@ -163,7 +168,7 @@ export default function Editor({ page, user, forms = [], integ, onSave, onBack, 
   };
   const copyStyle = (el) => { clip.current = el.getAttribute("style") || ""; say("Style copied"); setTick((x) => x + 1); };
   const pasteStyle = (el) => { if (clip.current === null) return; el.setAttribute("style", clip.current); commit(true); say("Style pasted"); };
-  A.current = { changed, commit: () => commit(true), move, dup, del, parent, outer, applyOuter, select, resp, css, sections, ensureAnchor, idsOf, copyStyle, pasteStyle, hasStyle: () => clip.current !== null, clean: cleanNode, setStyle, getStyle, toggleLock, editText, replaceEl, integ };
+  A.current = { changed, commit: () => commit(true), move, dup, del, parent, outer, applyOuter, select, resp, css, sections, ensureAnchor, idsOf, copyStyle, pasteStyle, hasStyle: () => clip.current !== null, clean: cleanNode, setStyle, getStyle, toggleLock, editText, replaceEl, integ, forms, events, bookingWidget, formHtml };
 
   /* ---------------- auto menus: [data-lb-autonav] always lists every page ---------------- */
   const links = (list) => list.map((p) => ({ name: p.name, file: p.file }));
@@ -361,13 +366,14 @@ export default function Editor({ page, user, forms = [], integ, onSave, onBack, 
   const qq = q.trim().toLowerCase();
 
   return (
-    <div className={"app" + (panel ? "" : " collapsed")}>
+    <div className={"app theme-" + theme + (panel ? "" : " collapsed")}>
       <header className="tb">
         <button className="ib lg" title="Back to dashboard" onClick={() => { flush(); onBack(); }}><Icon n="back" s={18} /></button>
         <div className="tb-name"><b>{page.name}</b><button className="chip" onClick={() => { setPanel(true); setTab("pages"); }} title="Switch page">{curPage.file}<Icon n="chevd" s={12} /></button></div>
         <div className="grow" />
         <div className="seg dev">{Object.keys(WIDTH).map((k) => <button key={k} className={dev === k ? "on" : ""} title={`${k} ${WIDTH[k]}px`} onClick={() => setDev(k)}><Icon n={k} s={16} /></button>)}<span className="zoom">{WIDTH[dev]}px · {Math.round(sc * 100)}%</span></div>
         <div className="grow" />
+        <button className="ib" title={theme === "aurora" ? "Switch to light theme" : "Switch to dark theme"} onClick={flipTheme}>{theme === "aurora" ? "☀" : "🌙"}</button>
         <button className="ib" title="Undo (Ctrl+Z)" onClick={undo} disabled={!h.past.length}><Icon n="undo" s={16} /></button>
         <button className="ib" title="Redo (Ctrl+Shift+Z)" onClick={redo} disabled={!h.future.length}><Icon n="redo" s={16} /></button>
         <span className="sep" />
@@ -387,14 +393,16 @@ export default function Editor({ page, user, forms = [], integ, onSave, onBack, 
         </div>
         {panel && <div className="lp-body">
           {tab === "add" && <>
-            <div className="srch big"><Icon n="search" s={15} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search elements…" />{q && <button className="ib" onClick={() => setQ("")}><Icon n="x" s={12} /></button>}</div>
-            {!qq && <div className="lg">
+            <div className="el-h"><Icon n="apps" s={18} /><b>Elements</b><span className="el-badge">{LIB.reduce((n, g) => n + g[1].length, 0)}</span></div>
+            <div className="srch big"><Icon n="search" s={15} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search all elements" />{q && <button className="ib" onClick={() => setQ("")}><Icon n="x" s={12} /></button>}</div>
+            <div className="el-pills">{[["all", "All"], ["layout", "Layout"], ["text", "Text"], ["cta", "CTA"], ["media", "Media"], ["apps", "Apps"], ["prebuilt", "Pre-built"]].map(([k, l]) => <button key={k} className={pill === k ? "on" : ""} onClick={() => setPill(k)}>{l}</button>)}</div>
+            {!qq && (pill === "all" || pill === "layout") && <div className="lg">
               <button className={"lg-h" + (shut.has("Structure") ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has("Structure") ? n.delete("Structure") : n.add("Structure"); return n; })}><span>Structure</span><em>pick columns</em><Icon n="chevd" s={13} /></button>
               {!shut.has("Structure") && <div className="structs">{STRUCTURES.map(([l, cols]) => (
                 <button key={l} title={`Section with ${l} columns`} draggable onClick={() => addSection(cols)} onDragStart={(e) => { drag.current = { html: structureHtml(cols) }; e.dataTransfer.setData("text/plain", "n"); }} onDragEnd={() => { drag.current = null; hideInd(); }}>
                   <span className="st-prev">{cols.map((c, i) => <i key={i} style={{ flex: c }} />)}</span><small>{l}</small></button>))}</div>}
             </div>}
-            {!qq && <div className="lg">
+            {!qq && pill === "all" && <div className="lg lg-ai">
               <button className={"lg-h" + (shut.has("AI") ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has("AI") ? n.delete("AI") : n.add("AI"); return n; })}><span>✨ AI section</span><em>{(AI_PROVIDERS.find((p) => p.id === ((integ && integ.ai.provider) || "claude")) || {}).name}</em><Icon n="chevd" s={13} /></button>
               {!shut.has("AI") && (integ && integ.ai.keys && integ.ai.keys[integ.ai.provider] ? <div className="aibox">
                 <textarea rows={3} value={aiQ} disabled={aiBusy} onChange={(e) => setAiQ(e.target.value)} placeholder="e.g. Pricing section with 3 plans for an AI workshop: ₹21 trial, ₹999 course, ₹4,999 mentorship" />
@@ -402,7 +410,14 @@ export default function Editor({ page, user, forms = [], integ, onSave, onBack, 
                 <p className="hint">Added below the selected element.</p></div>
                 : <p className="hint pad">Connect Claude, ChatGPT, Gemini or DeepSeek in Dashboard → <b>Integrations</b> to generate sections from a prompt.</p>)}
             </div>}
-            {!qq && <div className="lg">
+            {!qq && (pill === "all" || pill === "apps") && events.length > 0 && <div className="lg">
+              <button className={"lg-h" + (shut.has("My calendars") ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has("My calendars") ? n.delete("My calendars") : n.add("My calendars"); return n; })}><span>My booking calendars</span><em>{events.length}</em><Icon n="chevd" s={13} /></button>
+              {!shut.has("My calendars") && <div className="myforms">{events.map((ev) => (
+                <div key={ev.id} className="mf" draggable title="Drag onto the page, or click to add" onClick={() => addEl(`<section data-lb-name="Calendar section" style="padding:64px 24px"><div data-lb-calendar="${ev.id}" data-lb-name="Calendar: ${ev.name.replace(/"/g, "")}">${bookingWidget(ev, integ)}</div></section>`)}
+                  onDragStart={(e) => { drag.current = { html: `<div data-lb-calendar="${ev.id}" data-lb-name="Calendar: ${ev.name.replace(/"/g, "")}">${bookingWidget(ev, integ)}</div>` }; e.dataTransfer.setData("text/plain", "n"); }} onDragEnd={() => { drag.current = null; hideInd(); }}>
+                  <Icon n="calendar" s={16} /><div><b>{ev.name}</b><span>{ev.duration} min · {ev.days.length} days{ev.pay && ev.pay.enabled ? ` · ₹${ev.pay.amount}` : ""}</span></div></div>))}</div>}
+            </div>}
+            {!qq && (pill === "all" || pill === "apps") && <div className="lg">
               <button className={"lg-h" + (shut.has("My forms") ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has("My forms") ? n.delete("My forms") : n.add("My forms"); return n; })}><span>My forms</span><em>{forms.length}</em><Icon n="chevd" s={13} /></button>
               {!shut.has("My forms") && (forms.length ? <div className="myforms">{forms.map((f) => (
                 <div key={f.id} className="mf" draggable title="Drag onto the page, or click to add" onClick={() => addEl(`<section data-lb-name="Form section" style="padding:64px 24px">${formHtml(f, integ)}</section>`)}
@@ -410,10 +425,10 @@ export default function Editor({ page, user, forms = [], integ, onSave, onBack, 
                   <Icon n="form" s={16} /><div><b>{f.name}</b><span>{f.fields.length} fields · stays linked</span></div></div>))}</div>
                 : <p className="hint pad">No saved forms yet. Create them in Dashboard → <b>Forms</b> (with templates), then add them here.</p>)}
             </div>}
-            {LIB.map(([g, items]) => {
-              const list = items.filter(([, nm, , kw]) => !qq || (nm + " " + (kw || "") + " " + g).toLowerCase().includes(qq)); if (!list.length) return null;
+            {LIB.map(([g, items], gi) => {
+              const list = items.filter(([, nm, , kw]) => (!qq || (nm + " " + (kw || "") + " " + g).toLowerCase().includes(qq)) && (pill === "all" || qq || pillOf(g, nm) === pill)); if (!list.length) return null;
               const closed = !qq && shut.has(g);
-              return <div key={g} className="lg">
+              return <div key={g} className={"lg lgc" + gi}>
                 <button className={"lg-h" + (closed ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has(g) ? n.delete(g) : n.add(g); return n; })}><span>{g}</span><em>{list.length}</em><Icon n="chevd" s={13} /></button>
                 {!closed && <div className="pal">{list.map(([ic, nm, html]) => (
                   <div key={nm} className="pi" draggable title={`Drag onto the page, or click to add`} onClick={() => addEl(html)}
@@ -421,7 +436,7 @@ export default function Editor({ page, user, forms = [], integ, onSave, onBack, 
                     <Icon n={ic} s={20} w={1.5} /><span>{nm}</span></div>))}</div>}
               </div>;
             })}
-            <p className="hint pad">Drag onto the page — a purple line shows where it lands. Click to add below the selected element (or inside an empty box).</p>
+            <p className="hint pad">Drag onto the page — a blue line shows where it lands. Click to add below the selected element (or inside an empty box).</p>
           </>}
           {tab === "layers" && <Layers doc={doc} sel={inDoc ? selEl : null} onSelect={select} onChanged={(now) => (now ? commit(true) : changed())} tick={selKey} />}
           {tab === "pages" && <PagesPanel project={page} curId={curRef.current} act={pageAct} />}

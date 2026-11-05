@@ -1,4 +1,4 @@
-// LaunchBuilder v7 — tools.js
+// LaunchBuilder v14 — tools.js
 // Editor toolbox: draggable elements, settings, site runtime, video storage, zip export
 
 
@@ -192,6 +192,25 @@ details.lbw-acc>summary::-webkit-details-marker{display:none}
 details.lbw-acc>summary::after{content:"+";font-size:22px;font-weight:400;transition:transform .25s;color:var(--lb-primary,#4f46e5)}
 details.lbw-acc[open]>summary::after{transform:rotate(45deg)}
 [data-lb-progress]{transition:width 1.4s cubic-bezier(.2,.7,.2,1)}
+.lbw-book{display:grid;grid-template-columns:minmax(220px,280px) 1fr minmax(200px,250px);background:#fff;border:1px solid #e6e7ee;border-radius:18px;overflow:hidden;color:#1d1d2b;max-width:1100px;margin:0 auto;box-shadow:0 20px 50px -30px rgba(20,20,60,.35)}
+.lbw-bk-info{padding:28px;border-right:1px solid #eeeff4}.lbw-bk-info h3{margin:6px 0 10px;font-size:24px}.lbw-bk-info p{color:#5b5f73;line-height:1.6;margin:0 0 18px;font-size:14.5px}
+.lbw-bk-logo{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--lb-primary,#4f46e5);color:#fff;font-weight:800;margin-bottom:8px}
+.lbw-bk-org{font-weight:700;color:#6b6f82;font-size:14px}.lbw-bk-meta{display:flex;gap:10px;align-items:center;color:#3d4154;font-weight:600;font-size:14px;margin:10px 0}
+.lbw-bk-cal{padding:24px}.lbw-bk-mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.lbw-bk-mh b{font-size:18px}.lbw-bk-mh b span{color:#8a8ea3;font-weight:500}
+.lbw-bk-mh button{border:0;background:none;font-size:22px;color:#6b6f82;cursor:pointer;padding:2px 10px;border-radius:8px}.lbw-bk-mh button:hover{background:#f2f3f7}
+.lbw-bk-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.lbw-bk-grid i{font-style:normal;text-align:center;font-size:11.5px;font-weight:700;color:#5b5f73;padding:6px 0;letter-spacing:.04em}
+.lbw-bk-grid button{aspect-ratio:1;border:0;border-radius:10px;background:none;color:#a7aabb;font:600 15px inherit;font-family:inherit;cursor:default}
+.lbw-bk-grid button.on{background:#eceef4;color:#1d1d2b;cursor:pointer}.lbw-bk-grid button.on:hover{background:#dfe2ec}.lbw-bk-grid button.sel{background:#1d1d2b!important;color:#fff!important}
+.lbw-bk-grid button.today{box-shadow:inset 0 -3px 0 var(--lb-primary,#4f46e5)}
+.lbw-bk-slots{padding:24px 20px;border-left:1px solid #eeeff4;display:flex;flex-direction:column;gap:8px;max-height:480px;overflow:auto}
+.lbw-bk-day{font-weight:600;color:#3d4154;margin-bottom:6px}.lbw-bk-slots button{padding:12px;border:1px solid #dfe1ea;border-radius:10px;background:#fff;font:600 14.5px inherit;font-family:inherit;cursor:pointer;color:#1d1d2b}
+.lbw-bk-slots button:hover{border-color:var(--lb-primary,#4f46e5);color:var(--lb-primary,#4f46e5)}.lbw-bk-hint{color:#8a8ea3;font-size:14px}
+.lbw-bk-form{grid-column:1/-1;padding:26px 28px;border-top:1px solid #eeeff4}
+.lbw-bk-form label{display:block;font-weight:600;font-size:14px;margin-bottom:14px;color:#2b2e3f}.lbw-bk-form input,.lbw-bk-form textarea,.lbw-bk-form select{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:12px 13px;border:1px solid #dfe1ea;border-radius:10px;font:inherit;font-size:15px}
+.lbw-bk-form button[type=submit]{padding:14px 22px;border:0;border-radius:10px;background:#1d1d2b;color:#fff;font:700 15px inherit;font-family:inherit;cursor:pointer}
+.lbw-bk-back{border:0;background:none;color:#5b5f73;font:600 14px inherit;font-family:inherit;cursor:pointer;padding:0;margin-bottom:10px}
+.lbw-bk-sum{background:#f4f5f9;border-radius:10px;padding:12px 14px;font-weight:600;margin-bottom:18px;color:#2b2e3f}
+@media(max-width:860px){.lbw-book{grid-template-columns:1fr}.lbw-bk-info,.lbw-bk-slots{border:0;border-bottom:1px solid #eeeff4}.lbw-bk-slots{max-height:none;flex-direction:row;flex-wrap:wrap}.lbw-bk-slots button{flex:1 1 30%}}
 .lbw-ok{padding:22px;border-radius:12px;background:#ecfdf5;color:#065f46;font-weight:600;text-align:center}
 .lbw-pay{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:22px;border:1px solid #e7e5f2;border-radius:14px;background:#fff}
 .lbw-pay p{margin:0;color:#5f5b7d;font-size:14px}.lbw-pay img{border-radius:10px;border:1px solid #eee}
@@ -224,7 +243,9 @@ const SITE_CSS = `.lb-run [data-lb-anim]{opacity:0;transition:opacity .8s ease,t
 .lb-run [data-lb-preloader]{position:fixed!important;inset:0!important;z-index:10000;min-height:0!important;transition:opacity .5s}
 .lb-gone{opacity:0!important;pointer-events:none}
 .lb-run [data-lb-totop]{opacity:0;pointer-events:none;transition:opacity .3s}.lb-run [data-lb-totop].lb-show{opacity:1;pointer-events:auto}
-.lb-run [data-lb-cookie].lb-hidden{display:none!important}`;
+.lb-run [data-lb-cookie].lb-hidden{display:none!important}
+.lb-run .lbw-bk-form{display:none}.lb-run .lbw-book.lb-step2 .lbw-bk-cal,.lb-run .lbw-book.lb-step2 .lbw-bk-slots{display:none}.lb-run .lbw-book.lb-step2 .lbw-bk-form{display:block;grid-column:2/-1;border-top:0}
+@media(max-width:860px){.lb-run .lbw-book.lb-step2 .lbw-bk-form{grid-column:1}}`;
 
 /* Plain JS (no ${} inside!) — runs on the live site and in Preview */
 const RUNTIME = `(function(){
@@ -269,6 +290,32 @@ all('[data-lb-totop]').forEach(function(b){var f=function(){b.classList.toggle('
 all('[data-lb-cookie]').forEach(function(c){try{if(localStorage.getItem('lb_cookie_ok'))c.classList.add('lb-hidden')}catch(e){}c.addEventListener('click',function(e){if(e.target.closest('[data-lb-accept]')){e.preventDefault();try{localStorage.setItem('lb_cookie_ok',1)}catch(x){}c.classList.add('lb-hidden')}})});
 all('[data-lb-countdown]').forEach(function(c){var end=new Date(c.getAttribute('data-lb-countdown')).getTime();function tick(){var s=Math.max(0,Math.floor((end-Date.now())/1000)),v={d:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};all('[data-lb-cd]',c).forEach(function(x){var k=x.getAttribute('data-lb-cd');x.textContent=k==='d'?v.d:('0'+v[k]).slice(-2)})}tick();setInterval(tick,1000)});
 function labelOf(el,i){var l=el.closest('label'),t='';if(l)Array.prototype.forEach.call(l.childNodes,function(n){if(n.nodeType===3)t+=n.textContent});t=(t||el.placeholder||el.getAttribute('aria-label')||('Field '+(i+1))).replace(/\\*/g,'').trim();return t}
+all('[data-lb-booking]').forEach(function(bk){var c=jattr(bk,'data-lb-booking')||{};
+ var cal=bk.querySelector('[data-lb-bkcal]'),sl=bk.querySelector('[data-lb-bkslots]'),f=bk.querySelector('form'),sum=bk.querySelector('[data-lb-bksum]');if(!cal||!sl||!f)return;
+ var days=c.days||[1,2,3,4,5],st=c.start||'10:00',en=c.end||'17:00',step=+c.step||30,ahead=+c.ahead||30,dur=+c.duration||30,notice=(+c.notice||0)*3600000,busy={},fid=f.getAttribute('data-lb-form-id'),blocked=c.blocked||[],maxd=+c.maxPerDay||0,perDay={};
+ var MN=['January','February','March','April','May','June','July','August','September','October','November','December'],WD=['SUN','MON','TUE','WED','THU','FRI','SAT'],WL=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+ var today=new Date();today.setHours(0,0,0,0);var last=new Date(today.getTime()+ahead*86400000),view=new Date(today.getFullYear(),today.getMonth(),1),pick=null;
+ function pad(n){return ('0'+n).slice(-2)}function iso(x){return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate())}
+ function ok(x){var k=iso(x);return x>=today&&x<=last&&days.indexOf(x.getDay())>=0&&blocked.indexOf(k)<0&&!(maxd&&(perDay[k]||0)>=maxd)}
+ function times(x){var a=st.split(':'),b=en.split(':'),t=(+a[0])*60+(+a[1]),te=(+b[0])*60+(+b[1]),now=new Date(),r=[];for(;t+dur<=te;t+=step){var s2=new Date(x.getFullYear(),x.getMonth(),x.getDate(),Math.floor(t/60),t%60),lb=pad(Math.floor(t/60))+':'+pad(t%60);if(s2.getTime()>now.getTime()+notice&&!busy[iso(x)+' '+lb])r.push(lb)}return r}
+ function draw(){var y=view.getFullYear(),m=view.getMonth(),fd=new Date(y,m,1).getDay(),n=new Date(y,m+1,0).getDate(),h='<div class="lbw-bk-mh"><b>'+MN[m]+' <span>'+y+'</span></b><div><button type="button" data-p="-1" aria-label="Previous month">‹</button><button type="button" data-p="1" aria-label="Next month">›</button></div></div><div class="lbw-bk-grid">';
+  WD.forEach(function(w){h+='<i>'+w+'</i>'});for(var i=0;i<fd;i++)h+='<span></span>';
+  for(var k=1;k<=n;k++){var x=new Date(y,m,k),on=ok(x)&&times(x).length>0;h+='<button type="button" data-d="'+iso(x)+'" class="'+(on?'on':'')+(pick&&iso(pick)===iso(x)?' sel':'')+(iso(x)===iso(today)?' today':'')+'"'+(on?'':' disabled')+'>'+k+'</button>'}
+  cal.innerHTML=h+'</div>';
+  Array.prototype.forEach.call(cal.querySelectorAll('[data-p]'),function(b){b.onclick=function(){view=new Date(y,m+(+b.getAttribute('data-p')),1);draw()}});
+  Array.prototype.forEach.call(cal.querySelectorAll('[data-d]'),function(b){b.onclick=function(){var q=b.getAttribute('data-d').split('-');pick=new Date(+q[0],+q[1]-1,+q[2]);draw();slots()}})}
+ function slots(){if(!pick){sl.innerHTML='<p class="lbw-bk-hint">Pick a date to see available times</p>';return}
+  var r=times(pick),h='<div class="lbw-bk-day">'+WL[pick.getDay()]+' <b>'+pick.getDate()+'</b></div>';r.forEach(function(t){h+='<button type="button" data-t="'+t+'">'+t+'</button>'});
+  if(!r.length)h+='<p class="lbw-bk-hint">No times left on this day</p>';sl.innerHTML=h;
+  Array.prototype.forEach.call(sl.querySelectorAll('[data-t]'),function(b){b.onclick=function(){choose(b.getAttribute('data-t'))}})}
+ function choose(t){var set=function(n,v){var x=f.querySelector('[name="'+n+'"]');if(!x){x=d.createElement('input');x.type='hidden';x.name=n;f.appendChild(x)}x.value=v};
+  set('date',iso(pick));set('time',t);set('duration',dur+' min');
+  if(sum)sum.textContent=WL[pick.getDay()]+', '+pick.getDate()+' '+MN[pick.getMonth()]+' '+pick.getFullYear()+' · '+t+' · '+dur+' min'+(c.tz?' · '+c.tz:'');bk.classList.add('lb-step2')}
+ bk.addEventListener('click',function(e){if(e.target.closest('[data-lb-bkback]')){e.preventDefault();bk.classList.remove('lb-step2')}});
+ var fs=null;for(var z=0;z<=ahead&&!fs;z++){var cand=new Date(today.getTime()+z*86400000);if(ok(cand)&&times(cand).length)fs=cand}
+ if(fs){pick=fs;view=new Date(fs.getFullYear(),fs.getMonth(),1)}draw();slots();
+ if(W.LB_LEAD_URL&&fid&&W.fetch)fetch(W.LB_LEAD_URL,{method:'POST',body:JSON.stringify({action:'busy',formId:fid})}).then(function(r){return r.json()}).then(function(j){(j.busy||[]).forEach(function(x){busy[x]=1;var dk=x.split(' ')[0];perDay[dk]=(perDay[dk]||0)+1});if(pick&&!times(pick).length)pick=null;draw();slots()}).catch(function(){});
+ f.addEventListener('submit',function(){var dv=f.querySelector('[name=date]'),tv=f.querySelector('[name=time]');if(dv&&tv)busy[dv.value+' '+tv.value]=1},true)});
 function post(u,o){try{if(u&&W.fetch)return fetch(u,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o)}).catch(function(){})}catch(x){}return Promise.resolve()}
 function fillT(t,data){return String(t||'').replace(/\\{\\{\\s*([\\w-]+)\\s*\\}\\}/g,function(m,k){return data[k]!=null?data[k]:''})}
 function phoneOf(data){for(var k in data){if(/phone|tel|mobile|whats/i.test(k))return String(data[k])}return ''}
@@ -284,6 +331,7 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
   if(pay)lead.payment={status:'pending',amount:+pay.amount,mode:pay.mode,currency:'INR'};
   if(wa&&wa.hook){var ph=phoneOf(data).replace(/\\D/g,'');if(ph.length===10)ph=String(wa.cc||'91')+ph;lead.whatsapp={to:ph,message:fillT(wa.msg,data)}}
   if(W.LB_PREVIEW)parent.postMessage({lb:'lead',lead:lead},'*');
+  if(W.LB_LEAD_URL)post(W.LB_LEAD_URL,{action:'lead',lead:Object.assign({site:W.LB_SITE||''},lead)});
   post(hook,{event:'lead.created',lead:lead});
   if(pay)f.__lead=lead}
  var mail=jattr(f,'data-lb-mail');
@@ -303,6 +351,7 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
  if(!pay){sendWA();sendMail();done();return}
  var paid=function(pm){lead.payment=Object.assign({},lead.payment,pm,{ts:Date.now()});f.__lead=null;
   if(W.LB_PREVIEW)parent.postMessage({lb:'lead-pay',lid:lead.lid,payment:lead.payment},'*');
+  if(W.LB_LEAD_URL)post(W.LB_LEAD_URL,{action:'leadpay',lid:lead.lid,payment:lead.payment});
   post(hook,{event:'payment.'+pm.status,lead:lead});sendWA();sendMail();done()};
  var amt=(+pay.amount).toLocaleString('en-IN');
  if(pay.mode==='razorpay'&&pay.key){if(btn)btn.disabled=true;
@@ -339,7 +388,7 @@ export const readCfg = (doc) => { const s = doc.getElementById("lb-settings"); t
  * mode "blob": uploaded videos point at in-browser blob URLs (Preview)
  * mode "zip":  uploaded videos become files in assets/ (Export)
  */
-export async function finalize(html, { mode = "zip", preview = false, page = "index.html", hash = "" } = {}) {
+export async function finalize(html, { mode = "zip", preview = false, page = "index.html", hash = "", leadUrl = "", site = "" } = {}) {
   const doc = new DOMParser().parseFromString(html, "text/html"), head = doc.head, files = [];
   const cfg = readCfg(doc);
   doc.getElementById("lb-settings") && doc.getElementById("lb-settings").remove();
@@ -362,6 +411,7 @@ export async function finalize(html, { mode = "zip", preview = false, page = "in
   }
 
   const body = doc.body;
+  if (leadUrl) { const s = doc.createElement("script"); s.textContent = `window.LB_LEAD_URL=${JSON.stringify(leadUrl)};window.LB_SITE=${JSON.stringify(site)};`; body.appendChild(s); }
   if (preview) { const s = doc.createElement("script"); s.textContent = `window.LB_PREVIEW=1;window.LB_PAGE=${JSON.stringify(page)};window.LB_HASH=${JSON.stringify(hash)};`; body.appendChild(s); }
   const rt = doc.createElement("script"); rt.id = "lb-runtime"; rt.textContent = RUNTIME; body.appendChild(rt);
   if (cfg.js && cfg.js.trim()) { const s = doc.createElement("script"); s.textContent = cfg.js.replace(/<\/script/gi, "<\\/script"); body.appendChild(s); }
@@ -397,6 +447,47 @@ const NAVLINKS = [["Home", "index.html"], ["About", "about.html"], ["Services", 
 const navA = (st = "") => NAVLINKS.map(([t, f]) => `<a href="${f}" style="${st}">${t}</a>`).join("");
 
 /* [icon, name, html, extra search words] grouped by category */
+/* placeholder for "pick a saved calendar / form" elements */
+const SLOT = (attr, ic, name, msg) => `<div data-lb-${attr}="" data-lb-name="${name}" style="padding:44px 24px;border:2px dashed #c7d2fe;border-radius:18px;background:#f8faff;text-align:center;color:#4b5563;font-family:system-ui,sans-serif"><div style="font-size:34px">${ic}</div><b style="display:block;font-size:18px;color:#111827;margin:6px 0">${name}</b><span style="font-size:14px">${msg}</span></div>`;
+/* Booking calendar element (Cal.com-style). Built from a Calendar event (or defaults).
+   In the editor it shows a static preview; on the live site it's interactive. */
+const LOC = { meet: "📹 Google Meet", zoom: "📹 Zoom", phone: "📞 Phone call", whatsapp: "💬 WhatsApp call", inperson: "📍 In person" };
+export function bookingWidget(ev = {}, integ = null) {
+  const esc = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const e = { name: "Book a free demo", org: "Your brand", desc: "A 30-minute call to understand your goals and show you how we can help. Bring your questions!", duration: 30, location: "meet", locationNote: "",
+    days: [1, 2, 3, 4, 5], start: "10:00", end: "17:00", step: 30, ahead: 30, notice: 0, tz: "Asia/Kolkata", fields: { phone: true, notes: true }, success: "✅ You're booked! A confirmation is on its way.", color: "", ...ev };
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth(), fd = new Date(y, m, 1).getDay(), n = new Date(y, m + 1, 0).getDate();
+  const MN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  let grid = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((w) => `<i>${w}</i>`).join("") + "<span></span>".repeat(fd);
+  for (let k = 1; k <= n; k++) { const wd = new Date(y, m, k).getDay(), on = k >= now.getDate() && (e.days || []).includes(wd); grid += `<button type="button" class="${on ? "on" : ""}${k === now.getDate() ? " today" : ""}"${on ? "" : " disabled"}>${k}</button>`; }
+  const [sh, sm] = (e.start || "10:00").split(":").map(Number), [eh, em2] = (e.end || "17:00").split(":").map(Number), times = [];
+  for (let t = sh * 60 + sm; t + (+e.duration || 30) <= eh * 60 + em2 && times.length < 8; t += +e.step || 30) times.push(String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0"));
+  const cfg = esc(JSON.stringify({ duration: +e.duration || 30, days: e.days, start: e.start, end: e.end, step: +e.step || 30, ahead: +e.ahead || 30, notice: +e.notice || 0, tz: e.tz, blocked: e.blocked || [], maxPerDay: +e.maxPerDay || 0 }));
+  const F = (l, nm, t = "text", r = true) => `<label>${esc(l)}${r ? " *" : ""}<input type="${t}" name="${nm}"${r ? " required" : ""}></label>`;
+  const f = e.fields || {};
+  /* payment / WhatsApp / email automation — same settings as Forms */
+  const ig = integ || {}, gp = ig.pay || {}, p = e.pay || {}, amt = +p.amount || 0, payOn = p.enabled && amt > 0;
+  const payCfg = payOn ? { amount: amt, mode: p.mode || "razorpay", key: p.key || gp.razorpayKey || "", upi: p.upi || gp.upiId || "", payee: p.payee || gp.payee || e.org || e.name, link: p.link || "", desc: e.name, color: e.color || "#3d6bff" } : null;
+  const gw = ig.wa || {}, waCfg = e.wa && e.wa.enabled && (e.wa.hook || gw.webhook) ? { hook: e.wa.hook || gw.webhook, msg: e.wa.msg || "Hi {{name}}, your booking for {{date}} at {{time}} is confirmed!", cc: gw.country || "91" } : null;
+  const ge = ig.email || {}, mailOk = ge.provider === "emailjs" ? !!(ge.serviceId && ge.templateId && ge.publicKey) : !!ge.webhook;
+  const mailCfg = e.email && e.email.enabled && mailOk ? { p: ge.provider, s: ge.serviceId, t: ge.templateId, k: ge.publicKey, hook: ge.webhook, from: ge.fromName || e.org || e.name, reply: ge.ownerEmail || "", auto: true,
+    subj: e.email.subject || "Confirmed: " + e.name + " on {{date}} at {{time}}", body: e.email.body || "Hi {{name}},\n\nYour booking is confirmed for {{date}} at {{time}} (" + (e.duration || 30) + " min).\n\nSee you then!\n" + (ge.fromName || e.org || ""), owner: e.email.notify ? ge.ownerEmail || "" : "", osubj: "New booking: {{name}} — {{date}} {{time}}" } : null;
+  const attrs = (e.redirect ? ` data-lb-redirect="${esc(e.redirect)}"` : "") + (payCfg ? ` data-lb-pay="${esc(JSON.stringify(payCfg))}"` : "") + (waCfg ? ` data-lb-wa="${esc(JSON.stringify(waCfg))}"` : "") + (mailCfg ? ` data-lb-mail="${esc(JSON.stringify(mailCfg))}"` : "");
+  const C = e.color ? ` style="--lb-primary:${esc(e.color)}"` : "";
+  return `<div class="lbw-book" data-lb-name="Booking: ${esc(e.name)}" data-lb-booking="${cfg}"${e.id ? ` data-lb-event="${esc(e.id)}"` : ""}${C}>
+<div class="lbw-bk-info"><div class="lbw-bk-logo">${esc((e.org || e.name || "B").trim()[0] || "B").toUpperCase()}</div><span class="lbw-bk-org">${esc(e.org || "")}</span><h3>${esc(e.name)}</h3><p>${esc(e.desc || "")}</p>
+<div class="lbw-bk-meta">🕒 ${+e.duration || 30} min</div><div class="lbw-bk-meta">${LOC[e.location] || LOC.meet}${e.locationNote ? " · " + esc(e.locationNote) : ""}</div><div class="lbw-bk-meta">🌐 ${esc(e.tz || "")}</div>${payOn ? `<div class="lbw-bk-meta">💳 ₹${amt.toLocaleString("en-IN")}</div>` : ""}</div>
+<div class="lbw-bk-cal" data-lb-bkcal><div class="lbw-bk-mh"><b>${MN[m]} <span>${y}</span></b><div><button type="button">‹</button><button type="button">›</button></div></div><div class="lbw-bk-grid">${grid}</div></div>
+<div class="lbw-bk-slots" data-lb-bkslots><div class="lbw-bk-day">Available times</div>${times.map((t) => `<button type="button">${t}</button>`).join("")}</div>
+<form class="lbw-bk-form" data-lb-form="Booking: ${esc(e.name)}"${e.id ? ` data-lb-form-id="${esc(e.id)}"` : ""} data-lb-success="${esc(e.success || "")}"${attrs}><button type="button" class="lbw-bk-back" data-lb-bkback>← Back</button><div class="lbw-bk-sum" data-lb-bksum>Your selected date &amp; time appear here</div>
+${F("Your name", "name")}${F("Email address", "email", "email")}${f.phone ? F("WhatsApp number", "phone", "tel") : ""}${f.company ? F("Company", "company", "text", false) : ""}${f.custom ? F(f.custom, "custom", "text", false) : ""}${(e.questions || []).filter((q) => q.label).map((q, i) => { const nm = "q" + (i + 1) + "_" + String(q.label).toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 24), r = q.required ? " required" : "";
+  return q.type === "textarea" ? `<label>${esc(q.label)}${q.required ? " *" : ""}<textarea name="${nm}" rows="3"${r}></textarea></label>` : q.type === "select" ? `<label>${esc(q.label)}${q.required ? " *" : ""}<select name="${nm}"${r}><option value="">Choose…</option>${String(q.options || "").split(",").map((o) => o.trim()).filter(Boolean).map((o) => `<option>${esc(o)}</option>`).join("")}</select></label>` : F(q.label, nm, q.type === "number" ? "number" : "text", !!q.required); }).join("")}${f.notes ? '<label>What would you like to discuss?<textarea name="notes" rows="3"></textarea></label>' : ""}
+<button type="submit">${payOn ? `${esc(e.button || "Confirm")} &amp; pay ₹${amt.toLocaleString("en-IN")}` : esc(e.button || "Confirm booking")}</button></form></div>`;
+}
+/* a full page that shows only the booking calendar (public booking link) */
+const escB = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+export const bookingPageHtml = (ev, integ) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escB(ev.name)}${ev.org ? " — " + escB(ev.org) : ""}</title><meta name="description" content="${escB(ev.desc || "")}"><style>body{margin:0;min-height:100vh;background:#f3f4f8;font-family:Inter,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:32px 16px;box-sizing:border-box}</style></head><body><div style="width:100%;max-width:1100px">${bookingWidget(ev, integ)}<p style="text-align:center;color:#8a8ea3;font-size:12px;margin-top:16px">Powered by LaunchBuilder</p></div></body></html>`;
+
 export const LIB = [
   ["Layout", [
     ["section", "Section", '<section data-lb-ph style="padding:72px 24px"></section>', "wrapper block"],
@@ -471,13 +562,15 @@ export const LIB = [
     ["cookie", "Cookie banner", `<div data-lb-cookie data-lb-name="Cookie banner" style="position:fixed;left:20px;right:20px;bottom:20px;z-index:95;max-width:640px;margin:0 auto;background:${INK};color:#e9e7ff;border-radius:16px;padding:18px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;box-shadow:0 20px 50px rgba(0,0,0,.3)"><span style="flex:1;min-width:220px;font-size:14px;line-height:1.5">We use cookies to improve your experience. <a href="privacy-policy.html" style="color:#a99fff">Privacy policy</a></span><button data-lb-accept type="button" style="border:0;border-radius:10px;padding:10px 18px;background:#fff;color:${INK};font-weight:700;cursor:pointer">Accept</button></div>`, "consent gdpr"],
     ["loader", "Preloader", `<div data-lb-preloader data-lb-name="Preloader" style="display:grid;place-items:center;min-height:140px;background:#fff"><div style="width:44px;height:44px;border-radius:50%;border:4px solid #efedff;border-top-color:${P};animation:lbspin .8s linear infinite"></div><style>@keyframes lbspin{to{transform:rotate(360deg)}}</style></div>`, "loading spinner"],
   ]],
-  ["Forms", [
+  ["Forms & calendars", [
     ["form", "Lead form", form("Lead form", field("Name", "name") + field("Email", "email", "email") + field("WhatsApp number", "phone", "tel"), "Register now", "Thanks! We'll contact you on WhatsApp shortly.", "max-width:520px"), "register signup leads crm"],
     ["mail", "Contact form", `<div data-lb-name="Contact form" style="background:#fff;border:1px solid #ecebf5;border-radius:20px;padding:32px;max-width:620px">${h2("Get in touch", "We reply within one working day.", false)}${form("Contact form", `<div class="lbw-stack" style="display:flex;gap:14px"><div style="flex:1">${field("Name", "name")}</div><div style="flex:1">${field("Email", "email", "email")}</div></div>${field("Phone", "phone", "tel", false)}${field("Message", "message", "textarea")}`, "Send message", "Message sent. We'll get back to you soon.")}</div>`, "enquiry"],
     ["mail", "Newsletter", `<div data-lb-name="Newsletter" style="background:#f6f5ff;border-radius:20px;padding:36px;text-align:center"><h3 style="font-size:26px;margin:0 0 8px;color:${INK}">Get weekly tips</h3><p style="color:${MUTED};margin:0 0 18px">One email a week. Unsubscribe anytime.</p><form data-lb-form="Newsletter" data-lb-success="You're subscribed!" style="display:flex;gap:10px;max-width:460px;margin:0 auto;flex-wrap:wrap"><input type="email" name="email" required placeholder="you@example.com" style="${INP};flex:1;min-width:200px;margin:0"><button type="submit" style="padding:13px 22px;border:0;border-radius:10px;background:${P};color:#fff;font:inherit;font-weight:700;cursor:pointer">Subscribe</button></form></div>`, "subscription email signup"],
     ["lock", "Login form", `<div data-lb-name="Login form" style="max-width:400px;margin:0 auto;background:#fff;border:1px solid #ecebf5;border-radius:20px;padding:32px"><h3 style="margin:0 0 18px;font-size:24px;color:${INK}">Log in</h3><form data-lb-form="Login" data-lb-success="Login needs a member backend. This form is a design placeholder.">${field("Email", "email", "email")}<label style="${LBL}">Password *<input type="password" required style="${INP}"></label>${submit("Log in")}</form><p style="text-align:center;color:${MUTED};font-size:14px;margin:14px 0 0">No account? <a href="#" style="color:${P}">Register</a></p></div>`, "sign in member"],
     ["user", "Registration form", `<div data-lb-name="Registration form" style="max-width:460px;margin:0 auto;background:#fff;border:1px solid #ecebf5;border-radius:20px;padding:32px"><h3 style="margin:0 0 18px;font-size:24px;color:${INK}">Create your account</h3>${form("Registration", field("Full name", "name") + field("Email", "email", "email") + field("Phone", "phone", "tel") + field("I agree to the terms", "terms", "checkbox"), "Register", "Registration received!")}</div>`, "signup register"],
     ["search", "Search bar", `<form role="search" data-lb-name="Search bar" style="display:flex;gap:8px;max-width:520px"><input type="search" name="q" placeholder="Search…" style="${INP};margin:0;flex:1"><button type="submit" style="padding:0 20px;border:0;border-radius:10px;background:${P};color:#fff;font:inherit;font-weight:700;cursor:pointer">Search</button></form>`, "search box"],
+    ["calendar", "Calendar", SLOT("calendar", "📅", "Calendar", "Select this block, then pick one of your calendars in the left panel."), "calendar booking appointment schedule meeting demo call slot calendly"],
+    ["form", "Saved form", SLOT("formslot", "📝", "Form", "Select this block, then pick one of your saved forms in the left panel."), "form saved my forms linked lead crm"],
     ["code", "CRM form embed", `<div data-lb-embed data-lb-name="Form embed" style="border-radius:16px;overflow:hidden;background:#f6f5ff;min-height:200px"><div data-lb-eph style="padding:40px;text-align:center;color:#6b6890;font:500 14px system-ui,sans-serif">Select this block, then paste your CRM form link or embed code<br>(e.g. your Lead Generation form URL)</div></div>`, "iframe embed crm external form"],
     ["code", "HTML embed", `<div data-lb-html data-lb-name="HTML embed" style="padding:24px;background:#f6f5ff;border-radius:12px;text-align:center;color:#6b6890">Custom HTML — select it and paste your code in Content</div>`, "custom code script widget"],
   ]],
@@ -497,6 +590,11 @@ export const LIB = [
     ["card2", "Payment button", `<div style="padding:6px 0"><a href="https://rzp.io/l/your-link" target="_blank" rel="noopener" data-lb-name="Payment button" style="display:inline-flex;gap:10px;align-items:center;padding:15px 28px;border-radius:12px;background:#0b72e7;color:#fff;font-weight:700;text-decoration:none">Pay ₹21 securely</a><div style="font-size:12px;color:${MUTED};margin-top:8px">Paste your Razorpay / Stripe / UPI payment link in Content → Link</div></div>`, "payment gateway razorpay stripe upi checkout"],
   ]],
 ];
+/* short, clear tile names (old names stay searchable) */
+const SHORT = { "Breadcrumbs": "Page path", "Announcement bar": "Notice bar", "Background section": "Photo section", "Testimonials": "Reviews", "Newsletter": "Email signup",
+  "Registration form": "Signup form", "Categories & tags": "Tags", "Pagination": "Page numbers", "Secondary menu": "Sub menu" };
+LIB.forEach(([, items]) => items.forEach((it) => { const n = SHORT[it[1]]; if (n) { it[3] = ((it[3] || "") + " " + it[1]).toLowerCase(); it[1] = n; } }));
+
 
 /* ---------- page templates (Pages → Add page) ---------- */
 const shell = (title, body) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{margin:0;font-family:Inter,system-ui,sans-serif;color:#16142b}</style></head><body>${body}</body></html>`;
@@ -564,15 +662,15 @@ export const formPageHtml = (form, integ) => `<!DOCTYPE html><html lang="en"><he
 
 /* ==================== Elementor-style structures (section with columns) ==================== */
 export const STRUCTURES = [
-  ["100", [1]], ["50 / 50", [1, 1]], ["33 / 66", [1, 2]], ["66 / 33", [2, 1]], ["33 × 3", [1, 1, 1]],
-  ["25 / 50 / 25", [1, 2, 1]], ["25 × 4", [1, 1, 1, 1]], ["25 / 75", [1, 3]], ["75 / 25", [3, 1]], ["20 × 5", [1, 1, 1, 1, 1]],
+  ["100", [1]], ["50/50", [1, 1]], ["33/66", [1, 2]], ["66/33", [2, 1]], ["33×3", [1, 1, 1]],
+  ["25/50/25", [1, 2, 1]], ["25×4", [1, 1, 1, 1]], ["25/75", [1, 3]], ["75/25", [3, 1]], ["20×5", [1, 1, 1, 1, 1]],
 ];
 export const structureHtml = (cols) => `<section data-lb-name="Section" style="padding:64px 24px"><div class="lbw-stack" data-lb-name="Row" style="max-width:1140px;margin:0 auto;display:flex;gap:28px;align-items:stretch">${cols.map((c, i) => `<div data-lb-ph data-lb-name="Column ${i + 1}" style="flex:${c} 1 0;min-width:0"></div>`).join("")}</div></section>`;
 
 /* ==================== build a whole site for publishing (all pages + uploaded videos + sitemap + 404) ==================== */
-export async function buildSite(pages, base = "") {
+export async function buildSite(pages, base = "", live = {}) {
   const out = [];
-  for (const p of pages) { const r = await finalize(p.html, { mode: "zip", page: p.file }); out.push({ name: p.file, data: r.html }); r.files.forEach((f) => !out.some((o) => o.name === f.name) && out.push(f)); }
+  for (const p of pages) { const r = await finalize(p.html, { mode: "zip", page: p.file, leadUrl: live.leadUrl || "", site: live.site || "" }); out.push({ name: p.file, data: r.html }); r.files.forEach((f) => !out.some((o) => o.name === f.name) && out.push(f)); }
   if (!pages.some((p) => p.file === "index.html") && pages[0]) out.push({ name: "index.html", data: out[0].data });
   if (!pages.some((p) => p.file === "404.html")) out.push({ name: "404.html", data: (await finalize(PAGE_TPLS.find((t) => t[0] === "404")[2]("Page not found"))).html });
   if (base) {

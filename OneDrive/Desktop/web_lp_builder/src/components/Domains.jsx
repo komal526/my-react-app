@@ -1,6 +1,6 @@
-// LaunchBuilder v7 — Domains.jsx
+// LaunchBuilder v13 — Domains.jsx
 import { useState } from "react";
-import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A } from "../lib.js";
+import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS } from "../lib.js";
 
 /* ================= Domains: connect a custom domain (DNS records or nameservers) and verify ================= */
 const copy = (t) => (navigator.clipboard ? navigator.clipboard.writeText(t).catch(() => window.prompt("Copy:", t)) : window.prompt("Copy:", t));
@@ -111,17 +111,105 @@ function DomainCard({ p, onPatch, onOpen, integ, onSetup, onPublish }) {
   );
 }
 
-export default function Domains({ projects, onPatch, onOpen, integ, onSetup, onPublish }) {
+/* ---------- sites published on your own hosting (lb-server.php) ---------- */
+/* one row = one target (whole website or a single page), each with its own domain */
+function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, integ, onSetup, onOpen }) {
+  const [open, setOpen] = useState(false), [kind, setKind] = useState(obj.domain && !isApex(obj.domain) ? "sub" : "domain");
+  const [val, setVal] = useState(obj.domain || ""), [busy, setBusy] = useState(""), [err, setErr] = useState(""), [note, setNote] = useState(""), [ns, setNs] = useState(false);
+  const srv = (integ && integ.server) || {}, ip = srv.ip || "", st = STATUS[obj.domain ? obj.domainStatus || "pending" : "none"], chk = obj.domainCheck;
+  const d = cleanDomain(val).replace(/^www\./, ""), sub = d && !isApex(d) ? d.slice(0, -(rootDomain(d).length + 1)) : "offer";
+  const save = async () => {
+    setErr(""); setNote("");
+    if (!validDomain(d)) return setErr("Type a domain like mybrand.com or offer.mybrand.com");
+    const k = isApex(d) ? "domain" : "sub"; setKind(k); setVal(d);   // detect automatically — no wrong-tab errors
+    onSave({ domain: d, domainStatus: "pending", domainCheck: null });
+    if (!serverOn(integ)) { setNote(`✓ Saved ${d}. Publish this site once so it can be routed.`); return; }
+    setBusy("route");
+    try { await phpCall(srv, { action: "domain", domain: d, ...route }); setNote(`✓ ${d} is connected to this ${route.page ? "page" : "website"}. It opens as soon as the domain points to your hosting (steps below).`); }
+    catch (e) { setNote(`✓ Saved ${d}.`); setErr("Routing on the server didn't go through: " + e.message); }
+    setBusy("");
+  };
+  const remove = async () => {
+    if (!window.confirm(`Disconnect ${obj.domain}?`)) return;
+    if (serverOn(integ)) { try { await phpCall(srv, { action: "domain", domain: "", ...route }); } catch { /* ignore */ } }
+    onSave({ domain: "", domainStatus: "", domainCheck: null }); setVal("");
+  };
+  const verify = async () => {
+    setBusy("verify"); let ok = false, found = [];
+    if (ns) { const r = await verifyNS(obj.domain, HOSTINGER_NS); ok = r.ok; found = r.found; }
+    else { try { found = await dnsLookup(obj.domain, "A"); ok = found.length > 0 && (!ip || found.includes(ip)); } catch { found = []; } }
+    onSave({ domainCheck: { ok, found, ts: Date.now(), ns }, domainStatus: ok ? "connected" : "pending" }); setBusy("");
+  };
+  const C = ({ v }) => <><code>{v}</code> <Copy v={v} /></>;
+  return (
+    <div className={"dr" + (open ? " open" : "")}>
+      <div className="dr-h" onClick={() => setOpen(!open)}>
+        <div className="dr-l"><b>{label}</b><span className="mut sm">{subLabel}</span></div>
+        <div className="dr-d">{obj.domain ? <><code className="dm-own">{obj.domain}</code><span className={"badge " + st[0]}>{st[1]}</span></> : <a href={url} target="_blank" rel="noopener" className="mut sm" onClick={(e) => e.stopPropagation()}>{url.replace(/^https?:\/\//, "")} ↗</a>}</div>
+        <button className={obj.domain ? "" : "pri"} onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>{open ? "Close" : obj.domain ? "Manage" : "Connect domain"}</button>
+      </div>
+      {open && <div className="dm-body">
+        <div className="dm-kind">{[["domain", "Domain", "mybrand.com"], ["sub", "Subdomain", "offer.mybrand.com"]].map(([k, l, ex]) => <button key={k} className={kind === k ? "on" : ""} onClick={() => { setKind(k); setErr(""); setNote(""); }}><b>{l}</b><span>{ex}</span></button>)}</div>
+        <div className="dm-step"><span className="dm-n">1</span><div className="grow"><b>Type your domain or subdomain</b> <span className="mut sm">— we detect which one it is</span>
+          <div className="row" style={{ marginTop: 8 }}><input value={val} placeholder="mybrand.com or offer.mybrand.com" onChange={(e) => { setVal(e.target.value); const c = cleanDomain(e.target.value).replace(/^www\./, ""); if (validDomain(c)) setKind(isApex(c) ? "domain" : "sub"); }} onKeyDown={(e) => e.key === "Enter" && save()} />
+            <button className="pri" disabled={busy === "route"} onClick={save}>{busy === "route" ? "Connecting…" : obj.domain ? "Update" : "Connect"}</button>{obj.domain && <button className="red" onClick={remove}>Disconnect</button>}</div>
+          {note && <p className="green sm">{note}</p>}{err && <p className="red sm">{err}</p>}</div></div>
+        {kind === "sub" ? <div className="dm-step"><span className="dm-n">2</span><div className="grow"><b>Create the subdomain in Hostinger</b>
+          <p className="mut sm">hPanel → <b>Domains → Subdomains</b> → name <C v={sub} /> → tick <b>Custom folder for subdomain</b> → folder <C v={folder.replace(/^public_html\//, "")} /> → <b>Create</b>.</p>
+          <p className="mut sm">Main domain's DNS somewhere else (GoDaddy, Namecheap…)? Add there: <b>A</b> record, host <C v={sub} />, value <C v={ip || "your server IP (hPanel → Hosting → Details)"} />.</p></div></div>
+        : <>
+          <div className="dm-step"><span className="dm-n">2</span><div className="grow"><b>Point the domain to your hosting — pick one</b>
+            <div className="dm-methods" style={{ marginTop: 8 }}>
+              <button className={!ns ? "on" : ""} onClick={() => setNs(false)}><b>DNS records</b><span>Keep your DNS where it is — add 2 records</span></button>
+              <button className={ns ? "on" : ""} onClick={() => setNs(true)}><b>Nameservers</b><span>Easiest — change 2 nameservers once</span></button></div>
+            {ns ? <div className="dm-ns" style={{ marginTop: 10 }}>{HOSTINGER_NS.map((x) => <div key={x}><C v={x} /></div>)}<p className="mut sm">At your registrar → Nameservers → Custom → enter these two → Save.</p></div>
+              : <div className="ltable" style={{ marginTop: 10 }}><table><thead><tr><th>Type</th><th>Host</th><th>Points to</th></tr></thead><tbody>
+                <tr><td><b>A</b></td><td><C v="@" /></td><td>{ip ? <C v={ip} /> : <span className="mut">Server IP from hPanel → Hosting → Details</span>}</td></tr>
+                <tr><td><b>CNAME</b></td><td><C v="www" /></td><td><C v={d || "mybrand.com"} /></td></tr></tbody></table></div>}
+          </div></div>
+          <div className="dm-step"><span className="dm-n">3</span><div className="grow"><b>Park the domain on this hosting</b>
+            <p className="mut sm">hPanel → <b>Websites</b> → your builder's site → <b>Domains → Parked domains</b> → enter <C v={d || "mybrand.com"} /> → <b>Park domain</b>. The routing to this {route.page ? "page" : "website"} is already done.</p></div></div>
+        </>}
+        {obj.domain && <div className="dm-step"><span className="dm-n">{kind === "sub" ? 3 : 4}</span><div className="grow"><b>Verify &amp; secure</b>
+          <div className="row" style={{ marginTop: 6 }}><button className="pri" disabled={busy === "verify"} onClick={verify}>{busy === "verify" ? "Checking…" : "Verify now"}</button>
+            {chk && <span className={chk.ok ? "green" : "mut"}>{chk.ok ? `✓ Connected — checked ${ago(chk.ts)}` : `Not yet — DNS shows ${(chk.found || []).join(", ") || "nothing"} (${ago(chk.ts)}). Can take a few hours.`}</span>}</div>
+          <p className="mut sm">Then hPanel → <b>Security → SSL</b> → install the free SSL for <b>{obj.domain}</b>.</p>
+          <div className="row"><a className="btn" href={`http://${obj.domain}`} target="_blank" rel="noopener">Visit {obj.domain}</a>{onOpen && <button onClick={onOpen}>Open in editor</button>}</div></div></div>}
+      </div>}
+    </div>
+  );
+}
+
+function ServerCard({ p, onPatch, onPatchPage, onOpen, integ, onSetup }) {
+  const folder = p.host.folder || `public_html/sites/${p.host.slug}`, base = p.host.url.replace(/\/$/, "");
+  const multi = p.type === "website" && p.pages.length > 1;
+  return (
+    <div className="panel dm">
+      <div className="dm-h"><div><b>{p.name}</b><div className="mut sm">● Live on your hosting · {p.pages.length} page{p.pages.length > 1 ? "s" : ""}</div></div><div className="grow" />
+        <a className="btn" href={p.host.url} target="_blank" rel="noopener">Open site ↗</a></div>
+      <div className="dr-list">
+        <DomainRow label={multi ? "Whole website" : "This page"} sub={multi ? "Home page + all pages and menus" : p.pages[0].name} url={p.host.url} folder={folder}
+          obj={p} onSave={(o) => onPatch(p.id, o)} route={{ slug: p.host.slug }} integ={integ} onSetup={onSetup} onOpen={() => onOpen(p.id)} />
+        {multi && p.pages.filter((x) => x.file !== "index.html").map((pg) => (
+          <DomainRow key={pg.id} label={pg.name} sub={"Only this page · " + pg.file} url={`${base}/${pg.file}`} folder={`${folder}/p/${pg.file.replace(/\.html$/, "")}`}
+            obj={pg} onSave={(o) => onPatchPage(p.id, pg.id, o)} route={{ slug: p.host.slug, page: pg.file }} integ={integ} onSetup={onSetup} onOpen={() => onOpen(p.id)} />))}
+      </div>
+      {multi && <p className="mut sm" style={{ margin: "10px 2px 0" }}>Tip: give a landing page its own domain (e.g. <b>offer.mybrand.com</b> → Offer page) while the main domain shows the whole website. Republish after adding new pages.</p>}
+    </div>
+  );
+}
+
+export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ, onSetup, onPublish }) {
   return (
     <>
-      <div className="top"><div><h1>Domains</h1><p className="mut">Publish for a free link, then connect your own domain with DNS records or nameservers.</p></div></div>
+      <div className="top"><div><h1>Domains</h1><p className="mut">Every website — and every single page — can have its own domain or subdomain. Connect with DNS records or nameservers.</p></div></div>
       <div className="stats">
-        <div className="stat"><span>Live sites</span><b>{projects.filter((p) => p.netlify).length}</b></div>
+        <div className="stat"><span>Live sites</span><b>{projects.filter((p) => p.netlify || p.host).length}</b></div>
         <div className="stat"><span>Custom domains</span><b>{projects.filter((p) => p.domain).length}</b></div>
         <div className="stat"><span>Connected</span><b>{projects.filter((p) => p.domainStatus === "connected").length}</b></div>
       </div>
       {!projects.length ? <div className="empty"><b>No projects yet</b><p className="mut">Create a page or website first, then publish and connect a domain.</p></div>
-        : projects.map((p) => <DomainCard key={p.id} p={p} onPatch={onPatch} onOpen={onOpen} integ={integ} onSetup={onSetup} onPublish={onPublish} />)}
+        : projects.map((p) => p.host ? <ServerCard key={p.id} p={p} onPatch={onPatch} onPatchPage={onPatchPage} onOpen={onOpen} integ={integ} onSetup={onSetup} /> : <DomainCard key={p.id} p={p} onPatch={onPatch} onOpen={onOpen} integ={integ} onSetup={onSetup} onPublish={onPublish} />)}
     </>
   );
 }
