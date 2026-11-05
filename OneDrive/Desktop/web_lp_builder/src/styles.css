@@ -1179,3 +1179,5 @@ html,body{zoom:1!important;transform:none!important;margin:0!important;padding:0
 .dash .cw-steps li b{display:inline;margin:0;font-size:inherit}
 .dash .cw-steps li>div>b{display:block;margin-bottom:4px;font-size:14.5px}
 .dash .cw .dm-kind button span{font-family:inherit!important;font-size:12.5px}
+.pub-fix{display:flex;flex-direction:column;gap:10px}.pub-fix>div{display:flex;gap:12px;align-items:flex-start;background:#f8fafe;border:1px solid #e6ebf5;border-radius:12px;padding:12px}.pub-fix b{display:block}.pub-fix code{background:#eef1f7;padding:1px 6px;border-radius:5px;font-size:12px}
+.dash .cw-3{grid-template-columns:repeat(3,1fr)!important}@media(max-width:900px){.dash .cw-3{grid-template-columns:1fr!important}}

@@ -1,4 +1,4 @@
-// LaunchBuilder v15 — parts.jsx
+// LaunchBuilder v20 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP } from "../lib.js";
@@ -153,9 +153,18 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
       {!srvOk && !netOk ? <div className="pub-setup">
         {auto === "checking" ? <div className="pub-busy" style={{ border: 0, padding: 10 }}><span className="pub-spin" /><b>Connecting to your hosting…</b></div>
           : auto === "key" ? <>
-            <b>Publishing from another computer?</b>
-            <p className="mut">Your hosting is already connected to LaunchBuilder from another browser. Paste the hosting key once (find it on the first computer: Publish → Live site → “Hosting key”).</p>
-            <div className="row"><input value={pkey} onChange={(e) => setPkey(e.target.value)} placeholder="lbk_…" style={{ flex: 1, padding: 11, border: "1px solid #d1d5db", borderRadius: 10, font: "inherit" }} /><button className="pri" disabled={pkey.trim().length < 16} onClick={useKey}>Connect</button></div>
+            <b>Your hosting was connected earlier from another browser</b>
+            <p className="mut">From now on this is automatic — the connection comes from your LaunchBuilder login. Just do this once:</p>
+            <div className="pub-fix">
+              <div><span className="dm-n">1</span><div><b>Reset the old connection (1 minute)</b>
+                <p className="mut sm">hPanel → <b>Websites</b> → <b>{(serverUrlFrom(rurl) || (integ.server && integ.server.url) || defaultServerUrl()).replace(/^https?:\/\//, "").replace(/\/lb-server\.php$/, "")}</b> → <b>File Manager</b> → open <code>public_html</code> → open <code>lb-data</code> → delete only the file <code>config.json</code>.<br />Your published websites and leads are <b>not</b> touched.</p>
+                <a className="btn" href="https://hpanel.hostinger.com/websites" target="_blank" rel="noopener">Open hPanel ↗</a></div></div>
+              <div><span className="dm-n">2</span><div><b>Press Connect again</b>
+                <div className="row" style={{ marginTop: 6 }}><button className="pri" disabled={rbusy} onClick={async () => { setErr(""); setRbusy(true); const a = await autoServer({ ...integ, server: { ...(integ.server || {}), ok: false } }, onInteg, serverUrlFrom(rurl) || (integ.server && integ.server.url) || defaultServerUrl()); setRbusy(false); if (a.ok) { setAuto("ok"); setDest("server"); } else setErr(a.reason === "key" ? "Still connected to the old key — make sure config.json inside lb-data is deleted, then try again." : SERVER_HELP[a.diag] || "Couldn't connect."); }}>{rbusy ? "Connecting…" : "Connect again"}</button></div></div></div>
+            </div>
+            <details className="pub-adv"><summary>Or paste the old hosting key instead</summary>
+              <p className="mut sm">On the first computer/browser: Publish → (live site) → “Hosting key”.</p>
+              <div className="row"><input value={pkey} onChange={(e) => setPkey(e.target.value)} placeholder="lbk_…" style={{ flex: 1, padding: 10, border: "1px solid #d1d5db", borderRadius: 10, font: "inherit" }} /><button disabled={pkey.trim().length < 16} onClick={useKey}>Use key</button></div></details>
           </> : <>
             <b>Put your site on the internet</b>
             <p className="mut">{location.hostname === "localhost" || location.hostname === "127.0.0.1" ? "You're running the builder on your computer (localhost). Nobody else can open localhost, so publish to your Hostinger instead — just type its address:" : "Type the address of the Hostinger website where you uploaded LaunchBuilder:"}</p>

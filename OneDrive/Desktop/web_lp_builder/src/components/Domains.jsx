@@ -1,4 +1,4 @@
-// LaunchBuilder v19 — Domains.jsx
+// LaunchBuilder v20 — Domains.jsx
 import { useState, useEffect } from "react";
 import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS } from "../lib.js";
 
@@ -160,20 +160,25 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
   useEffect(() => { if (open && obj.domain) check(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const state = chk && chk.state;
-  const STEPS = where === "hostinger" ? [
-    ["Add the domain as a website in Hostinger", <>hPanel → <b>Websites</b> → <b>+ Add website</b> → choose <b>Empty website</b> (or “Skip, start with empty site”) → pick <b>{d || "your domain"}</b> → finish. Hostinger sets the DNS and free SSL for you automatically.
-      <div className="row" style={{ marginTop: 8 }}><a className="btn" href="https://hpanel.hostinger.com/websites" target="_blank" rel="noopener">Open hPanel → Websites ↗</a></div></>],
-    ["Come back and press “Connect & check”", <>LaunchBuilder copies your website into that domain and checks that it opens. Every time you publish again, the domain updates automatically.</>],
-  ] : [
-    ["Point the domain to Hostinger", <>At the company where you bought it (GoDaddy, Namecheap, BigRock…) → <b>Nameservers</b> → <b>Custom</b> → enter:<div className="dm-ns" style={{ margin: "8px 0" }}>{HOSTINGER_NS.map((x) => <div key={x}><C v={x} /></div>)}</div><span className="mut sm">Changes can take a few hours.</span></>],
-    ["Add the domain as a website in Hostinger", <>hPanel → <b>Websites</b> → <b>+ Add website</b> → <b>Empty website</b> → choose <b>“Use an existing domain”</b> → type <b>{d || "your domain"}</b> → finish.
-      <div className="row" style={{ marginTop: 8 }}><a className="btn" href="https://hpanel.hostinger.com/websites" target="_blank" rel="noopener">Open hPanel → Websites ↗</a></div></>],
-    ["Come back and press “Connect & check”", <>LaunchBuilder copies your website into that domain and checks that it opens.</>],
-  ];
+  const ADD_SITE = ["Add the domain as a website in Hostinger", <>hPanel → <b>Websites</b> → <b>+ Add website</b> → <b>Empty website</b> (or “Skip, start with an empty site”) → {where === "hostinger" ? <>pick <b>{d || "your domain"}</b></> : <>choose <b>“Use an existing domain”</b> → type <b>{d || "your domain"}</b></>} → finish.
+    <div className="row" style={{ marginTop: 8 }}><a className="btn" href="https://hpanel.hostinger.com/websites" target="_blank" rel="noopener">Open hPanel → Websites ↗</a></div></>];
+  const GO = ["Press “Connect & check” below", <>LaunchBuilder puts your website on the domain and checks that it opens. When you publish again, the domain updates by itself.</>];
+  const STEPS = where === "hostinger" ? [ADD_SITE, GO]
+    : where === "ns" ? [
+      ["Change the nameservers where you bought the domain", <>At GoDaddy / Namecheap / BigRock… → your domain → <b>Nameservers</b> → <b>Custom</b> → enter these two → Save:<div className="dm-ns" style={{ margin: "8px 0" }}>{HOSTINGER_NS.map((x) => <div key={x}><C v={x} /></div>)}</div><span className="mut sm">Hostinger then manages the DNS for you. Can take a few hours to update.</span></>],
+      ADD_SITE, GO]
+    : [
+      ADD_SITE,
+      ["Add 2 DNS records where your domain's DNS is", <>Delete any old <b>A</b> record on <b>@</b> and any <b>CNAME</b> on <b>www</b>, then add:
+        <div className="ltable" style={{ margin: "8px 0" }}><table><thead><tr><th>Type</th><th>Name</th><th>Value</th></tr></thead><tbody>
+          <tr><td><b>A</b></td><td><C v="@" /></td><td>{ipOk ? <C v={ip} /> : <span>your Website IP ↓</span>}</td></tr>
+          <tr><td><b>CNAME</b></td><td><C v="www" /></td><td><C v={d || "mybrand.com"} /></td></tr></tbody></table></div>
+        <div className="dm-ip"><b>Website IP</b><span className="mut sm">hPanel → Websites → <b>{d || "the domain"}</b>'s website → Dashboard → “IP address”</span><input value={ip} onChange={(e) => setIp(e.target.value)} placeholder="e.g. 2.57.91.91" className={ip && !ipOk ? "bad" : ""} /></div></>],
+      GO];
   const STATE = {
     live: ["ok", "🎉 Live! " + (obj.domain || "") + " shows this " + (route.page ? "page" : "website") + "."],
     folder: ["warn", "Almost there — the domain exists in Hostinger. Press “Connect & check” to put your website into it."],
-    attach: ["warn", "The domain reaches Hostinger, but isn't added as a website yet. Do step " + (where === "hostinger" ? "1" : "2") + ", then press “Connect & check”."],
+    attach: ["warn", "The domain reaches Hostinger, but isn't added as a website yet. Do the step “Add the domain as a website in Hostinger”, then press “Connect & check”."],
     dns: ["wait", "Waiting for the domain to point to Hostinger. " + (where === "hostinger" ? "If you just bought it, wait 10–30 minutes." : "Nameserver changes can take a few hours.") + " Then press “Check again”."],
   };
   return (
@@ -187,8 +192,8 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
         <div className="cw-field"><label>Your domain</label>
           <div className="row"><input value={val} placeholder="mybrand.com  or  offer.mybrand.com" onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => e.key === "Enter" && connect()} />
             {obj.domain && <button className="red" onClick={remove}>Disconnect</button>}</div></div>
-        <div className="cw-field"><label>Where did you buy this domain?</label>
-          <div className="dm-kind">{[["hostinger", "In my Hostinger account", "Easiest — 2 steps"], ["other", "Somewhere else", "GoDaddy, Namecheap, BigRock…"]].map(([k, l, ex]) => <button key={k} className={where === k ? "on" : ""} onClick={() => setWhere(k)}><b>{l}</b><span>{ex}</span></button>)}</div></div>
+        <div className="cw-field"><label>How do you want to connect it?</label>
+          <div className="dm-kind cw-3">{[["hostinger", "🟢 Bought on Hostinger", "Easiest — 2 steps"], ["ns", "Elsewhere — Nameservers", "GoDaddy, Namecheap… · simple"], ["dns", "Elsewhere — DNS records", "Keep your DNS · for email users"]].map(([k, l, ex]) => <button key={k} className={where === k ? "on" : ""} onClick={() => setWhere(k)}><b>{l}</b><span>{ex}</span></button>)}</div></div>
         <ol className="cw-steps">{STEPS.map(([t, body], i) => <li key={i}><span className="dm-n">{i + 1}</span><div><b>{t}</b><div className="mut">{body}</div></div></li>)}</ol>
         <div className="cw-go"><button className="pri big" disabled={!!busy || !d} onClick={connect}>{busy === "connect" ? "Connecting…" : busy === "check" ? "Checking…" : obj.domain ? "Connect & check again" : "Connect & check"}</button>
           {obj.domain && <button disabled={!!busy} onClick={() => check()}>Check again</button>}</div>
@@ -196,11 +201,9 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
         {state && STATE[state] && <div className={"cw-st " + STATE[state][0]}>{STATE[state][1]} <span className="mut sm">({ago(chk.ts)})</span>
           {state === "live" && <div className="row" style={{ marginTop: 8 }}><a className="btn pri" href={`http://${obj.domain}`} target="_blank" rel="noopener">Open {obj.domain} ↗</a><span className="mut sm">“Not secure”? Hostinger adds free SSL within ~30 min — or hPanel → Security → SSL.</span></div>}</div>}
 
-        <button className="link cw-adv" onClick={() => setAdv(!adv)}>{adv ? "▾" : "▸"} Advanced: DNS records / park on the builder instead</button>
+        <button className="link cw-adv" onClick={() => setAdv(!adv)}>{adv ? "▾" : "▸"} Advanced: park the domain on the builder instead</button>
         {adv && <div className="cw-advbox">
-          <p className="mut sm"><b>Option A — DNS records</b> (keep your DNS elsewhere): add an <b>A</b> record <C v="@" /> → your Website IP, and <b>CNAME</b> <C v="www" /> → <C v={d || "mybrand.com"} />. Website IP = hPanel → Websites → the domain's website → Dashboard → IP address.</p>
-          <div className="dm-ip"><b>Website IP</b><input value={ip} onChange={(e) => setIp(e.target.value)} placeholder="e.g. 2.57.91.91" className={ip && !ipOk ? "bad" : ""} />{ipOk && <span className="mut sm">A record: <C v={ip} /></span>}</div>
-          <p className="mut sm"><b>Option B — Park on the builder's site</b>: hPanel → Websites → {(srv.base || "").replace(/^https?:\/\//, "") || "your builder's site"} → Domains → Parked domains → add <C v={d || "mybrand.com"} />. Routing is already done.</p>
+          <p className="mut sm"><b>Park on the builder's site</b> (instead of adding a website): hPanel → Websites → {(srv.base || "").replace(/^https?:\/\//, "") || "your builder's site"} → Domains → Parked domains → add <C v={d || "mybrand.com"} />. Routing is already done.</p>
           {isSub && <p className="mut sm"><b>Subdomain</b>: hPanel → Domains → Subdomains → name <C v={subName} /> → custom folder <C v={folder.replace(/^public_html\//, "")} />.</p>}
         </div>}
         {onOpen && <div className="row" style={{ marginTop: 6 }}><button onClick={onOpen}>Open in editor</button></div>}

@@ -1,4 +1,4 @@
-// LaunchBuilder v17 — lib.js
+// LaunchBuilder v20 — lib.js
 import { DESIGNS } from "./designs.js";
 // Helpers, page templates, saving/loading projects, leads and preview links
 
@@ -281,6 +281,7 @@ export const verifyNS = async (domain, servers) => {
 /* Publishes to https://your-site/sites/<name>/ and collects leads from live sites — no third-party service. */
 export const defaultServerUrl = () => `${location.origin}${location.pathname.replace(/[^/]*$/, "")}lb-server.php`;
 export const serverOn = (integ) => !!(integ && integ.server && integ.server.ok && integ.server.key);
+export const accountKey = () => { const e = localStorage.getItem("lb_hostkey_active"); return (e && localStorage.getItem("lb_hostkey_" + e)) || ""; };
 export async function phpCall(srv, body) {
   const url = (srv && srv.url) || defaultServerUrl();
   let r;
@@ -288,6 +289,8 @@ export async function phpCall(srv, body) {
   catch { throw new Error("Couldn't reach lb-server.php. Make sure it's uploaded next to your builder (public_html)."); }
   if (r.status === 404) throw new Error("lb-server.php was not found at " + url + ". Upload it to the same folder as the builder.");
   let j; try { j = await r.json(); } catch { throw new Error("The server didn't answer correctly. Does your hosting support PHP? (Hostinger web hosting does.)"); }
+  /* key from an older browser session? try the key that comes from your login */
+  if (!j.ok && /wrong key/i.test(j.error || "") && srv && !body._acct) { const ak = accountKey(); if (ak && ak !== srv.key) { srv.key = ak; return phpCall(srv, { ...body, _acct: true }); } }
   if (!j.ok && /not set up yet/i.test(j.error || "") && body.action !== "setup" && srv && srv.key && !body._healed) {
     /* the server's lb-data folder was reset (e.g. files re-uploaded) — reconnect with the same key and retry once */
     await phpCall(srv, { action: "setup" });
@@ -363,8 +366,13 @@ export async function autoServer(integ, onInteg, urlOverride) {
   const chk = await checkServer(url);
   if (!chk.ok) return { ok: false, reason: urlOverride ? "diag" : "none", diag: chk.reason, url };
   const info = chk.info;
-  if (info.configured) return { ok: false, reason: "key", url };
-  const key = "lbk_" + Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+  const ak = accountKey();
+  if (info.configured) {
+    /* already connected — if it was connected with this same login, reconnect silently */
+    if (ak) { try { const r = await phpCall({ url, key: ak, _noheal: 1 }, { action: "ping" }); const next = { ...integ, server: { url, key: ak, ok: true, ip: r.ip || "", base: r.base || "" } }; onInteg(next); return { ok: true, integ: next }; } catch { /* different key */ } }
+    return { ok: false, reason: "key", url };
+  }
+  const key = ak || "lbk_" + Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
   try { const r = await phpCall({ url, key }, { action: "setup" }); const next = { ...integ, server: { url, key, ok: true, ip: r.ip || "", ip6: r.ip6 || "", base: r.base || "" } }; onInteg(next); return { ok: true, integ: next }; }
   catch (e) { return { ok: false, reason: "error", error: e.message }; }
 }

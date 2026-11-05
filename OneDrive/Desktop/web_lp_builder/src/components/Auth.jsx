@@ -24,6 +24,9 @@ export default function Auth({ onLogin }) {
       u[email] = { name: f.name.trim() || email.split("@")[0], hash };
       localStorage.setItem("lb_users", JSON.stringify(u));
     } else if (!u[email] || u[email].hash !== hash) return setErr("Wrong email or password.");
+    /* hosting key comes from your login: same email + password on any computer = publishing just works */
+    localStorage.setItem("lb_hostkey_" + email, "lbk_" + (await sha(email + "|" + f.password + "|launchbuilder-hosting")).slice(0, 32));
+    localStorage.setItem("lb_hostkey_active", email);
     onLogin({ email, name: u[email].name });
   };
   const login = mode === "login";
