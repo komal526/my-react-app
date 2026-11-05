@@ -144,7 +144,7 @@ export default function Dashboard({ user, onLogout }) {
         {view === "integrations" && <Integrations key={igTile} initial={igTile} integ={integ} onChange={onInteg} />}
         {view === "leads" && <Leads user={user} projects={projects} forms={forms} leads={leads} setLeads={setLeads} integ={integ} />}
         {view === "analytics" && <Analytics projects={projects} events={events} leads={leads} onOpenProject={setOpenId} />}
-        {view === "domains" && <Domains projects={projects} onPatch={patch} onPatchPage={patchPage} onOpen={setOpenId} integ={integ} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onPublish={(p) => setModal({ type: "publish", id: p.id })} />}
+        {view === "domains" && <Domains projects={projects} onPatch={patch} onPatchPage={patchPage} onInteg={onInteg} onOpen={setOpenId} integ={integ} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onPublish={(p) => setModal({ type: "publish", id: p.id })} />}
         {view === "settings" && <Settings user={user} count={projects.length} onDeleteAll={() => setProjects([])} />}
       </section>
       {modal && modal.type === "new" && <NewModal onClose={() => setModal(null)} onCreate={create} onImport={() => { setModal(null); setView("import"); }} ai={integ.ai} onSetupAI={() => { setModal(null); setView("integrations"); }} />}

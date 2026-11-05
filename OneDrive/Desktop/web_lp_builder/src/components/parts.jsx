@@ -1,7 +1,7 @@
-// LaunchBuilder v20 — parts.jsx
+// LaunchBuilder v22 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
-import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP } from "../lib.js";
+import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl } from "../lib.js";
 import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
 import { Icon } from "./Inspector.jsx";
 
@@ -112,7 +112,8 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
   const [slug, setSlug] = useState((page.host && page.host.slug) || slugify(page.slug || page.name) || "my-site");
   const [target, setTarget] = useState("new"), [sites, setSites] = useState(null), [siteId, setSiteId] = useState("");
   const own = page.domain && page.domainStatus === "connected" ? "https://" + page.domain : "";
-  const liveUrl = dest === "server" ? page.host && page.host.url : page.netlify && page.netlify.url;
+  const liveUrl = dest === "server" ? page.host && (subUrl(integ, page.host.slug) || page.host.url) : page.netlify && page.netlify.url;
+  const sd = integ && integ.server && integ.server.sitesDomain;
   const url = own || liveUrl;
   const base = ((integ && integ.server && integ.server.base) || location.origin).replace(/\/$/, "");
   const versions = [...(page.versions || []), { ts: Date.now(), pages: page.pages }].slice(-5);
@@ -178,7 +179,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
       </div> : busy ? <div className="pub-busy"><span className="pub-spin" /><b>{busy}</b><p className="mut">Please keep this window open (usually 5–30 seconds).</p></div> : <>
         {srvOk && netOk && !page.host && !page.netlify && <div className="pub-dest">{[["server", "🏠 My hosting"], ["netlify", "▲ Netlify"]].map(([k, l]) => <button key={k} className={dest === k ? "on" : ""} onClick={() => setDest(k)}>{l}</button>)}</div>}
         {liveUrl ? live : dest === "server" ? <div className="pub-first">
-          <label className="pub-slug">Link name<div className="pub-urlrow"><span>{base.replace(/^https?:\/\//, "")}/sites/</span><input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} /><span>/</span></div></label>
+          <label className="pub-slug">{sd ? "Your free subdomain" : "Link name"}<div className="pub-urlrow">{sd ? <><input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} /><span>.{sd}</span></> : <><span>{base.replace(/^https?:\/\//, "")}/sites/</span><input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} /><span>/</span></>}</div></label>
           <p className="mut" style={{ margin: 0 }}>Anyone with this link can see your site immediately. Later you can connect your own domain or subdomain.</p>
           <button className="pri big" onClick={pubServer}>🚀 Publish now</button>
         </div> : <div className="pub-first">

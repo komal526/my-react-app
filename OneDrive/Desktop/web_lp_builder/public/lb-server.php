@@ -1,5 +1,5 @@
 <?php
-// LaunchBuilder server v7 — runs on your own hosting (Hostinger etc.), no extra service needed.
+// LaunchBuilder server v9 — runs on your own hosting (Hostinger etc.), no extra service needed.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
 // • Routes your own domains to a published site
@@ -63,6 +63,49 @@ function deploy_to($domain, $target, $SITES) {
   @file_put_contents($dst . '/lb-site.txt', $target);
   return '';
 }
+function lb_get($url) {
+  if (function_exists('curl_init')) {
+    $c = curl_init($url);
+    curl_setopt_array($c, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3, CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => 0, CURLOPT_USERAGENT => 'LaunchBuilder-check'));
+    $body = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); $err = curl_error($c); curl_close($c);
+    return array($code, $body === false ? '' : (string)$body, $err);
+  }
+  $ctx = stream_context_create(array('http' => array('timeout' => 10, 'ignore_errors' => true), 'ssl' => array('verify_peer' => false, 'verify_peer_name' => false)));
+  $body = @file_get_contents($url, false, $ctx); $code = 0;
+  if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) $code = (int)$m[1];
+  return array($code, $body === false ? '' : (string)$body, '');
+}
+/* ---------- routing rules (.htaccess) for custom domains + automatic subdomains ---------- */
+function write_rules($ROOT, $SITES, $prefix, $map, $sub) {
+  $host = isset($_SERVER['HTTP_HOST']) ? preg_replace('/:\d+$/', '', strtolower($_SERVER['HTTP_HOST'])) : '';
+  $block = "# BEGIN LaunchBuilder domains\n<IfModule mod_rewrite.c>\nRewriteEngine On\n";
+  foreach ($map as $dm => $sl) {
+    $parts = explode('/', $sl, 2); $site = $parts[0]; $pg = isset($parts[1]) ? $parts[1] : '';
+    $hc = 'RewriteCond %{HTTP_HOST} ^(www\.)?' . preg_quote($dm, '/') . "$ [NC]\n";
+    if ($pg !== '') $block .= $hc . 'RewriteRule ^$ ' . $prefix . '/sites/' . $site . '/' . $pg . " [L]\n";
+    $block .= $hc . 'RewriteCond %{REQUEST_URI} !^' . $prefix . "/sites/\n";
+    $block .= 'RewriteRule ^(.*)$ ' . $prefix . '/sites/' . $site . "/$1 [L]\n";
+  }
+  if ($sub !== '') {   /* anything.SUB  →  sites/anything/  (wildcard pointing at public_html) */
+    $block .= 'RewriteCond %{REQUEST_URI} !^' . $prefix . "/sites/\n";
+    $block .= "RewriteCond %{HTTP_HOST} !^(www|app|admin|builder|mail|webmail|cpanel|ftp)\\. [NC]\n";
+    if ($host !== '') $block .= 'RewriteCond %{HTTP_HOST} !^' . preg_quote($host, '/') . "$ [NC]\n";
+    $block .= 'RewriteCond %{HTTP_HOST} ^([a-z0-9-]+)\.' . preg_quote($sub, '/') . "$ [NC]\n";
+    $block .= 'RewriteRule ^(.*)$ ' . $prefix . "/sites/%1/$1 [L]\n";
+  }
+  $block .= "</IfModule>\n# END LaunchBuilder domains\n";
+  $ht = $ROOT . '/.htaccess';
+  $old = file_exists($ht) ? (string)file_get_contents($ht) : '';
+  $old = preg_replace('/# BEGIN LaunchBuilder domains.*?# END LaunchBuilder domains\n?/s', '', $old);
+  if (@file_put_contents($ht, $block . $old) === false) return 'Could not update .htaccess — check permissions.';
+  /* same idea when the wildcard subdomain's folder is public_html/sites */
+  $sht = $SITES . '/.htaccess';
+  $sold = file_exists($sht) ? (string)file_get_contents($sht) : '';
+  $sold = preg_replace('/# BEGIN LaunchBuilder subdomains.*?# END LaunchBuilder subdomains\n?/s', '', $sold);
+  $sblock = $sub === '' ? '' : "# BEGIN LaunchBuilder subdomains\n<IfModule mod_rewrite.c>\nRewriteEngine On\nRewriteCond %{ENV:REDIRECT_STATUS} ^$\nRewriteCond %{HTTP_HOST} ^([a-z0-9-]+)\." . preg_quote($sub, '/') . "$ [NC]\nRewriteRule ^(.*)$ %1/$1 [L]\n</IfModule>\n# END LaunchBuilder subdomains\n";
+  @file_put_contents($sht, $sblock . $sold);
+  return '';
+}
 function clean_str($v, $max) { $v = is_scalar($v) ? (string)$v : ''; return function_exists('mb_substr') ? mb_substr($v, 0, $max) : substr($v, 0, $max); }
 
 $https  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
@@ -76,7 +119,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 1, 'configured' => !empty($cfg['key'])));
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 9, 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : ''));
 
 if ($act === 'lead') {
   // simple flood protection: max 30 submissions per minute per visitor
@@ -171,6 +214,7 @@ if ($act === 'publish') {
     @mkdir($tmp . '/p/' . $bn, 0755, true);
     @file_put_contents($tmp . '/p/' . $bn . '/index.html', $html);
   }
+  @file_put_contents($tmp . '/lb-site.txt', $slug);
   $target = $SITES . '/' . $slug;
   rrmdir($target);
   if (!@rename($tmp, $target)) { rrmdir($tmp); fail('Could not save the site folder.'); }
@@ -205,6 +249,29 @@ if ($act === 'deletelead') {
   $all = array_values(array_filter($all, function ($l) use ($lids) { return !in_array($l['lid'], $lids, true); }));
   jwrite($DATA . '/leads.json', $all);
   out(array('ok' => true));
+}
+
+/* full step-by-step check of one domain — tells the user exactly which step is missing */
+if ($act === 'diag') {
+  $domain = strtolower(trim(isset($d['domain']) ? (string)$d['domain'] : ''));
+  if (!preg_match('/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/', $domain)) fail('Invalid domain');
+  $base = dirname(dirname(__DIR__)); $sites = array();
+  $list = @scandir($base);
+  if (is_array($list)) foreach ($list as $x) if ($x[0] !== '.' && @is_dir($base . '/' . $x . '/public_html')) $sites[] = $x;
+  $folder = domain_folder($domain);
+  $files = array(); if ($folder !== '') { $fl = @scandir($folder); if (is_array($fl)) foreach ($fl as $x) if ($x[0] !== '.') $files[] = $x; }
+  $ips = @gethostbynamel($domain); $mine = @gethostbynamel(preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST']));
+  list($c1, $b1, $e1) = lb_get('http://' . $domain . '/lb-site.txt');
+  list($c2, $b2, $e2) = lb_get('http://' . $domain . '/');
+  list($c3, $b3, $e3) = lb_get('https://' . $domain . '/');
+  $deploys = jread($DATA . '/deploys.json', array());
+  out(array('ok' => true, 'version' => 8, 'domain' => $domain,
+    'dns' => $ips ? $ips : array(), 'builder_ips' => $mine ? $mine : array(),
+    'can_list' => is_array($list), 'websites' => array_slice($sites, 0, 30),
+    'folder' => $folder !== '', 'writable' => $folder !== '' && is_writable($folder), 'files' => array_slice($files, 0, 12),
+    'copied' => $folder !== '' && file_exists($folder . '/lb-site.txt'), 'linked' => isset($deploys[$domain]) ? $deploys[$domain] : '',
+    'http_marker' => $c1, 'marker_ok' => $c1 === 200 && strlen(trim($b1)) > 0 && strlen($b1) < 200,
+    'http_home' => $c2, 'https_home' => $c3, 'https_err' => $e3 ? substr($e3, 0, 120) : ''));
 }
 
 /* put a published site into the domain's own Hostinger website folder */
@@ -264,20 +331,21 @@ if ($act === 'domain') {
     $map[preg_replace('/^www\./', '', $domain)] = $target;
   }
   jwrite($DATA . '/domains.json', $map);
-  $block = "# BEGIN LaunchBuilder domains\n<IfModule mod_rewrite.c>\nRewriteEngine On\n";
-  foreach ($map as $dm => $sl) {
-    $parts = explode('/', $sl, 2); $site = $parts[0]; $pg = isset($parts[1]) ? $parts[1] : '';
-    $hc = 'RewriteCond %{HTTP_HOST} ^(www\.)?' . preg_quote($dm, '/') . "$ [NC]\n";
-    if ($pg !== '') { $block .= $hc . 'RewriteRule ^$ ' . $prefix . '/sites/' . $site . '/' . $pg . " [L]\n"; }
-    $block .= $hc . 'RewriteCond %{REQUEST_URI} !^' . $prefix . "/sites/\n";
-    $block .= 'RewriteRule ^(.*)$ ' . $prefix . '/sites/' . $site . "/$1 [L]\n";
-  }
-  $block .= "</IfModule>\n# END LaunchBuilder domains\n";
-  $ht = $ROOT . '/.htaccess';
-  $old = file_exists($ht) ? (string)file_get_contents($ht) : '';
-  $old = preg_replace('/# BEGIN LaunchBuilder domains.*?# END LaunchBuilder domains\n?/s', '', $old);
-  if (@file_put_contents($ht, $block . $old) === false) fail('Could not update .htaccess — check permissions.');
+  $e = write_rules($ROOT, $SITES, $prefix, $map, isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '');
+  if ($e !== '') fail($e);
   out(array('ok' => true, 'domains' => $map));
+}
+
+/* automatic subdomains: every published site opens at <name>.<sites domain> */
+if ($act === 'sitesdomain') {
+  $sub = strtolower(trim(isset($d['domain']) ? (string)$d['domain'] : ''));
+  $sub = preg_replace('/^(\*\.|www\.)/', '', $sub);
+  if ($sub !== '' && !preg_match('/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/', $sub)) fail('Type a domain like mysites.in or sites.mybrand.com');
+  $cfg['sites_domain'] = $sub;
+  if (!jwrite($DATA . '/config.json', $cfg)) fail('Could not save settings (lb-data folder permissions).');
+  $e = write_rules($ROOT, $SITES, $prefix, jread($DATA . '/domains.json', array()), $sub);
+  if ($e !== '') fail($e);
+  out(array('ok' => true, 'sitesDomain' => $sub));
 }
 
 fail('Unknown action');

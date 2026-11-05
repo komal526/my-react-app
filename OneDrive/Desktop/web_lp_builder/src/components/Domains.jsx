@@ -1,6 +1,6 @@
-// LaunchBuilder v20 — Domains.jsx
+// LaunchBuilder v22 — Domains.jsx
 import { useState, useEffect } from "react";
-import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS } from "../lib.js";
+import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS, defaultServerUrl, subUrl } from "../lib.js";
 
 /* ================= Domains: connect a custom domain (DNS records or nameservers) and verify ================= */
 const copy = (t) => (navigator.clipboard ? navigator.clipboard.writeText(t).catch(() => window.prompt("Copy:", t)) : window.prompt("Copy:", t));
@@ -55,7 +55,7 @@ function DomainCard({ p, onPatch, onOpen, integ, onSetup, onPublish }) {
       <div className="dm-addr">
         <div><span className="mut sm">Free link</span>{nl ? <a href={p.netlify.url} target="_blank" rel="noopener"><code>{nl}.netlify.app ↗</code></a> : <button className="xs" onClick={() => onPublish(p)}>Publish to get a free link</button>}</div>
         {p.domain && <div><span className="mut sm">Custom domain</span><code className="dm-own">{p.domain}</code></div>}
-        <div><span className="mut sm">Live address</span><code>{addr(p)}</code></div>
+        {nl || (p.domain && p.domainStatus === "connected") ? <div><span className="mut sm">Live address</span><code>{addr(p)}</code></div> : <div><span className="mut sm">Live address</span><span className="mut">Not live yet — publish first</span></div>}
       </div>
       {open && <div className="dm-body">
         {!nl && <div className="dm-tip">💡 <b>Publish first</b> to get a free live link — then this page sets up your domain on the hosting automatically. <button className="xs" onClick={() => onPublish(p)}>Publish now</button></div>}
@@ -113,10 +113,42 @@ function DomainCard({ p, onPatch, onOpen, integ, onSetup, onPublish }) {
 
 /* ---------- sites published on your own hosting (lb-server.php) ---------- */
 /* one row = one target (whole website or a single page), each with its own domain */
+/* plain-language checklist: which of the 6 steps is missing */
+function Diag({ r, domain, builder }) {
+  if (r.old) return <div className="cw-diag"><div className="dg bad"><i>✕</i><div><b>Your server file is old</b><p>Upload the newest builder files: run <code>npm run build</code> and upload everything inside <code>dist</code> to {builder || "the builder's"} <code>public_html</code> (keep the <code>sites</code> and <code>lb-data</code> folders). Then run this check again.</p></div></div></div>;
+  if (r.error) return <div className="cw-diag"><div className="dg bad"><i>✕</i><div><b>The check couldn't run</b><p>{r.error}</p></div></div></div>;
+  r = { dns: [], websites: [], files: [], ...r };
+  const items = [];
+  const add = (st, t, p) => items.push([st, t, p]);
+  add("ok", "LaunchBuilder server is up to date", null);
+  add("ok", "Your website is published", null);
+  if (r.dns.length) add("ok", "The domain points to Hostinger", <>DNS answers <code>{r.dns.join(", ")}</code>.</>);
+  else add("bad", "The domain doesn't point anywhere yet", <>If you bought it on Hostinger: hPanel → Domains → {domain} → DNS / Nameservers → choose <b>Use Hostinger nameservers</b> → then <b>Reset DNS records</b>. Bought elsewhere: set nameservers <code>ns1.dns-parking.com</code> and <code>ns2.dns-parking.com</code>. Updates take 10 min – a few hours.</>);
+  if (r.folder) add("ok", "The domain is added as a website in Hostinger", null);
+  else add("bad", "The domain is not added as a website in Hostinger yet", <>hPanel → <b>Websites</b> → <b>+ Add website</b> → <b>Empty website</b> → choose <b>{domain}</b> → finish.
+    {r.can_list ? <> Websites I can see on this hosting: {r.websites.length ? r.websites.map((w) => <code key={w} style={{ marginRight: 4 }}>{w}</code>) : "none"}.{" "}If you already added it but it's not in this list, it was added to a <b>different hosting plan</b> — add it to the same plan as the builder.</> : " (I can't list the other websites on this hosting — that usually means it's on a different plan.)"}</>);
+  if (r.folder) {
+    if (r.copied) add("ok", "Your website is copied into the domain", null);
+    else if (!r.writable) add("bad", "Hostinger doesn't let LaunchBuilder write into the domain's folder", <>File Manager → <code>domains/{domain}/public_html</code> → right-click → Permissions → <b>755</b>. Then press <b>Connect &amp; check</b>.</>);
+    else if ((r.files || []).some((f) => /wp-config|index\.php/.test(f))) add("bad", "That website already has another site inside (WordPress/PHP)", <>Files found: {r.files.map((f) => <code key={f} style={{ marginRight: 4 }}>{f}</code>)}. Delete them in File Manager (or use an empty website), then press <b>Connect &amp; check</b>.</>);
+    else add("bad", "Your website isn't copied into the domain yet", <>Press <b>Connect &amp; check</b> above.</>);
+  }
+  if (r.marker_ok) add("ok", "The domain opens your website", null);
+  else if (r.dns.length && r.folder && r.copied) add("bad", r.http_marker === 403 ? "The domain shows “403 Forbidden”" : "The domain doesn't open your website yet",
+    <>{r.http_marker === 403 ? "The domain reaches a Hostinger server that doesn't know it. " : ""}Its DNS points somewhere else than its website. Fix: hPanel → Domains → {domain} → DNS / Nameservers → <b>Use Hostinger nameservers</b> → <b>Reset DNS records</b>. Delete any A records you added by hand. Wait 10–30 min and check again.</>);
+  else if (!r.marker_ok) add("wait", "The domain will open your website", "Finish the steps above first.");
+  if (r.marker_ok) add(r.https_home >= 200 && r.https_home < 400 ? "ok" : "wait", r.https_home >= 200 && r.https_home < 400 ? "Secure (https) is on" : "Secure (https) is not on yet", r.https_home >= 200 && r.https_home < 400 ? null : <>hPanel → <b>Security → SSL</b> → install the free SSL for {domain}. It can take up to an hour.</>);
+  const first = items.find((x) => x[0] === "bad");
+  return <div className="cw-diag">
+    <div className="dg-h"><b>Full check for {domain}</b>{first ? <span className="dg-pill bad">1 thing to fix</span> : <span className="dg-pill ok">All good</span>}</div>
+    {items.map(([st, t, p], i) => <div key={i} className={"dg " + st + (first && first[1] === t ? " focus" : "")}><i>{st === "ok" ? "✓" : st === "bad" ? "✕" : "…"}</i><div><b>{t}</b>{p && <p>{p}</p>}</div></div>)}
+  </div>;
+}
+
 function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, integ, onOpen }) {
   const srv = (integ && integ.server) || {};
   const [open, setOpen] = useState(false), [val, setVal] = useState(obj.domain || ""), [where, setWhere] = useState(obj.domainWhere || "hostinger");
-  const [busy, setBusy] = useState(""), [err, setErr] = useState(""), [adv, setAdv] = useState(false);
+  const [busy, setBusy] = useState(""), [err, setErr] = useState(""), [adv, setAdv] = useState(false), [diag, setDiag] = useState(null);
   const [ip, setIpRaw] = useState(() => localStorage.getItem("lb_site_ip") || ""), ipOk = /^\d{1,3}(\.\d{1,3}){3}$/.test(ip);
   const setIp = (v) => { const x = v.trim(); setIpRaw(x); localStorage.setItem("lb_site_ip", x); };
   const st = STATUS[obj.domain ? obj.domainStatus || "pending" : "none"], chk = obj.domainCheck || null;
@@ -136,7 +168,16 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
       else if (r.code === 403 || r.code === 404) state = "attach";
       else state = found.length ? "attach" : "dns";
       onSave({ domainStatus: state === "live" ? "connected" : "pending", domainCheck: { state, found, ts: Date.now() } });
+      if (state !== "live") { try { const g = await phpCall(srv, { action: "diag", domain: dom }); setDiag(g && g.version ? { ...g, ts: Date.now() } : { old: true, ts: Date.now() }); } catch (e2) { setDiag({ old: /unknown action/i.test(e2.message), error: e2.message, ts: Date.now() }); } }
+      else setDiag(null);
     } catch (e) { setErr(e.message); }
+    setBusy("");
+  };
+  const runDiag = async (dom = obj.domain || d) => {
+    if (!dom) return;
+    setBusy("diag");
+    try { const r = await phpCall(srv, { action: "diag", domain: dom }); setDiag(r && r.version ? { ...r, ts: Date.now() } : { old: true, ts: Date.now() }); }
+    catch (e) { setDiag({ old: /unknown action/i.test(e.message), error: e.message, ts: Date.now() }); }
     setBusy("");
   };
   const connect = async () => {
@@ -198,9 +239,11 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
         <div className="cw-go"><button className="pri big" disabled={!!busy || !d} onClick={connect}>{busy === "connect" ? "Connecting…" : busy === "check" ? "Checking…" : obj.domain ? "Connect & check again" : "Connect & check"}</button>
           {obj.domain && <button disabled={!!busy} onClick={() => check()}>Check again</button>}</div>
         {err && <div className="cw-st bad">✕ {err}</div>}
-        {state && STATE[state] && <div className={"cw-st " + STATE[state][0]}>{STATE[state][1]} <span className="mut sm">({ago(chk.ts)})</span>
+        {state && STATE[state] && (state === "live" || !diag || diag.old || diag.error) && <div className={"cw-st " + STATE[state][0]}>{STATE[state][1]} <span className="mut sm">({ago(chk.ts)})</span>
           {state === "live" && <div className="row" style={{ marginTop: 8 }}><a className="btn pri" href={`http://${obj.domain}`} target="_blank" rel="noopener">Open {obj.domain} ↗</a><span className="mut sm">“Not secure”? Hostinger adds free SSL within ~30 min — or hPanel → Security → SSL.</span></div>}</div>}
 
+        {obj.domain && <button className="link cw-adv" disabled={!!busy} onClick={() => runDiag()}>{busy === "diag" ? "Checking every step…" : "🔍 Why isn't it working? Run full check"}</button>}
+        {diag && <Diag r={diag} domain={obj.domain || d} builder={(srv.base || "").replace(/^https?:\/\//, "")} />}
         <button className="link cw-adv" onClick={() => setAdv(!adv)}>{adv ? "▾" : "▸"} Advanced: park the domain on the builder instead</button>
         {adv && <div className="cw-advbox">
           <p className="mut sm"><b>Park on the builder's site</b> (instead of adding a website): hPanel → Websites → {(srv.base || "").replace(/^https?:\/\//, "") || "your builder's site"} → Domains → Parked domains → add <C v={d || "mybrand.com"} />. Routing is already done.</p>
@@ -218,9 +261,9 @@ function ServerCard({ p, onPatch, onPatchPage, onOpen, integ, onSetup }) {
   return (
     <div className="panel dm">
       <div className="dm-h"><div><b>{p.name}</b><div className="mut sm">● Live on your hosting · {p.pages.length} page{p.pages.length > 1 ? "s" : ""}</div></div><div className="grow" />
-        <a className="btn" href={p.host.url} target="_blank" rel="noopener">Open site ↗</a></div>
+        <a className="btn" href={subUrl(integ, p.host.slug) || p.host.url} target="_blank" rel="noopener">Open site ↗</a></div>
       <div className="dr-list">
-        <DomainRow label={multi ? "Whole website" : "This page"} sub={multi ? "Home page + all pages and menus" : p.pages[0].name} url={p.host.url} folder={folder}
+        <DomainRow label={multi ? "Whole website" : "This page"} sub={multi ? "Home page + all pages and menus" : p.pages[0].name} url={subUrl(integ, p.host.slug) || p.host.url} folder={folder}
           obj={p} onSave={(o) => onPatch(p.id, o)} route={{ slug: p.host.slug }} integ={integ} onSetup={onSetup} onOpen={() => onOpen(p.id)} />
         {multi && p.pages.filter((x) => x.file !== "index.html").map((pg) => (
           <DomainRow key={pg.id} label={pg.name} sub={"Only this page · " + pg.file} url={`${base}/${pg.file}`} folder={`${folder}/p/${pg.file.replace(/\.html$/, "")}`}
@@ -231,10 +274,63 @@ function ServerCard({ p, onPatch, onPatchPage, onOpen, integ, onSetup }) {
   );
 }
 
-export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ, onSetup, onPublish }) {
+export const SERVER_VERSION = 9;
+/* ---------- automatic subdomains: publish → <name>.<your domain> is live instantly ---------- */
+function AutoSub({ integ, onInteg, projects, info }) {
+  const srv = (integ && integ.server) || {}, cur = srv.sitesDomain || (info && info.sitesDomain) || "";
+  const [open, setOpen] = useState(!cur), [val, setVal] = useState(cur), [busy, setBusy] = useState(""), [msg, setMsg] = useState(null);
+  const d = cleanDomain(val).replace(/^(\*\.|www\.)/, ""), root = d ? rootDomain(d) : "mybrand.com", label = d && d !== root ? d.slice(0, -(root.length + 1)) : "";
+  const builder = (srv.base || "").replace(/^https?:\/\//, "") || "your builder's website";
+  const sample = (projects.find((p) => p.host) || {}).host;
+  const C = ({ v }) => <><code>{v}</code> <Copy v={v} /></>;
+  const save = async (value) => {
+    setBusy("save"); setMsg(null);
+    try {
+      const r = await phpCall(srv, { action: "sitesdomain", domain: value });
+      onInteg({ ...integ, server: { ...srv, sitesDomain: r.sitesDomain } });
+      if (!r.sitesDomain) { setMsg(["ok", "Automatic subdomains turned off."]); setBusy(""); return; }
+      if (sample) {
+        const host = `${sample.slug}.${r.sitesDomain}`, t = await phpCall(srv, { action: "probe", domain: host });
+        setMsg(t.site ? ["ok", `🎉 Working! ${host} opens your website.`] : ["warn", `Saved. Now finish the Hostinger steps above — then ${host} will open your website (DNS can take 10–30 min). Press “Activate & test” again to check.`]);
+      } else setMsg(["ok", "Saved. Publish a website and it gets its own subdomain automatically."]);
+    } catch (e) { setMsg(["bad", /unknown action/i.test(e.message) ? "Your lb-server.php is old — upload the newest files first (see the orange note)." : e.message]); }
+    setBusy("");
+  };
+  return (
+    <div className="panel autosub">
+      <div className="as-h"><div><b>⚡ Automatic subdomains</b><span className="mut sm">{cur ? <>Every published website is live at <code>name.{cur}</code> — no setup per site.</> : "Every website you publish goes live instantly at its own subdomain, like name.mybrand.com."}</span></div>
+        {cur && <span className="badge published">● On</span>}<button onClick={() => setOpen(!open)}>{open ? "Close" : cur ? "Settings" : "Set up"}</button></div>
+      {open && <div className="cw" style={{ marginTop: 12 }}>
+        <div className="cw-field"><label>Domain for your websites' subdomains</label>
+          <input value={val} onChange={(e) => setVal(e.target.value)} placeholder="mybrand.com  or  sites.mybrand.com" />
+          <span className="mut sm">Sites will open at <b>{"neelam"}.{d || "mybrand.com"}</b>, <b>{"clinic"}.{d || "mybrand.com"}</b>… Use a domain you own (it can be your agency/tool domain).</span></div>
+        <ol className="cw-steps">
+          <li><span className="dm-n">1</span><div><b>Add <code>{root}</code> to your builder's website (once)</b><div className="mut">hPanel → <b>Websites</b> → <b>{builder}</b> → <b>Domains</b> → <b>Parked domains</b> → add <C v={root} />. (Skip if {root} is already the builder's domain.)</div></div></li>
+          <li><span className="dm-n">2</span><div><b>Create a “wildcard” subdomain</b><div className="mut">Same website → <b>Domains → Subdomains</b> → in the name box type <C v={label ? "*." + label : "*"} /> (choose <b>{root}</b>) → tick <b>Custom folder</b> → enter <C v="public_html/sites" /> → <b>Create</b>.</div></div></li>
+          <li><span className="dm-n">3</span><div><b>Check the DNS (usually automatic)</b><div className="mut">hPanel → <b>Domains → {root} → DNS records</b>: there should be an <b>A</b> record named <C v={label ? "*." + label : "*"} /> pointing to your Website IP. Add it if missing.</div></div></li>
+          <li><span className="dm-n">4</span><div><b>Press “Activate & test”</b><div className="mut">LaunchBuilder sets up the routing and tests one of your published websites.</div></div></li>
+        </ol>
+        <div className="cw-go"><button className="pri big" disabled={!!busy || !validDomain(d)} onClick={() => save(d)}>{busy ? "Working…" : cur ? "Save & test again" : "Activate & test"}</button>{cur && <button className="red" disabled={!!busy} onClick={() => { setVal(""); save(""); }}>Turn off</button>}</div>
+        {msg && <div className={"cw-st " + msg[0]}>{msg[1]}</div>}
+        <p className="mut sm">🔒 https: Hostinger's free SSL may not cover wildcard subdomains on every plan. If a subdomain shows “Not secure”, install SSL for it in hPanel → Security → SSL, or put the domain on Cloudflare (free), which secures all subdomains automatically.</p>
+      </div>}
+    </div>
+  );
+}
+
+export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ, onSetup, onPublish, onInteg = () => {} }) {
+  /* is the lb-server.php on Hostinger as new as this builder? */
+  const [srvVer, setSrvVer] = useState(null), [info, setInfo] = useState(null);
+  useEffect(() => {
+    if (!serverOn(integ)) return;
+    fetch(integ.server.url || defaultServerUrl(), { method: "POST", body: JSON.stringify({ action: "info" }) }).then((r) => r.json()).then((j) => { setSrvVer(+j.version || 1); setInfo(j); }).catch(() => setSrvVer(0));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <>
+      {srvVer !== null && srvVer < SERVER_VERSION && <div className="ver-warn"><b>{srvVer === 0 ? "⚠ Your hosting's server file isn't answering." : `⚠ Your hosting has an old server file (v${srvVer}) — this builder needs v${SERVER_VERSION}.`}</b>
+        <span>That's why domains can't finish connecting. Fix (2 minutes): on your computer run <code>npm run build</code>, then in hPanel → File Manager → <code>public_html</code> upload <b>everything inside <code>dist</code></b> and choose <b>Replace</b>. Keep the <code>sites</code> and <code>lb-data</code> folders. Then reload this page.</span></div>}
       <div className="top"><div><h1>Domains</h1><p className="mut">Every website — and every single page — can have its own domain or subdomain. Connect with DNS records or nameservers.</p></div></div>
+      {serverOn(integ) && <AutoSub integ={integ} onInteg={onInteg} projects={projects} info={info} />}
       <div className="stats">
         <div className="stat"><span>Live sites</span><b>{projects.filter((p) => p.netlify || p.host).length}</b></div>
         <div className="stat"><span>Custom domains</span><b>{projects.filter((p) => p.domain).length}</b></div>

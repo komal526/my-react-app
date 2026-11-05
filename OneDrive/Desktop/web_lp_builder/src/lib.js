@@ -1,4 +1,4 @@
-// LaunchBuilder v20 — lib.js
+// LaunchBuilder v22 — lib.js
 import { DESIGNS } from "./designs.js";
 // Helpers, page templates, saving/loading projects, leads and preview links
 
@@ -369,11 +369,11 @@ export async function autoServer(integ, onInteg, urlOverride) {
   const ak = accountKey();
   if (info.configured) {
     /* already connected — if it was connected with this same login, reconnect silently */
-    if (ak) { try { const r = await phpCall({ url, key: ak, _noheal: 1 }, { action: "ping" }); const next = { ...integ, server: { url, key: ak, ok: true, ip: r.ip || "", base: r.base || "" } }; onInteg(next); return { ok: true, integ: next }; } catch { /* different key */ } }
+    if (ak) { try { const r = await phpCall({ url, key: ak, _noheal: 1 }, { action: "ping" }); const next = { ...integ, server: { url, key: ak, ok: true, ip: r.ip || "", base: r.base || "", sitesDomain: info.sitesDomain || "" } }; onInteg(next); return { ok: true, integ: next }; } catch { /* different key */ } }
     return { ok: false, reason: "key", url };
   }
   const key = ak || "lbk_" + Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
-  try { const r = await phpCall({ url, key }, { action: "setup" }); const next = { ...integ, server: { url, key, ok: true, ip: r.ip || "", ip6: r.ip6 || "", base: r.base || "" } }; onInteg(next); return { ok: true, integ: next }; }
+  try { const r = await phpCall({ url, key }, { action: "setup" }); const next = { ...integ, server: { url, key, ok: true, ip: r.ip || "", ip6: r.ip6 || "", base: r.base || "", sitesDomain: info.sitesDomain || "" } }; onInteg(next); return { ok: true, integ: next }; }
   catch (e) { return { ok: false, reason: "error", error: e.message }; }
 }
 
@@ -404,3 +404,6 @@ export const SERVER_HELP = {
   notjson: "Something answered, but it isn't LaunchBuilder's server file. Make sure the file at this address is the latest lb-server.php.",
   other: "Something answered, but it isn't LaunchBuilder's server file. Upload the latest lb-server.php.",
 };
+
+/* automatic subdomain for a published site: <slug>.<sites domain> */
+export const subUrl = (integ, slug) => (integ && integ.server && integ.server.sitesDomain && slug ? `https://${slug}.${integ.server.sitesDomain}/` : "");
