@@ -1,5 +1,5 @@
 <?php
-// LaunchBuilder server v4 — runs on your own hosting (Hostinger etc.), no extra service needed.
+// LaunchBuilder server v5 — runs on your own hosting (Hostinger etc.), no extra service needed.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
 // • Routes your own domains to a published site
@@ -183,6 +183,31 @@ if ($act === 'deletelead') {
   $all = array_values(array_filter($all, function ($l) use ($lids) { return !in_array($l['lid'], $lids, true); }));
   jwrite($DATA . '/leads.json', $all);
   out(array('ok' => true));
+}
+
+/* check from the server itself whether a domain really reaches THIS hosting folder */
+if ($act === 'probe') {
+  $domain = strtolower(trim(isset($d['domain']) ? (string)$d['domain'] : ''));
+  if (!preg_match('/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/', $domain)) fail('Invalid domain');
+  $res = array('ok' => true, 'domain' => $domain, 'code' => 0, 'ours' => false, 'page' => 0);
+  $get = function ($url) {
+    if (function_exists('curl_init')) {
+      $c = curl_init($url);
+      curl_setopt_array($c, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3, CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => 0, CURLOPT_USERAGENT => 'LaunchBuilder-check'));
+      $body = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); curl_close($c);
+      return array($code, $body === false ? '' : (string)$body);
+    }
+    $ctx = stream_context_create(array('http' => array('timeout' => 10, 'ignore_errors' => true, 'header' => "User-Agent: LaunchBuilder-check\r\n"), 'ssl' => array('verify_peer' => false, 'verify_peer_name' => false)));
+    $body = @file_get_contents($url, false, $ctx); $code = 0;
+    if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) $code = (int)$m[1];
+    return array($code, $body === false ? '' : (string)$body);
+  };
+  list($c1, $b1) = $get('http://' . $domain . '/lb-server.php?action=info');
+  $res['code'] = $c1;
+  $j = json_decode($b1, true);
+  $res['ours'] = is_array($j) && isset($j['app']) && $j['app'] === 'launchbuilder';
+  if ($res['ours']) { list($c2, $b2) = $get('http://' . $domain . '/'); $res['page'] = $c2; }
+  out($res);
 }
 
 /* point your own domain at a published site (needs the domain parked on this hosting) */

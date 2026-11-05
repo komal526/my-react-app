@@ -138,7 +138,16 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
     setBusy("verify"); let ok = false, found = [];
     if (ns) { const r = await verifyNS(obj.domain, HOSTINGER_NS); ok = r.ok; found = r.found; }
     else { try { found = await dnsLookup(obj.domain, "A"); ok = found.length > 0 && (!ip || found.includes(ip)); } catch { found = []; } }
-    onSave({ domainCheck: { ok, found, ts: Date.now(), ns }, domainStatus: ok ? "connected" : "pending" }); setBusy("");
+    /* DNS is only half of it — ask the server to open the domain and confirm it reaches this website */
+    let note = "";
+    if (ok && serverOn(integ)) {
+      try {
+        const r = await phpCall(srv, { action: "probe", domain: obj.domain });
+        if (!r.ours) { ok = false; note = r.code === 403 ? "dns-ok-403" : "dns-ok-other"; }
+        else if (r.page && r.page >= 400) { ok = false; note = "routing"; }
+      } catch { /* older server file without the check — keep the DNS result */ }
+    }
+    onSave({ domainCheck: { ok, found, ts: Date.now(), ns, note }, domainStatus: ok ? "connected" : "pending" }); setBusy("");
   };
   useEffect(() => { if (open && serverOn(integ)) phpCall(srv, { action: "ping" }).then((r) => setIps({ ip: r.ip || "", ip6: r.ip6 || "" })).catch(() => {}); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   const C = ({ v }) => <><code>{v}</code> <Copy v={v} /></>;
@@ -175,7 +184,11 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
         </>}
         {obj.domain && <div className="dm-step"><span className="dm-n">{kind === "sub" ? 3 : 4}</span><div className="grow"><b>Verify &amp; secure</b>
           <div className="row" style={{ marginTop: 6 }}><button className="pri" disabled={busy === "verify"} onClick={verify}>{busy === "verify" ? "Checking…" : "Verify now"}</button>
-            {chk && <span className={chk.ok ? "green" : "mut"}>{chk.ok ? `✓ Connected — checked ${ago(chk.ts)}` : `Not yet — DNS shows ${(chk.found || []).join(", ") || "nothing"} (${ago(chk.ts)}). Can take a few hours.`}</span>}</div>
+            {chk && !chk.note && <span className={chk.ok ? "green" : "mut"}>{chk.ok ? `✓ Connected — your domain opens this ${route.page ? "page" : "website"} (checked ${ago(chk.ts)})` : `Not yet — DNS shows ${(chk.found || []).join(", ") || "nothing"} (${ago(chk.ts)}). Can take a few hours.`}</span>}</div>
+          {chk && chk.note && <div className="dm-warn"><b>✓ DNS is correct — one step left.</b>{" "}
+            {chk.note === "routing" ? <>The domain reaches your hosting, but the page didn't load. Click <b>Update</b> in step 1 once, then republish this site.</>
+              : <>{chk.note === "dns-ok-403" ? "Hostinger shows “403 Forbidden” because " : "The domain reaches Hostinger, but "}it isn't attached to your builder's website yet. Do step 3: hPanel → <b>Websites</b> → <b>{(srv.base || "").replace(/^https?:\/\//, "") || "your builder's site"}</b> → <b>Domains → Parked domains</b> → add <b>{obj.domain}</b>.
+                If Hostinger says the domain already exists, it was added as a separate website — delete that website first (hPanel → Websites → {obj.domain} → ⋮ → Delete), then park it. Then click <b>Verify now</b> again.</>}</div>}
           <p className="mut sm">Then hPanel → <b>Security → SSL</b> → install the free SSL for <b>{obj.domain}</b>.</p>
           <div className="row"><a className="btn" href={`http://${obj.domain}`} target="_blank" rel="noopener">Visit {obj.domain}</a>{onOpen && <button onClick={onOpen}>Open in editor</button>}</div></div></div>}
       </div>}
