@@ -1,4 +1,4 @@
-// LaunchBuilder v14 — Editor.jsx
+// LaunchBuilder v15 — Editor.jsx
 // The builder: canvas, top bar, left panel (Add / Layers / Pages / Site / Edit)
 import { useState, useRef, useEffect } from "react";
 import { uid, slug, uniqFile, addr, previewToken, previewUrl, aiSection, AI_PROVIDERS } from "../lib.js";
@@ -17,9 +17,9 @@ const TABS = [["add", "plus", "Add"], ["layers", "layers", "Layers"], ["pages", 
 
 export default function Editor({ page, user, forms = [], events = [], integ, onSave, onBack, onPublish, onPages, onType }) {
   const [src, setSrc] = useState(page.pages[0].html);
-  const [ver, setVer] = useState(0), [mode, setMode] = useState("visual"), [dev, setDev] = useState("desktop"), [tab, setTab] = useState("add"), [itab, setItab] = useState("content");
+  const [ver, setVer] = useState(0), [mode, setMode] = useState("visual"), [dev, setDev] = useState(() => (window.innerWidth < 600 ? "mobile" : window.innerWidth <= 1024 ? "tablet" : "desktop")), [tab, setTab] = useState("add"), [itab, setItab] = useState("content");
   const [selEl, setSelEl] = useState(null), [selKey, setSelKey] = useState(0), [, setTick] = useState(0), [codeText, setCodeText] = useState("");
-  const [box, setBox] = useState({ w: 900, h: 600 }), [q, setQ] = useState(""), [shut, setShut] = useState(() => new Set()), [panel, setPanel] = useState(true), [navFloat, setNavFloat] = useState(false);
+  const [box, setBox] = useState({ w: 900, h: 600 }), [q, setQ] = useState(""), [shut, setShut] = useState(() => new Set()), [panel, setPanel] = useState(() => window.innerWidth > 900), [navFloat, setNavFloat] = useState(false);
   const [aiQ, setAiQ] = useState(""), [aiBusy, setAiBusy] = useState(false), [pill, setPill] = useState("all");
   const [theme, setTheme] = useState(() => { const t = localStorage.getItem("lb_theme"); return t === "aurora" ? "aurora" : "clean"; });
   const flipTheme = () => { const t = theme === "aurora" ? "clean" : "aurora"; setTheme(t); localStorage.setItem("lb_theme", t); };

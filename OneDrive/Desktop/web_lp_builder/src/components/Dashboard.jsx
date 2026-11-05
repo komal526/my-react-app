@@ -1,4 +1,4 @@
-// LaunchBuilder v11 — Dashboard.jsx
+// LaunchBuilder v15 — Dashboard.jsx
 import { useState, useEffect, useRef } from "react";
 import Editor from "./Editor.jsx";
 import { Sidebar, NewModal, PublishModal } from "./parts.jsx";
@@ -43,7 +43,7 @@ export default function Dashboard({ user, onLogout }) {
   const syncT = useRef(0);
   const [integ, setInteg] = useState(() => loadInteg(E));
   const onInteg = (v) => { setInteg(v); saveInteg(E, v); };
-  const [igTile, setIgTile] = useState("");
+  const [igTile, setIgTile] = useState(""), [navOpen, setNavOpen] = useState(false);
   const [cal, setCal] = useState(() => loadCal(E));
   const calT = useRef(0);
   const onSaveCal = (list) => {
@@ -128,8 +128,12 @@ export default function Dashboard({ user, onLogout }) {
 
   return (
     <div className="dash">
-      <Sidebar view={view} onView={setView} count={projects.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, forms: forms.length, calendar: cal.length }} />
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} view={view} onView={setView} count={projects.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, forms: forms.length, calendar: cal.length }} />
+      {navOpen && <div className="nv-ov" onClick={() => setNavOpen(false)} />}
       <section>
+        <div className="mbar"><button className="mbar-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
+          <div className="mbar-brand"><span className="mbar-logo">⬡</span>LaunchBuilder</div>
+          {view === "pages" && <button className="mbar-new" onClick={startNew} aria-label="Create new">＋</button>}</div>
         {view === "pages" && <MyPages projects={projects} onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview}
           leadCount={leads.length} visits={visits7} onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} />}

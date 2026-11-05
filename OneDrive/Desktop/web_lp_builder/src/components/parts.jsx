@@ -1,4 +1,4 @@
-// LaunchBuilder v13 — parts.jsx
+// LaunchBuilder v15 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP } from "../lib.js";
@@ -21,13 +21,14 @@ export function Thumb({ html }) {
 
 const NAV = [["pages", "grid", "Dashboard"], ["templates", "card", "Templates"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "inbox", "Leads"], ["analytics", "chart", "Analytics"], ["domains", "globe", "Domains"], ["integrations", "share", "Integrations"], ["settings", "gear", "Settings"]];
 
-export function Sidebar({ view, onView, count, user, onLogout, badges = {} }) {
+export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open = false, onClose = () => {} }) {
   return (
-    <nav>
+    <nav className={open ? "open" : ""}>
+      <button className="nv-x" onClick={onClose} aria-label="Close menu">✕</button>
       <div className="brand"><span><Icon n="logo" s={18} w={2.2} /></span><div>LaunchBuilder<small>Studio</small></div></div>
       <div className="nv-h">Workspace</div>
       {NAV.map(([k, ic, nm]) => (
-        <div key={k} className={"nv" + (view === k || (k === "pages" && view === "import") ? " on" : "")} onClick={() => onView(k)}><i><Icon n={ic} s={17} /></i>{nm}{badges[k] ? <em className="nvb">{badges[k]}</em> : null}</div>
+        <div key={k} className={"nv" + (view === k || (k === "pages" && view === "import") ? " on" : "")} onClick={() => { onView(k); onClose(); }}><i><Icon n={ic} s={17} /></i>{nm}{badges[k] ? <em className="nvb">{badges[k]}</em> : null}</div>
       ))}
       <div className="grow" />
       <div className="plan"><b>Free plan</b><div className="bar"><div style={{ width: (count / LIMIT) * 100 + "%" }} /></div><span>{count} of {LIMIT} projects used</span></div>
