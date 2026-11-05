@@ -1,5 +1,5 @@
 <?php
-// LaunchBuilder server v3 — runs on your own hosting (Hostinger etc.), no extra service needed.
+// LaunchBuilder server v4 — runs on your own hosting (Hostinger etc.), no extra service needed.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
 // • Routes your own domains to a published site
@@ -34,6 +34,14 @@ function rrmdir($d) {
   if (!is_dir($d)) return;
   foreach (scandir($d) as $x) { if ($x === '.' || $x === '..') continue; $p = $d . '/' . $x; if (is_dir($p)) rrmdir($p); else @unlink($p); }
   @rmdir($d);
+}
+/* the server's public addresses: IPv4 for an A record, IPv6 for an AAAA record */
+function server_ips() {
+  $sa = isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '';
+  $v4 = filter_var($sa, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? $sa : '';
+  $v6 = filter_var($sa, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? $sa : '';
+  if ($v4 === '' && isset($_SERVER['HTTP_HOST'])) { $h = preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST']); $g = @gethostbyname($h); if ($g && $g !== $h && filter_var($g, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) $v4 = $g; }
+  return array('ip' => $v4, 'ip6' => $v6);
 }
 function clean_str($v, $max) { $v = is_scalar($v) ? (string)$v : ''; return function_exists('mb_substr') ? mb_substr($v, 0, $max) : substr($v, 0, $max); }
 
@@ -106,13 +114,13 @@ $key = isset($d['key']) ? (string)$d['key'] : '';
 if ($act === 'setup') {
   if (!empty($cfg['key'])) fail('This server is already connected to a builder. Paste its existing key, or delete lb-data/config.json in File Manager to reset.');
   if (strlen($key) < 16) fail('Key too short');
-  jwrite($DATA . '/config.json', array('key' => $key, 'created' => time()));
-  out(array('ok' => true, 'base' => $BASE, 'ip' => isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : ''));
+  if (!jwrite($DATA . '/config.json', array('key' => $key, 'created' => time())) || !file_exists($DATA . '/config.json')) fail('Could not save settings — in File Manager give the folder lb-data permission 755 (or create it), then try again.');
+  out(array('ok' => true, 'base' => $BASE) + server_ips());
 }
 if (empty($cfg['key'])) fail('Server not set up yet — click Connect in Integrations.');
 if (!hash_equals((string)$cfg['key'], $key)) fail('Wrong key for this server.');
 
-if ($act === 'ping') out(array('ok' => true, 'base' => $BASE, 'ip' => isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '', 'php' => PHP_VERSION));
+if ($act === 'ping') out(array('ok' => true, 'base' => $BASE, 'php' => PHP_VERSION) + server_ips());
 
 $ALLOWED = array('html', 'htm', 'xml', 'txt', 'css', 'js', 'json', 'mp4', 'webm', 'mov', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'ico', 'woff', 'woff2', 'pdf');
 function valid_slug($s) { return is_string($s) && preg_match('/^[a-z0-9][a-z0-9-]{1,60}$/', $s); }

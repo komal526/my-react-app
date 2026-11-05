@@ -1,4 +1,4 @@
-// LaunchBuilder v13 — lib.js
+// LaunchBuilder v17 — lib.js
 import { DESIGNS } from "./designs.js";
 // Helpers, page templates, saving/loading projects, leads and preview links
 
@@ -288,6 +288,11 @@ export async function phpCall(srv, body) {
   catch { throw new Error("Couldn't reach lb-server.php. Make sure it's uploaded next to your builder (public_html)."); }
   if (r.status === 404) throw new Error("lb-server.php was not found at " + url + ". Upload it to the same folder as the builder.");
   let j; try { j = await r.json(); } catch { throw new Error("The server didn't answer correctly. Does your hosting support PHP? (Hostinger web hosting does.)"); }
+  if (!j.ok && /not set up yet/i.test(j.error || "") && body.action !== "setup" && srv && srv.key && !body._healed) {
+    /* the server's lb-data folder was reset (e.g. files re-uploaded) — reconnect with the same key and retry once */
+    await phpCall(srv, { action: "setup" });
+    return phpCall(srv, { ...body, _healed: true });
+  }
   if (!j.ok) throw new Error(j.error || "Server error");
   return j;
 }
@@ -360,7 +365,7 @@ export async function autoServer(integ, onInteg, urlOverride) {
   const info = chk.info;
   if (info.configured) return { ok: false, reason: "key", url };
   const key = "lbk_" + Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
-  try { const r = await phpCall({ url, key }, { action: "setup" }); const next = { ...integ, server: { url, key, ok: true, ip: r.ip || "", base: r.base || "" } }; onInteg(next); return { ok: true, integ: next }; }
+  try { const r = await phpCall({ url, key }, { action: "setup" }); const next = { ...integ, server: { url, key, ok: true, ip: r.ip || "", ip6: r.ip6 || "", base: r.base || "" } }; onInteg(next); return { ok: true, integ: next }; }
   catch (e) { return { ok: false, reason: "error", error: e.message }; }
 }
 
