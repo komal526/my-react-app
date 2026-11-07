@@ -1,7 +1,10 @@
+// LaunchBuilder v24 — Auth.jsx
 import { useState } from "react";
+import { cloudOn, cloudSignup, cloudLogin, cloudUser, startCloud, sha256 } from "../cloud.js";
 
-// DEMO AUTH: accounts live in this browser only. Replace with a real backend (hashed passwords + sessions/JWT) before launch.
-const sha = async (s) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+// With Supabase configured (.env), accounts live on Supabase and work on every device.
+// Without it, accounts are kept in this browser only (demo mode).
+const sha = sha256;
 const users = () => { try { return JSON.parse(localStorage.getItem("lb_users")) || {}; } catch { return {}; } };
 
 const Eye = ({ off }) => (
@@ -12,11 +15,27 @@ const Eye = ({ off }) => (
 );
 
 export default function Auth({ onLogin }) {
-  const [mode, setMode] = useState("login"), [f, setF] = useState({ name: "", email: "", password: "" }), [err, setErr] = useState(""), [busy, setBusy] = useState(false), [show, setShow] = useState(false);
+  const [mode, setMode] = useState("login"), [f, setF] = useState({ name: "", email: "", password: "" }), [err, setErr] = useState(""), [busy, setBusy] = useState(false), [show, setShow] = useState(false), [note, setNote] = useState("");
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const submit = async (e) => {
-    e.preventDefault(); setErr(""); setBusy(true);
-    const email = f.email.trim().toLowerCase(), u = users(), hash = await sha(f.password);
+    e.preventDefault(); setErr(""); setNote(""); setBusy(true);
+    const email = f.email.trim().toLowerCase();
+    const hostKey = async () => { localStorage.setItem("lb_hostkey_" + email, "lbk_" + (await sha(email + "|" + f.password + "|launchbuilder-hosting")).slice(0, 32)); localStorage.setItem("lb_hostkey_active", email); };
+    if (cloudOn()) {   /* real accounts on Supabase */
+      try {
+        if (mode === "signup") {
+          if (f.password.length < 6) throw new Error("Password must be at least 6 characters.");
+          const r = await cloudSignup(email, f.password, f.name.trim() || email.split("@")[0]);
+          if (!r.session) { setBusy(false); setMode("login"); setNote(`✓ Account created! We sent a confirmation link to ${email}. Open it, then log in here.`); return; }
+        }
+        const user = mode === "signup" ? cloudUser() : await cloudLogin(email, f.password);
+        await startCloud(user); await hostKey();
+        setBusy(false);
+        onLogin({ email, id: user.id, name: (user.user_metadata && user.user_metadata.name) || email.split("@")[0] });
+      } catch (x) { setBusy(false); setErr(/already registered|already exists/i.test(x.message) ? "An account with this email already exists — log in instead." : x.message); }
+      return;
+    }
+    const u = users(), hash = await sha(f.password);
     setBusy(false);
     if (mode === "signup") {
       if (u[email]) return setErr("An account with this email already exists.");
@@ -25,8 +44,7 @@ export default function Auth({ onLogin }) {
       localStorage.setItem("lb_users", JSON.stringify(u));
     } else if (!u[email] || u[email].hash !== hash) return setErr("Wrong email or password.");
     /* hosting key comes from your login: same email + password on any computer = publishing just works */
-    localStorage.setItem("lb_hostkey_" + email, "lbk_" + (await sha(email + "|" + f.password + "|launchbuilder-hosting")).slice(0, 32));
-    localStorage.setItem("lb_hostkey_active", email);
+    await hostKey();
     onLogin({ email, name: u[email].name });
   };
   const login = mode === "login";
@@ -40,15 +58,16 @@ export default function Auth({ onLogin }) {
       <div className="au-main">
         <form className="au-box" onSubmit={submit}>
           <h3>{login ? "Welcome back" : "Create your account"}</h3>
-          <p className="au-sub">{login ? "Log in to your dashboard." : "Free plan includes 5 projects."}</p>
+          <p className="au-sub">{login ? "Log in to your dashboard." : "Free plan includes 10 projects."}</p>
           {!login && <label>Name<input required value={f.name} onChange={set("name")} placeholder="Your name" /></label>}
           <label>Email<input required type="email" value={f.email} onChange={set("email")} placeholder="you@example.com" /></label>
           <label>Password
             <div className="au-pw"><input required type={show ? "text" : "password"} value={f.password} onChange={set("password")} placeholder="At least 6 characters" />
               <button type="button" aria-label={show ? "Hide password" : "Show password"} onClick={() => setShow(!show)}><Eye off={show} /></button></div>
           </label>
+          {note && <div className="au-ok">{note}</div>}
           {err && <div className="au-err">{err}</div>}
-          <button className="au-btn" disabled={busy}>{login ? "Log in" : "Sign up"}</button>
+          <button className="au-btn" disabled={busy}>{busy ? "Please wait…" : login ? "Log in" : "Sign up"}</button>
           <p className="au-sub au-sw">{login ? "New here? " : "Already have an account? "}<a onClick={() => { setMode(login ? "signup" : "login"); setErr(""); }}>{login ? "Create an account" : "Log in"}</a></p>
         </form>
       </div>

@@ -1,5 +1,5 @@
 <?php
-// LaunchBuilder server v9 — runs on your own hosting (Hostinger etc.), no extra service needed.
+// LaunchBuilder server v10 — runs on your own hosting (Hostinger etc.), no extra service needed.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
 // • Routes your own domains to a published site
@@ -37,7 +37,13 @@ function rrmdir($d) {
 }
 /* Hostinger serves sites through a CDN / load balancer, so the address PHP sees is NOT the
    website's DNS address and changes between requests. Never guess it — the user copies it from hPanel. */
-function server_ips() { return array('ip' => '', 'ip6' => ''); }
+/* VPS mode: no hPanel — customers only add a DNS record */
+function vps_info() { $v = @json_decode((string)@file_get_contents(__DIR__ . '/lb-data/vps.json'), true); return is_array($v) ? array('vps' => true, 'ip' => isset($v['ip']) ? $v['ip'] : '', 'builder' => isset($v['domain']) ? $v['domain'] : '') : array('vps' => false); }
+function server_ips() {
+  /* on a VPS the setup script saves the real public IP in lb-data/vps.json */
+  $v = @json_decode((string)@file_get_contents(__DIR__ . '/lb-data/vps.json'), true);
+  return array('ip' => is_array($v) && !empty($v['ip']) ? $v['ip'] : '', 'ip6' => '');
+}
 /* ---------- "Add website" mode: each domain is its own Hostinger website; we copy the published site into its folder ---------- */
 function domain_folder($domain) {
   $base = dirname(dirname(__DIR__));            // /home/uXXXX/domains
@@ -119,7 +125,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 9, 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : ''));
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 10, 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
 
 if ($act === 'lead') {
   // simple flood protection: max 30 submissions per minute per visitor

@@ -1,8 +1,17 @@
-// LaunchBuilder v22 — parts.jsx
+// LaunchBuilder v24 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl } from "../lib.js";
 import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
+import { cloudOn } from "../cloud.js";
+/* small "saved to cloud" indicator in the sidebar */
+function CloudStatus() {
+  const [st, setSt] = useState("saved");
+  useEffect(() => { const f = (e) => setSt(e.detail); window.addEventListener("lb-cloud", f); return () => window.removeEventListener("lb-cloud", f); }, []);
+  if (!cloudOn()) return null;
+  const M = { saved: ["☁", "Saved to cloud"], saving: ["⟳", "Saving…"], loading: ["⟳", "Loading…"], offline: ["⚠", "Offline — will retry"] }[st] || ["☁", "Saved to cloud"];
+  return <div className={"cloud-st " + st}><span>{M[0]}</span>{M[1]}</div>;
+}
 import { Icon } from "./Inspector.jsx";
 
 /* ==================== Modal, Thumb, Sidebar, NewModal, PublishModal ==================== */
@@ -32,6 +41,7 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
       ))}
       <div className="grow" />
       <div className="plan"><b>Free plan</b><div className="bar"><div style={{ width: (count / LIMIT) * 100 + "%" }} /></div><span>{count} of {LIMIT} projects used</span></div>
+      <CloudStatus />
       <div className="user"><div className="av">{user.name[0].toUpperCase()}</div><div><b>{user.name}</b><span>{user.email}</span></div></div>
       <button onClick={onLogout}>Log out</button>
     </nav>
