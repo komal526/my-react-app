@@ -1,4 +1,4 @@
-// LaunchBuilder v24 — parts.jsx
+// LaunchBuilder v25 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl } from "../lib.js";
@@ -98,7 +98,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
   const srvOk = serverOn(integ), netOk = !!integ && publishReady(integ);
   const [dest, setDest] = useState(page.host ? "server" : page.netlify ? "netlify" : srvOk ? "server" : netOk ? "netlify" : "");
   /* your own hosting connects by itself the first time (no setup screen) */
-  const [auto, setAuto] = useState(srvOk ? "ok" : "checking"), [pkey, setPkey] = useState(""), [rurl, setRurl] = useState(""), [rbusy, setRbusy] = useState(false), [diag, setDiag] = useState(null);
+  const [auto, setAuto] = useState(srvOk ? "ok" : "checking"), [pkey, setPkey] = useState(""), [rurl, setRurl] = useState(""), [rbusy, setRbusy] = useState(false), [diag, setDiag] = useState(null), [ownDiag, setOwnDiag] = useState("");
   /* publish from anywhere (even localhost) to your Hostinger: just type its address */
   const connectRemote = async () => {
     const url = serverUrlFrom(rurl); if (!url) return;
@@ -111,7 +111,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
   };
   useEffect(() => {
     if (srvOk || !onInteg) { if (!srvOk) setAuto("none"); return; }
-    autoServer(integ, onInteg).then((a) => { setAuto(a.ok ? "ok" : a.reason); if (a.ok && !page.netlify) setDest("server"); });
+    autoServer(integ, onInteg).then((a) => { setAuto(a.ok ? "ok" : a.reason); setOwnDiag(a.diag || ""); if (a.ok && !page.netlify) setDest("server"); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const useKey = async () => {
     setErr("");
@@ -177,14 +177,27 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
               <p className="mut sm">On the first computer/browser: Publish → (live site) → “Hosting key”.</p>
               <div className="row"><input value={pkey} onChange={(e) => setPkey(e.target.value)} placeholder="lbk_…" style={{ flex: 1, padding: 10, border: "1px solid #d1d5db", borderRadius: 10, font: "inherit" }} /><button disabled={pkey.trim().length < 16} onClick={useKey}>Use key</button></div></details>
           </> : <>
-            <b>Put your site on the internet</b>
-            <p className="mut">{location.hostname === "localhost" || location.hostname === "127.0.0.1" ? "You're running the builder on your computer (localhost). Nobody else can open localhost, so publish to your Hostinger instead — just type its address:" : "Type the address of the Hostinger website where you uploaded LaunchBuilder:"}</p>
-            <div className="row"><input value={rurl} onChange={(e) => setRurl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && connectRemote()} placeholder="darkgreen-crocodile-802080.hostingersite.com" style={{ flex: 1, padding: 11, border: "1px solid #d1d5db", borderRadius: 10, font: "inherit" }} />
-              <button className="pri" disabled={!rurl.trim() || rbusy} onClick={connectRemote}>{rbusy ? "Connecting…" : "Connect"}</button></div>
-            {diag && <div className="pub-diag"><b>Not connected yet.</b> {diag.text}
-              <div className="row" style={{ marginTop: 8 }}><a className="btn" href={diag.url} target="_blank" rel="noopener">Test the file in a new tab ↗</a><span className="mut sm">Working = you see <code>{'{"ok":true,"app":"launchbuilder"…}'}</code></span></div></div>}
-            <p className="mut sm" style={{ margin: 0 }}>Your pages are published to <code>that-address/sites/your-page/</code> — a public link anyone can open — and you can connect any domain or subdomain to each page afterwards.</p>
-            <div className="pub-tg"><button onClick={() => onSetup("host")}><b>▲ Use Netlify instead</b><span>Free external hosting with a link like my-page.netlify.app</span></button></div>
+            {location.hostname === "localhost" || location.hostname === "127.0.0.1" ? <>
+              <b>You're working on your computer</b>
+              <p className="mut">Publishing happens on your live builder. Open your builder's real address (for example <b>https://crecapo.tech</b>) and publish there — or connect it below.</p>
+            </> : <>
+              <b>Publishing isn't switched on yet</b>
+              <p className="mut">This builder needs a one-time server setup by the person who installed it. After that, Publish works in one click — no addresses to type.</p>
+              <div className="pub-diag"><b>What's wrong:</b> {{
+                missing: "The builder's server file isn't on this server. Upload the latest build (the dist folder) again — it includes it.",
+                nophp: "The server can't run PHP yet. Run the VPS setup script once (it installs everything).",
+                unreachable: "The builder couldn't reach its own server.",
+                blocked: "The server didn't answer. The setup script probably hasn't finished — run it once on the VPS.",
+              }[ownDiag] || "The server isn't set up yet. Run the VPS setup script once, then upload the builder."}
+                <div className="row" style={{ marginTop: 8 }}><button className="pri" onClick={() => window.location.reload()}>↻ Check again</button><a className="btn" href={defaultServerUrl()} target="_blank" rel="noopener">Test the server ↗</a></div></div>
+            </>}
+            <details className="pub-adv"><summary>Advanced: publish to a different server</summary>
+              <p className="mut sm">Only if your builder files live on another server. This is <b>not</b> where you put a customer's domain — connect domains after publishing, in <b>Domains</b>.</p>
+              <div className="row"><input value={rurl} onChange={(e) => setRurl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && connectRemote()} placeholder="e.g. crecapo.tech" style={{ flex: 1, padding: 10, border: "1px solid #d1d5db", borderRadius: 10, font: "inherit" }} />
+                <button disabled={!rurl.trim() || rbusy} onClick={connectRemote}>{rbusy ? "Connecting…" : "Connect"}</button></div>
+              {diag && <div className="pub-diag" style={{ marginTop: 8 }}><b>Not connected.</b> {diag.text}</div>}
+              <div className="pub-tg" style={{ marginTop: 10 }}><button onClick={() => onSetup("host")}><b>▲ Use Netlify instead</b><span>Free external hosting with a link like my-page.netlify.app</span></button></div>
+            </details>
           </>}
       </div> : busy ? <div className="pub-busy"><span className="pub-spin" /><b>{busy}</b><p className="mut">Please keep this window open (usually 5–30 seconds).</p></div> : <>
         {srvOk && netOk && !page.host && !page.netlify && <div className="pub-dest">{[["server", "🏠 My hosting"], ["netlify", "▲ Netlify"]].map(([k, l]) => <button key={k} className={dest === k ? "on" : ""} onClick={() => setDest(k)}>{l}</button>)}</div>}
