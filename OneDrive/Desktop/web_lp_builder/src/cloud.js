@@ -9,7 +9,7 @@ const BASE = URL0.replace(/\/+$/, "");
 export const cloudOn = () => !!(BASE && KEY);
 
 /* which saved data belongs to a user (stored in the browser as  prefix + email) */
-const SYNC = ["lb_pages_", "lb_forms_", "lb_leads_sync_", "lb_leads_", "lb_cal_", "lb_events_", "lb_integrations_"];
+const SYNC = ["lb_pages_", "lb_forms_", "lb_leads_sync_", "lb_leads_", "lb_cal_", "lb_events_", "lb_integrations_", "lb_mytpl_"];
 const SK = "lb_supa_session";
 
 /* ---------------- session ---------------- */

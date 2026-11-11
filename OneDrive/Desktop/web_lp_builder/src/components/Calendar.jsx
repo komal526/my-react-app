@@ -1,4 +1,4 @@
-// LaunchBuilder v11 — Calendar.jsx
+// LaunchBuilder v28 — Calendar.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { newEvent, EVENT_TEMPLATES, LOCATIONS, eventSlug, eventUrl, gcalLink, uid, serverOn, phpCall, defaultServerUrl, autoServer, filesForServer } from "../lib.js";
 import { bookingWidget, bookingPageHtml, buildSite, finalize } from "./tools.js";
@@ -21,8 +21,25 @@ function Preview({ ev, integ, dev = "desktop", h = 820 }) {
 }
 
 /* ---------- template gallery ---------- */
-function Gallery({ onPick, onClose, integ }) {
-  const [view, setView] = useState(null), t = view && EVENT_TEMPLATES.find((x) => x.key === view);
+/* templates shown right on the Calendar page */
+function InlineTemplates({ onPick, onPreview, title }) {
+  return (
+    <div className="inl-tpl">
+      <div className="inl-h"><div><h2>{title}</h2><p className="mut">Every setting — hours, questions, payment, reminders — can be changed afterwards.</p></div></div>
+      <div className="ce-gal">
+        <button className="ce-card blank" onClick={() => onPick({ o: {} })}><span className="ce-ic">＋</span><b>Blank calendar</b><span className="mut sm">Start from scratch</span></button>
+        {EVENT_TEMPLATES.map((x) => <div key={x.key} className="ce-card" style={{ "--c": x.o.color || "#3d6bff" }}>
+          <span className="ce-ic">{x.ic}</span><b>{x.label}</b><span className="mut sm">{x.note}</span>
+          <div className="ce-meta"><span>🕒 {x.o.duration || 30} min</span>{x.o.pay && <span>₹{x.o.pay.amount}</span>}{x.o.location === "inperson" && <span>📍 In person</span>}</div>
+          <div className="row"><button onClick={() => onPreview(x.key)}>Preview</button><button className="pri" onClick={() => onPick(x)}>Use</button></div>
+        </div>)}
+      </div>
+    </div>
+  );
+}
+
+function Gallery({ onPick, onClose, integ, initial = null }) {
+  const [view, setView] = useState(initial), t = view && EVENT_TEMPLATES.find((x) => x.key === view);
   const ev = useMemo(() => (t ? newEvent(t.o) : null), [t]);
   return (
     <div className="ov" onClick={onClose}><div className="md fm-gal" onClick={(e) => e.stopPropagation()}>
@@ -185,7 +202,7 @@ export default function Calendar({ events, onSave, leads, projects, integ, onInt
         <div className="row">{note && <span className="fb-note">{note}</span>}<button className="pri big" onClick={() => setGal(true)}>＋ Create calendar</button></div></div>
       <div className="stats"><div className="stat"><span>Calendars</span><b>{events.length}</b></div><div className="stat"><span>Upcoming meetings</span><b>{upcoming}</b></div><div className="stat"><span>Next 7 days</span><b>{thisWeek}</b></div></div>
       <div className="ce-tabsbar">{[["events", "Calendars", events.length], ["meetings", "Meetings", bookings.length]].map(([k, l, n]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}<em>{n}</em></button>)}</div>
-      {tab === "events" ? (!events.length ? <div className="empty"><b>No calendars yet</b><p className="mut">Pick a template — discovery call, product demo, paid consultation, clinic, salon, interview and more.</p><button className="pri" onClick={() => setGal(true)}>＋ Create your first calendar</button></div>
+      {tab === "events" ? (!events.length ? <InlineTemplates title="Start with a calendar template" onPreview={(k) => setGal(k)} onPick={create} />
         : <div className="ce-list">{events.map((e) => (
           <div key={e.id} className="ce-row" style={{ "--c": e.color }}>
             <div className="grow" onClick={() => setOpen(e.id)} style={{ cursor: "pointer" }}><b>{e.name}</b>
@@ -218,7 +235,8 @@ export default function Calendar({ events, onSave, leads, projects, integ, onInt
               <td onClick={(x) => x.stopPropagation()}><select className={"lst s-" + b.status} value={b.status} onChange={(x) => onPatchLead(b.id, { status: x.target.value })}>{STATUS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></td>
               <td className="mut">Open →</td></tr>))}</tbody></table></div>}
       </>}
-      {gal && <Gallery integ={integ} onClose={() => setGal(false)} onPick={create} />}
+      {tab === "events" && events.length > 0 && <InlineTemplates title="Add another from a template" onPreview={(k) => setGal(k)} onPick={create} />}
+      {gal && <Gallery integ={integ} initial={typeof gal === "string" ? gal : null} onClose={() => setGal(false)} onPick={create} />}
       {d && <div className="ldrawer" onClick={() => setDet(null)}><div onClick={(x) => x.stopPropagation()}>
         <div className="row between"><h3>{d.data.name || "Meeting"}</h3><button onClick={() => setDet(null)}>Close</button></div>
         <p className="mut"><span className="ce-dot" style={{ background: (d.ev && d.ev.color) || "#3d6bff" }} />{(d.ev && d.ev.name) || d.form} · booked {new Date(d.ts).toLocaleString()}</p>

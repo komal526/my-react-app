@@ -1,7 +1,7 @@
-// LaunchBuilder v25 — parts.jsx
+// LaunchBuilder v28 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
-import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl } from "../lib.js";
+import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
 import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
 import { cloudOn, lastStatus } from "../cloud.js";
 /* small "saved to cloud" indicator in the sidebar */
@@ -30,30 +30,55 @@ export function Thumb({ html }) {
 
 const NAV = [["pages", "grid", "Dashboard"], ["templates", "card", "Templates"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "inbox", "Leads"], ["analytics", "chart", "Analytics"], ["domains", "globe", "Domains"], ["integrations", "share", "Integrations"], ["settings", "gear", "Settings"]];
 
-export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open = false, onClose = () => {} }) {
+/* grouped menu · collapses to an icon-only rail */
+const GROUPS = [
+  ["build", "layers", "Build & Manage", [["websites", "globe", "Websites"], ["landings", "pages", "Landing Pages"], ["templates", "card", "Templates"]]],
+  ["collect", "form", "Create & Collect", [["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"]]],
+  ["grow", "share", "Connect & Grow", [["domains", "share", "Domains"], ["integrations", "apps", "Integrations"]]],
+  ["reports", "gear", "Reports & Settings", [["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]]],
+];
+export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open = false, onClose = () => {}, mini = false, onMini = () => {} }) {
+  const [shut, setShut] = useState(() => { try { return JSON.parse(localStorage.getItem("lb_nav_shut") || "[]"); } catch { return []; } });
+  const toggle = (g) => { const n = shut.includes(g) ? shut.filter((x) => x !== g) : [...shut, g]; setShut(n); localStorage.setItem("lb_nav_shut", JSON.stringify(n)); };
+  const go = (k) => { onView(k); onClose(); };
+  const isOn = (k) => view === k || (k === "pages" && view === "import");
+  const Item = ({ k, ic, nm, sub }) => (
+    <div className={"sb3-item" + (sub && !mini ? " sub" : "") + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={mini ? nm : undefined}>
+      {sub && !mini ? <i className="sb3-node" /> : <Icon n={ic} s={17} />}<span className="sb3-l">{nm}</span>{badges[k] ? <em className="sb3-b">{badges[k]}</em> : null}
+    </div>);
   return (
-    <nav className={open ? "open" : ""}>
+    <nav className={"sb3" + (open ? " open" : "") + (mini ? " mini" : "")}>
       <button className="nv-x" onClick={onClose} aria-label="Close menu">✕</button>
-      <div className="brand"><span><Icon n="logo" s={18} w={2.2} /></span><div>LaunchBuilder<small>Studio</small></div></div>
-      <div className="nv-h">Workspace</div>
-      {NAV.map(([k, ic, nm]) => (
-        <div key={k} className={"nv" + (view === k || (k === "pages" && view === "import") ? " on" : "")} onClick={() => { onView(k); onClose(); }}><i><Icon n={ic} s={17} /></i>{nm}{badges[k] ? <em className="nvb">{badges[k]}</em> : null}</div>
-      ))}
-      <div className="grow" />
-      <div className="plan"><b>Free plan</b><div className="bar"><div style={{ width: (count / LIMIT) * 100 + "%" }} /></div><span>{count} of {LIMIT} projects used</span></div>
+      <div className="sb3-top">
+        <span className="sb3-logo"><Icon n="logo" s={17} w={2.2} /></span>
+        <div className="sb3-name"><b>LaunchBuilder</b><small>Studio</small></div>
+        <button className="sb3-mini" onClick={onMini} title={mini ? "Expand menu" : "Collapse menu"} aria-label="Toggle menu"><Icon n={mini ? "chev" : "back"} s={15} /></button>
+      </div>
+      <div className="sb3-scroll">
+        <Item k="pages" ic="grid" nm="Dashboard" />
+        {GROUPS.map(([g, gic, label, items]) => {
+          const closed = !mini && shut.includes(g) && !items.some(([k]) => isOn(k));
+          return <div key={g} className={"sb3-grp" + (closed ? " shut" : "")}>
+            {!mini ? <button className="sb3-gh" onClick={() => toggle(g)}><Icon n={gic} s={16} /><span>{label}</span><Icon n="chevd" s={12} className={closed ? "rot" : ""} /></button> : <div className="sb3-sep" />}
+            {!closed && <div className={mini ? "" : "sb3-tree"}>{items.map(([k, ic, nm]) => <Item key={k} k={k} ic={ic} nm={nm} sub />)}</div>}
+          </div>;
+        })}
+      </div>
+      <button className="sb3-up" onClick={() => go("settings")} title={mini ? `Upgrade to Pro · ${count}/${LIMIT} projects` : undefined}>
+        <span className="sb3-crown">👑</span><span className="sb3-l"><b>Upgrade to Pro</b><small>{count}/{LIMIT} projects used</small></span></button>
       <CloudStatus />
-      <div className="user"><div className="av">{user.name[0].toUpperCase()}</div><div><b>{user.name}</b><span>{user.email}</span></div></div>
-      <button onClick={onLogout}>Log out</button>
+      <div className="sb3-user" title={mini ? user.email : undefined}><span className="av">{(user.name || "U")[0].toUpperCase()}</span>
+        <span className="sb3-l"><b>{user.name}</b><small>{user.email}</small></span>
+        <button title="Log out" onClick={onLogout}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg></button></div>
     </nav>
   );
 }
 
-
 const AI_IDEAS = ["AI ad-creation workshop for beginners, ₹21 registration, Hindi + English audience, dark modern style", "Dental clinic in Hamirpur: services, doctors, timings, book appointment form, Google map", "Digital marketing agency: services, case studies, pricing plans, contact form", "Online yoga classes: batches, trainer bio, testimonials, WhatsApp signup"];
-export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI }) {
-  const [type, setType] = useState("landing"), [name, setName] = useState(""), [t, setT] = useState(0), [src, setSrc] = useState("tpl");
+export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI, kind = "landing", mine = [] }) {
+  const [type, setType] = useState(kind), [name, setName] = useState(""), [t, setT] = useState(0), [src, setSrc] = useState("tpl");
   const [brief, setBrief] = useState(""), [busy, setBusy] = useState(false), [err, setErr] = useState("");
-  const list = [...TEMPLATES.filter((x) => x.type === type && x.hidden).sort((a, b) => (/^blank/.test(b.key) ? 1 : 0) - (/^blank/.test(a.key) ? 1 : 0)), ...TEMPLATES.filter((x) => x.type === type && !x.hidden)];
+  const list = [...TEMPLATES.filter((x) => x.type === type && x.hidden).sort((a, b) => (/^blank/.test(b.key) ? 1 : 0) - (/^blank/.test(a.key) ? 1 : 0)), ...mine.map(asTemplate).filter((x) => x.type === type), ...TEMPLATES.filter((x) => x.type === type && !x.hidden)];
   const prov = AI_PROVIDERS.find((p) => p.id === (ai && ai.provider)) || AI_PROVIDERS[0], hasKey = ai && ai.keys && ai.keys[prov.id];
   const gen = async () => {
     if (brief.trim().length < 15) return setErr("Describe your business in a sentence or two (what, who for, what you want visitors to do).");
@@ -131,7 +156,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
   const pubServer = () => run(async () => {
     const sl = slugify(slug); if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(sl)) throw new Error("Link name: use 2+ lowercase letters, numbers or dashes.");
     setBusy("Building your pages…");
-    const files = await buildSite(page.pages, own || `${base}/sites/${sl}`, { leadUrl: (integ.server.url || defaultServerUrl()), site: sl });
+    const files = await buildSite(page.pages, own || `${base}/sites/${sl}`, { leadUrl: (integ.server.url || defaultServerUrl()), site: sl, pixels: pixelsFor(integ, page) });
     const payload = filesForServer(files), size = payload.reduce((n, f) => n + f.b64.length, 0);
     if (size > 60e6) throw new Error("Your site is bigger than 45 MB. Use smaller videos or YouTube links.");
     setBusy("Uploading to your hosting…");
@@ -141,7 +166,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
   const unpublish = () => { if (window.confirm("Take this site offline? The link will stop working.")) run(async () => { setBusy("Taking it offline…"); await phpCall(integ.server, { action: "unpublish", slug: page.host.slug }); onDone({ status: "draft", host: null }, true); }); };
   const pubNetlify = () => run(async () => {
     setBusy("Building your pages…");
-    const zip = makeZip(await buildSite(page.pages, url || ""));
+    const zip = makeZip(await buildSite(page.pages, url || "", { pixels: pixelsFor(integ, page) }));
     if (zip.size > 35e6) throw new Error("Your site is bigger than 35 MB. Use smaller videos or YouTube links, then try again.");
     setBusy("Uploading to Netlify…");
     const r = await serverCall(integ, { event: "publish", siteId: (page.netlify && page.netlify.siteId) || (target === "existing" ? siteId : undefined), zip: await blobToBase64(zip) });

@@ -1,4 +1,4 @@
-// LaunchBuilder v22 — lib.js
+// LaunchBuilder v27 — lib.js
 import { DESIGNS } from "./designs.js";
 // Helpers, page templates, saving/loading projects, leads and preview links
 
@@ -407,3 +407,20 @@ export const SERVER_HELP = {
 
 /* automatic subdomain for a published site: <slug>.<sites domain> */
 export const subUrl = (integ, slug) => (integ && integ.server && integ.server.sitesDomain && slug ? `https://${slug}.${integ.server.sitesDomain}/` : "");
+
+/* ==================== Tracking pixels (Meta, Google) — account-wide defaults ==================== */
+export const PIXEL_OK = (v) => /^[A-Za-z0-9_-]{3,40}$/.test(v || "");
+export const pixelsFor = (integ, project) => {
+  const px = integ && integ.pixels; if (!px || px.off) return null;
+  if (px.scope === "some" && !(px.ids || []).includes(project && project.id)) return null;
+  const o = {}; ["meta", "ga4", "gtm", "ads", "adsLabel"].forEach((k) => { if (px[k] && (k === "adsLabel" || PIXEL_OK(px[k]))) o[k] = px[k].trim(); });
+  return Object.keys(o).length ? o : null;
+};
+
+/* ==================== My templates (saved from your own websites / landing pages) ==================== */
+const MT = (email) => "lb_mytpl_" + email;
+export const loadMyTpl = (email) => { try { return JSON.parse(localStorage.getItem(MT(email)) || "[]"); } catch { return []; } };
+export const saveMyTpl = (email, list) => { try { localStorage.setItem(MT(email), JSON.stringify(list)); } catch { alert("Browser storage is full — delete an old template first."); } };
+/* turn a saved template into the same shape as the built-in ones */
+export const asTemplate = (m) => ({ key: "my_" + m.id, mine: true, id: m.id, type: m.type, cat: "My templates", name: m.name, note: m.note || (m.type === "website" ? `${m.pages.length} pages · saved by you` : "Saved by you"), accent: "#f5b301",
+  make: () => m.pages.map((x) => pg(x.name, x.file, x.html)) });

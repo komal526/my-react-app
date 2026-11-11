@@ -1,4 +1,4 @@
-// LaunchBuilder v14 — tools.js
+// LaunchBuilder v27 — tools.js
 // Editor toolbox: draggable elements, settings, site runtime, video storage, zip export
 
 
@@ -332,6 +332,7 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
   if(wa&&wa.hook){var ph=phoneOf(data).replace(/\\D/g,'');if(ph.length===10)ph=String(wa.cc||'91')+ph;lead.whatsapp={to:ph,message:fillT(wa.msg,data)}}
   if(W.LB_PREVIEW)parent.postMessage({lb:'lead',lead:lead},'*');
   if(W.LB_LEAD_URL)post(W.LB_LEAD_URL,{action:'lead',lead:Object.assign({site:W.LB_SITE||''},lead)});
+  try{if(W.fbq)fbq('track','Lead');if(W.gtag){gtag('event','generate_lead');if(W.LB_ADS)gtag('event','conversion',{send_to:W.LB_ADS})}if(W.dataLayer)W.dataLayer.push({event:'lb_lead'})}catch(_){}
   post(hook,{event:'lead.created',lead:lead});
   if(pay)f.__lead=lead}
  var mail=jattr(f,'data-lb-mail');
@@ -352,6 +353,7 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
  var paid=function(pm){lead.payment=Object.assign({},lead.payment,pm,{ts:Date.now()});f.__lead=null;
   if(W.LB_PREVIEW)parent.postMessage({lb:'lead-pay',lid:lead.lid,payment:lead.payment},'*');
   if(W.LB_LEAD_URL)post(W.LB_LEAD_URL,{action:'leadpay',lid:lead.lid,payment:lead.payment});
+  try{var amt=+(lead.payment&&lead.payment.amount)||0;if(W.fbq)fbq('track','Purchase',{value:amt,currency:'INR'});if(W.gtag)gtag('event','purchase',{value:amt,currency:'INR'});if(W.dataLayer)W.dataLayer.push({event:'lb_purchase',value:amt})}catch(_){}
   post(hook,{event:'payment.'+pm.status,lead:lead});sendWA();sendMail();done()};
  var amt=(+pay.amount).toLocaleString('en-IN');
  if(pay.mode==='razorpay'&&pay.key){if(btn)btn.disabled=true;
@@ -378,6 +380,7 @@ const ok = (v) => /^[A-Za-z0-9_-]{3,40}$/.test(v || "");
 const tracking = (c) => [
   ok(c.gtm) && `<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${c.gtm}');</script>`,
   ok(c.ga) && `<script async src="https://www.googletagmanager.com/gtag/js?id=${c.ga}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${c.ga}');</script>`,
+  ok(c.ads) && `${ok(c.ga) ? "" : `<script async src="https://www.googletagmanager.com/gtag/js?id=${c.ads}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());</script>`}<script>gtag('config','${c.ads}');window.LB_ADS=${JSON.stringify(c.ads + (c.adsLabel && /^[A-Za-z0-9_-]{2,60}$/.test(c.adsLabel) ? "/" + c.adsLabel : ""))};</script>`,
   ok(c.pixel) && `<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${c.pixel}');fbq('track','PageView');</script>`,
 ].filter(Boolean).join("");
 
@@ -388,7 +391,7 @@ export const readCfg = (doc) => { const s = doc.getElementById("lb-settings"); t
  * mode "blob": uploaded videos point at in-browser blob URLs (Preview)
  * mode "zip":  uploaded videos become files in assets/ (Export)
  */
-export async function finalize(html, { mode = "zip", preview = false, page = "index.html", hash = "", leadUrl = "", site = "" } = {}) {
+export async function finalize(html, { mode = "zip", preview = false, page = "index.html", hash = "", leadUrl = "", site = "", pixels = null } = {}) {
   const doc = new DOMParser().parseFromString(html, "text/html"), head = doc.head, files = [];
   const cfg = readCfg(doc);
   doc.getElementById("lb-settings") && doc.getElementById("lb-settings").remove();
@@ -397,7 +400,7 @@ export async function finalize(html, { mode = "zip", preview = false, page = "in
   head.insertAdjacentHTML("afterbegin", `<script>document.documentElement.classList.add('lb-run')</script>`);
   const css = doc.createElement("style"); css.id = "lb-widgets"; css.textContent = WIDGET_CSS + "\n" + SITE_CSS;
   head.insertBefore(css, head.querySelector("style,link[rel=stylesheet]"));
-  if (!preview) head.insertAdjacentHTML("beforeend", tracking(cfg));
+  if (!preview) { const px = pixels || {}; head.insertAdjacentHTML("beforeend", tracking({ ...cfg, ga: cfg.ga || px.ga4, pixel: cfg.pixel || px.meta, gtm: cfg.gtm || px.gtm, ads: cfg.ads || px.ads, adsLabel: cfg.adsLabel || px.adsLabel })); }
   if (cfg.schema && cfg.schema.trim()) head.insertAdjacentHTML("beforeend", `<script type="application/ld+json">${cfg.schema}</script>`);
   if (!preview && cfg.head) head.insertAdjacentHTML("beforeend", cfg.head);
 
@@ -670,7 +673,7 @@ export const structureHtml = (cols) => `<section data-lb-name="Section" style="p
 /* ==================== build a whole site for publishing (all pages + uploaded videos + sitemap + 404) ==================== */
 export async function buildSite(pages, base = "", live = {}) {
   const out = [];
-  for (const p of pages) { const r = await finalize(p.html, { mode: "zip", page: p.file, leadUrl: live.leadUrl || "", site: live.site || "" }); out.push({ name: p.file, data: r.html }); r.files.forEach((f) => !out.some((o) => o.name === f.name) && out.push(f)); }
+  for (const p of pages) { const r = await finalize(p.html, { mode: "zip", page: p.file, leadUrl: live.leadUrl || "", site: live.site || "", pixels: live.pixels || null }); out.push({ name: p.file, data: r.html }); r.files.forEach((f) => !out.some((o) => o.name === f.name) && out.push(f)); }
   if (!pages.some((p) => p.file === "index.html") && pages[0]) out.push({ name: "index.html", data: out[0].data });
   if (!pages.some((p) => p.file === "404.html")) out.push({ name: "404.html", data: (await finalize(PAGE_TPLS.find((t) => t[0] === "404")[2]("Page not found"))).html });
   if (base) {

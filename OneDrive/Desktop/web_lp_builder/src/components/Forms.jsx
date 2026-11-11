@@ -1,4 +1,4 @@
-// LaunchBuilder v8 — Forms.jsx
+// LaunchBuilder v28 — Forms.jsx
 // LaunchBuilder v3 — Forms.jsx
 import { useMemo, useRef, useState } from "react";
 import { FORM_TEMPLATES, FIELD_TYPES, newForm, newField, uid, ago, formUrl } from "../lib.js";
@@ -8,9 +8,25 @@ import { formHtml, formPageHtml } from "./tools.js";
 const TYPE_IC = { text: "Aa", email: "@", tel: "☎", number: "#", textarea: "¶", select: "▾", radio: "◉", checkboxes: "☑", date: "📅", time: "⏰", url: "🔗", consent: "✓", heading: "H" };
 const copy = async (t, done) => { try { await navigator.clipboard.writeText(t); done && done(); } catch { window.prompt("Copy this:", t); } };
 
-function Gallery({ onPick, onClose, integ }) {
+/* templates shown right on the Forms page */
+function InlineTemplates({ integ, onPick, onPreview, title }) {
   const forms = useMemo(() => Object.fromEntries(FORM_TEMPLATES.map((t) => [t.key, formPageHtml(newForm(t), integ)])), [integ]);
-  const [view, setView] = useState(null), [dev, setDev] = useState("desktop");
+  return (
+    <div className="inl-tpl">
+      <div className="inl-h"><div><h2>{title}</h2><p className="mut">Pick one, then change every field, colour and automation.</p></div></div>
+      <div className="fm-tpls">{FORM_TEMPLATES.map((t) => (
+        <div key={t.key} className="fm-t">
+          <div className="fm-shot" onClick={() => onPreview(t.key)}><iframe title={t.name} srcDoc={forms[t.key]} sandbox="" tabIndex={-1} loading="lazy" />
+            <div className="fm-hov"><button onClick={(e) => { e.stopPropagation(); onPreview(t.key); }}>Preview</button><button className="pri" onClick={(e) => { e.stopPropagation(); onPick(t); }}>Use</button></div></div>
+          <b>{t.name}</b><span>{t.note}</span>
+        </div>))}</div>
+    </div>
+  );
+}
+
+function Gallery({ onPick, onClose, integ, initial = null }) {
+  const forms = useMemo(() => Object.fromEntries(FORM_TEMPLATES.map((t) => [t.key, formPageHtml(newForm(t), integ)])), [integ]);
+  const [view, setView] = useState(initial), [dev, setDev] = useState("desktop");
   const cur = view && FORM_TEMPLATES.find((t) => t.key === view);
   return (
     <div className="ov" onClick={onClose}><div className="md fm-gal" onClick={(e) => e.stopPropagation()}>
@@ -206,7 +222,7 @@ export default function Forms({ forms, onSave, projects, leads, onAddToPage, onL
     <div onClick={() => setMenu(null)}>
       <div className="top"><div><h1>Forms</h1><p className="mut">Build forms once, use them on any page, and collect every entry in Leads.</p></div><button className="pri big" onClick={() => setGal(true)}>＋ New form</button></div>
       {!forms.length ? (
-        <div className="empty"><b>No forms yet</b><p className="mut">Start from a template like Lead capture, Contact, Workshop registration or Appointment booking.</p><button className="pri" onClick={() => setGal(true)}>＋ Create your first form</button></div>
+        <InlineTemplates integ={integ} title="Start with a form template" onPreview={(k) => setGal(k)} onPick={(t) => { const f = newForm(t); onSave([f, ...forms]); setOpen(f.id); }} />
       ) : (
         <div className="grid">{forms.map((f) => (
           <div key={f.id} className="card fm-card" onClick={() => setOpen(f.id)}>
@@ -225,7 +241,8 @@ export default function Forms({ forms, onSave, projects, leads, onAddToPage, onL
             </div>}
           </div>))}</div>
       )}
-      {gal && <Gallery integ={integ} onClose={() => setGal(false)} onPick={(t) => { const f = newForm(t); f.name = f.name === "Untitled form" ? "Untitled form" : f.name; onSave([f, ...forms]); setGal(false); setOpen(f.id); }} />}
+      {forms.length > 0 && <InlineTemplates integ={integ} title="Add another from a template" onPreview={(k) => setGal(k)} onPick={(t) => { const f = newForm(t); onSave([f, ...forms]); setOpen(f.id); }} />}
+      {gal && <Gallery integ={integ} initial={typeof gal === "string" ? gal : null} onClose={() => setGal(false)} onPick={(t) => { const f = newForm(t); f.name = f.name === "Untitled form" ? "Untitled form" : f.name; onSave([f, ...forms]); setGal(false); setOpen(f.id); }} />}
     </div>
   );
 }
