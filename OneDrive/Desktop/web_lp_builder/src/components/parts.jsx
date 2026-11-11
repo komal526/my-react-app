@@ -3,14 +3,14 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl } from "../lib.js";
 import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
-import { cloudOn } from "../cloud.js";
+import { cloudOn, lastStatus } from "../cloud.js";
 /* small "saved to cloud" indicator in the sidebar */
 function CloudStatus() {
-  const [st, setSt] = useState("saved");
-  useEffect(() => { const f = (e) => setSt(e.detail); window.addEventListener("lb-cloud", f); return () => window.removeEventListener("lb-cloud", f); }, []);
+  const [st, setSt] = useState(lastStatus.s), [why, setWhy] = useState(lastStatus.why);
+  useEffect(() => { const f = (e) => { setSt(e.detail); setWhy(lastStatus.why || ""); }; window.addEventListener("lb-cloud", f); return () => window.removeEventListener("lb-cloud", f); }, []);
   if (!cloudOn()) return null;
-  const M = { saved: ["☁", "Saved to cloud"], saving: ["⟳", "Saving…"], loading: ["⟳", "Loading…"], offline: ["⚠", "Offline — will retry"] }[st] || ["☁", "Saved to cloud"];
-  return <div className={"cloud-st " + st}><span>{M[0]}</span>{M[1]}</div>;
+  const M = { saved: ["☁", "Saved to cloud"], saving: ["⟳", "Saving…"], loading: ["⟳", "Loading…"], offline: ["⚠", "Not saved to cloud"] }[st] || ["☁", "Saved to cloud"];
+  return <div className={"cloud-st " + st}><div><span>{M[0]}</span> {M[1]}</div>{st === "offline" && why && <small>{why}</small>}</div>;
 }
 import { Icon } from "./Inspector.jsx";
 

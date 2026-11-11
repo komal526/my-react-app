@@ -1,4 +1,4 @@
-// LaunchBuilder v24 — cloud.js
+// LaunchBuilder v25 — cloud.js
 // Supabase login + automatic cloud sync of each user's data (pages, forms, leads, calendars, analytics, integrations).
 // Works with Supabase's standard REST API — no extra npm package needed.
 // Settings come from the .env file:  VITE_SUPABASE_URL  and  VITE_SUPABASE_ANON_KEY
@@ -60,7 +60,33 @@ export const cloudUser = () => { const s = getSession(); return s && s.user ? s.
 const _set = Storage.prototype.setItem, _rem = Storage.prototype.removeItem;
 let uid = null, email = null, patched = false;
 const pending = new Map(); let timer = 0;
-const status = (s) => window.dispatchEvent(new CustomEvent("lb-cloud", { detail: s }));
+export let lastStatus = { s: "saved", why: "" };
+const status = (s, why = "") => { lastStatus = { s, why }; window.dispatchEvent(new CustomEvent("lb-cloud", { detail: s, why })); };
+/* turn technical errors into one clear sentence */
+const reason = (m = "") => /does not exist|could not find the table|schema cache|PGRST205|42P01/i.test(m) ? "The cloud table isn't created yet. In Supabase → SQL Editor, run launchbuilder-supabase.sql, then reload."
+  : /jwt|401|expired|invalid token/i.test(m) ? "Your login expired. Log out and log in again."
+  : /row-level security|permission|42501|403/i.test(m) ? "Supabase security rules are blocking saves. Run launchbuilder-supabase.sql again."
+  : /fetch|network|failed to fetch|internet/i.test(m) ? "No internet connection — will retry."
+  : m ? "Cloud error: " + m : "Couldn't reach the cloud — will retry.";
+/* remember what was last synced, so an old/empty browser can never overwrite newer work */
+const hash = (v) => { let h = 5381; const t = String(v); for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return t.length + ":" + h; };
+const SYNCED = (k) => "lb_synced_" + k + email;
+const parse = (v) => { try { return JSON.parse(v); } catch { return undefined; } };
+const isEmpty = (x) => x == null || (Array.isArray(x) && !x.length) || (typeof x === "object" && !Array.isArray(x) && !Object.keys(x).length);
+const stamp = (x) => +((x && (x.updated || x.edited || x.ts || x.created)) || 0);
+/* combine cloud + this browser: keep every project/form/lead/etc. (newest version of each) */
+function mergeVals(cv, lv) {
+  const c = parse(cv), l = parse(lv);
+  if (lv == null || l === undefined || isEmpty(l)) return cv;
+  if (cv == null || c === undefined || isEmpty(c)) return lv;
+  if (Array.isArray(c) && Array.isArray(l)) {
+    const out = new Map(), extra = [];
+    [...c, ...l].forEach((it) => { const id = it && (it.id || it.lid); if (!id) { extra.push(it); return; } const o = out.get(id); if (!o || stamp(it) > stamp(o)) out.set(id, it); });
+    return JSON.stringify([...out.values(), ...extra.filter((x, i) => extra.findIndex((y) => JSON.stringify(y) === JSON.stringify(x)) === i)]);
+  }
+  if (typeof c === "object" && typeof l === "object" && !Array.isArray(c) && !Array.isArray(l)) return JSON.stringify({ ...l, ...c });
+  return cv;
+}
 const cloudKey = (k) => { if (!email || !k.endsWith(email)) return null; const p = k.slice(0, -email.length); return SYNC.includes(p) ? p : null; };
 
 function patch() {
@@ -76,7 +102,7 @@ function queue(k, v) {
 export async function flush() {
   clearTimeout(timer); if (!pending.size || !uid) return;
   const items = [...pending.entries()]; pending.clear();
-  const t = await token(); if (!t) { status("offline"); items.forEach(([k, v]) => pending.set(k, v)); return; }
+  const t = await token(); if (!t) { status("offline", reason("jwt expired")); items.forEach(([k, v]) => pending.set(k, v)); return; }
   try {
     const up = items.filter(([, v]) => v !== null).map(([key, value]) => ({ user_id: uid, key, value, updated_at: new Date().toISOString() }));
     const del = items.filter(([, v]) => v === null).map(([k]) => k);
@@ -85,26 +111,34 @@ export async function flush() {
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || "save failed");
     }
     for (const k of del) await fetch(BASE + `/rest/v1/lb_user_data?user_id=eq.${uid}&key=eq.${encodeURIComponent(k)}`, { method: "DELETE", headers: H(t) });
+    up.forEach((x) => _set.call(localStorage, SYNCED(x.key), hash(x.value)));
     status("saved");
   } catch (e) {
     items.forEach(([k, v]) => { if (!pending.has(k)) pending.set(k, v); });
-    status("offline"); clearTimeout(timer); timer = setTimeout(flush, 10000);   // try again later
+    status("offline", reason(e.message)); clearTimeout(timer); timer = setTimeout(flush, 10000);   // try again later
   }
 }
 /* call after login (or when the app opens): downloads everything, then keeps saving changes */
 export async function startCloud(user) {
   uid = user.id; email = (user.email || "").toLowerCase(); patch(); status("loading");
-  const t = await token(); if (!t) { status("offline"); return false; }
+  const t = await token(); if (!t) { status("offline", reason("jwt expired")); return false; }
   let rows = [];
   try {
     const r = await fetch(BASE + "/rest/v1/lb_user_data?select=key,value", { headers: H(t) });
-    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || "load failed");
+    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.message || j.code || "HTTP " + r.status); }
     rows = await r.json();
-  } catch (e) { status("offline"); console.warn("cloud load:", e.message); return false; }
-  const have = new Set(rows.map((x) => x.key));
-  rows.forEach((x) => { if (x.value !== null) _set.call(localStorage, x.key + email, x.value); });
-  /* first time on the cloud: upload what this browser already has */
-  SYNC.forEach((p) => { if (!have.has(p)) { const v = localStorage.getItem(p + email); if (v !== null) pending.set(p, v); } });
+  } catch (e) { status("offline", reason(e.message)); console.warn("cloud load:", e.message); return false; }
+  const cloud = new Map(rows.map((x) => [x.key, x.value]));
+  SYNC.forEach((p) => {
+    const lv = localStorage.getItem(p + email), cv = cloud.has(p) ? cloud.get(p) : null, last = localStorage.getItem(SYNCED(p));
+    let next;
+    if (cv == null) next = lv;                                   // only this browser has it → upload
+    else if (lv == null || (last && last === hash(lv))) next = cv; // this browser has no unsaved changes → take the cloud copy
+    else next = mergeVals(cv, lv);                               // both changed → keep everything
+    if (next == null) return;
+    if (next !== lv) _set.call(localStorage, p + email, next);
+    if (next !== cv) pending.set(p, next); else _set.call(localStorage, SYNCED(p), hash(next));
+  });
   if (pending.size) await flush(); else status("saved");
   return true;
 }

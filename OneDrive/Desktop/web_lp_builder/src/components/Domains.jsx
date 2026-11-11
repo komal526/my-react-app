@@ -346,6 +346,9 @@ export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ,
       {srvVer !== null && srvVer < SERVER_VERSION && <div className="ver-warn"><b>{srvVer === 0 ? "⚠ Your hosting's server file isn't answering." : `⚠ Your hosting has an old server file (v${srvVer}) — this builder needs v${SERVER_VERSION}.`}</b>
         <span>That's why domains can't finish connecting. Fix (2 minutes): on your computer run <code>npm run build</code>, then in hPanel → File Manager → <code>public_html</code> upload <b>everything inside <code>dist</code></b> and choose <b>Replace</b>. Keep the <code>sites</code> and <code>lb-data</code> folders. Then reload this page.</span></div>}
       <div className="top"><div><h1>Domains</h1><p className="mut">Every website — and every single page — can have its own domain or subdomain. Connect with DNS records or nameservers.</p></div></div>
+      {serverOn(integ) && info && !info.vps && <div className="mode-note"><b>ℹ Your builder is running on shared hosting.</b> On shared hosting Hostinger requires each customer domain to be added in hPanel — that's why you see those steps.
+        For the simple way (<b>customer adds DNS or nameservers → Connect & check → live</b>, no hPanel), run this builder on your <b>VPS</b>: point your builder domain's A record to the VPS IP, run the setup script, upload the build.</div>}
+      {serverOn(integ) && info && info.vps && <div className="mode-note ok"><b>✓ VPS mode.</b> Any domain connects with just DNS records — no hPanel needed. Server IP: <code>{info.ip}</code></div>}
       {serverOn(integ) && <AutoSub integ={integ} onInteg={onInteg} projects={projects} info={info} />}
       <div className="stats">
         <div className="stat"><span>Live sites</span><b>{projects.filter((p) => p.netlify || p.host).length}</b></div>
