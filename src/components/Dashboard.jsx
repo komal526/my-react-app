@@ -1,4 +1,4 @@
-// LaunchBuilder v27 — Dashboard.jsx
+// LaunchBuilder v30 — Dashboard.jsx
 import { useState, useEffect, useRef } from "react";
 import Editor from "./Editor.jsx";
 import { Sidebar, NewModal, PublishModal } from "./parts.jsx";
@@ -61,6 +61,9 @@ export default function Dashboard({ user, onLogout }) {
   const [integ, setInteg] = useState(() => loadInteg(E));
   const onInteg = (v) => { setInteg(v); saveInteg(E, v); };
   const [igTile, setIgTile] = useState(""), [navOpen, setNavOpen] = useState(false), [q, setQ] = useState(""), [um, setUm] = useState(false), [mini, setMini] = useState(() => localStorage.getItem("lb_nav_mini") === "1");
+  /* tablets & phones always get the normal (full) menu */
+  const [wide, setWide] = useState(() => window.innerWidth > 900);
+  useEffect(() => { const f = () => setWide(window.innerWidth > 900); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
   const [cal, setCal] = useState(() => loadCal(E));
   const [myTpl, setMyTpl] = useState(() => loadMyTpl(E));
   const putTpl = (list) => { setMyTpl(list); saveMyTpl(E, list); };
@@ -151,8 +154,8 @@ export default function Dashboard({ user, onLogout }) {
   );
 
   return (
-    <div className={"dash" + (mini ? " mini" : "")} onClick={() => um && setUm(false)}>
-      <Sidebar mini={mini} onMini={() => { const v = !mini; setMini(v); localStorage.setItem("lb_nav_mini", v ? "1" : "0"); }} open={navOpen} onClose={() => setNavOpen(false)} view={view} onView={setView} count={projects.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, forms: forms.length, calendar: cal.length }} />
+    <div className={"dash" + (mini && wide ? " mini" : "")} onClick={() => um && setUm(false)}>
+      <Sidebar mini={mini && wide} onMini={() => { const v = !mini; setMini(v); localStorage.setItem("lb_nav_mini", v ? "1" : "0"); }} open={navOpen} onClose={() => setNavOpen(false)} view={view} onView={setView} count={projects.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, forms: forms.length, calendar: cal.length }} />
       {navOpen && <div className="nv-ov" onClick={() => setNavOpen(false)} />}
       <section>
         <div className="mbar"><button className="mbar-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
@@ -160,7 +163,7 @@ export default function Dashboard({ user, onLogout }) {
           {["pages", "websites", "landings"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
         <TopBar user={user} q={q} setQ={(v) => { setQ(v); if (v && !["pages", "websites", "landings"].includes(view)) setView("pages"); }} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} />
-        {["pages", "websites", "landings"].includes(view) && <MyPages mode={view === "websites" ? "website" : view === "landings" ? "landing" : "dash"} query={q} projects={projects} leads={leads} events={events} user={user}
+        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query={q} projects={projects} leads={leads} events={events} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
           onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} />}

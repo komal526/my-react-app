@@ -1,10 +1,21 @@
-// LaunchBuilder v26 — MyPages.jsx (Dashboard · Websites · Landing pages)
-import { useMemo, useState } from "react";
+// LaunchBuilder v30 — MyPages.jsx (Dashboard · Websites · Landing pages)
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Thumb } from "./parts.jsx";
 import { Icon } from "./Inspector.jsx";
-import { ago, addr } from "../lib.js";
+import { ago, addr, LIMIT } from "../lib.js";
 
 const DAY = 864e5;
+/* numbers that count up when the dashboard opens */
+function CountUp({ to = 0, ms = 900 }) {
+  const [v, setV] = useState(0), raf = useRef(0);
+  useEffect(() => {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setV(to); return; }
+    const t0 = performance.now(); cancelAnimationFrame(raf.current);
+    const step = (t) => { const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3); setV(Math.round(to * e)); if (k < 1) raf.current = requestAnimationFrame(step); };
+    raf.current = requestAnimationFrame(step); return () => cancelAnimationFrame(raf.current);
+  }, [to, ms]);
+  return <>{v.toLocaleString("en-IN")}</>;
+}
 const pct = (now, prev) => (prev ? Math.round(((now - prev) / prev) * 100) : now ? 100 : 0);
 const Trend = ({ v }) => (v ? <em className={"db-trend" + (v < 0 ? " down" : "")}>{v > 0 ? "↑" : "↓"} {Math.abs(v)}%</em> : <em className="db-trend flat">—</em>);
 
@@ -20,7 +31,8 @@ function LineChart({ days }) {
       <defs><linearGradient id="dbv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7c4dff" stopOpacity=".28" /><stop offset="1" stopColor="#7c4dff" stopOpacity="0" /></linearGradient></defs>
       {[0, 1, 2, 3, 4].map((i) => { const v = (nice / 4) * i; return <g key={i}><line x1={P.l} x2={W - P.r} y1={y(v)} y2={y(v)} className="db-grid" /><text x={P.l - 8} y={y(v) + 4} textAnchor="end" className="db-ax">{v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + "K" : v}</text></g>; })}
       {days.map((d, i) => <text key={i} x={x(i)} y={H - 6} textAnchor="middle" className="db-ax">{d.label}</text>)}
-      <path d={area} fill="url(#dbv)" /><path d={path("views")} className="db-lv" /><path d={path("leads")} className="db-ll" />
+      <path d={area} fill="url(#dbv)" className="db-area" /><path d={path("views")} className="db-lv" /><path d={path("leads")} className="db-ll" />
+      <circle cx={x(days.length - 1)} cy={y(last.views)} r="5" className="db-ping" /><circle cx={x(days.length - 1)} cy={y(last.leads)} r="5" className="db-ping l" />
       {days.map((d, i) => <g key={i}><circle cx={x(i)} cy={y(d.views)} r="3.6" className="db-pv" /><circle cx={x(i)} cy={y(d.leads)} r="3.2" className="db-pl" /></g>)}
       <g transform={`translate(${x(days.length - 1) - 44},${Math.max(4, y(last.views) - 30)})`}><rect width="52" height="22" rx="7" className="db-tagv" /><text x="26" y="15" textAnchor="middle" className="db-tagt">{last.views}</text></g>
       <g transform={`translate(${x(days.length - 1) - 40},${Math.min(H - P.b - 26, y(last.leads) - 30)})`}><rect width="44" height="22" rx="7" className="db-tagl" /><text x="22" y="15" textAnchor="middle" className="db-tagt">{last.leads}</text></g>
@@ -38,11 +50,12 @@ function Donut({ parts }) {
   );
 }
 
-export default function MyPages({ projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates }) {
+export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates }) {
   const [filter, setFilter] = useState("All"), [menu, setMenu] = useState(null);
   const act = (fn, p) => () => { setMenu(null); fn(p); };
   const typed = mode === "website" ? projects.filter((p) => p.type === "website") : mode === "landing" ? projects.filter((p) => p.type !== "website") : projects;
-  const shown = typed.filter((p) => (filter === "All" || p.status === filter.toLowerCase()) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
+  const matching = typed.filter((p) => (filter === "All" || p.status === filter.toLowerCase()) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
+  const shown = mode === "dash" && !query ? [...matching].sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 3) : matching;
 
   /* ---------- numbers for the dashboard ---------- */
   const st = useMemo(() => {
@@ -59,6 +72,7 @@ export default function MyPages({ projects, onOpen, onNew, onImport, onRename, o
     return {
       total: projects.length, tTotal: wk(projects, created), landing: projects.filter((p) => p.type !== "website").length, website: projects.filter((p) => p.type === "website").length,
       leads: leads.length, tLeads: pct(wk(leads, (l) => l.ts), pwk(leads, (l) => l.ts)), views: views.length, tViews: pct(wk(views, (e) => e.ts), pwk(views, (e) => e.ts)),
+      wLeads: wk(leads, (l) => l.ts), wViews: wk(views, (e) => e.ts),
       pub: projects.filter((p) => p.status === "published").length, draft: projects.filter((p) => p.status !== "published").length, dom: projects.filter((p) => p.domain).length,
       days, top: byProj[0], activity,
     };
@@ -66,18 +80,19 @@ export default function MyPages({ projects, onOpen, onNew, onImport, onRename, o
 
   const list = (
     <>
-      <div className="db-lh"><h2>{mode === "website" ? "Your websites" : mode === "landing" ? "Your landing pages" : "Your projects"} <span>({typed.length})</span></h2>
+      <div className="db-lh"><h2>{mode === "website" ? "Your websites" : mode === "landing" ? "Your landing pages" : mode === "all" ? "Your projects" : "Recent projects"} <span>({mode === "dash" && !query ? shown.length + " of " + typed.length : typed.length})</span></h2>
+        {mode === "dash" && typed.length > 3 && <button className="link db-all" onClick={() => onViewAll && onViewAll()}>View all {typed.length} →</button>}
         <div className="chips" style={{ margin: 0 }}>{["All", "Published", "Draft"].map((f) => <button key={f} className={filter === f ? "on" : ""} onClick={() => setFilter(f)}>{f}</button>)}</div></div>
       {!shown.length ? (
         <div className="empty"><b>{typed.length ? "Nothing matches" : mode === "website" ? "No websites yet" : mode === "landing" ? "No landing pages yet" : "Nothing here yet"}</b><p className="mut">Create one from a template, with AI, or import an existing HTML file.</p>
           <button className="pri" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ Create new</button> <button onClick={onImport}>Import HTML</button></div>
       ) : (
-        <div className="grid">{shown.map((p) => (
+        <div className={mode === "dash" && !query ? "grid pc-grid" : "grid"}>{shown.map((p) => (
           <div key={p.id} className="card" onClick={() => onOpen(p.id)}>
             <Thumb html={p.pages[0].html} />
             <div className="cb">
-              <div className="ct"><b>{p.name}</b><span className={"badge " + p.status}>{p.status === "published" ? "Published" : "Draft"}</span></div>
-              <div className="mut db-addr"><Icon n="globe" s={13} /> {p.domain || (p.status === "published" ? addr(p) : "Not published yet")}</div>
+              <div className="ct"><b>{p.name}</b></div>
+              <div className={"pc-st " + (p.status === "published" ? "on" : "")}><i />{p.status === "published" ? "Published" : "Draft"}<span className="mut">· {p.domain || (p.status === "published" ? addr(p) : "not live yet")}</span></div>
               <div className="db-cardbtns" onClick={(e) => e.stopPropagation()}>
                 <button onClick={() => onOpen(p.id)}><Icon n="pen" s={14} /> Edit</button>
                 {onPreview && <button onClick={act(onPreview, p)}><Icon n="eye" s={14} /> Preview</button>}
@@ -92,15 +107,19 @@ export default function MyPages({ projects, onOpen, onNew, onImport, onRename, o
                 {p.status === "published" && <div onClick={act(onUnpublish, p)}>Unpublish</div>}
                 <div className="red" onClick={act(onDelete, p)}>Delete</div>
               </div>)}
-          </div>))}</div>
+          </div>))}
+          {mode === "dash" && !query && <div className="pc-help">
+            <div className="pc-hh"><span>🎧</span><b>Need help?</b></div><p>Quick guides to get your site live.</p>
+            <button onClick={onTemplates}>Start from a template →</button><button onClick={() => onViewAll && onViewAll("domains")}>Connect a domain →</button><button onClick={() => onViewAll && onViewAll("pixels")}>Add tracking pixels →</button>
+          </div>}</div>
       )}
     </>
   );
 
   if (mode !== "dash") return (
     <div onClick={() => setMenu(null)}>
-      <div className="top"><div><h1>{mode === "website" ? "Websites" : "Landing Pages"}</h1><p className="mut">{mode === "website" ? "Multi-page sites with a shared menu." : "Single pages built to convert — offers, events, sign-ups."}</p></div>
-        <button className="pri big" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ New {mode === "website" ? "website" : "landing page"}</button></div>
+      <div className="top"><div><h1>{mode === "website" ? "Websites" : mode === "landing" ? "Landing Pages" : "All projects"}</h1><p className="mut">{mode === "website" ? "Multi-page sites with a shared menu." : mode === "landing" ? "Single pages built to convert — offers, events, sign-ups." : "Every website and landing page you've built."}</p></div>
+        <button className="pri big" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ New {mode === "website" ? "website" : mode === "landing" ? "landing page" : "project"}</button></div>
       {list}
     </div>
   );
@@ -109,30 +128,51 @@ export default function MyPages({ projects, onOpen, onNew, onImport, onRename, o
   return (
     <div onClick={() => setMenu(null)}>
       {/* hero */}
-      <div className="db-hero">
-        <div className="db-hero-l">
-          <span className="db-pill"><Icon n="sparkle" s={14} /> AI Page Builder</span>
-          <h2>Create Landing Pages &amp; Websites <br />with AI — <span className="db-gold">in Minutes!</span></h2>
-          <div className="db-feats"><span>⚡ No Coding</span><span>◈ Drag &amp; Drop</span><span>▦ Ready Templates</span><span>🚀 Publish Instantly</span></div>
+      <div className="hx">
+        <i className="hx-blob b1" /><i className="hx-blob b2" /><i className="hx-blob b3" />
+        <div className="hx-l">
+          <span className="hx-pill"><Icon n="sparkle" s={14} /> AI Website &amp; Landing Page Builder</span>
+          <h2>Create High-Converting <br /><span>Landing Pages &amp; Websites</span></h2>
+          <div className="hx-chips">{["Drag & Drop", "Ready Templates", "Mobile Responsive", "Launch in Minutes"].map((c, i) => <span key={c} style={{ "--d": 0.15 + i * 0.08 + "s" }}><i>✓</i>{c}</span>)}</div>
+          <button className="hx-cta" onClick={() => onNew("landing")}>＋ Create New Project <span>→</span></button>
         </div>
-        <button className="db-cta" onClick={() => onNew("landing")}>＋ Create New Project →</button>
-        <div className="db-art" aria-hidden="true"><div className="db-ai">AI</div><div className="db-lap"><div className="db-scr"><i /><b>Grow Your Business</b><span /><em /></div></div><div className="db-base" /></div>
+        <div className="hx-art" aria-hidden="true">
+          {[["c1", "#f97316", "Bloom"], ["c2", "#0ea5e9", "Studio"], ["c3", "#10b981", "Fresh"], ["c4", "#7c3aed", "Launch"], ["c5", "#ec4899", "Event"], ["c6", "#eab308", "Shop"]].map(([k, c, t]) => (
+            <div key={k} className={"hx-card " + k} style={{ "--c": c }}><i /><b>{t}</b><span /><span className="s" /><em /></div>))}
+          <div className="hx-lap"><div className="hx-scr"><div className="hx-nav"><i /><i /><i /></div><b>Grow Your <br />Business Online</b><span /><span className="s" /><em>Get started</em><div className="hx-plant" /></div></div>
+          <div className="hx-base" />
+          <div className="hx-ai">AI</div>
+        </div>
       </div>
 
-      {/* stats */}
-      <div className="db-stats">
-        {[["Total Projects", st.total, "layers", "y", st.tTotal ? <em className="db-trend">+{st.tTotal} this week</em> : <em className="db-trend flat">—</em>, null],
-          ["Landing Pages", st.landing, "pages", "v", null, "landings"], ["Websites", st.website, "globe", "b", null, "websites"],
-          ["Total Leads", st.leads, "users", "o", <Trend v={st.tLeads} />, "leads"], ["Total Views", st.views, "eye", "p", <Trend v={st.tViews} />, "analytics"]].map(([l, v, ic, c, tr, go]) => (
-          <div key={l} className={"db-stat c-" + c + (go ? " click" : "")} onClick={go === "leads" ? onLeads : go === "analytics" ? onAnalytics : undefined}>
-            <span className="db-si"><Icon n={ic} s={24} /></span><div><span>{l}</span><b>{v.toLocaleString("en-IN")}</b></div>{tr}</div>))}
+      {/* stats: colourful cards — circle icon on top, number + label below, animated bar */}
+      <div className="db-stats fx">
+        {[["Total Projects", st.total, "layers", "amber", Math.round((st.total / LIMIT) * 100), `${st.total} of ${LIMIT} used`, null],
+          ["Landing Pages", st.landing, "pages", "violet", st.total ? Math.round((st.landing / st.total) * 100) : 0, `${st.total ? Math.round((st.landing / st.total) * 100) : 0}% of projects`, "landings"],
+          ["Websites", st.website, "globe", "ocean", st.total ? Math.round((st.website / st.total) * 100) : 0, `${st.total ? Math.round((st.website / st.total) * 100) : 0}% of projects`, "websites"],
+          ["Total Leads", st.leads, "users", "mint", st.leads ? Math.round((st.wLeads / st.leads) * 100) : 0, `+${st.wLeads} this week`, "leads"],
+          ["Total Views", st.views, "eye", "rose", st.views ? Math.round((st.wViews / st.views) * 100) : 0, `${st.wViews.toLocaleString("en-IN")} this week`, "analytics"]].map(([l, v, ic, c, bar, sub, go], i) => (
+          <div key={l} className={"fx-stat fx-" + c + (go ? " click" : "")} style={{ "--d": i * 0.08 + "s" }} onClick={go === "leads" ? onLeads : go === "analytics" ? onAnalytics : go ? () => onViewAll && onViewAll(go) : undefined}>
+            <span className="fx-orb"><Icon n={ic} s={22} /></span>
+            <b className="fx-num"><CountUp to={v} /></b>
+            <span className="fx-lbl">{l}</span>
+            <div className="fx-bar"><i style={{ width: Math.max(4, Math.min(100, bar)) + "%" }} /></div>
+            <small className="fx-sub">{sub}</small>
+          </div>))}
       </div>
 
       {/* progress · chart · top project */}
       <div className="db-row3">
-        <div className="db-card"><h3>Project Progress</h3>
-          <div className="db-prog"><Donut parts={[{ v: st.pub, c: "#7c4dff" }, { v: st.draft, c: "#f5b301" }]} />
-            <ul><li><i style={{ background: "#7c4dff" }} />Published<b>{st.pub}</b></li><li><i style={{ background: "#f5b301" }} />Draft<b>{st.draft}</b></li><li><i style={{ background: "#e5e7eb" }} />Custom domain<b>{st.dom}</b></li></ul></div></div>
+        <div className="db-card db-progc"><h3>Project Progress</h3>
+          <div className="db-ringwrap"><i className="db-halo" /><Donut parts={[{ v: st.pub, c: "#7c4dff" }, { v: st.draft, c: "#f5b301" }]} /></div>
+          <div className="db-legend">
+            {[["Published", st.pub, "#7c4dff"], ["Draft", st.draft, "#f5b301"], ["Custom domain", st.dom, "#10b981"]].map(([l, v, c], i) => (
+              <div key={l} className="db-lr" style={{ "--c": c, "--d": 0.3 + i * 0.12 + "s" }}>
+                <div className="db-lt"><i />{l}<b>{v}</b></div>
+                <div className="db-lb"><span style={{ width: (st.total ? Math.max(4, (v / st.total) * 100) : 4) + "%" }} /></div>
+              </div>))}
+          </div>
+        </div>
         <div className="db-card"><div className="db-ch"><h3>Views &amp; Leads Overview</h3><span className="db-leg"><i className="v" />Views<i className="l" />Leads</span><span className="db-wk">This week</span></div><LineChart days={st.days} /></div>
         <div className="db-card"><div className="db-ch"><h3>Top Performing Project</h3>{top && <button className="ib2" title="Open" onClick={() => onOpen(top.id)}><Icon n="external" s={15} /></button>}</div>
           {top ? <><div className="db-topimg" onClick={() => onOpen(top.id)}><Thumb html={top.pages[0].html} /></div><b className="db-topn">{top.name}</b>
@@ -146,9 +186,10 @@ export default function MyPages({ projects, onOpen, onNew, onImport, onRename, o
           {st.activity.length ? st.activity.map((a, i) => <div key={i} className="db-act" onClick={a.go}><span className={"db-ai2 c-" + a.c}><Icon n={a.ic} s={16} /></span><div className="grow"><b>{a.t}</b><span>{a.s}</span></div><em>{ago(a.ts)}</em></div>)
             : <p className="mut">Your latest edits, publishes and leads will show here.</p>}</div>
         <div className="db-card"><h3>Quick Actions</h3>
-          <div className="db-qa">
-            {[["Create Landing Page", "plus", "dark", () => onNew("landing")], ["Create Website", "globe", "gold", () => onNew("website")], ["Browse Templates", "layers", "lav", onTemplates], ["Manage Leads", "users", "gold2", onLeads], ["View Reports", "chart", "lav", onAnalytics]].map(([t, ic, c, fn]) => (
-              <button key={t} className={"db-q q-" + c} onClick={fn}><Icon n={ic} s={26} /><b>{t}</b><span className="db-qgo">→</span></button>))}
+          <div className="db-qa fx-qa">
+            {[["Create Landing Page", "plus", "q1", () => onNew("landing")], ["Create Website", "globe", "q2", () => onNew("website")], ["Browse Templates", "layers", "q3", onTemplates], ["Manage Leads", "users", "q4", onLeads], ["View Reports", "chart", "q5", onAnalytics]].map(([t, ic, c, fn], i) => (
+              <button key={t} className={"fx-q " + c} style={{ "--d": i * 0.07 + "s" }} onClick={fn}>
+                <span className="fx-qorb"><Icon n={ic} s={22} /></span><b>{t}</b><span className="fx-go">→</span><i className="fx-glow" /></button>))}
           </div></div>
       </div>
 

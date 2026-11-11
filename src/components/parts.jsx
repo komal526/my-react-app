@@ -1,4 +1,4 @@
-// LaunchBuilder v28 — parts.jsx
+// LaunchBuilder v29 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
@@ -31,6 +31,7 @@ export function Thumb({ html }) {
 const NAV = [["pages", "grid", "Dashboard"], ["templates", "card", "Templates"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "inbox", "Leads"], ["analytics", "chart", "Analytics"], ["domains", "globe", "Domains"], ["integrations", "share", "Integrations"], ["settings", "gear", "Settings"]];
 
 /* grouped menu · collapses to an icon-only rail */
+const SHORT = { build: "Build", collect: "Collect", grow: "Grow", reports: "Reports" };
 const GROUPS = [
   ["build", "layers", "Build & Manage", [["websites", "globe", "Websites"], ["landings", "pages", "Landing Pages"], ["templates", "card", "Templates"]]],
   ["collect", "form", "Create & Collect", [["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"]]],
@@ -38,7 +39,7 @@ const GROUPS = [
   ["reports", "gear", "Reports & Settings", [["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]]],
 ];
 export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open = false, onClose = () => {}, mini = false, onMini = () => {} }) {
-  const [shut, setShut] = useState(() => { try { return JSON.parse(localStorage.getItem("lb_nav_shut") || "[]"); } catch { return []; } });
+  const [shut, setShut] = useState(() => { try { return JSON.parse(localStorage.getItem("lb_nav_shut") || "[]"); } catch { return []; } }), [fly, setFly] = useState("");
   const toggle = (g) => { const n = shut.includes(g) ? shut.filter((x) => x !== g) : [...shut, g]; setShut(n); localStorage.setItem("lb_nav_shut", JSON.stringify(n)); };
   const go = (k) => { onView(k); onClose(); };
   const isOn = (k) => view === k || (k === "pages" && view === "import");
@@ -54,7 +55,16 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
         <div className="sb3-name"><b>LaunchBuilder</b><small>Studio</small></div>
         <button className="sb3-mini" onClick={onMini} title={mini ? "Expand menu" : "Collapse menu"} aria-label="Toggle menu"><Icon n={mini ? "chev" : "back"} s={15} /></button>
       </div>
-      <div className="sb3-scroll">
+      {mini ? <div className="sb3-scroll sb3-rail" onMouseLeave={() => setFly("")}>
+        {/* collapsed: main sections with small labels; a panel shows each section's pages */}
+        <div className={"sb3-m" + (isOn("pages") ? " on" : "")} onClick={() => go("pages")}><Icon n="grid" s={18} /><small>Dashboard</small></div>
+        {GROUPS.map(([g, gic, label, items]) => (
+          <div key={g} className={"sb3-mg" + (items.some(([k]) => isOn(k)) ? " on" : "") + (fly === g ? " open" : "")} onMouseEnter={() => setFly(g)}>
+            <div className="sb3-m" onClick={() => setFly(fly === g ? "" : g)}><Icon n={gic} s={18} /><small>{SHORT[g]}</small></div>
+            <div className="sb3-fly"><b>{label}</b>{items.map(([k, ic, nm]) => (
+              <div key={k} className={"sb3-fi" + (isOn(k) ? " on" : "")} onClick={() => { setFly(""); go(k); }}><Icon n={ic} s={15} /><span>{nm}</span>{badges[k] ? <em className="sb3-b">{badges[k]}</em> : null}</div>))}</div>
+          </div>))}
+      </div> : <div className="sb3-scroll">
         <Item k="pages" ic="grid" nm="Dashboard" />
         {GROUPS.map(([g, gic, label, items]) => {
           const closed = !mini && shut.includes(g) && !items.some(([k]) => isOn(k));
@@ -63,7 +73,7 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
             {!closed && <div className={mini ? "" : "sb3-tree"}>{items.map(([k, ic, nm]) => <Item key={k} k={k} ic={ic} nm={nm} sub />)}</div>}
           </div>;
         })}
-      </div>
+      </div>}
       <button className="sb3-up" onClick={() => go("settings")} title={mini ? `Upgrade to Pro · ${count}/${LIMIT} projects` : undefined}>
         <span className="sb3-crown">👑</span><span className="sb3-l"><b>Upgrade to Pro</b><small>{count}/{LIMIT} projects used</small></span></button>
       <CloudStatus />
