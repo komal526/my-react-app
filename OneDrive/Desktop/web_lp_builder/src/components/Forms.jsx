@@ -1,5 +1,4 @@
 // LaunchBuilder v28 — Forms.jsx
-// LaunchBuilder v3 — Forms.jsx
 import { useMemo, useRef, useState } from "react";
 import { FORM_TEMPLATES, FIELD_TYPES, newForm, newField, uid, ago, formUrl } from "../lib.js";
 import { formHtml, formPageHtml } from "./tools.js";
