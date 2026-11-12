@@ -9,7 +9,7 @@ import { Preview, FormPage, BookPage } from "./components/parts.jsx";
 const route = () => {
   const f = location.hash.match(/^#\/form\/([\w-]+)/); if (f) return { form: f[1] };
   const bk = location.hash.match(/^#\/book\/([\w-]+)/); if (bk) return { book: bk[1] };
-  return m ? { token: m[1], file: decodeURIComponent(m[2] || "") } : null;
+  const m = location.hash.match(/^#\/preview\/([^/]+)\/?(.*)$/); return m ? { token: m[1], file: decodeURIComponent(m[2] || "") || "index.html" } : null;
 };
 
 export default function App() {

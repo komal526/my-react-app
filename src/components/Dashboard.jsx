@@ -1,4 +1,4 @@
-// LaunchBuilder v30 — Dashboard.jsx
+// LaunchBuilder v35 — Dashboard.jsx
 import { useState, useEffect, useRef } from "react";
 import Editor from "./Editor.jsx";
 import { Sidebar, NewModal, PublishModal } from "./parts.jsx";
@@ -38,16 +38,64 @@ const syncFormInHtml = (html, f, integ) => {
 };
 
 /* greeting · search · notifications · account */
-function TopBar({ user, q, setQ, newLeads, onLeads, onSettings, onLogout, um, setUm }) {
+/* search across projects, forms, calendars and pages */
+const PAGES = [["pages", "grid", "Dashboard"], ["websites", "globe", "Websites"], ["landings", "pages", "Landing Pages"], ["templates", "card", "Templates"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"], ["domains", "share", "Domains"], ["integrations", "apps", "Integrations"], ["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]];
+function Search({ projects, forms, cal, onOpenProject, onGo }) {
+  const [q, setQ] = useState(""), [open, setOpen] = useState(false), [hi, setHi] = useState(0), ref = useRef(null), box = useRef(null);
+  useEffect(() => {
+    const k = (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); ref.current && ref.current.focus(); setOpen(true); } };
+    const out = (e) => { if (box.current && !box.current.contains(e.target)) setOpen(false); };
+    window.addEventListener("keydown", k); document.addEventListener("mousedown", out);
+    return () => { window.removeEventListener("keydown", k); document.removeEventListener("mousedown", out); };
+  }, []);
+  const t = q.trim().toLowerCase(), has = (x) => (x || "").toLowerCase().includes(t);
+  const groups = !t ? [] : [
+    ["Projects", projects.filter((p) => has(p.name) || has(p.domain)).slice(0, 5).map((p) => ({ ic: p.type === "website" ? "globe" : "pages", t: p.name, s: (p.type === "website" ? "Website" : "Landing page") + " · " + (p.status === "published" ? "Published" : "Draft"), go: () => onOpenProject(p.id) }))],
+    ["Forms", forms.filter((f) => has(f.name)).slice(0, 4).map((f) => ({ ic: "form", t: f.name, s: "Form", go: () => onGo("forms") }))],
+    ["Calendars", cal.filter((c) => has(c.name)).slice(0, 4).map((c) => ({ ic: "calendar", t: c.name, s: "Calendar · " + (c.duration || 30) + " min", go: () => onGo("calendar") }))],
+    ["Pages", PAGES.filter(([, , n]) => has(n)).slice(0, 4).map(([k, ic, n]) => ({ ic, t: n, s: "Go to page", go: () => onGo(k) }))],
+  ].filter(([, list]) => list.length);
+  const flat = groups.flatMap(([, list]) => list);
+  const pick = (r) => { if (!r) return; r.go(); setQ(""); setOpen(false); ref.current && ref.current.blur(); };
+  const key = (e) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); setHi((h) => Math.min(flat.length - 1, h + 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setHi((h) => Math.max(0, h - 1)); }
+    else if (e.key === "Enter") pick(flat[hi]);
+    else if (e.key === "Escape") { setOpen(false); ref.current.blur(); }
+  };
+  let n = -1;
+  return (
+    <div className={"sx" + (open ? " on" : "")} ref={box}>
+      <label className="sx-in"><Icon n="search" s={16} />
+        <input ref={ref} value={q} placeholder="Search projects, forms, pages…" onFocus={() => setOpen(true)} onChange={(e) => { setQ(e.target.value); setHi(0); setOpen(true); }} onKeyDown={key} aria-label="Search" />
+        {q ? <button className="sx-x" onClick={() => { setQ(""); ref.current.focus(); }} aria-label="Clear">✕</button> : <kbd>Ctrl K</kbd>}
+      </label>
+      {open && t && <div className="sx-dd">
+        {flat.length ? groups.map(([g, list]) => <div key={g} className="sx-g"><small>{g}</small>{list.map((r) => { n++; const i = n; return (
+          <button key={g + r.t + i} className={"sx-r" + (i === hi ? " hi" : "")} onMouseEnter={() => setHi(i)} onClick={() => pick(r)}><span className="sx-ic"><Icon n={r.ic} s={15} /></span><span className="sx-t"><b>{r.t}</b><em>{r.s}</em></span><span className="sx-go">↵</span></button>); })}</div>)
+          : <div className="sx-none">No results for “{q}”</div>}
+        <div className="sx-foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> close</span></div>
+      </div>}
+    </div>
+  );
+}
+
+function TopBar({ user, newLeads, onLeads, onSettings, onLogout, um, setUm, onGo = () => {}, projects = [], forms = [], cal = [], onOpenProject = () => {} }) {
   const h = new Date().getHours(), hi = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
   const first = (user.name || "").split(" ")[0] || "there";
   return (
     <div className="tb2">
       <div className="tb2-hi"><h1>{hi}, <span>{first}</span> 👋</h1><p>Build high-converting landing pages and websites in minutes.</p></div>
-      <label className="tb2-search"><Icon n="search" s={17} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search websites, landing pages…" /></label>
-      <button className="tb2-bell" onClick={onLeads} title={newLeads ? newLeads + " new leads" : "Notifications"}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>{newLeads > 0 && <i>{newLeads > 9 ? "9+" : newLeads}</i>}</button>
+      <Search projects={projects} forms={forms} cal={cal} onOpenProject={onOpenProject} onGo={onGo} />
+      <button className="tb2-bell" onClick={onLeads} title="Leads"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg></button>
       <div className="tb2-me" onClick={(e) => { e.stopPropagation(); setUm(!um); }}><span className="av">{(user.name || "U")[0].toUpperCase()}</span><b>{first}</b><Icon n="chevd" s={14} />
-        {um && <div className="menu tb2-menu" onClick={(e) => e.stopPropagation()}><div onClick={() => { setUm(false); onSettings(); }}>Settings</div><div className="red" onClick={onLogout}>Log out</div></div>}</div>
+        {um && <div className="tb2-dd" role="menu" onClick={(e) => e.stopPropagation()}>
+          <div className="tb2-ddh"><span className="av">{(user.name || "U")[0].toUpperCase()}</span><div><b>{user.name}</b><small>{user.email}</small></div></div>
+          {[["gear", "Settings", onSettings], ["eye", "Tracking Pixels", () => onGo("pixels")], ["apps", "Integrations", () => onGo("integrations")]].map(([ic, l, fn]) => (
+            <button key={l} role="menuitem" onClick={() => { setUm(false); fn(); }}><Icon n={ic} s={16} /><span>{l}</span></button>))}
+          <i className="tb2-sep" />
+          <button role="menuitem" className="out" onClick={() => { setUm(false); onLogout(); }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg><span>Log out</span></button>
+        </div>}</div>
     </div>
   );
 }
@@ -60,7 +108,7 @@ export default function Dashboard({ user, onLogout }) {
   const syncT = useRef(0);
   const [integ, setInteg] = useState(() => loadInteg(E));
   const onInteg = (v) => { setInteg(v); saveInteg(E, v); };
-  const [igTile, setIgTile] = useState(""), [navOpen, setNavOpen] = useState(false), [q, setQ] = useState(""), [um, setUm] = useState(false), [mini, setMini] = useState(() => localStorage.getItem("lb_nav_mini") === "1");
+  const [igTile, setIgTile] = useState(""), [navOpen, setNavOpen] = useState(false), [um, setUm] = useState(false), [mini, setMini] = useState(() => localStorage.getItem("lb_nav_mini") === "1");
   /* tablets & phones always get the normal (full) menu */
   const [wide, setWide] = useState(() => window.innerWidth > 900);
   useEffect(() => { const f = () => setWide(window.innerWidth > 900); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
@@ -161,9 +209,9 @@ export default function Dashboard({ user, onLogout }) {
         <div className="mbar"><button className="mbar-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
           <div className="mbar-brand"><span className="mbar-logo">⬡</span>LaunchBuilder</div>
           {["pages", "websites", "landings"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
-        <TopBar user={user} q={q} setQ={(v) => { setQ(v); if (v && !["pages", "websites", "landings"].includes(view)) setView("pages"); }} newLeads={leads.filter((l) => l.status === "new").length}
-          onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} />
-        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query={q} projects={projects} leads={leads} events={events} user={user}
+        <TopBar user={user} newLeads={leads.filter((l) => l.status === "new").length}
+          onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={projects} forms={forms} cal={cal} onOpenProject={setOpenId} />
+        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={projects} leads={leads} events={events} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
           onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} />}

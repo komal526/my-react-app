@@ -1,4 +1,4 @@
-// LaunchBuilder v30 — MyPages.jsx (Dashboard · Websites · Landing pages)
+// LaunchBuilder v35 — MyPages.jsx (Dashboard · Websites · Landing pages)
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Thumb } from "./parts.jsx";
 import { Icon } from "./Inspector.jsx";
@@ -127,37 +127,34 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
   const top = st.top && st.top.p;
   return (
     <div onClick={() => setMenu(null)}>
-      {/* hero */}
-      <div className="hx">
-        <i className="hx-blob b1" /><i className="hx-blob b2" /><i className="hx-blob b3" />
-        <div className="hx-l">
-          <span className="hx-pill"><Icon n="sparkle" s={14} /> AI Website &amp; Landing Page Builder</span>
-          <h2>Create High-Converting <br /><span>Landing Pages &amp; Websites</span></h2>
-          <div className="hx-chips">{["Drag & Drop", "Ready Templates", "Mobile Responsive", "Launch in Minutes"].map((c, i) => <span key={c} style={{ "--d": 0.15 + i * 0.08 + "s" }}><i>✓</i>{c}</span>)}</div>
-          <button className="hx-cta" onClick={() => onNew("landing")}>＋ Create New Project <span>→</span></button>
+      {/* hero — compact navy banner: text · button in the centre · laptop */}
+      <div className="hb">
+        <div className="hb-l">
+          <span className="hb-pill"><Icon n="sparkle" s={13} /> AI Website &amp; Landing Page Builder</span>
+          <h2><span className="hb-w">Create High-Converting</span> <span className="hb-y">Landing Pages &amp; Websites</span></h2>
+          <div className="hb-feats">{["Drag & Drop", "Ready Templates", "Mobile Responsive", "Launch in Minutes"].map((c, i) => <span key={c} style={{ "--d": 0.35 + i * 0.08 + "s" }}><i>✓</i>{c}</span>)}</div>
         </div>
-        <div className="hx-art" aria-hidden="true">
-          {[["c1", "#f97316", "Bloom"], ["c2", "#0ea5e9", "Studio"], ["c3", "#10b981", "Fresh"], ["c4", "#7c3aed", "Launch"], ["c5", "#ec4899", "Event"], ["c6", "#eab308", "Shop"]].map(([k, c, t]) => (
+        <button className="hb-cta" onClick={() => onNew("landing")}><span>＋ Create New Project</span><b>→</b></button>
+        <div className="hb-fanwrap" aria-hidden="true"><div className="hx-art hb-fan">
+          {[["c1", "#f97316", "Bloom"], ["c2", "#0ea5e9", "Studio"], ["c5", "#ec4899", "Event"], ["c6", "#eab308", "Shop"]].map(([k, c, t]) => (
             <div key={k} className={"hx-card " + k} style={{ "--c": c }}><i /><b>{t}</b><span /><span className="s" /><em /></div>))}
           <div className="hx-lap"><div className="hx-scr"><div className="hx-nav"><i /><i /><i /></div><b>Grow Your <br />Business Online</b><span /><span className="s" /><em>Get started</em><div className="hx-plant" /></div></div>
-          <div className="hx-base" />
-          <div className="hx-ai">AI</div>
-        </div>
+          <div className="hx-base" /><div className="hx-ai">AI</div>
+        </div></div>
       </div>
 
-      {/* stats: colourful cards — circle icon on top, number + label below, animated bar */}
+      {/* stats: light, compact cards — icon tile left, label + number, trend at the bottom */}
       <div className="db-stats fx">
-        {[["Total Projects", st.total, "layers", "amber", Math.round((st.total / LIMIT) * 100), `${st.total} of ${LIMIT} used`, null],
-          ["Landing Pages", st.landing, "pages", "violet", st.total ? Math.round((st.landing / st.total) * 100) : 0, `${st.total ? Math.round((st.landing / st.total) * 100) : 0}% of projects`, "landings"],
-          ["Websites", st.website, "globe", "ocean", st.total ? Math.round((st.website / st.total) * 100) : 0, `${st.total ? Math.round((st.website / st.total) * 100) : 0}% of projects`, "websites"],
-          ["Total Leads", st.leads, "users", "mint", st.leads ? Math.round((st.wLeads / st.leads) * 100) : 0, `+${st.wLeads} this week`, "leads"],
-          ["Total Views", st.views, "eye", "rose", st.views ? Math.round((st.wViews / st.views) * 100) : 0, `${st.wViews.toLocaleString("en-IN")} this week`, "analytics"]].map(([l, v, ic, c, bar, sub, go], i) => (
-          <div key={l} className={"fx-stat fx-" + c + (go ? " click" : "")} style={{ "--d": i * 0.08 + "s" }} onClick={go === "leads" ? onLeads : go === "analytics" ? onAnalytics : go ? () => onViewAll && onViewAll(go) : undefined}>
+        {[["Total Projects", st.total, "layers", "green", Math.round((st.total / LIMIT) * 100), st.tTotal ? `↑ +${st.tTotal} this week` : `${st.total}/${LIMIT} used`, !!st.tTotal, null],
+          ["Landing Pages", st.landing, "pages", "orange", st.total ? Math.round((st.landing / st.total) * 100) : 0, `${st.total ? Math.round((st.landing / st.total) * 100) : 0}% of projects`, false, "landings"],
+          ["Websites", st.website, "globe", "blue", st.total ? Math.round((st.website / st.total) * 100) : 0, `${st.total ? Math.round((st.website / st.total) * 100) : 0}% of projects`, false, "websites"],
+          ["Total Leads", st.leads, "users", "purple", st.leads ? Math.round((st.wLeads / st.leads) * 100) : 0, st.tLeads ? `${st.tLeads > 0 ? "↑ +" : "↓ "}${Math.abs(st.tLeads)}%` : `+${st.wLeads} this week`, st.tLeads > 0 || (!st.tLeads && st.wLeads > 0), "leads"],
+          ["Total Views", st.views, "eye", "pink", st.views ? Math.round((st.wViews / st.views) * 100) : 0, st.tViews ? `${st.tViews > 0 ? "↑ +" : "↓ "}${Math.abs(st.tViews)}%` : `${st.wViews} this week`, st.tViews > 0 || (!st.tViews && st.wViews > 0), "analytics"]].map(([l, v, ic, c, bar, sub, up, go], i) => (
+          <div key={l} className={"fx-stat fx-" + c + (go ? " click" : "")} style={{ "--d": i * 0.07 + "s" }} onClick={go === "leads" ? onLeads : go === "analytics" ? onAnalytics : go ? () => onViewAll && onViewAll(go) : undefined}>
             <span className="fx-orb"><Icon n={ic} s={22} /></span>
-            <b className="fx-num"><CountUp to={v} /></b>
-            <span className="fx-lbl">{l}</span>
-            <div className="fx-bar"><i style={{ width: Math.max(4, Math.min(100, bar)) + "%" }} /></div>
-            <small className="fx-sub">{sub}</small>
+            <div className="fx-txt"><span className="fx-lbl">{l}</span><b className="fx-num"><CountUp to={v} /></b></div>
+            <small className={"fx-sub" + (up ? " up" : "")}>{sub}</small>
+            <div className="fx-bar"><i style={{ width: Math.max(6, Math.min(100, bar)) + "%" }} /></div>
           </div>))}
       </div>
 
