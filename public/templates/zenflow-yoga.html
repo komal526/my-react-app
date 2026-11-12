@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZenFlow Yoga Center | Find Your Inner Peace</title>
+<style>
+  :root{
+    --teal:#2a9d8f;
+    --light-teal:#8ab6a8;
+    --gold:#e9c46a;
+    --navy:#264653;
+    --orange:#f4a261;
+    --dark:#1e2a2a;
+    --cream:#fdfaf5;
+    --main-gradient: linear-gradient(135deg, var(--teal), var(--navy));
+    --soft-gradient: linear-gradient(135deg, rgba(42,157,143,0.08), rgba(233,196,106,0.10));
+    --warm-gradient: linear-gradient(135deg, var(--gold), var(--orange));
+    --calm-gradient: linear-gradient(135deg, var(--navy), var(--teal));
+    --shadow-soft: 0 10px 30px rgba(38,70,83,0.08);
+    --shadow-lift: 0 20px 40px rgba(38,70,83,0.16);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    line-height:1.65;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4{font-family: Georgia, 'Times New Roman', serif; color:var(--navy); line-height:1.2;}
+  a{text-decoration:none; color:inherit;}
+  ul{list-style:none;}
+  img{max-width:100%; display:block;}
+  .container{max-width:1200px; margin:0 auto; padding:0 24px;}
+  section{padding:100px 0; position:relative;}
+  .eyebrow{
+    display:inline-block; text-transform:uppercase; letter-spacing:2px; font-size:.78rem;
+    font-weight:700; color:var(--teal); background:rgba(42,157,143,0.1);
+    padding:6px 16px; border-radius:20px; margin-bottom:16px;
+  }
+  .section-head{text-align:center; max-width:640px; margin:0 auto 60px;}
+  .section-head h2{font-size:2.4rem; margin-bottom:14px;}
+  .section-head p{color:#5a6b6b; font-size:1.05rem;}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:14px 32px; border-radius:50px; font-weight:600; font-size:.95rem;
+    cursor:pointer; border:2px solid transparent; transition:all .35s ease;
+  }
+  .btn-primary{background:var(--main-gradient); color:#fff; box-shadow:0 10px 25px rgba(42,157,143,0.35);}
+  .btn-primary:hover{transform:translateY(-3px); box-shadow:0 16px 32px rgba(42,157,143,0.45);}
+  .btn-outline{border-color:var(--navy); color:var(--navy); background:transparent;}
+  .btn-outline:hover{background:var(--navy); color:#fff; transform:translateY(-3px);}
+  .btn-light{background:#fff; color:var(--teal);}
+  .btn-light:hover{transform:translateY(-3px); box-shadow:0 12px 26px rgba(0,0,0,0.15);}
+
+  .zf-reveal{
+    opacity: 1; 
+    transition: transform .9s cubic-bezier(.22,.9,.32,1);
+  }
+  .fade-up{transform:translateY(50px);}
+  .fade-left{transform:translateX(-60px);}
+  .fade-right{transform:translateX(60px);}
+  .fade-scale{transform:scale(.88);}
+  .zf-reveal.zf-in{transform:translate(0,0) scale(1);}
+  @media (prefers-reduced-motion: reduce){
+    .zf-reveal{transition:none; transform:none;}
+    *{animation:none !important;}
+  }
+
+  /* NAVBAR */
+  header{
+    position:fixed; top:0; left:0; width:100%; z-index:1000;
+    padding:22px 0; transition: all .4s ease;
+  }
+  header.zf-scrolled{
+    background:#fff; padding:14px 0; box-shadow:0 6px 24px rgba(38,70,83,0.1);
+  }
+  nav{display:flex; align-items:center; justify-content:space-between; max-width:1200px; margin:0 auto; padding:0 24px;}
+  .logo{display:flex; align-items:center; gap:10px; font-family:Georgia,serif; font-size:1.5rem; font-weight:700; color:#fff; transition:color .4s ease;}
+  header.zf-scrolled .logo{color:var(--navy);}
+  .logo span.mark{font-size:1.7rem;}
+  .nav-links{display:flex; gap:34px; align-items:center;}
+  .nav-links a{
+    color:#fff; font-weight:500; font-size:.95rem; position:relative; padding:6px 0; transition:color .4s ease;
+  }
+  header.zf-scrolled .nav-links a{color:var(--dark);}
+  .nav-links a::after{
+    content:''; position:absolute; left:0; bottom:-2px; width:0; height:2px; background:var(--gold); transition:width .3s ease;
+  }
+  .nav-links a:hover::after, .nav-links a.zf-active::after{width:100%;}
+  .nav-links a.zf-active{color:var(--gold) !important;}
+  .nav-actions{display:flex; align-items:center; gap:20px;}
+  .join-btn{
+    background:var(--warm-gradient); color:var(--dark) !important; padding:11px 26px; border-radius:50px; font-weight:700; font-size:.9rem;
+    box-shadow:0 8px 20px rgba(244,162,97,0.35);
+  }
+  .join-btn:hover{transform:translateY(-2px);}
+  .hamburger{display:none; flex-direction:column; gap:5px; cursor:pointer; z-index:1100;}
+  .hamburger span{width:26px; height:3px; background:#fff; border-radius:3px; transition:all .35s ease;}
+  header.zf-scrolled .hamburger span{background:var(--navy);}
+  .hamburger.zf-open span:nth-child(1){transform:translateY(8px) rotate(45deg);}
+  .hamburger.zf-open span:nth-child(2){opacity:0;}
+  .hamburger.zf-open span:nth-child(3){transform:translateY(-8px) rotate(-45deg);}
+
+  .mobile-panel{
+    position:fixed; top:0; right:-100%; width:78%; max-width:340px; height:100vh; background:#fff;
+    z-index:1050; box-shadow:-10px 0 40px rgba(0,0,0,0.15); transition:right .45s cubic-bezier(.22,.9,.32,1);
+    padding:100px 34px 40px; display:flex; flex-direction:column; gap:26px;
+  }
+  .mobile-panel.zf-open{right:0;}
+  .mobile-panel a{font-size:1.15rem; font-weight:600; color:var(--navy);}
+  .zf-mobile-overlay{
+    position:fixed; inset:0; background:rgba(30,42,42,0.5); z-index:1040;
+    opacity:0; visibility:hidden; pointer-events:none; transition:opacity .4s ease, visibility .4s ease;
+  }
+  .zf-mobile-overlay.zf-open{opacity:1; visibility:visible; pointer-events:all;}
+
+  /* HERO */
+  .hero{
+    min-height:100vh; display:flex; align-items:center; position:relative; overflow:hidden;
+    background: var(--calm-gradient);
+  }
+  .hero-shapes{position:absolute; inset:0; overflow:hidden; z-index:0;}
+  .shape{position:absolute; border-radius:50%; filter:blur(2px); opacity:.35; animation: morph 12s ease-in-out infinite;}
+  .shape1{width:340px; height:340px; background:var(--gold); top:8%; left:-80px; animation-delay:0s;}
+  .shape2{width:220px; height:220px; background:var(--orange); bottom:10%; left:20%; animation-delay:2s;}
+  .shape3{width:180px; height:180px; background:var(--light-teal); top:60%; right:8%; animation-delay:4s;}
+  @keyframes morph{
+    0%,100%{border-radius:50% 50% 50% 50%; transform:translate(0,0) scale(1);}
+    33%{border-radius:60% 40% 55% 45%; transform:translate(20px,-30px) scale(1.08);}
+    66%{border-radius:40% 60% 45% 55%; transform:translate(-20px,20px) scale(.95);}
+  }
+  .particles{position:absolute; inset:0; z-index:0; pointer-events:none;}
+  .particle{position:absolute; width:4px; height:4px; background:rgba(255,255,255,.5); border-radius:50%; animation: rise linear infinite;}
+  @keyframes rise{
+    from{transform:translateY(0); opacity:0;}
+    10%{opacity:1;}
+    90%{opacity:1;}
+    to{transform:translateY(-100vh); opacity:0;}
+  }
+  .hero-inner{
+    position:relative; z-index:2; display:grid; grid-template-columns:1.1fr .9fr; gap:60px; align-items:center;
+    max-width:1200px; margin:0 auto; padding:140px 24px 60px;
+  }
+  .hero-text .eyebrow{background:rgba(255,255,255,0.15); color:#fdfaf5;}
+  .hero-text h1{
+    font-size:3.4rem; color:#fff; margin-bottom:22px;
+  }
+  .hero-text h1 .grad{
+    background:linear-gradient(90deg, var(--gold), var(--orange));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero-text p{color:rgba(255,255,255,0.85); font-size:1.1rem; max-width:480px; margin-bottom:36px;}
+  .hero-btns{display:flex; gap:18px; flex-wrap:wrap;}
+  .hero-btns .btn-outline{border-color:rgba(255,255,255,.6); color:#fff;}
+  .hero-btns .btn-outline:hover{background:#fff; color:var(--navy);}
+  .hero-visual{position:relative; display:flex; align-items:center; justify-content:center;}
+  .orbit{
+    position:absolute; width:420px; height:420px; border:2px dashed rgba(255,255,255,0.35); border-radius:50%;
+    animation: spin 30s linear infinite;
+  }
+  .orbit::before, .orbit::after{
+    content:''; position:absolute; width:14px; height:14px; background:var(--gold); border-radius:50%;
+    box-shadow:0 0 18px 4px rgba(233,196,106,0.7);
+  }
+  .orbit::before{top:-7px; left:50%; margin-left:-7px;}
+  .orbit::after{bottom:-7px; left:50%; margin-left:-7px; background:var(--orange); box-shadow:0 0 18px 4px rgba(244,162,97,0.7);}
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+  .hero-img-wrap{
+    width:340px; height:340px; border-radius:50%; overflow:hidden; border:8px solid rgba(255,255,255,0.25);
+    box-shadow:0 30px 60px rgba(0,0,0,0.3); animation: float 5s ease-in-out infinite; position:relative; z-index:2;
+  }
+  .hero-img-wrap img{width:100%; height:100%; object-fit:cover;}
+  @keyframes float{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-18px);} }
+
+  /* STATS */
+  .stats{background:var(--main-gradient); color:#fff;}
+  .stats-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:30px; text-align:center;}
+  .stat-num{font-size:3rem; font-weight:800; font-family:Georgia,serif; color:var(--gold);}
+  .stat-label{margin-top:8px; font-size:.95rem; letter-spacing:.5px; opacity:.9;}
+  .stat-item{animation: float 6s ease-in-out infinite;}
+  .stat-item:nth-child(2){animation-delay:.4s;}
+  .stat-item:nth-child(3){animation-delay:.8s;}
+  .stat-item:nth-child(4){animation-delay:1.2s;}
+
+  /* ABOUT */
+  .about-grid{display:grid; grid-template-columns:1fr 1fr; gap:70px; align-items:center;}
+  .about-img-wrap{position:relative;}
+  .about-img-wrap img{border-radius:24px; box-shadow:var(--shadow-lift);}
+  .about-badge{
+    position:absolute; bottom:-24px; right:-24px; background:#fff; padding:20px 26px; border-radius:16px;
+    box-shadow:var(--shadow-lift); text-align:center; animation: float 5s ease-in-out infinite;
+  }
+  .about-badge .num{font-size:1.6rem; font-weight:800; color:var(--teal); font-family:Georgia,serif;}
+  .about-badge .txt{font-size:.8rem; color:#5a6b6b;}
+  .about-text h2{font-size:2.3rem; margin-bottom:18px;}
+  .about-text p{color:#5a6b6b; margin-bottom:26px;}
+  .feature-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .feature-item{
+    display:flex; gap:12px; align-items:flex-start; padding:16px; border-radius:14px; transition:all .3s ease; cursor:default;
+  }
+  .feature-item:hover{background:rgba(42,157,143,0.08); transform:translateX(6px);}
+  .feature-item .check{
+    width:30px; height:30px; flex-shrink:0; border-radius:50%; background:var(--main-gradient); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700;
+  }
+  .feature-item h4{font-size:.98rem; margin-bottom:2px;}
+  .feature-item p{font-size:.85rem; color:#5a6b6b; margin:0;}
+
+  /* CLASSES */
+  .classes-section{background:var(--soft-gradient);}
+  .classes-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:30px;}
+  .class-card{
+    position:relative; border-radius:20px; overflow:hidden; height:380px; box-shadow:var(--shadow-soft);
+    transition: transform .3s ease, box-shadow .3s ease; cursor:pointer;
+  }
+  .class-card:hover{transform:translateY(-10px); box-shadow:var(--shadow-lift);}
+  .class-card img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .5s ease;}
+  .class-card:hover img{transform:scale(1.08);}
+  .class-overlay{
+    position:absolute; inset:0; background:linear-gradient(to top, rgba(30,42,42,0.92) 10%, rgba(30,42,42,0.1) 60%);
+    display:flex; flex-direction:column; justify-content:flex-end; padding:26px; color:#fff;
+  }
+  .class-badge{
+    position:absolute; top:20px; left:20px; background:var(--warm-gradient); color:var(--dark); font-size:.72rem;
+    font-weight:700; padding:6px 14px; border-radius:20px; text-transform:uppercase; letter-spacing:.5px;
+  }
+  .class-overlay h3{color:#fff; font-size:1.3rem; margin-bottom:6px;}
+  .class-overlay p{font-size:.85rem; color:rgba(255,255,255,0.8); margin-bottom:12px;}
+  .class-meta{display:flex; gap:14px; font-size:.78rem; color:var(--gold); flex-wrap:wrap;}
+
+  /* SCHEDULE */
+  .schedule-wrap{overflow-x:auto; border-radius:18px; box-shadow:var(--shadow-soft);}
+  table{width:100%; border-collapse:collapse; background:#fff; min-width:760px;}
+  thead tr{background:var(--main-gradient); color:#fff;}
+  th{padding:18px 16px; text-align:left; font-size:.85rem; text-transform:uppercase; letter-spacing:.6px;}
+  td{padding:16px; border-bottom:1px solid #eee2d3; font-size:.88rem;}
+  tbody tr{transition:background .25s ease;}
+  tbody tr:hover{background:rgba(42,157,143,0.06);}
+  .time-cell{font-weight:700; color:var(--navy); white-space:nowrap;}
+  .cls-beginner{color:#2a9d5f; font-weight:600;}
+  .cls-intermediate{color:#c99a1e; font-weight:600;}
+  .cls-advanced{color:#d4732a; font-weight:600;}
+  .cls-empty{color:#ccc;}
+
+  /* INSTRUCTORS */
+  .instructors-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:28px;}
+  .instructor-card{
+    background:#fff; border-radius:20px; overflow:hidden; box-shadow:var(--shadow-soft); text-align:center;
+    transition:transform .3s ease, box-shadow .3s ease;
+  }
+  .instructor-card:hover{transform:translateY(-10px); box-shadow:var(--shadow-lift);}
+  .instructor-card img{width:100%; height:260px; object-fit:cover;}
+  .instructor-info{padding:22px;}
+  .instructor-info h3{font-size:1.1rem; margin-bottom:2px;}
+  .instructor-role{color:var(--teal); font-size:.82rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px;}
+  .instructor-bio{font-size:.85rem; color:#5a6b6b; margin-bottom:14px;}
+  .social-row{display:flex; gap:10px; justify-content:center;}
+  .social-row a{
+    width:34px; height:34px; border-radius:50%; background:rgba(42,157,143,0.1); display:flex; align-items:center;
+    justify-content:center; font-size:.8rem; color:var(--teal); transition:all .3s ease;
+  }
+  .social-row a:hover{background:var(--teal); color:#fff;}
+
+  /* PRICING */
+  .pricing-section{background:var(--soft-gradient);}
+  .pricing-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:30px; align-items:center;}
+  .price-card{
+    background:#fff; border-radius:22px; padding:44px 32px; text-align:center; box-shadow:var(--shadow-soft);
+    position:relative; transition:transform .3s ease; overflow:hidden;
+  }
+  .price-card:hover{transform:translateY(-8px);}
+  .price-card.featured{
+    background:var(--main-gradient); color:#fff; transform:scale(1.06); box-shadow:var(--shadow-lift); z-index:2;
+  }
+  .price-card.featured:hover{transform:scale(1.08) translateY(-8px);}
+  .price-badge{
+    position:absolute; top:18px; right:-42px; background:var(--gold); color:var(--dark); font-size:.7rem; font-weight:800;
+    padding:6px 50px; transform:rotate(40deg); text-transform:uppercase; letter-spacing:.5px;
+  }
+  .price-plan{font-size:.85rem; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; color:var(--teal); margin-bottom:14px;}
+  .price-card.featured .price-plan{color:var(--gold);}
+  .price-amount{font-size:2.6rem; font-weight:800; font-family:Georgia,serif; margin-bottom:4px;}
+  .price-amount span{font-size:1rem; font-weight:500; opacity:.7;}
+  .price-list{margin:26px 0; text-align:left;}
+  .price-list li{padding:8px 0; font-size:.9rem; display:flex; gap:10px; align-items:center;}
+  .price-list li::before{content:'✓'; color:var(--teal); font-weight:800;}
+  .price-card.featured .price-list li::before{color:var(--gold);}
+
+  /* QUOTE */
+  .quote-section{
+    background: var(--calm-gradient); background-blend-mode:multiply; background-size:cover; background-position:center;
+    color:#fff; text-align:center; padding:140px 0;
+    background-image: linear-gradient(rgba(38,70,83,0.75), rgba(38,70,83,0.75)), url('https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1600&q=80');
+  }
+  .quote-mark{font-size:4rem; color:var(--gold); font-family:Georgia,serif; line-height:1;}
+  .quote-section blockquote{font-size:2rem; font-family:Georgia,serif; max-width:800px; margin:10px auto 20px; font-style:italic;}
+  .quote-author{color:var(--gold); font-weight:600; margin-bottom:36px;}
+
+  /* GALLERY */
+  .gallery-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px;}
+  .gallery-item{position:relative; border-radius:16px; overflow:hidden; height:230px; cursor:pointer;}
+  .gallery-item img{width:100%; height:100%; object-fit:cover; transition:transform .5s ease;}
+  .gallery-item:hover img{transform:scale(1.12);}
+  .gallery-label{
+    position:absolute; inset:0; background:linear-gradient(to top, rgba(38,70,83,0.85), transparent 60%);
+    display:flex; align-items:flex-end; padding:16px; color:#fff; font-weight:600; opacity:0; transition:opacity .35s ease;
+  }
+  .gallery-item:hover .gallery-label{opacity:1;}
+
+  /* VIDEO */
+  .video-wrap{
+    position:relative; border-radius:24px; overflow:hidden; height:480px; box-shadow:var(--shadow-lift);
+    background-image:linear-gradient(rgba(38,70,83,0.4), rgba(38,70,83,0.55)), url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1600&q=80');
+    background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .play-btn{
+    width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.95); display:flex; align-items:center;
+    justify-content:center; font-size:2rem; color:var(--teal); animation:pulse 2.2s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(255,255,255,0.5);}
+    70%{box-shadow:0 0 0 30px rgba(255,255,255,0);}
+    100%{box-shadow:0 0 0 0 rgba(255,255,255,0);}
+  }
+
+  /* TESTIMONIALS */
+  .testimonials-section{background:var(--soft-gradient); text-align:center;}
+  .testi-slider{max-width:720px; margin:0 auto; position:relative; min-height:260px;}
+  .testi-slide{display:none; animation:fadeIn .6s ease;}
+  .testi-slide.zf-active{display:block;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+  .testi-quote{font-size:1.3rem; font-style:italic; color:var(--navy); font-family:Georgia,serif; margin-bottom:26px;}
+  .testi-avatar{width:70px; height:70px; border-radius:50%; object-fit:cover; margin:0 auto 12px; border:3px solid var(--gold);}
+  .testi-name{font-weight:700;}
+  .testi-role{font-size:.82rem; color:#5a6b6b;}
+  .testi-dots{display:flex; gap:10px; justify-content:center; margin-top:30px;}
+  .testi-dot{width:10px; height:10px; border-radius:50%; background:#d8cdb8; cursor:pointer; transition:all .3s ease;}
+  .testi-dot.zf-active{background:var(--teal); width:28px; border-radius:6px;}
+
+  /* BLOG */
+  .blog-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:30px;}
+  .blog-card{background:#fff; border-radius:20px; overflow:hidden; box-shadow:var(--shadow-soft); transition:transform .3s ease;}
+  .blog-card:hover{transform:translateY(-8px); box-shadow:var(--shadow-lift);}
+  .blog-card img{height:200px; object-fit:cover;}
+  .blog-body{padding:24px;}
+  .blog-date{font-size:.78rem; color:var(--teal); font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;}
+  .blog-body h3{font-size:1.15rem; margin-bottom:10px;}
+  .blog-body p{font-size:.88rem; color:#5a6b6b; margin-bottom:16px;}
+  .read-more{color:var(--teal); font-weight:700; font-size:.85rem;}
+  .read-more:after{content:' →'; transition:margin .3s ease;}
+  .read-more:hover:after{margin-left:4px;}
+
+  /* FAQ */
+  .faq-list{max-width:780px; margin:0 auto;}
+  .faq-item{background:#fff; border-radius:14px; margin-bottom:14px; box-shadow:var(--shadow-soft); overflow:hidden;}
+  .faq-q{
+    display:flex; justify-content:space-between; align-items:center; padding:22px 26px; cursor:pointer; font-weight:600;
+  }
+  .faq-icon{transition:transform .35s ease; color:var(--teal); font-size:1.2rem;}
+  .faq-item.zf-open .faq-icon{transform:rotate(45deg);}
+  .faq-a{max-height:0; overflow:hidden; transition:max-height .4s ease;}
+  .faq-a p{padding:0 26px 22px; color:#5a6b6b; font-size:.92rem;}
+
+  /* NEWSLETTER */
+  .newsletter-section{background:var(--warm-gradient); text-align:center;}
+  .newsletter-section h2{color:var(--dark);}
+  .newsletter-section p{color:rgba(30,42,42,0.75); margin-bottom:30px;}
+  .newsletter-form{display:flex; max-width:480px; margin:0 auto; gap:12px; flex-wrap:wrap; justify-content:center;}
+  .newsletter-form input{
+    flex:1; min-width:220px; padding:15px 22px; border-radius:50px; border:none; font-size:.95rem; outline:none;
+  }
+  .newsletter-form button{border:none; cursor:pointer;}
+
+  /* CONTACT */
+  .contact-grid{display:grid; grid-template-columns:.9fr 1.1fr; gap:60px;}
+  .contact-item{display:flex; gap:16px; margin-bottom:28px;}
+  .contact-icon{
+    width:48px; height:48px; border-radius:14px; background:var(--main-gradient); color:#fff; display:flex;
+    align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;
+  }
+  .contact-item h4{margin-bottom:4px; font-size:1rem;}
+  .contact-item p{color:#5a6b6b; font-size:.9rem;}
+  .contact-form{background:#fff; padding:40px; border-radius:22px; box-shadow:var(--shadow-soft);}
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;}
+  .form-group{margin-bottom:16px;}
+  .contact-form label{display:block; font-size:.82rem; font-weight:700; margin-bottom:6px; color:var(--navy);}
+  .contact-form input, .contact-form select, .contact-form textarea{
+    width:100%; padding:13px 16px; border-radius:10px; border:1.5px solid #e5ded0; font-size:.92rem; font-family:inherit; outline:none;
+    transition:border .3s ease;
+  }
+  .contact-form input:focus, .contact-form select:focus, .contact-form textarea:focus{border-color:var(--teal);}
+  .contact-form textarea{resize:vertical; min-height:120px;}
+  .contact-form button{width:100%; margin-top:6px;}
+
+  /* FOOTER */
+  footer{background:var(--dark); color:#cdd9d5; padding:80px 0 0;}
+  .footer-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr 1.2fr; gap:40px; padding-bottom:50px; border-bottom:1px solid rgba(255,255,255,0.08);}
+  .footer-brand .logo{color:#fff; margin-bottom:16px;}
+  .footer-brand p{font-size:.88rem; color:#a9bab6; margin-bottom:20px;}
+  .footer-social{display:flex; gap:10px;}
+  .footer-social a{
+    width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.08); display:flex; align-items:center;
+    justify-content:center; transition:all .3s ease;
+  }
+  .footer-social a:hover{background:var(--teal);}
+  footer h4{color:#fff; font-size:1rem; margin-bottom:20px;}
+  footer ul li{margin-bottom:12px;}
+  footer ul li a{color:#a9bab6; font-size:.9rem; transition:color .3s ease;}
+  footer ul li a:hover{color:var(--gold);}
+  .footer-bottom{padding:24px 0; text-align:center; font-size:.82rem; color:#7d8f8b;}
+
+  /* BACK TO TOP */
+  .back-top{
+    position:fixed; bottom:30px; right:30px; width:52px; height:52px; border-radius:50%; background:var(--main-gradient);
+    color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; pointer-events:none;
+    transform:translateY(20px); transition:all .4s ease; z-index:900; box-shadow:0 10px 24px rgba(38,70,83,0.35); font-size:1.2rem;
+  }
+  .back-top.zf-show{opacity:1; pointer-events:all; transform:translateY(0);}
+
+  /* RESPONSIVE */
+  @media (max-width:1024px){
+    .hero-inner{grid-template-columns:1fr; text-align:center;}
+    .hero-text p{margin-left:auto; margin-right:auto;}
+    .hero-btns{justify-content:center;}
+    .hero-visual{margin-top:40px;}
+    .about-grid{grid-template-columns:1fr;}
+    .classes-grid{grid-template-columns:repeat(2,1fr);}
+    .instructors-grid{grid-template-columns:repeat(2,1fr);}
+    .pricing-grid{grid-template-columns:repeat(2,1fr);}
+    .price-card.featured{grid-column:span 2; transform:scale(1);}
+    .gallery-grid{grid-template-columns:repeat(3,1fr);}
+    .blog-grid{grid-template-columns:repeat(2,1fr);}
+    .contact-grid{grid-template-columns:1fr;}
+    .footer-grid{grid-template-columns:1fr 1fr;}
+    .stats-grid{grid-template-columns:repeat(2,1fr); row-gap:40px;}
+  }
+  @media (max-width:768px){
+    section{padding:70px 0;}
+    .nav-links{display:none;}
+    .join-btn{display:none;}
+    .hamburger{display:flex;}
+    .hero-text h1{font-size:2.3rem;}
+    .classes-grid, .instructors-grid, .pricing-grid, .gallery-grid, .blog-grid{grid-template-columns:1fr;}
+    .price-card.featured{grid-column:span 1;}
+    .feature-grid{grid-template-columns:1fr;}
+    .footer-grid{grid-template-columns:1fr 1fr;}
+    .form-row{grid-template-columns:1fr;}
+    .orbit, .hero-img-wrap{transform:scale(.8);}
+  }
+  @media (max-width:480px){
+    .container{padding:0 18px;}
+    .section-head h2{font-size:1.8rem;}
+    .hero-text h1{font-size:1.9rem;}
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .gallery-grid{grid-template-columns:1fr 1fr;}
+    .footer-grid{grid-template-columns:1fr;}
+    .newsletter-form{flex-direction:column;}
+    .newsletter-form input, .newsletter-form button{width:100%;}
+  }
+
+  /* =========================================================
+     PUBLISHED-PAGE BRIGHTNESS FIX
+     Prevent accidental global dimming/overlay/filter effects
+     that can be introduced by the publishing renderer.
+     This does not change the intended design colors.
+     ========================================================= */
+  html,
+  body{
+    opacity:1 !important;
+    filter:none !important;
+    mix-blend-mode:normal !important;
+  }
+
+  /* The mobile backdrop must be completely inactive until
+     the mobile menu is explicitly opened. */
+  .zf-mobile-overlay{
+    opacity:0 !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+  .zf-mobile-overlay.zf-open{
+    opacity:1 !important;
+    visibility:visible !important;
+    pointer-events:auto !important;
+  }
+
+  /* No global pseudo-element should be allowed to create a
+     page-wide dark wash in the published version. */
+  body::before,
+  body::after{
+    content:none !important;
+    display:none !important;
+    background:transparent !important;
+    opacity:0 !important;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header id="header">
+  <nav>
+    <a href="#home" class="logo"><span class="mark">🪷</span> ZenFlow</a>
+    <div class="nav-links" id="navLinks">
+      <a href="#home" class="nav-link zf-active">Home</a>
+      <a href="#about" class="nav-link">About</a>
+      <a href="#classes" class="nav-link">Classes</a>
+      <a href="#schedule" class="nav-link">Schedule</a>
+      <a href="#instructors" class="nav-link">Instructors</a>
+      <a href="#pricing" class="nav-link">Pricing</a>
+      <a href="#contact" class="nav-link">Contact</a>
+    </div>
+    <div class="nav-actions">
+      <a href="#pricing" class="btn join-btn">Join Now</a>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </nav>
+</header>
+<div class="zf-mobile-overlay" id="overlay"></div>
+<div class="mobile-panel" id="mobilePanel">
+  <a href="#home">Home</a>
+  <a href="#about">About</a>
+  <a href="#classes">Classes</a>
+  <a href="#schedule">Schedule</a>
+  <a href="#instructors">Instructors</a>
+  <a href="#pricing">Pricing</a>
+  <a href="#contact">Contact</a>
+  <a href="#pricing" class="btn btn-primary" style="justify-content:center;">Join Now</a>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-shapes">
+    <div class="shape shape1"></div>
+    <div class="shape shape2"></div>
+    <div class="shape shape3"></div>
+  </div>
+  <div class="particles" id="particles"></div>
+  <div class="hero-inner">
+    <div class="hero-text zf-reveal fade-left zf-in">
+      <span class="eyebrow">ZenFlow Yoga Center</span>
+      <h1>Find Your <span class="grad">Inner Peace</span> Through Yoga</h1>
+      <p>Join a community rooted in mindful movement, breath, and balance. Whether you're a beginner or advanced practitioner, our studio welcomes you to grow, stretch, and simply be.</p>
+      <div class="hero-btns">
+        <a href="#classes" class="btn btn-primary">Explore Classes</a>
+        <a href="#about" class="btn btn-outline">Learn More</a>
+      </div>
+    </div>
+    <div class="hero-visual zf-reveal fade-right zf-in">
+      <div class="orbit"></div>
+      <div class="hero-img-wrap">
+        <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80" alt="Person practicing yoga">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="container stats-grid">
+    <div class="stat-item"><div class="stat-num" data-target="15">0</div><div class="stat-label">Years Experience</div></div>
+    <div class="stat-item"><div class="stat-num" data-target="5000">0</div><div class="stat-label">Happy Students</div></div>
+    <div class="stat-item"><div class="stat-num" data-target="25">0</div><div class="stat-label">Expert Instructors</div></div>
+    <div class="stat-item"><div class="stat-num" data-target="40">0</div><div class="stat-label">Weekly Classes</div></div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="container about-grid">
+    <div class="about-img-wrap zf-reveal fade-left">
+      <img src="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=700&q=80" alt="Yoga studio interior">
+      <div class="about-badge">
+        <div class="num">15+</div>
+        <div class="txt">Years of Excellence</div>
+      </div>
+    </div>
+    <div class="about-text zf-reveal fade-right">
+      <span class="eyebrow">About ZenFlow</span>
+      <h2>A Sanctuary for Body & Mind</h2>
+      <p>Since day one, ZenFlow Yoga Center has been dedicated to helping people reconnect with themselves through the ancient practice of yoga. Our light-filled studios, expert guidance, and warm community make every visit feel like coming home.</p>
+      <p>We believe yoga is for everybody — regardless of age, flexibility, or experience. Come as you are, and leave a little lighter.</p>
+      <div class="feature-grid">
+        <div class="feature-item"><div class="check">✓</div><div><h4>Certified Instructors</h4><p>Trained & experienced guides</p></div></div>
+        <div class="feature-item"><div class="check">✓</div><div><h4>Peaceful Environment</h4><p>Calm, welcoming studios</p></div></div>
+        <div class="feature-item"><div class="check">✓</div><div><h4>All Levels Welcome</h4><p>From beginner to advanced</p></div></div>
+        <div class="feature-item"><div class="check">✓</div><div><h4>Community Focused</h4><p>A space to connect & grow</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLASSES -->
+<section class="classes-section" id="classes">
+  <div class="container">
+    <div class="section-head zf-reveal fade-up">
+      <span class="eyebrow">Our Classes</span>
+      <h2>Practices for Every Path</h2>
+      <p>From gentle stretches to powerful flows, find the class that speaks to your body today.</p>
+    </div>
+    <div class="classes-grid">
+      <div class="class-card zf-reveal fade-scale">
+        <span class="class-badge">Popular</span>
+        <img src="https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?w=600&q=80" alt="Hatha Yoga">
+        <div class="class-overlay">
+          <h3>Hatha Yoga</h3>
+          <p>Slow-paced postures focused on alignment and breath.</p>
+          <div class="class-meta"><span>60 min</span><span>Beginner</span><span>Low Intensity</span></div>
+        </div>
+      </div>
+      <div class="class-card zf-reveal fade-scale">
+        <span class="class-badge">Energetic</span>
+        <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80" alt="Vinyasa Flow">
+        <div class="class-overlay">
+          <h3>Vinyasa Flow</h3>
+          <p>Dynamic sequences that link breath with movement.</p>
+          <div class="class-meta"><span>75 min</span><span>Intermediate</span><span>High Intensity</span></div>
+        </div>
+      </div>
+      <div class="class-card zf-reveal fade-scale">
+        <span class="class-badge">Relaxing</span>
+        <img src="https://images.unsplash.com/photo-1591228127791-8e2eaef098d3?w=600&q=80" alt="Yin Yoga">
+        <div class="class-overlay">
+          <h3>Yin Yoga</h3>
+          <p>Deep, passive stretches held for several minutes.</p>
+          <div class="class-meta"><span>60 min</span><span>All Levels</span><span>Low Intensity</span></div>
+        </div>
+      </div>
+      <div class="class-card zf-reveal fade-scale">
+        <span class="class-badge">Strength</span>
+        <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80" alt="Power Yoga">
+        <div class="class-overlay">
+          <h3>Power Yoga</h3>
+          <p>An athletic, fitness-based approach to vinyasa.</p>
+          <div class="class-meta"><span>60 min</span><span>Advanced</span><span>High Intensity</span></div>
+        </div>
+      </div>
+      <div class="class-card zf-reveal fade-scale">
+        <span class="class-badge">Mindful</span>
+        <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&q=80" alt="Restorative Yoga">
+        <div class="class-overlay">
+          <h3>Restorative Yoga</h3>
+          <p>Prop-supported poses for deep rest and recovery.</p>
+          <div class="class-meta"><span>50 min</span><span>Beginner</span><span>Low Intensity</span></div>
+        </div>
+      </div>
+      <div class="class-card zf-reveal fade-scale">
+        <span class="class-badge">Prenatal</span>
+        <img src="https://images.unsplash.com/photo-1552196563-55cd4e45efb3?w=600&q=80" alt="Prenatal Yoga">
+        <div class="class-overlay">
+          <h3>Prenatal Yoga</h3>
+          <p>Gentle practice tailored for expecting mothers.</p>
+          <div class="class-meta"><span>45 min</span><span>All Levels</span><span>Low Intensity</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEDULE -->
+<section id="schedule">
+  <div class="container">
+    <div class="section-head zf-reveal fade-up">
+      <span class="eyebrow">Weekly Schedule</span>
+      <h2>Plan Your Practice</h2>
+      <p>Find a class time that fits your week — mats provided, all levels welcome.</p>
+    </div>
+    <div class="schedule-wrap zf-reveal fade-up">
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="time-cell">6:00 AM</td>
+            <td class="cls-beginner">Hatha</td><td class="cls-empty">—</td><td class="cls-beginner">Hatha</td><td class="cls-empty">—</td><td class="cls-beginner">Hatha</td>
+          </tr>
+          <tr>
+            <td class="time-cell">8:00 AM</td>
+            <td class="cls-intermediate">Vinyasa</td><td class="cls-beginner">Restorative</td><td class="cls-intermediate">Vinyasa</td><td class="cls-beginner">Restorative</td><td class="cls-intermediate">Vinyasa</td>
+          </tr>
+          <tr>
+            <td class="time-cell">12:00 PM</td>
+            <td class="cls-beginner">Prenatal</td><td class="cls-empty">—</td><td class="cls-beginner">Prenatal</td><td class="cls-empty">—</td><td class="cls-empty">—</td>
+          </tr>
+          <tr>
+            <td class="time-cell">5:30 PM</td>
+            <td class="cls-advanced">Power Yoga</td><td class="cls-intermediate">Vinyasa</td><td class="cls-advanced">Power Yoga</td><td class="cls-intermediate">Vinyasa</td><td class="cls-beginner">Yin</td>
+          </tr>
+          <tr>
+            <td class="time-cell">7:00 PM</td>
+            <td class="cls-beginner">Yin</td><td class="cls-advanced">Power Yoga</td><td class="cls-beginner">Yin</td><td class="cls-advanced">Power Yoga</td><td class="cls-empty">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- INSTRUCTORS -->
+<section class="classes-section" id="instructors">
+  <div class="container">
+    <div class="section-head zf-reveal fade-up">
+      <span class="eyebrow">Meet the Team</span>
+      <h2>Our Expert Instructors</h2>
+      <p>Guided by experienced teachers who bring warmth, knowledge, and presence to every class.</p>
+    </div>
+    <div class="instructors-grid">
+      <div class="instructor-card zf-reveal fade-up">
+        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&q=80" alt="Maya Anand">
+        <div class="instructor-info">
+          <h3>Maya Anand</h3>
+          <div class="instructor-role">Founder & Lead Teacher</div>
+          <p class="instructor-bio">200hr certified with 15 years guiding Hatha and Vinyasa practices.</p>
+          <div class="social-row"><a href="#">in</a><a href="#">ig</a><a href="#">tw</a></div>
+        </div>
+      </div>
+      <div class="instructor-card zf-reveal fade-up">
+        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&q=80" alt="Arjun Mehta">
+        <div class="instructor-info">
+          <h3>Arjun Mehta</h3>
+          <div class="instructor-role">Power Yoga Specialist</div>
+          <p class="instructor-bio">Former athlete bringing strength and precision to every flow.</p>
+          <div class="social-row"><a href="#">in</a><a href="#">ig</a><a href="#">tw</a></div>
+        </div>
+      </div>
+      <div class="instructor-card zf-reveal fade-up">
+        <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=500&q=80" alt="Priya Nair">
+        <div class="instructor-info">
+          <h3>Priya Nair</h3>
+          <div class="instructor-role">Restorative & Yin Guide</div>
+          <p class="instructor-bio">Specializes in deep-rest practices and stress recovery.</p>
+          <div class="social-row"><a href="#">in</a><a href="#">ig</a><a href="#">tw</a></div>
+        </div>
+      </div>
+      <div class="instructor-card zf-reveal fade-up">
+        <img src="https://images.unsplash.com/photo-1552058544-f2b08422138a?w=500&q=80" alt="Kabir Shah">
+        <div class="instructor-info">
+          <h3>Kabir Shah</h3>
+          <div class="instructor-role">Prenatal & Beginner Coach</div>
+          <p class="instructor-bio">Patient, encouraging guidance for new and expecting practitioners.</p>
+          <div class="social-row"><a href="#">in</a><a href="#">ig</a><a href="#">tw</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div class="container">
+    <div class="section-head zf-reveal fade-up">
+      <span class="eyebrow">Membership</span>
+      <h2>Simple, Honest Pricing</h2>
+      <p>Choose the plan that matches your practice — cancel or switch anytime.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card zf-reveal fade-up">
+        <div class="price-plan">Beginner</div>
+        <div class="price-amount">₹1,999<span>/month</span></div>
+        <ul class="price-list">
+          <li>8 classes per month</li>
+          <li>Access to beginner sessions</li>
+          <li>Free mat rental</li>
+          <li>Community events</li>
+        </ul>
+        <a href="#contact" class="btn btn-outline" style="width:100%; justify-content:center;">Get Started</a>
+      </div>
+      <div class="price-card featured zf-reveal fade-scale">
+        <span class="price-badge">Most Popular</span>
+        <div class="price-plan">Wellness</div>
+        <div class="price-amount">₹3,999<span>/month</span></div>
+        <ul class="price-list">
+          <li>Unlimited classes</li>
+          <li>All class levels & styles</li>
+          <li>Free mat & prop rental</li>
+          <li>1 free workshop monthly</li>
+          <li>Priority booking</li>
+        </ul>
+        <a href="#contact" class="btn btn-light" style="width:100%; justify-content:center;">Get Started</a>
+      </div>
+      <div class="price-card zf-reveal fade-up">
+        <div class="price-plan">Premium</div>
+        <div class="price-amount">₹6,999<span>/month</span></div>
+        <ul class="price-list">
+          <li>Unlimited classes</li>
+          <li>2 private sessions monthly</li>
+          <li>All workshops included</li>
+          <li>Nutrition consultation</li>
+          <li>Guest passes x2</li>
+        </ul>
+        <a href="#contact" class="btn btn-outline" style="width:100%; justify-content:center;">Get Started</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section class="quote-section zf-reveal fade-up">
+  <div class="container">
+    <div class="quote-mark">"</div>
+    <blockquote>The body benefits from movement. The mind benefits from stillness.</blockquote>
+    <div class="quote-author">— Sakyong Mipham</div>
+    <a href="#pricing" class="btn btn-light">Start Your Journey</a>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="container">
+    <div class="section-head zf-reveal fade-up">
+      <span class="eyebrow">Gallery</span>
+      <h2>Moments at ZenFlow</h2>
+    </div>
+    <div class="gallery-grid">
+      <div class="gallery-item zf-reveal fade-scale"><img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&q=80" alt="Yoga pose"><div class="gallery-label">Morning Flow</div></div>
+      <div class="gallery-item zf-reveal fade-scale"><img src="https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?w=500&q=80" alt="Studio session"><div class="gallery-label">Group Class</div></div>
+      <div class="gallery-item zf-reveal fade-scale"><img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=500&q=80" alt="Vinyasa"><div class="gallery-label">Vinyasa Flow</div></div>
+      <div class="gallery-item zf-reveal fade-scale"><img src="https://images.unsplash.com/photo-1591228127791-8e2eaef098d3?w=500&q=80" alt="Meditation"><div class="gallery-label">Meditation</div></div>
+      <div class="gallery-item zf-reveal fade-scale"><img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=500&q=80" alt="Outdoor yoga"><div class="gallery-label">Outdoor Session</div></div>
+      <div class="gallery-item zf-reveal fade-scale"><img src="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=500&q=80" alt="Studio"><div class="gallery-label">Our Studio</div></div>
+      <div class="gallery-item zf-reveal fade-scale"><img src="https://images.unsplash.com/photo-1552196563-55cd4e45efb3?w=500&q=80" alt="Prenatal class"><div class="gallery-label">Prenatal Class</div></div>
+      <div class="gallery-item zf-reveal fade-scale"><img src="https://images.unsplash.com/photo-1552058544-f2b08422138a?w=500&q=80" alt="Community"><div class="gallery-label">Community</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- VIDEO -->
+<section id="video">
+  <div class="container">
+    <div class="section-head zf-reveal fade-up">
+      <span class="eyebrow">Watch</span>
+      <h2>Step Inside ZenFlow</h2>
+    </div>
+    <div class="video-wrap zf-reveal fade-scale">
+      <div class="play-btn">▶</div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials-section" id="testimonials">
+  <div class="container">
+    <div class="section-head zf-reveal fade-up">
+      <span class="eyebrow">Testimonials</span>
+      <h2>What Our Students Say</h2>
+    </div>
+    <div class="testi-slider">
+      <div class="testi-slide zf-active">
+        <p class="testi-quote">"ZenFlow changed how I move through my day. The instructors truly care about every student."</p>
+        <img class="testi-avatar" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80" alt="Ananya">
+        <div class="testi-name">Ananya Kapoor</div>
+        <div class="testi-role">Member since 2022</div>
+      </div>
+      <div class="testi-slide">
+        <p class="testi-quote">"I came in stiff and stressed, and I leave every class feeling completely renewed."</p>
+        <img class="testi-avatar" src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80" alt="Rohan">
+        <div class="testi-name">Rohan Verma</div>
+        <div class="testi-role">Member since 2023</div>
+      </div>
+      <div class="testi-slide">
+        <p class="testi-quote">"The prenatal class was exactly what I needed — gentle, safe, and welcoming."</p>
+        <img class="testi-avatar" src="https://images.unsplash.com/photo-1552058544-f2b08422138a?w=200&q=80" alt="Neha">
+        <div class="testi-name">Neha Sharma</div>
+        <div class="testi-role">Member since 2021</div>
+      </div>
+      <div class="testi-slide">
+        <p class="testi-quote">"Power Yoga with Arjun is the best workout of my week. Highly recommend ZenFlow."</p>
+        <img class="testi-avatar" src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200&q=80" alt="Vikram">
+        <div class="testi-name">Vikram Rao</div>
+        <div class="testi-role">Member since 2024</div>
+      </div>
+      <div class="testi-dots" id="testiDots"></div>
+    </div>
+  </div>
+</section>
+
+<!-- BLOG -->
+<section id="blog">
+  <div class="container">
+    <div class="section-head zf-reveal fade-up">
+      <span class="eyebrow">Blog</span>
+      <h2>Insights & Inspiration</h2>
+    </div>
+    <div class="blog-grid">
+      <div class="blog-card zf-reveal fade-up">
+        <img src="https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?w=500&q=80" alt="Breath work">
+        <div class="blog-body">
+          <div class="blog-date">March 12, 2026</div>
+          <h3>5 Breathing Techniques to Calm Your Mind</h3>
+          <p>Simple pranayama practices you can do anywhere, anytime you need to reset.</p>
+          <a href="#" class="read-more">Read More</a>
+        </div>
+      </div>
+      <div class="blog-card zf-reveal fade-up">
+        <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=500&q=80" alt="Beginner tips">
+        <div class="blog-body">
+          <div class="blog-date">Feb 28, 2026</div>
+          <h3>A Beginner's Guide to Your First Yoga Class</h3>
+          <p>What to wear, what to bring, and what to expect walking into the studio.</p>
+          <a href="#" class="read-more">Read More</a>
+        </div>
+      </div>
+      <div class="blog-card zf-reveal fade-up">
+        <img src="https://images.unsplash.com/photo-1591228127791-8e2eaef098d3?w=500&q=80" alt="Mindfulness">
+        <div class="blog-body">
+          <div class="blog-date">Feb 10, 2026</div>
+          <h3>Building a Home Meditation Practice</h3>
+          <p>How ten quiet minutes a day can reshape the rest of your week.</p>
+          <a href="#" class="read-more">Read More</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="classes-section" id="faq">
+  <div class="container">
+    <div class="section-head zf-reveal fade-up">
+      <span class="eyebrow">FAQ</span>
+      <h2>Common Questions</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item zf-reveal fade-up">
+        <div class="faq-q">Do I need prior yoga experience? <span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>Not at all. We offer classes for every level, and our beginner sessions are designed to welcome you at your own pace.</p></div>
+      </div>
+      <div class="faq-item zf-reveal fade-up">
+        <div class="faq-q">What should I bring to class? <span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>Just comfortable clothing and water. Mats and props are provided free with every membership.</p></div>
+      </div>
+      <div class="faq-item zf-reveal fade-up">
+        <div class="faq-q">Can I cancel my membership anytime? <span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>Yes, all plans are month-to-month with no long-term contract required.</p></div>
+      </div>
+      <div class="faq-item zf-reveal fade-up">
+        <div class="faq-q">Do you offer private sessions? <span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>Yes, private sessions are available and included in our Premium plan, or bookable separately.</p></div>
+      </div>
+      <div class="faq-item zf-reveal fade-up">
+        <div class="faq-q">Is prenatal yoga safe for all trimesters? <span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>Our prenatal classes are guided by certified instructors and adapted to each stage of pregnancy — always consult your doctor first.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section class="newsletter-section">
+  <div class="container zf-reveal fade-up">
+    <h2>Stay in the Flow</h2>
+    <p>Get weekly tips, class updates, and mindful moments in your inbox.</p>
+    <form class="newsletter-form" id="newsletterForm">
+      <input type="email" placeholder="Enter your email" required>
+      <button type="submit" class="btn btn-light">Subscribe</button>
+    </form>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="container contact-grid">
+    <div class="zf-reveal fade-left">
+      <span class="eyebrow">Contact Us</span>
+      <h2 style="font-size:2.2rem; margin-bottom:24px;">Come Practice With Us</h2>
+      <div class="contact-item">
+        <div class="contact-icon">📍</div>
+        <div><h4>Address</h4><p>42 Serenity Lane, Hamirpur, Himachal Pradesh 177001</p></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">📞</div>
+        <div><h4>Phone</h4><p>+91 98765 43210</p></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">✉️</div>
+        <div><h4>Email</h4><p>hello@zenflowyoga.example</p></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">🕐</div>
+        <div><h4>Hours</h4><p>Mon–Sat: 6:00 AM – 9:00 PM · Sun: 8:00 AM – 2:00 PM</p></div>
+      </div>
+    </div>
+    <div class="contact-form zf-reveal fade-right">
+      <form id="contactForm">
+        <div class="form-row">
+          <div class="form-group"><label>Name</label><input type="text" placeholder="Your name" required></div>
+          <div class="form-group"><label>Email</label><input type="email" placeholder="you@example.com" required></div>
+        </div>
+        <div class="form-group">
+          <label>Topic</label>
+          <select required>
+            <option value="">Select a topic</option>
+            <option>Class Inquiry</option>
+            <option>Membership</option>
+            <option>Private Sessions</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Message</label><textarea placeholder="Tell us how we can help..." required></textarea></div>
+        <button type="submit" class="btn btn-primary">Send Message</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#home" class="logo">🪷 ZenFlow</a>
+        <p>A calm space to move, breathe, and reconnect — for every body, every level, every day.</p>
+        <div class="footer-social"><a href="#">f</a><a href="#">ig</a><a href="#">tw</a><a href="#">yt</a></div>
+      </div>
+      <div>
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="#about">About</a></li>
+          <li><a href="#classes">Classes</a></li>
+          <li><a href="#schedule">Schedule</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="#blog">Blog</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="#instructors">Instructors</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="#">42 Serenity Lane, Hamirpur, HP</a></li>
+          <li><a href="#">+91 98765 43210</a></li>
+          <li><a href="#">hello@zenflowyoga.example</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 ZenFlow Yoga Center. All rights reserved.</div>
+  </div>
+</footer>
+
+<div class="back-top" id="backTop">↑</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+
+  /* ---- NAVBAR SCROLL STATE ---- */
+  const header = document.getElementById('header');
+  const backTop = document.getElementById('backTop');
+  function onScroll(){
+    if(window.scrollY > 60){ header.classList.add('zf-scrolled'); } else { header.classList.remove('zf-scrolled'); }
+    if(window.scrollY > 500){ backTop.classList.add('zf-show'); } else { backTop.classList.remove('zf-show'); }
+    updateActiveNav();
+  }
+  window.addEventListener('scroll', onScroll);
+  backTop.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+
+  /* ---- MOBILE MENU ---- */
+  const hamburger = document.getElementById('hamburger');
+  const mobilePanel = document.getElementById('mobilePanel');
+  const overlay = document.getElementById('overlay');
+  function closeMenu(){
+    hamburger.classList.remove('zf-open');
+    mobilePanel.classList.remove('zf-open');
+    overlay.classList.remove('zf-open');
+  }
+  hamburger.addEventListener('click', ()=>{
+    hamburger.classList.toggle('zf-open');
+    mobilePanel.classList.toggle('zf-open');
+    overlay.classList.toggle('zf-open');
+  });
+  overlay.addEventListener('click', closeMenu);
+  mobilePanel.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+
+  /* ---- ACTIVE NAV LINK BASED ON SCROLL ---- */
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  function updateActiveNav(){
+    let current = '';
+    sections.forEach(sec=>{
+      const top = sec.offsetTop - 140;
+      if(window.scrollY >= top){ current = sec.getAttribute('id'); }
+    });
+    navLinks.forEach(link=>{
+      link.classList.remove('zf-active');
+      if(link.getAttribute('href') === '#' + current){ link.classList.add('zf-active'); }
+    });
+  }
+
+  /* ---- PARTICLES ---- */
+  const particleContainer = document.getElementById('particles');
+  for(let i=0;i<30;i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100 + '%';
+    p.style.bottom = '-10px';
+    p.style.animationDuration = (8 + Math.random()*10) + 's';
+    p.style.animationDelay = (Math.random()*10) + 's';
+    p.style.opacity = (0.2 + Math.random()*0.5);
+    particleContainer.appendChild(p);
+  }
+
+  /* ---- SCROLL REVEAL (Intersection Observer) ---- */
+  const revealEls = document.querySelectorAll('.zf-reveal');
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add('zf-in');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, {threshold:0.15});
+  revealEls.forEach(el => revealObserver.observe(el));
+
+  /* ---- STATS COUNTER ---- */
+  const statNums = document.querySelectorAll('.stat-num');
+  const statObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        const el = entry.target;
+        const target = parseInt(el.getAttribute('data-target'));
+        let count = 0;
+        const duration = 1600;
+        const stepTime = 16;
+        const steps = duration / stepTime;
+        const increment = target / steps;
+        const timer = setInterval(()=>{
+          count += increment;
+          if(count >= target){ count = target; clearInterval(timer); }
+          el.textContent = Math.floor(count) + '+';
+        }, stepTime);
+        statObserver.unobserve(el);
+      }
+    });
+  }, {threshold:0.5});
+  statNums.forEach(el => statObserver.observe(el));
+
+  /* ---- TILT EFFECT ---- */
+  function applyTilt(selector){
+    document.querySelectorAll(selector).forEach(card=>{
+      card.addEventListener('mousemove', (e)=>{
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width/2;
+        const centerY = rect.height/2;
+        const rotateX = ((y - centerY)/centerY) * -6;
+        const rotateY = ((x - centerX)/centerX) * 6;
+        card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px)`;
+      });
+      card.addEventListener('mouseleave', ()=>{ card.style.transform = ''; });
+    });
+  }
+  applyTilt('.class-card');
+  applyTilt('.price-card');
+  applyTilt('.instructor-card');
+  applyTilt('.blog-card');
+
+  /* ---- PARALLAX ON HERO SHAPES ---- */
+  window.addEventListener('scroll', ()=>{
+    const scrolled = window.scrollY;
+    document.querySelectorAll('.shape').forEach((shape, i)=>{
+      const speed = 0.15 + (i*0.08);
+      shape.style.transform = `translateY(${scrolled*speed}px)`;
+    });
+  });
+
+  /* ---- TESTIMONIAL SLIDER ---- */
+  const slides = document.querySelectorAll('.testi-slide');
+  const dotsContainer = document.getElementById('testiDots');
+  let current = 0;
+  slides.forEach((_, i)=>{
+    const dot = document.createElement('div');
+    dot.className = 'testi-dot' + (i===0 ? ' zf-active' : '');
+    dot.addEventListener('click', ()=> goToSlide(i));
+    dotsContainer.appendChild(dot);
+  });
+  const dots = document.querySelectorAll('.testi-dot');
+  function goToSlide(i){
+    slides[current].classList.remove('zf-active');
+    dots[current].classList.remove('zf-active');
+    current = i;
+    slides[current].classList.add('zf-active');
+    dots[current].classList.add('zf-active');
+  }
+  let testiInterval = setInterval(()=>{
+    goToSlide((current+1) % slides.length);
+  }, 6000);
+
+  /* ---- FAQ ACCORDION ---- */
+  document.querySelectorAll('.faq-item').forEach(item=>{
+    const q = item.querySelector('.faq-q');
+    const a = item.querySelector('.faq-a');
+    q.addEventListener('click', ()=>{
+      const isOpen = item.classList.contains('zf-open');
+      document.querySelectorAll('.faq-item').forEach(other=>{
+        other.classList.remove('zf-open');
+        other.querySelector('.faq-a').style.maxHeight = null;
+      });
+      if(!isOpen){
+        item.classList.add('zf-open');
+        a.style.maxHeight = a.scrollHeight + 'px';
+      }
+    });
+  });
+
+  /* ---- NEWSLETTER SUBMIT ---- */
+  document.getElementById('newsletterForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    alert('Thank you for subscribing to ZenFlow updates!');
+    this.reset();
+  });
+
+  /* ---- CONTACT FORM SUBMIT ---- */
+  document.getElementById('contactForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    alert('Thank you! Your message has been sent — we will get back to you soon.');
+    this.reset();
+  });
+
+  /* ---- SMOOTH SCROLL FOR ALL ANCHOR LINKS ---- */
+  document.querySelectorAll('a[href^="#"]').forEach(anchor=>{
+    anchor.addEventListener('click', function(e){
+      const targetId = this.getAttribute('href');
+      if(targetId.length > 1){
+        const target = document.querySelector(targetId);
+        if(target){
+          e.preventDefault();
+          window.scrollTo({top: target.offsetTop - 90, behavior:'smooth'});
+        }
+      }
+    });
+  });
+
+  /* ---- VIDEO PLACEHOLDER CLICK (no-op, visual only) ---- */
+  document.querySelector('.video-wrap').addEventListener('click', ()=>{
+    alert('Video playback is not enabled in this demo.');
+  });
+
+  onScroll();
+});
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 // LaunchBuilder v3 — Analytics.jsx
 import { useMemo, useState } from "react";
+import { Icon } from "./Inspector.jsx";
 
 /* ================= Analytics: visits, visitors, leads, conversion, pages, devices, forms ================= */
 const DAY = 864e5;
@@ -15,9 +16,10 @@ function Chart({ days, views, leads }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="an-chart" role="img" aria-label="Visits and leads per day">
       {[0, 0.5, 1].map((k) => <g key={k}><line x1={P} x2={W - P} y1={y(max * k)} y2={y(max * k)} stroke="#eceaf5" /><text x={P - 8} y={y(max * k) + 4} textAnchor="end" fontSize="10" fill="#8a87a8">{Math.round(max * k)}</text></g>)}
-      <path d={line(views) + ` L${x(n - 1)},${H - P} L${x(0)},${H - P} Z`} fill="rgba(79,70,229,.08)" />
-      <path d={line(views)} fill="none" stroke="#4f46e5" strokeWidth="2.5" strokeLinejoin="round" />
-      <path d={line(leads)} fill="none" stroke="#16a34a" strokeWidth="2.5" strokeDasharray="5 4" strokeLinejoin="round" />
+      <defs><linearGradient id="anv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#3b5bdb" stopOpacity=".28" /><stop offset="1" stopColor="#3b5bdb" stopOpacity="0" /></linearGradient></defs>
+      <path d={line(views) + ` L${x(n - 1)},${H - P} L${x(0)},${H - P} Z`} fill="url(#anv)" className="an-area" />
+      <path d={line(views)} fill="none" stroke="#3b5bdb" strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" className="an-lv" />
+      <path d={line(leads)} fill="none" stroke="#f5b301" strokeWidth="2.6" strokeDasharray="5 4" strokeLinejoin="round" className="an-ll" />
       {days.map((d, i) => i % step === 0 && <text key={i} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="#8a87a8">{d}</text>)}
     </svg>
   );
@@ -51,11 +53,16 @@ export default function Analytics({ projects, events, leads, onOpenProject }) {
       <div className="top"><div><h1>Analytics</h1><p className="mut">How many people see your pages and how many become leads.</p></div>
         <div className="row"><select value={pid} onChange={(e) => setPid(e.target.value)}><option value="">All projects</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
           <div className="chips" style={{ margin: 0 }}>{[7, 30, 90].map((d) => <button key={d} className={range === d ? "on" : ""} onClick={() => setRange(d)}>{d} days</button>)}</div></div></div>
-      <div className="stats an-stats">
-        <div className="stat"><span>Page views</span><b>{views.length}</b>{trend !== null && <em className={trend >= 0 ? "up" : "down"}>{trend >= 0 ? "▲" : "▼"} {Math.abs(trend)}% vs previous {range} days</em>}</div>
-        <div className="stat"><span>Visitors</span><b>{visitors}</b></div>
-        <div className="stat"><span>Leads</span><b>{ld.length}</b></div>
-        <div className="stat"><span>Conversion rate</span><b>{conv}%</b><em>leads ÷ visitors</em></div>
+      <div className="db-stats fx an-fx">
+        {[["Page views", views.length, "eye", "blue", trend !== null ? `${trend >= 0 ? "↑ +" : "↓ "}${Math.abs(trend)}% vs previous ${range} days` : `last ${range} days`, trend > 0],
+          ["Visitors", visitors, "users", "purple", `last ${range} days`, false],
+          ["Leads", ld.length, "form", "green", `last ${range} days`, false],
+          ["Conversion rate", conv + "%", "chart", "orange", "leads ÷ visitors", false]].map(([l, v, ic, c, sub, up], i) => (
+          <div key={l} className={"fx-stat fx-" + c} style={{ "--d": i * 0.07 + "s" }}>
+            <span className="fx-orb"><Icon n={ic} s={22} /></span>
+            <div className="fx-txt"><span className="fx-lbl">{l}</span><b className="fx-num">{v}</b></div>
+            <small className={"fx-sub" + (up ? " up" : "")}>{sub}</small>
+          </div>))}
       </div>
       <div className="panel"><div className="row between"><b>Visits and leads per day</b><span className="an-key"><i className="v" />Page views <i className="l" />Leads</span></div><Chart days={days} views={vSeries} leads={lSeries} /></div>
       <div className="an-grid">

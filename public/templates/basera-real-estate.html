@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basera — Find where you belong</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#005ca8;
+    --blue-dark:#00426f;
+    --blue-tint:#eaf3fb;
+    --bg-light:#f9f9fb;
+    --white:#ffffff;
+    --ink:#16202c;
+    --ink-soft:#5b6472;
+    --ink-faint:#8891a0;
+    --gold:#c98a2c;
+    --gold-tint:#fbf1e0;
+    --border:#e8eaee;
+    --footer-bg:#1a1a1a;
+    --radius-md:14px;
+    --radius-lg:22px;
+    --shadow-card:0 10px 30px -12px rgba(16,32,52,0.16);
+    --shadow-float:0 20px 50px -18px rgba(16,32,52,0.28);
+    --ease:cubic-bezier(.22,.85,.32,1);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    background:var(--white);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{
+    font-family:'Sora',sans-serif;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  p{margin:0;}
+  a{text-decoration:none;color:inherit;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;}
+  img{display:block;}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 32px;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--blue);
+    font-weight:600;
+  }
+  .btn-primary{
+    background:var(--blue);
+    color:#fff;
+    padding:13px 26px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:14.5px;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    transition:background .28s var(--ease), transform .28s var(--ease), box-shadow .28s var(--ease);
+    box-shadow:0 8px 20px -8px rgba(0,92,168,0.55);
+  }
+  .btn-primary:hover{background:var(--blue-dark);transform:translateY(-2px);box-shadow:0 14px 26px -10px rgba(0,92,168,0.6);}
+  .btn-ghost{
+    padding:12px 22px;
+    border-radius:999px;
+    border:1.5px solid var(--border);
+    font-weight:600;
+    font-size:14px;
+    color:var(--ink);
+    transition:border-color .25s var(--ease), background .25s var(--ease);
+  }
+  .btn-ghost:hover{border-color:var(--blue);background:var(--blue-tint);}
+
+  /* reveal animation */
+  .reveal{opacity:0; transform:translateY(28px); transition:opacity .8s var(--ease), transform .8s var(--ease);}
+  .reveal.is-visible{opacity:1; transform:translateY(0);}
+  .stagger .reveal:nth-child(1){transition-delay:0s;}
+  .stagger .reveal:nth-child(2){transition-delay:.12s;}
+  .stagger .reveal:nth-child(3){transition-delay:.24s;}
+  .stagger .reveal:nth-child(4){transition-delay:.36s;}
+
+  @media (prefers-reduced-motion: reduce){
+    .reveal{opacity:1;transform:none;transition:none;}
+    html{scroll-behavior:auto;}
+  }
+
+  /* ===== NAVBAR ===== */
+  .navbar{
+    position:sticky; top:0; z-index:100;
+    background:#fff;
+    border-bottom:1px solid transparent;
+    transition:box-shadow .3s var(--ease), border-color .3s var(--ease);
+  }
+  .navbar.scrolled{
+    box-shadow:0 6px 24px -14px rgba(16,32,52,0.28);
+    border-bottom-color:var(--border);
+  }
+  .navbar-inner{
+    max-width:1240px;margin:0 auto;padding:0 32px;
+    height:74px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .logo{display:flex;align-items:center;gap:9px;font-family:'Sora',sans-serif;font-weight:800;font-size:21px;color:var(--ink);}
+  .logo .dot{width:11px;height:11px;border-radius:3px;background:var(--blue);transform:rotate(45deg);}
+  .nav-links{display:flex;gap:34px;list-style:none;padding:0;margin:0;}
+  .nav-links a{font-size:14.5px;font-weight:600;color:var(--ink-soft);position:relative;padding:6px 0;transition:color .25s;}
+  .nav-links a::after{content:'';position:absolute;left:0;bottom:0;width:0;height:2px;background:var(--blue);transition:width .3s var(--ease);}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-links a:hover::after{width:100%;}
+  .nav-right{display:flex;align-items:center;gap:18px;}
+  .profile-icon{width:38px;height:38px;border-radius:50%;background:var(--blue-tint);display:flex;align-items:center;justify-content:center;color:var(--blue);border:1px solid var(--border);transition:background .25s;}
+  .profile-icon:hover{background:#dcecf9;}
+  @media (max-width:900px){.nav-links{display:none;}}
+
+  /* ===== HERO ===== */
+  .hero{position:relative;background:linear-gradient(180deg,#0a3b63,#00426f 55%,#00335a);overflow:hidden;padding-bottom:120px;}
+  .hero-bg-art{position:absolute;inset:0;opacity:0.5;}
+  .hero-inner{max-width:1240px;margin:0 auto;padding:76px 32px 40px;position:relative;color:#fff;}
+  .hero-inner h1{font-size:44px;line-height:1.12;max-width:640px;font-weight:700;}
+  .hero-inner h1 em{font-style:normal;color:#ffd394;}
+  .hero-inner p{margin-top:16px;color:#d7e6f2;font-size:16.5px;max-width:480px;}
+  .hero-stats{display:flex;gap:36px;margin-top:34px;}
+  .hero-stats div{border-left:2px solid rgba(255,255,255,0.25);padding-left:14px;}
+  .hero-stats .num{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;color:#ffd394;}
+  .hero-stats .lbl{font-size:12.5px;color:#c6d8e6;margin-top:2px;}
+
+  .search-float{
+    max-width:1080px;margin:0 auto;position:relative;top:60px;
+    background:#fff;border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-float);
+    padding:10px 10px 24px;
+  }
+  .search-tabs{display:flex;gap:4px;padding:6px;border-bottom:1px solid var(--border);}
+  .search-tab{
+    padding:12px 22px;border-radius:10px 10px 0 0;font-weight:700;font-size:14.5px;color:var(--ink-faint);
+    transition:color .25s, background .25s;
+  }
+  .search-tab.active{color:var(--blue);background:var(--blue-tint);}
+  .search-tab:hover:not(.active){color:var(--ink-soft);}
+  .search-row{display:flex;align-items:stretch;gap:10px;padding:18px 16px 6px;flex-wrap:wrap;}
+  .search-select{
+    border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-weight:600;font-size:14px;
+    display:flex;align-items:center;gap:8px;color:var(--ink);min-width:170px;background:#fff;
+  }
+  .search-input{
+    flex:1;min-width:220px;border:1.5px solid var(--border);border-radius:10px;padding:0 16px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .search-input input{border:none;outline:none;flex:1;font-size:14.5px;padding:14px 0;font-family:inherit;}
+  .icon-btn{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--ink-faint);transition:background .2s,color .2s;}
+  .icon-btn:hover{background:var(--bg-light);color:var(--blue);}
+  .search-submit{border-radius:10px;padding:0 28px;font-size:14.5px;}
+
+  /* ===== SECTION HEADER ===== */
+  .section{padding:96px 0;}
+  .section.tight{padding-top:48px;}
+  .section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:38px;gap:20px;flex-wrap:wrap;}
+  .section-head h2{font-size:28px;font-weight:700;max-width:560px;}
+  .section-head .sub{color:var(--ink-soft);margin-top:8px;font-size:14.5px;}
+  .scroller-controls{display:flex;gap:8px;}
+  .scroller-controls button{
+    width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);
+    transition:border-color .25s,color .25s,background .25s;
+  }
+  .scroller-controls button:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-tint);}
+
+  /* ===== HORIZONTAL SCROLLERS ===== */
+  .hscroll{display:flex;gap:18px;overflow-x:auto;scroll-behavior:smooth;padding:6px 4px 18px;scrollbar-width:none;}
+  .hscroll::-webkit-scrollbar{display:none;}
+
+  .option-card{
+    flex:0 0 168px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-md);
+    padding:20px 16px;text-align:center;transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s;
+  }
+  .option-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-card);border-color:transparent;}
+  .option-card .ic{
+    width:52px;height:52px;border-radius:14px;background:var(--blue-tint);color:var(--blue);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 14px;
+  }
+  .option-card .t{font-weight:700;font-size:14px;}
+
+  /* ===== CATEGORY BLOCK PATTERN ===== */
+  .cat-block{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;padding:70px 0;border-top:1px solid var(--border);}
+  .cat-block.reverse .cat-media{order:2;}
+  .cat-block.reverse .cat-copy{order:1;}
+  .cat-media{position:relative;}
+  .cat-media img{width:100%;height:420px;object-fit:cover;border-radius:var(--radius-lg);}
+  .cat-copy .eyebrow{margin-bottom:12px;}
+  .cat-copy h3{font-size:30px;font-weight:700;line-height:1.2;}
+  .cat-copy p{color:var(--ink-soft);margin-top:14px;font-size:15px;max-width:420px;line-height:1.6;}
+  .cat-copy .btn-primary{margin-top:26px;}
+
+  .article-float{
+    position:absolute;left:-34px;bottom:-40px;width:88%;
+    background:#fff;border-radius:var(--radius-md);box-shadow:var(--shadow-float);
+    padding:18px 20px 20px;
+  }
+  .cat-block.reverse .article-float{left:auto;right:-34px;}
+  .article-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px;}
+  .article-tab{font-size:12.5px;font-weight:700;padding:8px 12px;color:var(--ink-faint);border-radius:8px 8px 0 0;transition:color .2s,background .2s;}
+  .article-tab.active{color:var(--blue);background:var(--blue-tint);}
+  .article-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .article-item{display:flex;gap:10px;}
+  .article-item .thumb{width:44px;height:44px;border-radius:8px;background:var(--bg-light);flex:none;background-size:cover;background-position:center;}
+  .article-item .at{font-size:12px;font-weight:600;line-height:1.35;color:var(--ink);}
+  .article-item .ad{font-size:10.5px;color:var(--ink-faint);margin-top:3px;font-family:'JetBrains Mono',monospace;}
+
+  @media (max-width:900px){
+    .cat-block, .cat-block.reverse{grid-template-columns:1fr;}
+    .cat-block.reverse .cat-media, .cat-block.reverse .cat-copy{order:0;}
+    .article-float{position:static;width:100%;margin-top:20px;left:0;right:0;}
+  }
+
+  /* ===== PROPERTY CARDS ===== */
+  .bg-tint{background:var(--bg-light);}
+  .prop-card{
+    flex:0 0 288px;background:#fff;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border);
+    transition:transform .3s var(--ease), box-shadow .3s var(--ease);
+  }
+  .prop-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-card);}
+  .prop-media{position:relative;height:168px;}
+  .prop-media img{width:100%;height:100%;object-fit:cover;}
+  .builder-badge{
+    position:absolute;bottom:-16px;left:16px;width:40px;height:40px;border-radius:10px;background:#fff;
+    box-shadow:0 6px 14px -4px rgba(16,32,52,0.3);display:flex;align-items:center;justify-content:center;
+    font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:var(--blue);
+  }
+  .prop-body{padding:26px 18px 18px;}
+  .prop-body .pname{font-weight:700;font-size:15px;}
+  .prop-body .ploc{font-size:12.5px;color:var(--ink-faint);margin-top:4px;}
+  .prop-body .pprice{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--blue);margin-top:12px;font-size:14.5px;}
+  .prop-foot{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid var(--border);}
+  .view-btn{font-size:12.5px;font-weight:700;color:var(--blue);border:1.5px solid var(--blue-tint);background:var(--blue-tint);padding:8px 14px;border-radius:8px;transition:background .25s,color .25s;}
+  .view-btn:hover{background:var(--blue);color:#fff;}
+
+  /* ===== FEATURED BANNER ===== */
+  .feature-banner{
+    position:relative;border-radius:var(--radius-lg);overflow:hidden;height:420px;
+  }
+  .feature-banner img{width:100%;height:100%;object-fit:cover;}
+  .feature-overlay{
+    position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,20,38,0.86) 0%,rgba(0,20,38,0.15) 55%,transparent 100%);
+    display:flex;flex-direction:column;justify-content:flex-end;padding:44px;
+  }
+  .feature-overlay .eyebrow{color:#ffd394;}
+  .feature-overlay h3{color:#fff;font-size:30px;font-weight:700;margin-top:10px;max-width:520px;}
+  .feature-overlay p{color:#d7e6f2;margin-top:10px;max-width:460px;font-size:14.5px;}
+  .feature-overlay .btn-primary{margin-top:22px;width:fit-content;}
+
+  /* ===== CITIES GRID ===== */
+  .cities-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:22px;}
+  .city-item{text-align:center;}
+  .city-item .cimg{width:100%;aspect-ratio:1/1;border-radius:50%;overflow:hidden;border:3px solid var(--bg-light);transition:border-color .3s,transform .3s;}
+  .city-item .cimg img{width:100%;height:100%;object-fit:cover;}
+  .city-item:hover .cimg{border-color:var(--blue-tint);transform:scale(1.05);}
+  .city-item .cname{font-weight:700;font-size:14px;margin-top:12px;}
+  .city-item .ccount{font-size:12px;color:var(--ink-faint);margin-top:2px;font-family:'JetBrains Mono',monospace;}
+  @media (max-width:900px){.cities-grid{grid-template-columns:repeat(3,1fr);}}
+
+  /* ===== WHY CHOOSE US ===== */
+  .why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;}
+  .why-item .num{font-family:'JetBrains Mono',monospace;color:var(--gold);font-weight:600;font-size:13px;letter-spacing:0.06em;}
+  .why-item h4{font-size:20px;margin-top:10px;font-weight:700;}
+  .why-item p{color:var(--ink-soft);margin-top:10px;font-size:14.5px;line-height:1.6;}
+  .why-item .ic{width:50px;height:50px;border-radius:12px;background:var(--gold-tint);color:var(--gold);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+  @media (max-width:900px){.why-grid{grid-template-columns:1fr;}}
+
+  /* ===== TESTIMONIALS ===== */
+  .review-card{
+    flex:0 0 340px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:26px;
+    box-shadow:0 4px 16px -10px rgba(16,32,52,0.12);
+  }
+  .review-top{display:flex;align-items:center;gap:12px;}
+  .avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;}
+  .review-name{font-weight:700;font-size:14.5px;}
+  .review-loc{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+  .review-text{margin-top:16px;font-size:14px;color:var(--ink-soft);line-height:1.65;}
+  .stars{color:var(--gold);font-size:13px;margin-top:14px;letter-spacing:2px;}
+
+  /* ===== FOOTER ===== */
+  footer{background:var(--footer-bg);color:#c9ccd2;padding:70px 0 28px;}
+  .footer-top{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:36px;padding-bottom:44px;border-bottom:1px solid rgba(255,255,255,0.09);}
+  .footer-brand .logo{color:#fff;}
+  .footer-brand p{margin-top:14px;font-size:13.5px;color:#8f939c;max-width:260px;line-height:1.6;}
+  .footer-col h5{color:#fff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:16px;}
+  .footer-col a{display:block;font-size:13.5px;color:#9a9ea6;margin-bottom:11px;transition:color .2s;}
+  .footer-col a:hover{color:#fff;}
+  .social-row{display:flex;gap:10px;margin-top:18px;}
+  .social-row a{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;transition:background .25s;}
+  .social-row a:hover{background:var(--blue);}
+  .footer-bottom{display:flex;justify-content:space-between;padding-top:24px;font-size:12.5px;color:#777b83;flex-wrap:wrap;gap:10px;}
+  @media (max-width:900px){.footer-top{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<!-- ===================== NAVBAR ===================== -->
+<header class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a class="logo" href="#top"><span class="dot"></span>Basera</a>
+    <ul class="nav-links">
+      <li><a href="#buy">For Buyers</a></li>
+      <li><a href="#rent">For Tenants</a></li>
+      <li><a href="#owners">For Owners</a></li>
+      <li><a href="#dealers">For Dealers/Builders</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="btn-primary" style="padding:11px 20px;">Post Property <span style="font-size:10px;background:#ffd394;color:#7a4a00;padding:2px 7px;border-radius:999px;font-weight:800;">FREE</span></button>
+      <button class="profile-icon" aria-label="Profile">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="top">
+  <svg class="hero-bg-art" viewBox="0 0 1240 520" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="0,520 0,340 120,300 200,360 300,260 420,330 520,270 620,340 720,280 820,350 920,300 1020,360 1120,290 1240,340 1240,520" fill="rgba(255,255,255,0.05)"/>
+    <polygon points="0,520 0,400 150,370 260,420 380,360 500,410 640,370 760,420 900,380 1020,430 1140,390 1240,420 1240,520" fill="rgba(255,255,255,0.08)"/>
+  </svg>
+  <div class="hero-inner">
+    <p class="eyebrow" style="color:#ffd394;">12 lakh+ verified listings across India</p>
+    <h1 style="margin-top:14px;">A home is a decision. <em>Make it a confident one.</em></h1>
+    <p>Search, compare and shortlist verified properties across every major Indian city — with pricing, paperwork and neighbourhood data in one place.</p>
+    <div class="hero-stats">
+      <div><div class="num">12L+</div><div class="lbl">Active listings</div></div>
+      <div><div class="num">1,800+</div><div class="lbl">Cities &amp; towns</div></div>
+      <div><div class="num">98%</div><div class="lbl">Verified owners</div></div>
+    </div>
+  </div>
+
+  <div class="search-float wrap" style="max-width:1080px;">
+    <div class="search-tabs" id="searchTabs">
+      <button class="search-tab active" data-tab="buy">Buy</button>
+      <button class="search-tab" data-tab="rent">Rent</button>
+      <button class="search-tab" data-tab="launch">New Launch</button>
+    </div>
+    <div class="search-row">
+      <div class="search-select">
+        <span id="searchTypeLabel">All Residential</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="search-input">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input type="text" id="searchInputField" placeholder="Search locality, project or landmark in Bengaluru">
+        <button class="icon-btn" title="Search near me">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        </button>
+        <button class="icon-btn" title="Voice search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0M12 19v3"/></svg>
+        </button>
+      </div>
+      <button class="btn-primary search-submit">Search</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== EXPLORE OPTIONS ===================== -->
+<section class="section tight" style="padding-top:120px;">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>Get started with exploring real estate options</h2>
+      <div class="scroller-controls">
+        <button data-scroll="optionsScroll" data-dir="-1" aria-label="scroll left">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button data-scroll="optionsScroll" data-dir="1" aria-label="scroll right">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="hscroll" id="optionsScroll"></div>
+  </div>
+</section>
+
+<!-- ===================== CATEGORY BLOCKS ===================== -->
+<section class="wrap" id="buy">
+  <div class="cat-block reveal">
+    <div class="cat-media">
+      <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80" alt="Living room of a modern apartment">
+      <div class="article-float">
+        <div class="article-tabs" data-article-group="buy">
+          <button class="article-tab active" data-art="news">News</button>
+          <button class="article-tab" data-art="tax">Tax &amp; Legal</button>
+          <button class="article-tab" data-art="help">Help Guides</button>
+        </div>
+        <div class="article-grid" data-art-content="buy"></div>
+      </div>
+    </div>
+    <div class="cat-copy">
+      <p class="eyebrow">01 · Buy a Home</p>
+      <h3>Own a home that fits how you actually live.</h3>
+      <p>Filter by builder reputation, RERA status and resale value trends. Every listing here is verified by our field team before it goes live.</p>
+      <button class="btn-primary">Explore homes to buy</button>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="rent">
+  <div class="cat-block reverse reveal">
+    <div class="cat-media">
+      <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80" alt="Cosy rented apartment interior">
+      <div class="article-float">
+        <div class="article-tabs" data-article-group="rent">
+          <button class="article-tab active" data-art="news">News</button>
+          <button class="article-tab" data-art="tax">Tax &amp; Legal</button>
+          <button class="article-tab" data-art="help">Help Guides</button>
+        </div>
+        <div class="article-grid" data-art-content="rent"></div>
+      </div>
+    </div>
+    <div class="cat-copy">
+      <p class="eyebrow">02 · Rent a Home</p>
+      <h3>Move in without the usual back-and-forth.</h3>
+      <p>Zero-brokerage listings, digital agreements and owner-verified availability, so you spend less time chasing and more time settling in.</p>
+      <button class="btn-primary">Explore homes to rent</button>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="cat-block reveal">
+    <div class="cat-media">
+      <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80" alt="Open plot of land ready for construction">
+      <div class="article-float">
+        <div class="article-tabs" data-article-group="plots">
+          <button class="article-tab active" data-art="news">News</button>
+          <button class="article-tab" data-art="tax">Tax &amp; Legal</button>
+          <button class="article-tab" data-art="help">Help Guides</button>
+        </div>
+        <div class="article-grid" data-art-content="plots"></div>
+      </div>
+    </div>
+    <div class="cat-copy">
+      <p class="eyebrow">03 · Plots &amp; Land</p>
+      <h3>Build from the ground up, on solid title.</h3>
+      <p>Every plot listing includes encumbrance certificates and survey documentation, cross-checked so you can build with confidence.</p>
+      <button class="btn-primary">Explore plots &amp; land</button>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" style="margin-bottom:20px;">
+  <div class="cat-block reverse reveal">
+    <div class="cat-media">
+      <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=900&q=80" alt="Shared living space in a co-living residence">
+      <div class="article-float">
+        <div class="article-tabs" data-article-group="pg">
+          <button class="article-tab active" data-art="news">News</button>
+          <button class="article-tab" data-art="tax">Tax &amp; Legal</button>
+          <button class="article-tab" data-art="help">Help Guides</button>
+        </div>
+        <div class="article-grid" data-art-content="pg"></div>
+      </div>
+    </div>
+    <div class="cat-copy">
+      <p class="eyebrow">04 · PG / Co-living</p>
+      <h3>A room, a community, and none of the hassle.</h3>
+      <p>Furnished stays with housekeeping and meals built in — built for students and early-career professionals moving cities.</p>
+      <button class="btn-primary">Explore co-living stays</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROPERTY CAROUSELS ===================== -->
+<section class="section bg-tint">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div>
+        <h2>Newly launched projects</h2>
+        <p class="sub">Fresh to the market, from builders verified this quarter</p>
+      </div>
+      <div class="scroller-controls">
+        <button data-scroll="newScroll" data-dir="-1" aria-label="scroll left"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <button data-scroll="newScroll" data-dir="1" aria-label="scroll right"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+      </div>
+    </div>
+    <div class="hscroll" id="newScroll"></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div>
+        <h2>Handpicked for you</h2>
+        <p class="sub">Curated based on the most-searched localities this week</p>
+      </div>
+      <div class="scroller-controls">
+        <button data-scroll="pickScroll" data-dir="-1" aria-label="scroll left"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <button data-scroll="pickScroll" data-dir="1" aria-label="scroll right"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+      </div>
+    </div>
+    <div class="hscroll" id="pickScroll"></div>
+  </div>
+</section>
+
+<!-- ===================== FEATURED BANNER ===================== -->
+<section class="section tight">
+  <div class="wrap reveal">
+    <div class="feature-banner">
+      <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1400&q=80" alt="Skyline of an upcoming residential township">
+      <div class="feature-overlay">
+        <p class="eyebrow">Upcoming Projects</p>
+        <h3>Skyline Meridian — Whitefield, Bengaluru</h3>
+        <p>3 &amp; 4 BHK residences launching Q1 2027, backed by a 5-tower masterplan with a 2-acre central park.</p>
+        <button class="btn-primary">View Number</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== POPULAR CITIES ===================== -->
+<section class="section bg-tint">
+  <div class="wrap">
+    <div class="section-head reveal"><h2>Explore real estate in popular Indian cities</h2></div>
+    <div class="cities-grid stagger" id="citiesGrid"></div>
+  </div>
+</section>
+
+<!-- ===================== WHY CHOOSE US ===================== -->
+<section class="section" id="owners">
+  <div class="wrap">
+    <div class="section-head reveal"><h2>Why homebuyers trust Basera</h2></div>
+    <div class="why-grid stagger">
+      <div class="why-item reveal">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 018 0v2"/></svg></div>
+        <p class="num">01</p>
+        <h4>Over 12 lac verified properties</h4>
+        <p>Every listing is field-checked, so what you see is what actually exists — no ghost listings, no bait pricing.</p>
+      </div>
+      <div class="why-item reveal">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg></div>
+        <p class="num">02</p>
+        <h4>Ratings from real residents</h4>
+        <p>Locality and society scores are built from people who actually live there, not paid placements.</p>
+      </div>
+      <div class="why-item reveal">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4M5 5h14v14H5z"/></svg></div>
+        <p class="num">03</p>
+        <h4>Legal and RERA checks built in</h4>
+        <p>Title, encumbrance and RERA registration are surfaced upfront, before you spend time on a site visit.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TESTIMONIALS ===================== -->
+<section class="section bg-tint" id="dealers">
+  <div class="wrap">
+    <div class="section-head reveal"><h2>What people found here</h2></div>
+    <div class="hscroll" id="reviewScroll"></div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a class="logo" href="#top"><span class="dot" style="background:#ffd394;"></span>Basera</a>
+        <p>Basera helps you buy, rent and let property with verified data, across 1,800+ Indian cities and towns.</p>
+        <div class="social-row">
+          <a href="#" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+          <a href="#" aria-label="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 10v7M7 7v.01M12 17v-4a2 2 0 014 0v4M12 13v4"/></svg></a>
+          <a href="#" aria-label="X"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+          <a href="#" aria-label="YouTube"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M10 9l5 3-5 3z" fill="#fff"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <a href="#">About us</a><a href="#">Careers</a><a href="#">Press</a><a href="#">Investor relations</a>
+      </div>
+      <div class="footer-col">
+        <h5>Our Partners</h5>
+        <a href="#">Home loan partners</a><a href="#">Legal partners</a><a href="#">Moving &amp; packing</a><a href="#">Interior partners</a>
+      </div>
+      <div class="footer-col">
+        <h5>Contact Us</h5>
+        <a href="#">1800-000-0000</a><a href="#">support@basera.example</a><a href="#">Report an issue</a><a href="#">Sitemap</a>
+      </div>
+      <div class="footer-col">
+        <h5>Popular Searches</h5>
+        <a href="#">Flats in Bengaluru</a><a href="#">Flats in Pune</a><a href="#">Plots in Hyderabad</a><a href="#">PG in Gurugram</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Basera Technologies Pvt. Ltd. All rights reserved.</span>
+      <span>Privacy Policy · Terms of Use · Sitemap</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ---------- DATA ----------
+  const optionIcons = {
+    home:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>',
+    key:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14 9l2 2"/></svg>',
+    land:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20M4 20V10l6-4 6 4v10"/></svg>',
+    coliving:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2 20c0-3 2.5-5 6-5s6 2 6 5M12 20c0-3 2.5-5 6-5s3.5.7 4.5 2"/></svg>',
+    loan:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M2 11h20M6 15h4"/></svg>',
+    value:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
+    commercial:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/></svg>',
+    interior:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 12h18M12 3v18"/></svg>'
+  };
+  const options = [
+    ['home','Buy a Home'],['key','Rent a Home'],['land','Plots / Land'],['coliving','PG / Co-living'],
+    ['loan','Home Loans'],['value','Property Valuation'],['commercial','Commercial Space'],['interior','Interior Design']
+  ];
+  const optionsScroll = document.getElementById('optionsScroll');
+  options.forEach(([icon,label])=>{
+    const el = document.createElement('div');
+    el.className='option-card reveal';
+    el.innerHTML = `<div class="ic">${optionIcons[icon]}</div><div class="t">${label}</div>`;
+    optionsScroll.appendChild(el);
+  });
+
+  // Category block article content
+  const articleData = {
+    buy:{
+      news:[['Home prices rise 6% YoY in metro suburbs','Aug 18'],['New RERA portal launches statewide','Aug 12'],['Bank rate cut lifts loan demand','Aug 05'],['Builders report strong Q2 pre-sales','Jul 29']],
+      tax:[['Section 24 deduction limits explained','Aug 20'],['Stamp duty rates by state, 2026','Aug 14'],['Capital gains on resale flats','Aug 02'],['TDS rules for property over ₹50L','Jul 24']],
+      help:[['How to verify a builder\'s RERA ID','Aug 16'],['Home loan eligibility checklist','Aug 09'],['Reading a sale agreement, clause by clause','Jul 30'],['Site visit checklist for first-time buyers','Jul 21']]
+    },
+    rent:{
+      news:[['Rental yields climb in IT corridors','Aug 19'],['Co-living demand up among Gen Z','Aug 11'],['City rent index, July update','Aug 03'],['Metro connectivity lifts suburb rents','Jul 27']],
+      tax:[['TDS on rent above ₹50,000/month','Aug 17'],['HRA exemption rules explained','Aug 10'],['Rental agreement stamp duty guide','Aug 01'],['GST on commercial rentals','Jul 23']],
+      help:[['Security deposit norms by city','Aug 15'],['Red flags in a rental agreement','Aug 07'],['Negotiating rent like a local','Jul 28'],['Moving-in checklist for tenants','Jul 19']]
+    },
+    plots:{
+      news:[['Land rates surge near new expressway','Aug 18'],['State eases plot conversion rules','Aug 09'],['Demand for farmhouse plots grows','Jul 31'],['Survey numbers go digital statewide','Jul 22']],
+      tax:[['Capital gains on inherited land','Aug 13'],['Agricultural land tax exemptions','Aug 04'],['Conversion charges explained','Jul 26'],['Stamp duty on plot registration','Jul 17']],
+      help:[['How to read an encumbrance certificate','Aug 12'],['Checking survey boundaries before buying','Aug 03'],['Plot vs apartment: what to weigh','Jul 25'],['Getting a soil test done right','Jul 16']]
+    },
+    pg:{
+      news:[['Co-living operators expand to tier-2 cities','Aug 17'],['Student housing demand up 20%','Aug 08'],['New hygiene standards for PGs','Jul 30'],['Meal-plan PGs gain popularity','Jul 20']],
+      tax:[['GST applicability on PG rent','Aug 11'],['Claiming HRA while living in a PG','Aug 02'],['TDS rules for shared accommodation','Jul 24'],['Deposit refund tax queries','Jul 15']],
+      help:[['Questions to ask before booking a PG','Aug 14'],['Comparing PG vs independent rental','Aug 05'],['What a good PG agreement includes','Jul 27'],['Settling in: a first-week checklist','Jul 18']]
+    }
+  };
+  const thumbColors = ['#e7f0fb','#fdeedb','#e9f7ef','#f4e9fb'];
+  document.querySelectorAll('[data-art-content]').forEach(container=>{
+    const group = container.getAttribute('data-art-content');
+    function render(tab){
+      container.innerHTML='';
+      articleData[group][tab].forEach(([title,date],i)=>{
+        const item=document.createElement('div');
+        item.className='article-item';
+        item.innerHTML=`<div class="thumb" style="background:${thumbColors[i%4]}"></div><div><div class="at">${title}</div><div class="ad">${date}</div></div>`;
+        container.appendChild(item);
+      });
+    }
+    render('news');
+    container.parentElement.querySelectorAll('.article-tab').forEach(tabBtn=>{
+      tabBtn.addEventListener('click',()=>{
+        container.parentElement.querySelectorAll('.article-tab').forEach(b=>b.classList.remove('active'));
+        tabBtn.classList.add('active');
+        render(tabBtn.dataset.art);
+      });
+    });
+  });
+
+  // Hero search tabs
+  const searchTabs = document.querySelectorAll('#searchTabs .search-tab');
+  const typeLabel = document.getElementById('searchTypeLabel');
+  const inputField = document.getElementById('searchInputField');
+  const tabConfig = {
+    buy:{type:'All Residential', placeholder:'Search locality, project or landmark in Bengaluru'},
+    rent:{type:'All Residential', placeholder:'Search rentals by locality or landmark'},
+    launch:{type:'New Launches', placeholder:'Search upcoming projects by city'}
+  };
+  searchTabs.forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      searchTabs.forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      const cfg = tabConfig[tab.dataset.tab];
+      typeLabel.textContent = cfg.type;
+      inputField.placeholder = cfg.placeholder;
+    });
+  });
+
+  // Property card generator
+  const builders = ['SK','PR','GM','LV','AX','TN'];
+  const propImgs = [
+    'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=500&q=80',
+    'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=500&q=80',
+    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=500&q=80',
+    'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=500&q=80',
+    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=500&q=80',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=500&q=80'
+  ];
+  const newLaunches = [
+    ['Meridian Greens','Whitefield, Bengaluru','₹1.2Cr – 1.8Cr'],
+    ['Orchid Skyline','Baner, Pune','₹85L – 1.4Cr'],
+    ['Palm Residency','Gachibowli, Hyderabad','₹95L – 1.6Cr'],
+    ['Solaris Heights','Thane West, Mumbai','₹1.6Cr – 2.4Cr'],
+    ['Cedar Court','Sector 62, Noida','₹78L – 1.1Cr'],
+    ['Willow Enclave','Kondapur, Hyderabad','₹1.0Cr – 1.5Cr']
+  ];
+  const handpicked = [
+    ['Lakeview Residency','HSR Layout, Bengaluru','₹1.4Cr'],
+    ['Elysian Towers','Kharadi, Pune','₹1.1Cr'],
+    ['Riverstone Apartments','Kondhwa, Pune','₹72L'],
+    ['Grand Meadows','Sarjapur Road, Bengaluru','₹92L'],
+    ['Silver Pine County','Sector 150, Noida','₹1.3Cr'],
+    ['Harbor View','Kandivali, Mumbai','₹2.1Cr']
+  ];
+  function buildPropCards(target, list){
+    const scroller = document.getElementById(target);
+    list.forEach((p,i)=>{
+      const c=document.createElement('div');
+      c.className='prop-card reveal';
+      c.innerHTML=`
+        <div class="prop-media">
+          <img src="${propImgs[i%propImgs.length]}" alt="${p[0]}">
+          <div class="builder-badge">${builders[i%builders.length]}</div>
+        </div>
+        <div class="prop-body">
+          <div class="pname">${p[0]}</div>
+          <div class="ploc">${p[1]}</div>
+          <div class="pprice">${p[2]}</div>
+        </div>
+        <div class="prop-foot">
+          <span style="font-size:12px;color:var(--ink-faint);">RERA verified</span>
+          <button class="view-btn">View Number</button>
+        </div>`;
+      scroller.appendChild(c);
+    });
+  }
+  buildPropCards('newScroll', newLaunches);
+  buildPropCards('pickScroll', handpicked);
+
+  // Cities grid
+  const cities = [
+    ['Bengaluru','48,200+','https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=200&q=80'],
+    ['Mumbai','61,500+','https://images.unsplash.com/photo-1529253355930-ddbe423a2ac7?auto=format&fit=crop&w=200&q=80'],
+    ['Pune','32,900+','https://images.unsplash.com/photo-1595656665283-b7dfe5b83d9d?auto=format&fit=crop&w=200&q=80'],
+    ['Hyderabad','29,700+','https://images.unsplash.com/photo-1572445271230-a78b5944a659?auto=format&fit=crop&w=200&q=80'],
+    ['Delhi NCR','54,300+','https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=200&q=80'],
+    ['Chennai','24,100+','https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=200&q=80']
+  ];
+  const citiesGrid = document.getElementById('citiesGrid');
+  cities.forEach(([name,count,img])=>{
+    const el=document.createElement('div');
+    el.className='city-item reveal';
+    el.innerHTML=`<div class="cimg"><img src="${img}" alt="${name} skyline"></div><div class="cname">${name}</div><div class="ccount">${count} properties</div>`;
+    citiesGrid.appendChild(el);
+  });
+
+  // Testimonials
+  const reviews = [
+    ['Ananya R.','Bengaluru','Found a flat in HSR within two weeks — the verified badge saved me three wasted site visits.','https://i.pravatar.cc/80?img=47'],
+    ['Rohit M.','Pune','Zero brokerage on my rental and the agreement was ready to e-sign the same day.','https://i.pravatar.cc/80?img=12'],
+    ['Fatima S.','Hyderabad','The tax guides genuinely helped me understand TDS on my purchase before I signed anything.','https://i.pravatar.cc/80?img=32'],
+    ['Karthik V.','Chennai','Plot documentation checks flagged a boundary mismatch I would have otherwise missed.','https://i.pravatar.cc/80?img=51'],
+    ['Priya D.','Mumbai','Booked a co-living room sight-unseen and it matched the listing exactly.','https://i.pravatar.cc/80?img=25']
+  ];
+  const reviewScroll = document.getElementById('reviewScroll');
+  reviews.forEach(([name,loc,text,avatar])=>{
+    const c=document.createElement('div');
+    c.className='review-card reveal';
+    c.innerHTML=`
+      <div class="review-top">
+        <img class="avatar" src="${avatar}" alt="${name}">
+        <div><div class="review-name">${name}</div><div class="review-loc">${loc}</div></div>
+      </div>
+      <p class="review-text">"${text}"</p>
+      <div class="stars">★★★★★</div>`;
+    reviewScroll.appendChild(c);
+  });
+
+  // ---------- Scroll controls for hscrollers ----------
+  document.querySelectorAll('[data-scroll]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const target = document.getElementById(btn.dataset.scroll);
+      const dir = parseInt(btn.dataset.dir,10);
+      target.scrollBy({left: dir*320, behavior:'smooth'});
+    });
+  });
+
+  // ---------- Navbar shadow on scroll ----------
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll',()=>{
+    navbar.classList.toggle('scrolled', window.scrollY > 12);
+  },{passive:true});
+
+  // ---------- IntersectionObserver reveal ----------
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add('is-visible');
+        io.unobserve(entry.target);
+      }
+    });
+  },{threshold:0.15, rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+})();
+</script>
+</body>
+</html>

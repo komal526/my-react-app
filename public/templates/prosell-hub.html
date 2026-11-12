@@ -1,0 +1,3063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProSell Hub — Digital Communication Agency</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        /* ============================================================
+                   RESET & BASE
+                ============================================================ */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #16A34A;
+            --primary-dark: #0B6B3A;
+            --primary-bright: #22C55E;
+            --primary-soft: #EAF8EF;
+            --bg-light: #F7FBF8;
+            --text-dark: #102018;
+            --text-muted: #4a5a52;
+            --white: #FFFFFF;
+            --shadow-sm: 0 4px 20px rgba(16, 32, 24, 0.06);
+            --shadow-md: 0 12px 48px rgba(16, 32, 24, 0.08);
+            --shadow-lg: 0 24px 64px rgba(16, 32, 24, 0.12);
+            --radius: 20px;
+            --radius-sm: 12px;
+            --transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --font: 'Plus Jakarta Sans', sans-serif;
+            /* --- NEW BRAND COLORS --- */
+            --accent-red: #E63946;
+            --accent-red-dark: #B71C1C;
+            --dark-bg: #080C0A;
+            --dark-surface: #111A15;
+            --dark-border: #2A342E;
+            --text-light: #E8F0EC;
+        }
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+        body {
+            font-family: var(--font);
+            background: var(--white);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        img {
+            max-width: 100%;
+            display: block;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        section {
+            padding: 100px 0;
+            position: relative;
+        }
+        .section-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+        .section-title {
+            font-size: clamp(2.2rem, 5vw, 3.8rem);
+            font-weight: 800;
+            line-height: 1.12;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+        }
+        .section-title .highlight {
+            color: var(--primary);
+        }
+        .section-sub {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 640px;
+            line-height: 1.7;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* --- DARK THEME OVERRIDES --- */
+        .section-dark {
+            background: var(--dark-bg);
+            color: var(--text-light);
+        }
+        .section-dark .section-label {
+            color: var(--primary-bright);
+        }
+        .section-dark .section-title .highlight {
+            color: var(--primary-bright);
+        }
+        .section-dark .section-sub {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .section-dark .section-title {
+            color: var(--white);
+        }
+        .section-dark .btn-outline {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+        }
+        .section-dark .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        /* ============================================================
+                   BUTTONS
+                ============================================================ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+            box-shadow: 0 8px 24px rgba(22, 163, 74, 0.3);
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(22, 163, 74, 0.4);
+        }
+        .btn-primary .arrow {
+            transition: transform 0.3s ease;
+        }
+        .btn-primary:hover .arrow {
+            transform: translateX(6px);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text-dark);
+            border: 2px solid rgba(16, 32, 24, 0.12);
+        }
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+        .btn-white {
+            background: var(--white);
+            color: var(--text-dark);
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-white:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        .btn .arrow {
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+        .btn:hover .arrow {
+            transform: translateX(6px);
+        }
+        .btn-sm {
+            padding: 10px 24px;
+            font-size: 0.9rem;
+        }
+        /* ============================================================
+                   HEADER
+                ============================================================ */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 16px 0;
+            transition: var(--transition);
+            background: transparent;
+        }
+        .header.scrolled {
+            background: rgba(8, 12, 10, 0.92);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 1px 40px rgba(0, 0, 0, 0.4);
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .header .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--white);
+        }
+        .logo span {
+            color: var(--primary-bright);
+        }
+        .logo .red {
+            color: var(--accent-red);
+        }
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+        .nav a {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.8);
+            position: relative;
+            padding: 4px 0;
+            transition: color 0.3s;
+        }
+        .nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-bright);
+            transition: width 0.3s ease;
+        }
+        .nav a:hover::after {
+            width: 100%;
+        }
+        .nav a:hover {
+            color: var(--white);
+        }
+        .nav-cta {
+            margin-left: 8px;
+        }
+        .nav-cta .btn {
+            background: var(--accent-red);
+            color: white;
+            box-shadow: 0 8px 24px rgba(230, 57, 70, 0.3);
+        }
+        .nav-cta .btn:hover {
+            background: var(--accent-red-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(230, 57, 70, 0.4);
+        }
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 4px;
+            background: none;
+            border: none;
+        }
+        .hamburger span {
+            display: block;
+            width: 28px;
+            height: 2.5px;
+            background: var(--white);
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        .hamburger.active span:nth-child(1) {
+            transform: translateY(7.5px) rotate(45deg);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: translateY(-7.5px) rotate(-45deg);
+        }
+        /* ============================================================
+                   HERO — REDESIGNED
+                ============================================================ */
+        .hero {
+            padding: 160px 0 100px;
+            background: var(--dark-bg);
+            overflow: hidden;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .hero-content .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(230, 57, 70, 0.15);
+            color: var(--accent-red);
+            padding: 6px 18px 6px 12px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 24px;
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(230, 57, 70, 0.2);
+        }
+        .hero-content .badge .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+        }
+        .hero h1 {
+            font-size: clamp(2.8rem, 6.5vw, 5rem);
+            font-weight: 800;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+            color: var(--white);
+        }
+        .hero h1 .highlight {
+            color: var(--primary-bright);
+            position: relative;
+        }
+        .hero p {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 520px;
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+        .hero-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .hero-buttons .btn-primary {
+            background: var(--accent-red);
+            box-shadow: 0 8px 24px rgba(230, 57, 70, 0.3);
+        }
+        .hero-buttons .btn-primary:hover {
+            background: var(--accent-red-dark);
+            box-shadow: 0 12px 32px rgba(230, 57, 70, 0.4);
+        }
+        .hero-buttons .btn-outline {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+        }
+        .hero-buttons .btn-outline:hover {
+            border-color: var(--primary-bright);
+            color: var(--primary-bright);
+        }
+        .hero-trust {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .hero-trust .check {
+            color: var(--primary-bright);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        /* --- HERO RIGHT SIDE: DARK DASHBOARD --- */
+        .hero-visual-dark {
+            position: relative;
+            background: radial-gradient(circle at 30% 40%, #0D1F16, #050A08 90%);
+            border-radius: 24px;
+            padding: 24px;
+            min-height: 520px;
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.8), inset 0 0 60px rgba(22, 163, 74, 0.05);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hero-visual-dark .grid-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+        }
+        .hero-visual-dark .glow-orb {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(22, 163, 74, 0.25) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            animation: pulse-orb 4s ease-in-out infinite;
+        }
+        @keyframes pulse-orb {
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+        }
+        /* Dashboard Nodes */
+        .dash-node {
+            position: absolute;
+            z-index: 2;
+            background: rgba(17, 26, 21, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            border-radius: 16px;
+            padding: 10px 18px;
+            color: var(--white);
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            white-space: nowrap;
+        }
+        .dash-node .icon {
+            font-size: 1.2rem;
+        }
+        .dash-node .badge-red {
+            background: var(--accent-red);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 60px;
+            font-weight: 700;
+        }
+        .dash-node.center {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            flex-direction: column;
+            padding: 16px 24px;
+            background: rgba(8, 12, 10, 0.9);
+            border-color: var(--primary-bright);
+            box-shadow: 0 0 40px rgba(22, 163, 74, 0.2);
+            text-align: center;
+        }
+        .dash-node.center .icon {
+            font-size: 2rem;
+        }
+        .dash-node.center .label {
+            font-size: 1rem;
+        }
+        .dash-node.center .sub {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 400;
+        }
+        .dash-node.whatsapp {
+            top: 12%;
+            left: 8%;
+        }
+        .dash-node.landing {
+            bottom: 15%;
+            right: 8%;
+        }
+        .dash-node.rcs {
+            bottom: 15%;
+            left: 8%;
+        }
+        .dash-node.analytics {
+            top: 12%;
+            right: 8%;
+        }
+        /* Floating Cards */
+        .float-card-dark {
+            position: absolute;
+            z-index: 3;
+            background: rgba(17, 26, 21, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            animation: float-dark 5s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .float-card-dark .green {
+            color: var(--primary-bright);
+            font-weight: 700;
+        }
+        .float-card-dark .red {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+        .float-card-dark .emoji {
+            font-size: 1rem;
+        }
+        .float-card-dark:nth-child(1) {
+            top: 18%;
+            right: 12%;
+            animation-delay: 0s;
+        }
+        .float-card-dark:nth-child(2) {
+            bottom: 28%;
+            right: 4%;
+            animation-delay: 1.2s;
+        }
+        .float-card-dark:nth-child(3) {
+            top: 28%;
+            left: 4%;
+            animation-delay: 2.4s;
+        }
+        .float-card-dark:nth-child(4) {
+            bottom: 18%;
+            left: 12%;
+            animation-delay: 0.6s;
+        }
+        @keyframes float-dark {
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        /* SVG Connection Lines */
+        .dash-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.7;
+        }
+        .dash-svg line {
+            stroke: rgba(34, 197, 94, 0.4);
+            stroke-width: 1.5;
+            stroke-dasharray: 6 6;
+            animation: dash-move 20s linear infinite;
+        }
+        .dash-svg .glow-line {
+            stroke: rgba(34, 197, 94, 0.8);
+            stroke-width: 2;
+            filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.4));
+        }
+        @keyframes dash-move {
+            to {
+                stroke-dashoffset: -100;
+            }
+        }
+        /* ============================================================
+                   TRUST BAR (DARK)
+                ============================================================ */
+        .trust-bar-dark {
+            background: var(--dark-surface);
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            padding: 40px 0;
+        }
+        .trust-bar-dark .label {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.3);
+            margin-bottom: 20px;
+        }
+        .marquee {
+            overflow: hidden;
+            position: relative;
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+        .marquee-track {
+            display: flex;
+            gap: 60px;
+            width: max-content;
+            animation: marquee 30s linear infinite;
+        }
+        .marquee-track .logo-placeholder {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: -0.02em;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+        }
+        @keyframes marquee {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+        /* ============================================================
+                   PROBLEM
+                ============================================================ */
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 48px;
+        }
+        .problem-card {
+            background: var(--white);
+            padding: 24px 20px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(16, 32, 24, 0.04);
+            transition: var(--transition);
+            cursor: default;
+            box-shadow: var(--shadow-sm);
+        }
+        .problem-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+        .problem-card .icon {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+        .problem-card:hover .icon {
+            transform: scale(1.15) rotate(-4deg);
+        }
+        .problem-card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .problem-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        /* ============================================================
+                   SOLUTIONS
+                ============================================================ */
+        .solutions {
+            background: var(--bg-light);
+        }
+        .solutions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 48px;
+        }
+        .solution-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 36px 28px;
+            border: 1px solid rgba(16, 32, 24, 0.04);
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+        .solution-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+        .solution-card .icon-wrap {
+            width: 56px;
+            height: 56px;
+            background: var(--primary-soft);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 16px;
+            transition: var(--transition);
+        }
+        .solution-card:hover .icon-wrap {
+            background: var(--primary);
+            color: white;
+        }
+        .solution-card h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .solution-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+        .solution-card .features {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 12px;
+            margin-bottom: 20px;
+        }
+        .solution-card .features li {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .solution-card .features li::before {
+            content: '•';
+            color: var(--primary);
+            font-weight: 700;
+        }
+        .solution-card .link {
+            font-weight: 600;
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+        }
+        .solution-card .link:hover {
+            gap: 12px;
+        }
+        /* ============================================================
+                   SOLUTION SWITCHER
+                ============================================================ */
+        .switcher {
+            background: var(--white);
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 40px 0 48px;
+            background: var(--bg-light);
+            padding: 6px;
+            border-radius: 60px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .tab-btn {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-muted);
+            transition: var(--transition);
+            font-family: var(--font);
+        }
+        .tab-btn.active {
+            background: var(--white);
+            color: var(--text-dark);
+            box-shadow: var(--shadow-sm);
+        }
+        .tab-btn:hover:not(.active) {
+            color: var(--text-dark);
+        }
+        .tab-panel {
+            display: none;
+            animation: fadeSlide 0.5s ease forwards;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+        @keyframes fadeSlide {
+            0% {
+                opacity: 0;
+                transform: translateY(16px) scale(0.97);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .tab-panel-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+        .tab-panel-content .mockup {
+            background: var(--bg-light);
+            border-radius: var(--radius);
+            padding: 32px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(22, 163, 74, 0.06);
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+        .tab-panel-content .info h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .tab-panel-content .info p {
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            line-height: 1.7;
+        }
+        .tab-panel-content .info ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+        }
+        .tab-panel-content .info ul li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+        .tab-panel-content .info ul li::before {
+            content: '✓';
+            color: var(--primary);
+            font-weight: 700;
+        }
+        /* ============================================================
+                   WHATSAPP DEDICATED
+                ============================================================ */
+        .whatsapp-section {
+            background: var(--bg-light);
+        }
+        .workflow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 12px 4px;
+            margin: 40px 0 32px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .workflow .step {
+            background: var(--white);
+            padding: 12px 24px;
+            border-radius: 60px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(22, 163, 74, 0.08);
+        }
+        .workflow .arrow {
+            color: var(--primary);
+            font-size: 1.4rem;
+        }
+        .wa-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 32px;
+        }
+        .wa-features .item {
+            background: var(--white);
+            padding: 18px 20px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(22, 163, 74, 0.06);
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+        .wa-features .item:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-sm);
+        }
+        .wa-features .item .emoji {
+            font-size: 1.3rem;
+        }
+        /* ============================================================
+                   LANDING PAGE
+                ============================================================ */
+        .landing-section {
+            background: var(--primary-soft);
+        }
+        .lp-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .browser-mockup {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(16, 32, 24, 0.04);
+        }
+        .browser-bar {
+            padding: 12px 20px;
+            background: #f5f7f6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(16, 32, 24, 0.04);
+        }
+        .browser-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .browser-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ddd;
+        }
+        .browser-dots span:nth-child(1) {
+            background: #ff5f57;
+        }
+        .browser-dots span:nth-child(2) {
+            background: #ffbd2e;
+        }
+        .browser-dots span:nth-child(3) {
+            background: #28c840;
+        }
+        .browser-body {
+            padding: 32px;
+            min-height: 260px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .browser-body .line {
+            height: 12px;
+            border-radius: 6px;
+            background: var(--bg-light);
+            width: 100%;
+        }
+        .browser-body .line.short {
+            width: 60%;
+        }
+        .browser-body .line.med {
+            width: 80%;
+        }
+        .browser-body .line.green {
+            background: var(--primary);
+            width: 40%;
+            height: 32px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+        .lp-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-top: 24px;
+        }
+        .lp-stat {
+            background: var(--white);
+            padding: 20px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+        .lp-stat .number {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .lp-stat .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .funnel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        .funnel .item {
+            background: var(--white);
+            padding: 6px 16px;
+            border-radius: 60px;
+            box-shadow: var(--shadow-sm);
+        }
+        .funnel .arrow {
+            color: var(--primary);
+        }
+        /* ============================================================
+                   RCS
+                ============================================================ */
+        .rcs-section {
+            background: var(--white);
+        }
+        .rcs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .phone-mockup {
+            background: #1a1a1a;
+            border-radius: 36px;
+            padding: 16px;
+            max-width: 280px;
+            margin: 0 auto;
+            box-shadow: var(--shadow-lg);
+        }
+        .phone-screen {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 24px 16px;
+            min-height: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .phone-screen .brand {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .phone-screen .msg {
+            background: var(--bg-light);
+            padding: 12px 16px;
+            border-radius: 16px;
+            border-top-left-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .phone-screen .msg strong {
+            color: var(--text-dark);
+        }
+        .phone-screen .msg-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .phone-screen .msg-row .chip {
+            background: var(--primary-soft);
+            padding: 6px 14px;
+            border-radius: 60px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        .phone-screen .cta-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .phone-screen .cta-row .btn-sm {
+            flex: 1;
+            justify-content: center;
+            font-size: 0.75rem;
+            padding: 8px 12px;
+        }
+        .rcs-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .rcs-features .item {
+            background: var(--bg-light);
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+        .rcs-features .item:hover {
+            background: var(--primary-soft);
+            transform: translateY(-4px);
+        }
+        /* ============================================================
+                   HOW IT WORKS (DARK)
+                ============================================================ */
+        .how-section {
+            background: var(--dark-bg);
+            color: var(--text-light);
+        }
+        .how-section .section-label {
+            color: var(--primary-bright);
+        }
+        .how-section .section-title .highlight {
+            color: var(--primary-bright);
+        }
+        .how-section .section-sub {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .timeline {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-top: 48px;
+            position: relative;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 0;
+            border-radius: 4px;
+        }
+        .timeline::after {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 10%;
+            height: 3px;
+            background: var(--primary-bright);
+            z-index: 1;
+            border-radius: 4px;
+            width: 0;
+            transition: width 1s ease;
+        }
+        .timeline.visible::after {
+            width: 80%;
+        }
+        .timeline-step {
+            position: relative;
+            z-index: 2;
+            background: var(--dark-surface);
+            padding: 28px 24px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: var(--transition);
+        }
+        .timeline-step:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary-bright);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+        }
+        .timeline-step .num {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--primary-bright);
+            opacity: 0.2;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .timeline-step h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--white);
+        }
+        .timeline-step p {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        /* ============================================================
+                   WHY US
+                ============================================================ */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 48px;
+        }
+        .bento-card {
+            background: var(--white);
+            padding: 28px 24px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(16, 32, 24, 0.04);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            cursor: default;
+        }
+        .bento-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+        .bento-card .num {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            opacity: 0.15;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .bento-card h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .bento-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .bento-card.large {
+            grid-column: span 2;
+        }
+        .bento-card .icon-big {
+            font-size: 2.4rem;
+            margin-bottom: 8px;
+        }
+        /* ============================================================
+                   USE CASES
+                ============================================================ */
+        .use-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 48px;
+        }
+        .use-card {
+            background: var(--white);
+            padding: 20px 16px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(16, 32, 24, 0.04);
+            text-align: center;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            cursor: default;
+        }
+        .use-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+        .use-card .icon {
+            font-size: 2.2rem;
+            margin-bottom: 6px;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+        .use-card:hover .icon {
+            transform: scale(1.2) rotate(-6deg);
+        }
+        .use-card h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+        .use-card .tags {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        /* ============================================================
+                   STATS (DARK)
+                ============================================================ */
+        .stats-section {
+            background: var(--dark-bg);
+            color: var(--white);
+            padding: 60px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            text-align: center;
+        }
+        .stat-item .number {
+            font-size: 3.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            color: var(--primary-bright);
+        }
+        .stat-item .number .suffix {
+            font-size: 1.8rem;
+        }
+        .stat-item .label {
+            font-size: 0.9rem;
+            opacity: 0.6;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        /* ============================================================
+                   INTEGRATIONS
+                ============================================================ */
+        .integrations-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 40px;
+            padding-bottom: 8px;
+        }
+        .integrations-row {
+            display: flex;
+            gap: 12px;
+            width: max-content;
+            min-width: 100%;
+            justify-content: center;
+            flex-wrap: nowrap;
+        }
+        .integration-item {
+            background: var(--white);
+            padding: 14px 20px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(16, 32, 24, 0.04);
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            flex: 0 0 auto;
+            min-width: 110px;
+        }
+        .integration-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        .integration-item .emoji {
+            font-size: 1.8rem;
+        }
+        /* ============================================================
+                   TESTIMONIALS
+                ============================================================ */
+        .testimonial-carousel {
+            overflow: hidden;
+            position: relative;
+            margin-top: 48px;
+        }
+        .testimonial-track {
+            display: flex;
+            gap: 30px;
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .testimonial-card {
+            min-width: calc(33.33% - 20px);
+            flex: 0 0 calc(33.33% - 20px);
+            background: var(--white);
+            padding: 28px 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(16, 32, 24, 0.04);
+        }
+        .testimonial-card .stars {
+            color: #f5b342;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .testimonial-card blockquote {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        .testimonial-card .author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .testimonial-card .author .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--primary-soft);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .testimonial-card .author .name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .testimonial-card .author .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .carousel-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 28px;
+        }
+        .carousel-controls button {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(16, 32, 24, 0.08);
+            background: var(--white);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-controls button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+        /* ============================================================
+                   CASE STUDIES
+                ============================================================ */
+        .case-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 48px;
+        }
+        .case-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(16, 32, 24, 0.04);
+            transition: var(--transition);
+        }
+        .case-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+        .case-card .industry {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+            background: var(--primary-soft);
+            padding: 4px 12px;
+            border-radius: 60px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+        .case-card h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .case-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .case-card .result {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .case-card .result-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        /* ============================================================
+                   PRICING (DARK)
+                ============================================================ */
+        .pricing-section {
+            background: var(--dark-bg);
+            color: var(--text-light);
+        }
+        .pricing-section .section-label {
+            color: var(--primary-bright);
+        }
+        .pricing-section .section-title .highlight {
+            color: var(--primary-bright);
+        }
+        .pricing-toggle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin: 32px 0 48px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .toggle-track {
+            width: 56px;
+            height: 30px;
+            background: var(--dark-surface);
+            border-radius: 60px;
+            position: relative;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: var(--transition);
+        }
+        .toggle-track .thumb {
+            width: 24px;
+            height: 24px;
+            background: var(--primary-bright);
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+        }
+        .toggle-track.active .thumb {
+            left: 28px;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+        .pricing-card {
+            background: var(--dark-surface);
+            border-radius: var(--radius);
+            padding: 32px 28px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: var(--transition);
+            position: relative;
+        }
+        .pricing-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary-bright);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+        }
+        .pricing-card.popular {
+            border-color: var(--primary-bright);
+            background: rgba(34, 197, 94, 0.05);
+        }
+        .pricing-card.popular .badge-pop {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-red);
+            color: white;
+            padding: 4px 20px;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .pricing-card .name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 4px;
+        }
+        .pricing-card .price {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--white);
+        }
+        .pricing-card .price .period {
+            font-size: 1rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .pricing-card .desc {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            margin: 8px 0 16px;
+        }
+        .pricing-card ul {
+            list-style: none;
+            margin: 16px 0 24px;
+        }
+        .pricing-card ul li {
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .pricing-card ul li::before {
+            content: '✓';
+            color: var(--primary-bright);
+            font-weight: 700;
+        }
+        .pricing-card .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        /* ============================================================
+                   FAQ
+                ============================================================ */
+        .faq-list {
+            max-width: 800px;
+            margin: 40px auto 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .faq-item {
+            background: var(--white);
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(16, 32, 24, 0.04);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .faq-item .question {
+            padding: 18px 24px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-family: var(--font);
+            color: var(--text-dark);
+        }
+        .faq-item .question:hover {
+            color: var(--primary);
+        }
+        .faq-item .question .icon {
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+        .faq-item.open .question .icon {
+            transform: rotate(180deg);
+        }
+        .faq-item .answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            padding: 0 24px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+        .faq-item.open .answer {
+            max-height: 300px;
+            padding: 0 24px 20px;
+        }
+        /* ============================================================
+                   FINAL CTA (DARK)
+                ============================================================ */
+        .cta-final {
+            background: var(--dark-bg);
+            color: var(--white);
+            text-align: center;
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .cta-final::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(34, 197, 94, 0.05) 0%, transparent 60%);
+            animation: pulse-bg 8s ease-in-out infinite;
+        }
+        @keyframes pulse-bg {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.8;
+            }
+        }
+        .cta-final .container {
+            position: relative;
+            z-index: 2;
+        }
+        .cta-final h2 {
+            font-size: clamp(2.4rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+        .cta-final p {
+            font-size: 1.2rem;
+            opacity: 0.6;
+            max-width: 520px;
+            margin: 0 auto 32px;
+        }
+        .cta-final .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+        }
+        .cta-final .btn-primary {
+            background: var(--accent-red);
+            box-shadow: 0 8px 24px rgba(230, 57, 70, 0.3);
+        }
+        .cta-final .btn-primary:hover {
+            background: var(--accent-red-dark);
+            box-shadow: 0 12px 32px rgba(230, 57, 70, 0.4);
+        }
+        .cta-final .btn-outline {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+        }
+        .cta-final .btn-outline:hover {
+            border-color: var(--primary-bright);
+            color: var(--primary-bright);
+        }
+        /* ============================================================
+                   FOOTER
+                ============================================================ */
+        .footer {
+            background: #050A08;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 60px 0 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        .footer-brand .logo {
+            color: white;
+            margin-bottom: 12px;
+        }
+        .footer-brand p {
+            font-size: 0.9rem;
+            max-width: 280px;
+            line-height: 1.7;
+        }
+        .footer-col h4 {
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 16px;
+        }
+        .footer-col ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .footer-col ul a {
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        .footer-col ul a:hover {
+            color: var(--primary-bright);
+        }
+        .footer-socials {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .footer-socials a {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: var(--transition);
+        }
+        .footer-socials a:hover {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.8rem;
+        }
+        .footer-bottom .links {
+            display: flex;
+            gap: 20px;
+        }
+        .footer-bottom .links a:hover {
+            color: white;
+        }
+        /* ============================================================
+                   RESPONSIVE
+                ============================================================ */
+        @media (max-width: 1024px) {
+            .hero-grid,
+            .lp-grid,
+            .rcs-grid,
+            .tab-panel-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            .hero-visual-dark {
+                min-height: 400px;
+            }
+            .solutions-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .pricing-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .bento-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .bento-card.large {
+                grid-column: span 1;
+            }
+            .use-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .case-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .timeline {
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+            .timeline::before,
+            .timeline::after {
+                display: none;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .testimonial-card {
+                min-width: calc(50% - 15px);
+                flex: 0 0 calc(50% - 15px);
+            }
+            .problem-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .dash-node {
+                font-size: 0.7rem;
+                padding: 6px 12px;
+            }
+            .dash-node.center {
+                padding: 12px 16px;
+            }
+            .float-card-dark {
+                font-size: 0.65rem;
+                padding: 6px 12px;
+            }
+        }
+        @media (max-width: 768px) {
+            .nav {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(8, 12, 10, 0.98);
+                backdrop-filter: blur(16px);
+                padding: 24px;
+                gap: 16px;
+                border-top: 1px solid rgba(255, 255, 255, 0.04);
+                box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8);
+            }
+            .nav.open {
+                display: flex;
+            }
+            .hamburger {
+                display: flex;
+            }
+            .hero {
+                padding: 120px 0 60px;
+                min-height: auto;
+            }
+            .hero h1 {
+                font-size: 2.4rem;
+            }
+            .hero-visual-dark {
+                min-height: 340px;
+                padding: 16px;
+            }
+            .solutions-grid {
+                grid-template-columns: 1fr;
+            }
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+            .use-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .case-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }
+            .stat-item .number {
+                font-size: 2.8rem;
+            }
+            .lp-stats {
+                grid-template-columns: 1fr;
+            }
+            .rcs-features {
+                grid-template-columns: 1fr;
+            }
+            .tab-panel-content .info ul {
+                grid-template-columns: 1fr;
+            }
+            .testimonial-card {
+                min-width: calc(100% - 10px);
+                flex: 0 0 calc(100% - 10px);
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+            .hero-buttons {
+                flex-direction: column;
+            }
+            .hero-buttons .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .tabs {
+                flex-wrap: wrap;
+                border-radius: 20px;
+                padding: 8px;
+                gap: 4px;
+            }
+            .tab-btn {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+                flex: 1;
+                text-align: center;
+            }
+            .dashboard {
+                padding: 12px;
+            }
+            .timeline {
+                grid-template-columns: 1fr;
+            }
+            .workflow {
+                font-size: 0.8rem;
+            }
+            .workflow .step {
+                padding: 8px 16px;
+            }
+            .section-title {
+                font-size: 2rem;
+            }
+            .pricing-card .price {
+                font-size: 2.4rem;
+            }
+            .phone-mockup {
+                max-width: 220px;
+            }
+            .problem-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .integrations-row {
+                justify-content: flex-start;
+                padding: 0 8px;
+            }
+            .integration-item {
+                min-width: 100px;
+                padding: 12px 16px;
+                font-size: 0.8rem;
+            }
+            .integration-item .emoji {
+                font-size: 1.5rem;
+            }
+            /* Hero nodes reposition */
+            .dash-node.whatsapp {
+                top: 8%;
+                left: 4%;
+            }
+            .dash-node.analytics {
+                top: 8%;
+                right: 4%;
+            }
+            .dash-node.landing {
+                bottom: 10%;
+                right: 4%;
+            }
+            .dash-node.rcs {
+                bottom: 10%;
+                left: 4%;
+            }
+            .float-card-dark {
+                display: none;
+            }
+        }
+        @media (max-width: 480px) {
+            .use-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .use-card {
+                padding: 14px 10px;
+            }
+            .use-card .icon {
+                font-size: 1.8rem;
+            }
+            .container {
+                padding: 0 16px;
+            }
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .hero-visual-dark {
+                min-height: 280px;
+                padding: 12px;
+            }
+            .dash-node {
+                font-size: 0.6rem;
+                padding: 4px 10px;
+                border-radius: 10px;
+            }
+            .dash-node.center {
+                padding: 10px 14px;
+            }
+            .dash-node.center .icon {
+                font-size: 1.4rem;
+            }
+            .problem-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .problem-card {
+                padding: 16px 14px;
+            }
+            .problem-card h4 {
+                font-size: 0.9rem;
+            }
+            .problem-card p {
+                font-size: 0.75rem;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .stat-item .number {
+                font-size: 2.4rem;
+            }
+            .stat-item .label {
+                font-size: 0.75rem;
+            }
+            .integration-item {
+                min-width: 80px;
+                padding: 10px 12px;
+                font-size: 0.7rem;
+            }
+            .integration-item .emoji {
+                font-size: 1.2rem;
+            }
+        }
+        /* ============================================================
+                   SCROLL REVEAL
+                ============================================================ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-stagger>* {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .reveal-stagger.visible>*:nth-child(1) {
+            transition-delay: 0.05s;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-stagger.visible>*:nth-child(2) {
+            transition-delay: 0.12s;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-stagger.visible>*:nth-child(3) {
+            transition-delay: 0.19s;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-stagger.visible>*:nth-child(4) {
+            transition-delay: 0.26s;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-stagger.visible>*:nth-child(5) {
+            transition-delay: 0.33s;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-stagger.visible>*:nth-child(6) {
+            transition-delay: 0.40s;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-stagger.visible>*:nth-child(7) {
+            transition-delay: 0.47s;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-stagger.visible>*:nth-child(8) {
+            transition-delay: 0.54s;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* ============================================================
+                   ACCESSIBILITY
+                ============================================================ */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .reveal {
+                opacity: 1 !important;
+                transform: none !important;
+            }
+            .reveal-stagger>* {
+                opacity: 1 !important;
+                transform: none !important;
+            }
+            .marquee-track {
+                animation: none !important;
+            }
+            .float-card-dark {
+                animation: none !important;
+            }
+            .dash-svg line {
+                animation: none !important;
+            }
+            .hero-visual-dark .glow-orb {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="header scrolled" id="header">
+        <div class="container">
+            <a href="#" class="logo">
+                <span class="logo-icon">PH</span>
+                PRO<span>SEL</span> <span class="red">HUB</span>
+            </a>
+            <ul class="nav open" id="nav">
+                <li><a href="#solutions">Solutions</a></li>
+                <li><a href="#whatsapp">WhatsApp API</a></li>
+                <li><a href="#landing">Landing Pages</a></li>
+                <li><a href="#rcs">RCS</a></li>
+                <li><a href="#why">Why Us</a></li>
+                <li><a href="#resources">Resources</a></li>
+                <li class="nav-cta"><a href="#contact" class="btn btn-sm">Talk to Us <span class="arrow">→</span></a></li>
+            </ul>
+            <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <div class="badge"><span class="dot"></span> Next-gen communication</div>
+                    <h1>
+                        Turn Every Customer<br />
+                        Interaction Into <span class="highlight">Growth.</span>
+                    </h1>
+                    <p>
+                        Powerful WhatsApp API, high-converting landing pages and next-generation RCS
+                        experiences designed to help businesses attract, engage and convert more customers.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="#" class="btn btn-primary">Get Started <span class="arrow">→</span></a>
+                        <a href="#" class="btn btn-outline">Explore Solutions</a>
+                    </div>
+                    <div class="hero-trust">
+                        <span class="check">✓</span> Built for modern businesses
+                    </div>
+                </div>
+                <div class="hero-visual-dark">
+                    <div class="grid-bg"></div>
+                    <div class="glow-orb"></div>
+
+                    <!-- SVG Connection Lines -->
+                    <svg class="dash-svg" viewBox="0 0 500 400" preserveAspectRatio="none">
+                        <line x1="250" y1="200" x2="100" y2="80" />
+                        <line x1="250" y1="200" x2="400" y2="80" />
+                        <line x1="250" y1="200" x2="100" y2="320" />
+                        <line x1="250" y1="200" x2="400" y2="320" />
+                        <line x1="100" y1="80" x2="400" y2="80" stroke-dasharray="4 8" opacity="0.3" />
+                        <line x1="100" y1="320" x2="400" y2="320" stroke-dasharray="4 8" opacity="0.3" />
+                        <line x1="100" y1="80" x2="100" y2="320" stroke-dasharray="4 8" opacity="0.3" />
+                        <line x1="400" y1="80" x2="400" y2="320" stroke-dasharray="4 8" opacity="0.3" />
+                        <!-- Glowing center lines -->
+                        <line x1="250" y1="200" x2="180" y2="120" class="glow-line" />
+                        <line x1="250" y1="200" x2="320" y2="120" class="glow-line" />
+                        <line x1="250" y1="200" x2="180" y2="280" class="glow-line" />
+                        <line x1="250" y1="200" x2="320" y2="280" class="glow-line" />
+                    </svg>
+
+                    <!-- Dashboard Nodes -->
+                    <div class="dash-node center">
+                        <span class="icon">💬</span>
+                        <span class="label">Customer</span>
+                        <span class="sub">Conversation Hub</span>
+                    </div>
+                    <div class="dash-node whatsapp">
+                        <span class="icon">📱</span> WhatsApp API
+                        <span class="badge-red">Live</span>
+                    </div>
+                    <div class="dash-node landing">
+                        <span class="icon">🌐</span> Landing Pages
+                        <span class="badge-red">+34%</span>
+                    </div>
+                    <div class="dash-node rcs">
+                        <span class="icon">✉️</span> RCS Messaging
+                    </div>
+                    <div class="dash-node analytics">
+                        <span class="icon">📊</span> Analytics
+                    </div>
+
+                    <!-- Floating Data Cards -->
+                    <div class="float-card-dark">
+                        <span class="emoji">💬</span> 12 <span class="green">New Conversations</span>
+                    </div>
+                    <div class="float-card-dark">
+                        <span class="emoji">📩</span> New Lead <span class="red">+1</span>
+                    </div>
+                    <div class="float-card-dark">
+                        <span class="emoji">📊</span> WhatsApp • <span class="green">92%</span> Delivered
+                    </div>
+                    <div class="float-card-dark">
+                        <span class="emoji">🚀</span> Landing Page <span class="green">+34%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== TRUST BAR (DARK) ===== -->
+    <section class="trust-bar-dark">
+        <div class="container">
+            <div class="label">Helping businesses communicate smarter</div>
+            <div class="marquee">
+                <div class="marquee-track">
+                    <span class="logo-placeholder">✦ Loom</span>
+                    <span class="logo-placeholder">✦ Notion</span>
+                    <span class="logo-placeholder">✦ Figma</span>
+                    <span class="logo-placeholder">✦ Stripe</span>
+                    <span class="logo-placeholder">✦ Vercel</span>
+                    <span class="logo-placeholder">✦ Linear</span>
+                    <span class="logo-placeholder">✦ Loom</span>
+                    <span class="logo-placeholder">✦ Notion</span>
+                    <span class="logo-placeholder">✦ Figma</span>
+                    <span class="logo-placeholder">✦ Stripe</span>
+                    <span class="logo-placeholder">✦ Vercel</span>
+                    <span class="logo-placeholder">✦ Linear</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PROBLEM ===== -->
+    <section id="why">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">The Challenge</span>
+                <h2 class="section-title">Your Customers Are Everywhere.<br />Your Communication Should Be <span class="highlight">Too.</span></h2>
+                <p class="section-sub mx-auto">Low response rates, fragmented channels, and generic experiences are costing you leads.</p>
+            </div>
+            <div class="problem-grid reveal-stagger visible">
+                <div class="problem-card"><span class="icon">📉</span><h4>Low Response Rates</h4><p>Customers ignore generic outreach.</p></div>
+                <div class="problem-card"><span class="icon">🔄</span><h4>Fragmented Channels</h4><p>Messages lost across platforms.</p></div>
+                <div class="problem-card"><span class="icon">🎯</span><h4>Poor Lead Conversion</h4><p>Traffic that doesn't convert.</p></div>
+                <div class="problem-card"><span class="icon">⏳</span><h4>Slow Follow-ups</h4><p>Delays kill momentum.</p></div>
+                <div class="problem-card"><span class="icon">🧩</span><h4>Generic Experiences</h4><p>One-size-fits-all marketing.</p></div>
+                <div class="problem-card"><span class="icon">⚙️</span><h4>Complicated Tech</h4><p>Complex tools slow you down.</p></div>
+                <div class="problem-card"><span class="icon">📡</span><h4>No Omnichannel Strategy</h4><p>Missing a unified customer view.</p></div>
+                <div class="problem-card"><span class="icon">💸</span><h4>Missed Opportunities</h4><p>Leads slip through the cracks.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== THREE CORE SOLUTIONS ===== -->
+    <section class="solutions" id="solutions">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">Our Solutions</span>
+                <h2 class="section-title">Three Powerful Solutions.<br />One <span class="highlight">Growth Engine.</span></h2>
+                <p class="section-sub mx-auto">WhatsApp API, high-converting landing pages, and RCS — unified to drive real results.</p>
+            </div>
+            <div class="solutions-grid reveal-stagger visible">
+                <div class="solution-card">
+                    <div class="icon-wrap">💬</div>
+                    <h3>WhatsApp API</h3>
+                    <p>Automate conversations, notifications, campaigns and customer support through powerful WhatsApp Business messaging.</p>
+                    <ul class="features">
+                        <li>Automated messaging</li>
+                        <li>Customer notifications</li>
+                        <li>Campaign management</li>
+                        <li>Lead follow-ups</li>
+                        <li>Chat automation</li>
+                        <li>Business integrations</li>
+                    </ul>
+                    <a href="#" class="link">Explore WhatsApp API <span class="arrow">→</span></a>
+                </div>
+                <div class="solution-card">
+                    <div class="icon-wrap">🌐</div>
+                    <h3>High-Converting Landing Pages</h3>
+                    <p>Beautiful, responsive landing pages designed to turn clicks into qualified leads.</p>
+                    <ul class="features">
+                        <li>Conversion-focused design</li>
+                        <li>Responsive layouts</li>
+                        <li>Lead forms</li>
+                        <li>Fast loading</li>
+                        <li>A/B testing ready</li>
+                        <li>Analytics integration</li>
+                    </ul>
+                    <a href="#" class="link">Explore Landing Pages <span class="arrow">→</span></a>
+                </div>
+                <div class="solution-card">
+                    <div class="icon-wrap">📱</div>
+                    <h3>RCS Business Messaging</h3>
+                    <p>Deliver richer customer experiences with interactive, branded messaging.</p>
+                    <ul class="features">
+                        <li>Rich media</li>
+                        <li>Interactive buttons</li>
+                        <li>Carousels</li>
+                        <li>Branded sender</li>
+                        <li>Product showcases</li>
+                        <li>Customer engagement</li>
+                    </ul>
+                    <a href="#" class="link">Explore RCS <span class="arrow">→</span></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SOLUTION SWITCHER ===== -->
+    <section class="switcher" id="resources">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">Interactive</span>
+                <h2 class="section-title">Choose Your <span class="highlight">Growth Channel</span></h2>
+            </div>
+            <div class="tabs" role="tablist">
+                <button class="tab-btn active" data-tab="tab1" role="tab">WhatsApp</button>
+                <button class="tab-btn" data-tab="tab2" role="tab">Landing Pages</button>
+                <button class="tab-btn" data-tab="tab3" role="tab">RCS</button>
+            </div>
+            <div class="tab-panel active" id="tab1" role="tabpanel">
+                <div class="tab-panel-content">
+                    <div class="mockup" style="flex-direction:column;gap:12px;background:var(--primary-soft);">
+                        <span style="font-size:3rem;">💬</span>
+                        <div style="background:white;padding:12px 20px;border-radius:60px;box-shadow:var(--shadow-sm);width:80%;text-align:center;">Customer: "Hello, I need help with my order."</div>
+                        <div style="background:var(--primary);color:white;padding:12px 20px;border-radius:60px;box-shadow:var(--shadow-sm);width:70%;text-align:center;align-self:flex-end;">Automated reply with order status</div>
+                        <div style="font-size:0.8rem;color:var(--text-muted);">⚡ Automated conversation flow</div>
+                    </div>
+                    <div class="info">
+                        <h3>Conversation Automation</h3>
+                        <p>Engage customers instantly with intelligent WhatsApp automation that scales your support and sales.</p>
+                        <ul>
+                            <li>Auto-replies &amp; chatbots</li>
+                            <li>Campaign broadcasting</li>
+                            <li>CRM &amp; webhook integrations</li>
+                            <li>Analytics &amp; delivery tracking</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-panel" id="tab2" role="tabpanel">
+                <div class="tab-panel-content">
+                    <div class="mockup" style="flex-direction:column;gap:8px;background:var(--primary-soft);">
+                        <span style="font-size:2.8rem;">📊</span>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+                            <span style="background:white;padding:6px 16px;border-radius:60px;font-size:0.8rem;">Visitors 2.4k</span>
+                            <span style="background:var(--primary);color:white;padding:6px 16px;border-radius:60px;font-size:0.8rem;">Leads 342</span>
+                            <span style="background:white;padding:6px 16px;border-radius:60px;font-size:0.8rem;">Conversion 14.2%</span>
+                        </div>
+                        <div style="width:100%;height:8px;background:var(--white);border-radius:60px;overflow:hidden;"><div style="width:42%;height:100%;background:var(--primary);border-radius:60px;"></div></div>
+                        <div style="font-size:0.8rem;color:var(--text-muted);">📈 +42% conversion rate uplift</div>
+                    </div>
+                    <div class="info">
+                        <h3>Landing Page Analytics</h3>
+                        <p>Track every click, form submission, and conversion with real-time analytics built for growth.</p>
+                        <ul>
+                            <li>Conversion funnels</li>
+                            <li>A/B testing</li>
+                            <li>Heatmaps &amp; recordings</li>
+                            <li>Lead capture forms</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-panel" id="tab3" role="tabpanel">
+                <div class="tab-panel-content">
+                    <div class="mockup" style="flex-direction:column;gap:8px;background:var(--primary-soft);">
+                        <span style="font-size:2.8rem;">📲</span>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+                            <span style="background:white;padding:6px 16px;border-radius:60px;font-size:0.8rem;">🖼️ Rich Media</span>
+                            <span style="background:white;padding:6px 16px;border-radius:60px;font-size:0.8rem;">🔘 Interactive</span>
+                            <span style="background:white;padding:6px 16px;border-radius:60px;font-size:0.8rem;">🎠 Carousels</span>
+                        </div>
+                        <div style="background:white;padding:12px 16px;border-radius:16px;width:90%;text-align:center;box-shadow:var(--shadow-sm);">✨ Special Offer — Shop Now</div>
+                        <div style="font-size:0.8rem;color:var(--text-muted);">📱 Branded, interactive messaging</div>
+                    </div>
+                    <div class="info">
+                        <h3>Rich Messaging Experience</h3>
+                        <p>Deliver stunning, interactive RCS messages with images, buttons, and carousels that drive engagement.</p>
+                        <ul>
+                            <li>Branded sender ID</li>
+                            <li>Product carousels</li>
+                            <li>Action buttons</li>
+                            <li>Rich analytics</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== WHATSAPP DEDICATED ===== -->
+    <section class="whatsapp-section" id="whatsapp">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">WhatsApp API</span>
+                <h2 class="section-title">Conversations That <span class="highlight">Never Sleep.</span></h2>
+                <p class="section-sub mx-auto">Connect, automate, and convert at scale with the world's most popular messaging channel.</p>
+            </div>
+            <div class="workflow reveal visible">
+                <span class="step">📩 Customer sends message</span>
+                <span class="arrow">→</span>
+                <span class="step">⚡ WhatsApp API</span>
+                <span class="arrow">→</span>
+                <span class="step">🤖 Automation</span>
+                <span class="arrow">→</span>
+                <span class="step">🗄️ CRM / Database</span>
+                <span class="arrow">→</span>
+                <span class="step">👤 Sales Team</span>
+                <span class="arrow">→</span>
+                <span class="step">🎯 Conversion</span>
+            </div>
+            <div class="wa-features reveal-stagger visible">
+                <div class="item"><span class="emoji">🔔</span> Automated Notifications</div>
+                <div class="item"><span class="emoji">🎯</span> Lead Generation</div>
+                <div class="item"><span class="emoji">💬</span> Customer Support</div>
+                <div class="item"><span class="emoji">📣</span> Campaign Messaging</div>
+                <div class="item"><span class="emoji">📦</span> Order Updates</div>
+                <div class="item"><span class="emoji">📅</span> Appointment Reminders</div>
+            </div>
+            <div class="text-center" style="margin-top:32px;">
+                <a href="#" class="btn btn-primary">Start with WhatsApp API <span class="arrow">→</span></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== LANDING PAGE ===== -->
+    <section class="landing-section" id="landing">
+        <div class="container">
+            <div class="lp-grid">
+                <div class="reveal visible">
+                    <span class="section-label">Landing Pages</span>
+                    <h2 class="section-title">Don't Just Get Traffic. <span class="highlight">Convert It.</span></h2>
+                    <p style="color:var(--text-muted);font-size:1.1rem;line-height:1.7;margin-bottom:16px;">High-performing pages designed to turn every click into a qualified lead.</p>
+                    <div class="lp-stats">
+                        <div class="lp-stat"><div class="number">+42%</div><div class="label">Conversion Rate</div></div>
+                        <div class="lp-stat"><div class="number">+68%</div><div class="label">Lead Engagement</div></div>
+                        <div class="lp-stat"><div class="number">3.2×</div><div class="label">More Leads</div></div>
+                    </div>
+                    <div class="funnel">
+                        <span class="item">👥 Visitors</span>
+                        <span class="arrow">→</span>
+                        <span class="item">📄 Landing Page</span>
+                        <span class="arrow">→</span>
+                        <span class="item">🎯 Engagement</span>
+                        <span class="arrow">→</span>
+                        <span class="item">📩 Lead</span>
+                        <span class="arrow">→</span>
+                        <span class="item">⭐ Customer</span>
+                    </div>
+                    <div style="margin-top:24px;">
+                        <a href="#" class="btn btn-primary">Build Your Landing Page <span class="arrow">→</span></a>
+                    </div>
+                </div>
+                <div class="reveal visible">
+                    <div class="browser-mockup">
+                        <div class="browser-bar">
+                            <div class="browser-dots"><span></span><span></span><span></span></div>
+                            <span style="font-size:0.7rem;color:var(--text-muted);margin-left:8px;">prosellhub.com/landing</span>
+                        </div>
+                        <div class="browser-body">
+                            <div style="font-weight:700;font-size:1.2rem;">🔥 Limited Offer</div>
+                            <div class="line" style="width:70%;"></div>
+                            <div class="line short"></div>
+                            <div style="display:flex;gap:10px;margin:8px 0;">
+                                <span class="line" style="width:40%;height:32px;background:var(--primary);border-radius:8px;"></span>
+                                <span class="line" style="width:30%;height:32px;background:var(--bg-light);border-radius:8px;"></span>
+                            </div>
+                            <div class="line green"></div>
+                            <div style="display:flex;gap:8px;margin-top:4px;">
+                                <span class="line" style="width:20%;height:8px;"></span>
+                                <span class="line" style="width:30%;height:8px;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== RCS ===== -->
+    <section class="rcs-section" id="rcs">
+        <div class="container">
+            <div class="rcs-grid">
+                <div class="reveal visible">
+                    <span class="section-label">RCS</span>
+                    <h2 class="section-title">Messaging, <span class="highlight">Reimagined.</span></h2>
+                    <p style="color:var(--text-muted);font-size:1.1rem;line-height:1.7;margin-bottom:16px;">Rich, interactive, branded messaging that customers actually want to engage with.</p>
+                    <div class="rcs-features">
+                        <div class="item">🖼️ Rich Media</div>
+                        <div class="item">🔘 Interactive CTAs</div>
+                        <div class="item">🏷️ Branded Messaging</div>
+                        <div class="item">🎠 Product Carousels</div>
+                    </div>
+                    <div style="margin-top:24px;">
+                        <a href="#" class="btn btn-primary">Explore RCS <span class="arrow">→</span></a>
+                    </div>
+                </div>
+                <div class="reveal visible" style="display:flex;justify-content:center;">
+                    <div class="phone-mockup">
+                        <div class="phone-screen">
+                            <div class="brand"><span>🌿</span> ProSell Hub</div>
+                            <div style="font-weight:700;font-size:1.1rem;">Special Offer For You</div>
+                            <div class="msg"><strong>✨ 20% off</strong> your first campaign</div>
+                            <div class="msg-row">
+                                <span class="chip">📦 Product A</span>
+                                <span class="chip">📦 Product B</span>
+                                <span class="chip">📦 Product C</span>
+                            </div>
+                            <div class="cta-row">
+                                <span class="btn btn-primary btn-sm" style="flex:1;text-align:center;font-size:0.7rem;">Shop Now</span>
+                                <span class="btn btn-outline btn-sm" style="flex:1;text-align:center;font-size:0.7rem;">Learn More</span>
+                            </div>
+                            <div style="font-size:0.7rem;color:var(--text-muted);text-align:center;">📱 RCS · Rich Card Experience</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== HOW IT WORKS (DARK) ===== -->
+    <section class="how-section" id="how">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">Process</span>
+                <h2 class="section-title">From Idea to Interaction in <span class="highlight">Four Steps.</span></h2>
+                <p class="section-sub mx-auto">A streamlined process to get your communication engine up and running.</p>
+            </div>
+            <div class="timeline reveal visible" id="timeline">
+                <div class="timeline-step"><div class="num">01</div><h4>Understand</h4><p>We learn your business and communication goals.</p></div>
+                <div class="timeline-step"><div class="num">02</div><h4>Build</h4><p>We design the right digital experience for you.</p></div>
+                <div class="timeline-step"><div class="num">03</div><h4>Connect</h4><p>Integrate WhatsApp, landing pages and RCS.</p></div>
+                <div class="timeline-step"><div class="num">04</div><h4>Grow</h4><p>Track performance and optimize conversions.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== WHY US ===== -->
+    <section style="background:var(--white);" id="why-us">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">Why Us</span>
+                <h2 class="section-title">Technology That Works For <span class="highlight">Your Business.</span></h2>
+            </div>
+            <div class="bento-grid reveal-stagger visible">
+                <div class="bento-card large"><div class="icon-big">⚡</div><div class="num">01</div><h4>Smart Automation</h4><p>Intelligent workflows that save time and scale your communication.</p></div>
+                <div class="bento-card"><div class="icon-big">🎯</div><div class="num">02</div><h4>Conversion-Focused</h4><p>Every experience is designed to turn interest into action.</p></div>
+                <div class="bento-card"><div class="icon-big">📡</div><div class="num">03</div><h4>Real-Time Communication</h4><p>Instant, reliable messaging that builds trust.</p></div>
+                <div class="bento-card"><div class="icon-big">📈</div><div class="num">04</div><h4>Scalable Technology</h4><p>Grow without limits with our enterprise-grade infrastructure.</p></div>
+                <div class="bento-card"><div class="icon-big">📊</div><div class="num">05</div><h4>Data-Driven Decisions</h4><p>Actionable insights from every campaign and conversation.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== USE CASES ===== -->
+    <section style="background:var(--bg-light);">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">Use Cases</span>
+                <h2 class="section-title">Built For Businesses That Want To <span class="highlight">Grow.</span></h2>
+            </div>
+            <div class="use-grid reveal-stagger visible">
+                <div class="use-card"><span class="icon">🏠</span><h4>Real Estate</h4><div class="tags">WhatsApp + Landing Pages + RCS</div></div>
+                <div class="use-card"><span class="icon">🎓</span><h4>Education</h4><div class="tags">WhatsApp + Landing Pages + RCS</div></div>
+                <div class="use-card"><span class="icon">🏥</span><h4>Healthcare</h4><div class="tags">WhatsApp + Landing Pages + RCS</div></div>
+                <div class="use-card"><span class="icon">🛍️</span><h4>E-commerce</h4><div class="tags">WhatsApp + Landing Pages + RCS</div></div>
+                <div class="use-card"><span class="icon">✈️</span><h4>Travel</h4><div class="tags">WhatsApp + Landing Pages + RCS</div></div>
+                <div class="use-card"><span class="icon">💰</span><h4>Finance</h4><div class="tags">WhatsApp + Landing Pages + RCS</div></div>
+                <div class="use-card"><span class="icon">🚗</span><h4>Automotive</h4><div class="tags">WhatsApp + Landing Pages + RCS</div></div>
+                <div class="use-card"><span class="icon">🏨</span><h4>Hospitality</h4><div class="tags">WhatsApp + Landing Pages + RCS</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== STATS (DARK) ===== -->
+    <section class="stats-section" id="stats">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label" style="color:var(--primary-bright);">Results</span>
+                <h2 class="section-title" style="color:white;">Communication That Drives <span style="color:var(--primary-bright);">Results.</span></h2>
+            </div>
+            <div class="stats-grid reveal-stagger visible">
+                <div class="stat-item"><div class="number" data-count="10">10</div><div class="label">Messages Delivered</div></div>
+                <div class="stat-item"><div class="number" data-count="95">95</div><div class="label">Delivery Rate</div></div>
+                <div class="stat-item"><div class="number" data-count="3">3</div><div class="label">More Engagement</div></div>
+                <div class="stat-item"><div class="number" data-count="40">40</div><div class="label">Higher Conversions</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== INTEGRATIONS ===== -->
+    <section style="background:var(--white);">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">Integrations</span>
+                <h2 class="section-title">Connect Everything You <span class="highlight">Already Use.</span></h2>
+            </div>
+            <div class="integrations-wrapper reveal visible">
+                <div class="integrations-row">
+                    <div class="integration-item"><span class="emoji">📊</span> CRM</div>
+                    <div class="integration-item"><span class="emoji">📑</span> Google Sheets</div>
+                    <div class="integration-item"><span class="emoji">🟠</span> HubSpot</div>
+                    <div class="integration-item"><span class="emoji">🔷</span> Salesforce</div>
+                    <div class="integration-item"><span class="emoji">⚡</span> Zapier</div>
+                    <div class="integration-item"><span class="emoji">🔗</span> Webhooks</div>
+                    <div class="integration-item"><span class="emoji">📈</span> Analytics</div>
+                    <div class="integration-item"><span class="emoji">💳</span> Payment Systems</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== TESTIMONIALS ===== -->
+    <section style="background:var(--bg-light);">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">Testimonials</span>
+                <h2 class="section-title">Businesses Are Communicating <span class="highlight">Differently.</span></h2>
+            </div>
+            <div class="testimonial-carousel" id="testimonialCarousel">
+                <div class="testimonial-track" id="testimonialTrack">
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <blockquote>"ProSell Hub transformed our lead generation. WhatsApp + landing pages gave us a 3x increase in qualified leads."</blockquote>
+                        <div class="author"><div class="avatar">JD</div><div><div class="name">Jane Doe</div><div class="role">CMO, TechStart</div></div></div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <blockquote>"The RCS campaigns are a game-changer. Our engagement rates doubled and customers love the interactive experience."</blockquote>
+                        <div class="author"><div class="avatar">MR</div><div><div class="name">Mike Ross</div><div class="role">Director, Elevate</div></div></div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <blockquote>"We saw a 42% increase in conversions within the first month. The analytics and automation are top-notch."</blockquote>
+                        <div class="author"><div class="avatar">SL</div><div><div class="name">Sarah Lin</div><div class="role">Founder, Bloom</div></div></div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <blockquote>"Finally a communication platform that actually works. The integration with our CRM was seamless."</blockquote>
+                        <div class="author"><div class="avatar">AK</div><div><div class="name">Alex Kim</div><div class="role">VP, NexGen</div></div></div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <blockquote>"ProSell Hub helped us scale our customer support without hiring more people. The automation is incredible."</blockquote>
+                        <div class="author"><div class="avatar">CW</div><div><div class="name">Clara Wu</div><div class="role">Ops, Finly</div></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-controls">
+                <button id="prevTestimonial" aria-label="Previous">‹</button>
+                <button id="nextTestimonial" aria-label="Next">›</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== CASE STUDIES ===== -->
+    <section style="background:var(--white);">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">Case Studies</span>
+                <h2 class="section-title">Real Campaigns. <span class="highlight">Real Growth.</span></h2>
+            </div>
+            <div class="case-grid reveal-stagger visible">
+                <div class="case-card"><span class="industry">Real Estate</span><h4>WhatsApp + Landing Page</h4><p>Automated follow-ups and a high-converting landing page.</p><div class="result">+58%</div><div class="result-label">Qualified Leads</div></div>
+                <div class="case-card"><span class="industry">E-commerce</span><h4>RCS + WhatsApp API</h4><p>Rich product carousels and automated order updates.</p><div class="result">+76%</div><div class="result-label">Engagement Rate</div></div>
+                <div class="case-card"><span class="industry">Education</span><h4>Landing Page + RCS</h4><p>Interactive messaging for student recruitment campaigns.</p><div class="result">+43%</div><div class="result-label">Enrollment Growth</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PRICING (DARK) ===== -->
+    <section class="pricing-section" id="pricing">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">Pricing</span>
+                <h2 class="section-title">Choose What Fits Your <span class="highlight">Growth.</span></h2>
+            </div>
+            <div class="pricing-toggle">
+                <span>Monthly</span>
+                <div class="toggle-track" id="toggleTrack"><div class="thumb"></div></div>
+                <span>Yearly <span style="font-size:0.7rem;color:var(--primary-bright);font-weight:600;">Save 20%</span></span>
+            </div>
+            <div class="pricing-grid reveal-stagger visible">
+                <div class="pricing-card"><div class="name">Starter</div><div class="price" data-monthly="₹4,999" data-yearly="₹3,999">₹4,999 <span class="period">/mo</span></div><div class="desc">For small businesses getting started.</div><ul><li>WhatsApp API</li><li>1 Landing Page</li><li>RCS Basic</li><li>Email Support</li></ul><a href="#" class="btn btn-outline">Get Started</a></div>
+                <div class="pricing-card popular"><div class="badge-pop">Popular</div><div class="name">Growth</div><div class="price" data-monthly="₹9,999" data-yearly="₹7,999">₹9,999 <span class="period">/mo</span></div><div class="desc">For growing businesses.</div><ul><li>WhatsApp API Pro</li><li>10 Landing Pages</li><li>RCS Pro</li><li>Priority Support</li><li>Analytics Dashboard</li></ul><a href="#" class="btn btn-primary">Get Started</a></div>
+                <div class="pricing-card"><div class="name">Scale</div><div class="price" data-monthly="₹24,999" data-yearly="₹19,999">₹24,999 <span class="period">/mo</span></div><div class="desc">For businesses running larger campaigns.</div><ul><li>WhatsApp API Enterprise</li><li>Unlimited Landing Pages</li><li>RCS Enterprise</li><li>Dedicated Account Manager</li><li>Custom Integrations</li></ul><a href="#" class="btn btn-outline">Talk to Sales</a></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== FAQ ===== -->
+    <section style="background:var(--white);" id="faq">
+        <div class="container">
+            <div class="text-center reveal visible">
+                <span class="section-label">FAQ</span>
+                <h2 class="section-title">Questions? We Have <span class="highlight">Answers.</span></h2>
+            </div>
+            <div class="faq-list reveal visible">
+                <div class="faq-item"><button class="question">What is WhatsApp API? <span class="icon">▼</span></button><div class="answer">WhatsApp API allows businesses to send and receive messages at scale, automate conversations, and integrate with CRM systems for seamless customer communication.</div></div>
+                <div class="faq-item"><button class="question">How does WhatsApp Business API work? <span class="icon">▼</span></button><div class="answer">It connects your business systems to WhatsApp via a verified provider, enabling automated notifications, campaigns, and two-way conversations with customers.</div></div>
+                <div class="faq-item"><button class="question">Can you build landing pages for campaigns? <span class="icon">▼</span></button><div class="answer">Yes, we design and build high-converting landing pages tailored to your campaign goals, with A/B testing, analytics, and lead capture forms.</div></div>
+                <div class="faq-item"><button class="question">What is RCS messaging? <span class="icon">▼</span></button><div class="answer">RCS (Rich Communication Services) is the next-generation messaging standard that delivers rich media, interactive buttons, carousels, and branded experiences directly to customers' phones.</div></div>
+                <div class="faq-item"><button class="question">Can WhatsApp and RCS integrate with CRM? <span class="icon">▼</span></button><div class="answer">Yes, both integrate seamlessly with major CRMs like HubSpot, Salesforce, and custom systems via webhooks and Zapier.</div></div>
+                <div class="faq-item"><button class="question">Can I track campaign performance? <span class="icon">▼</span></button><div class="answer">Absolutely. Our dashboard provides real-time analytics on delivery, engagement, conversions, and ROI for every campaign.</div></div>
+                <div class="faq-item"><button class="question">How quickly can we launch? <span class="icon">▼</span></button><div class="answer">Most businesses can launch within 1-2 weeks, depending on integration complexity and campaign scope.</div></div>
+                <div class="faq-item"><button class="question">Can you customize solutions for our business? <span class="icon">▼</span></button><div class="answer">Yes, we tailor every solution to your specific industry, goals, and existing technology stack.</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== FINAL CTA (DARK) ===== -->
+    <section class="cta-final" id="contact">
+        <div class="container">
+            <div class="reveal visible">
+                <h2>Ready to Turn Conversations Into <span style="color:var(--primary-bright);">Customers?</span></h2>
+                <p>Let's build a smarter communication system for your business.</p>
+                <div class="btn-group">
+                    <a href="#" class="btn btn-primary">Start Your Project <span class="arrow">→</span></a>
+                    <a href="#" class="btn btn-outline">Talk to an Expert</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo" style="color:white;"><span class="logo-icon">PH</span>PRO<span style="color:var(--primary-bright);">SEL</span> <span style="color:var(--accent-red);">HUB</span></a>
+                    <p>Premium digital communication solutions for modern businesses. WhatsApp API, landing pages, and RCS — unified.</p>
+                    <div class="footer-socials">
+                        <a href="#" aria-label="LinkedIn">in</a>
+                        <a href="#" aria-label="Twitter">𝕏</a>
+                        <a href="#" aria-label="YouTube">▶</a>
+                        <a href="#" aria-label="Instagram">📷</a>
+                    </div>
+                </div>
+                <div class="footer-col"><h4>Solutions</h4><ul><li><a href="#">WhatsApp API</a></li><li><a href="#">Landing Pages</a></li><li><a href="#">RCS</a></li></ul></div>
+                <div class="footer-col"><h4>Company</h4><ul><li><a href="#">About</a></li><li><a href="#">Why Us</a></li><li><a href="#">Case Studies</a></li><li><a href="#">Contact</a></li></ul></div>
+                <div class="footer-col"><h4>Contact</h4><ul><li>📧 hello@prosellhub.com</li><li>📞 +1 (555) 000-0000</li><li>💬 WhatsApp: +1 (555) 000-0001</li></ul></div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 ProSell Hub. All rights reserved.</span>
+                <div class="links"><a href="#">Privacy Policy</a><a href="#">Terms</a><a href="#">Cookie Policy</a></div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ============================================================
+    JAVASCRIPT
+    ============================================================ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // ===== HEADER SCROLL =====
+            const header = document.getElementById('header');
+            window.addEventListener('scroll', function() {
+                header.classList.toggle('scrolled', window.scrollY > 40);
+            });
+
+            // ===== HAMBURGER =====
+            const hamburger = document.getElementById('hamburger');
+            const nav = document.getElementById('nav');
+            hamburger.addEventListener('click', function() {
+                this.classList.toggle('active');
+                nav.classList.toggle('open');
+            });
+            nav.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    hamburger.classList.remove('active');
+                    nav.classList.remove('open');
+                });
+            });
+
+            // ===== SCROLL REVEAL =====
+            const reveals = document.querySelectorAll('.reveal, .reveal-stagger');
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+            reveals.forEach(function(el) { observer.observe(el); });
+
+            // ===== TIMELINE LINE =====
+            const timeline = document.getElementById('timeline');
+            const timelineObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        timeline.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.3 });
+            if (timeline) timelineObserver.observe(timeline);
+
+            // ===== TABS =====
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabPanels = {
+                tab1: document.getElementById('tab1'),
+                tab2: document.getElementById('tab2'),
+                tab3: document.getElementById('tab3')
+            };
+            tabBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    tabBtns.forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    const target = this.dataset.tab;
+                    Object.keys(tabPanels).forEach(function(key) {
+                        tabPanels[key].classList.toggle('active', key === target);
+                    });
+                });
+            });
+
+            // ===== FAQ ACCORDION =====
+            const faqItems = document.querySelectorAll('.faq-item');
+            faqItems.forEach(function(item) {
+                const q = item.querySelector('.question');
+                q.addEventListener('click', function() {
+                    const isOpen = item.classList.contains('open');
+                    faqItems.forEach(function(i) { i.classList.remove('open'); });
+                    if (!isOpen) item.classList.add('open');
+                });
+            });
+
+            // ===== TESTIMONIAL CAROUSEL =====
+            const track = document.getElementById('testimonialTrack');
+            const cards = track.querySelectorAll('.testimonial-card');
+            let currentIndex = 0;
+            let visibleCount = 3;
+            let cardWidth = 0;
+
+            function updateCarousel() {
+                const containerWidth = track.parentElement.offsetWidth;
+                if (containerWidth < 768) visibleCount = 1;
+                else if (containerWidth < 1024) visibleCount = 2;
+                else visibleCount = 3;
+                const gap = 30;
+                cardWidth = (containerWidth - (visibleCount - 1) * gap) / visibleCount;
+                const totalWidth = cards.length * (cardWidth + gap);
+                const maxIndex = Math.max(0, cards.length - visibleCount);
+                if (currentIndex > maxIndex) currentIndex = maxIndex;
+                track.style.transform = 'translateX(-' + (currentIndex * (cardWidth + gap)) + 'px)';
+                cards.forEach(function(c) {
+                    c.style.minWidth = cardWidth + 'px';
+                    c.style.flex = '0 0 ' + cardWidth + 'px';
+                });
+            }
+
+            document.getElementById('nextTestimonial').addEventListener('click', function() {
+                const maxIndex = Math.max(0, cards.length - visibleCount);
+                if (currentIndex < maxIndex) { currentIndex++;
+                    updateCarousel(); }
+            });
+            document.getElementById('prevTestimonial').addEventListener('click', function() {
+                if (currentIndex > 0) { currentIndex--;
+                    updateCarousel(); }
+            });
+
+            window.addEventListener('resize', updateCarousel);
+            updateCarousel();
+
+            // ===== PRICING TOGGLE =====
+            const toggleTrack = document.getElementById('toggleTrack');
+            const pricingCards = document.querySelectorAll('.pricing-card .price');
+            let isYearly = false;
+            toggleTrack.addEventListener('click', function() {
+                this.classList.toggle('active');
+                isYearly = this.classList.contains('active');
+                pricingCards.forEach(function(el) {
+                    const monthly = el.dataset.monthly;
+                    const yearly = el.dataset.yearly;
+                    if (monthly && yearly) {
+                        el.innerHTML = (isYearly ? yearly : monthly) + ' <span class="period">/mo</span>';
+                    }
+                });
+            });
+
+            // ===== STAT COUNTERS =====
+            const statNumbers = document.querySelectorAll('.stat-item .number');
+            const statObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        const target = parseInt(el.dataset.count);
+                        if (isNaN(target)) return;
+                        let current = 0;
+                        const increment = Math.ceil(target / 50);
+                        const timer = setInterval(function() {
+                            current += increment;
+                            if (current >= target) { current = target;
+                                clearInterval(timer); }
+                            const suffix = el.querySelector('.suffix') ? el.querySelector('.suffix').textContent :
+                                '';
+                            el.textContent = current + suffix;
+                            if (suffix && !el.querySelector('.suffix')) {
+                                const text = el.textContent;
+                                el.innerHTML = text + '<span class="suffix">' + suffix + '</span>';
+                            }
+                        }, 30);
+                        statObserver.unobserve(el);
+                    }
+                });
+            }, { threshold: 0.4 });
+            statNumbers.forEach(function(el) { statObserver.observe(el); });
+
+        });
+    </script>
+    <script data-reveal-fix="">
+        (function() {
+            var SEL = '.reveal,[data-sa-reveal],[data-reveal],[data-animate],[data-aos],[data-scroll],.scroll-reveal,.fade-in-section,.animate-on-scroll,.reveal-on-scroll';
+            var CLASSES = ['visible', 'sa-visible', 'aos-animate', 'in-view', 'is-visible', 'active', 'show', 'animated'];
+            function revealAll() {
+                try {
+                    document.querySelectorAll(SEL).forEach(function(el) {
+                        for (var i = 0; i < CLASSES.length; i++) el.classList.add(CLASSES[i]);
+                    });
+                } catch (e) {}
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', revealAll);
+            else revealAll();
+            setTimeout(revealAll, 150);
+            setTimeout(revealAll, 500);
+        })();
+    </script>
+
+</body>
+</html>

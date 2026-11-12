@@ -424,3 +424,38 @@ export const saveMyTpl = (email, list) => { try { localStorage.setItem(MT(email)
 /* turn a saved template into the same shape as the built-in ones */
 export const asTemplate = (m) => ({ key: "my_" + m.id, mine: true, id: m.id, type: m.type, cat: "My templates", name: m.name, note: m.note || (m.type === "website" ? `${m.pages.length} pages · saved by you` : "Saved by you"), accent: "#f5b301",
   make: () => m.pages.map((x) => pg(x.name, x.file, x.html)) });
+
+/* ==================== Lead pipelines (several boards, each fed by chosen forms) ==================== */
+export const PIPE_COLORS = ["#3b82f6", "#f97316", "#06b6d4", "#a855f7", "#ec4899", "#22c55e", "#eab308", "#94a3b8"];
+export const defaultPipe = () => ({ id: "default", name: "Sales Pipeline", def: true, forms: [], stages: [
+  { id: "new", name: "New", c: "#3b82f6" }, { id: "contacted", name: "Contacted", c: "#f97316" }, { id: "qualified", name: "Qualified", c: "#06b6d4" },
+  { id: "won", name: "Won", c: "#22c55e" }, { id: "lost", name: "Lost", c: "#94a3b8" }] });
+const PIPEK = (email) => "lb_pipes_" + email;
+export const loadPipes = (email) => { try { const l = JSON.parse(localStorage.getItem(PIPEK(email)) || "[]"); return l.length ? l : [defaultPipe()]; } catch { return [defaultPipe()]; } };
+export const savePipes = (email, list) => localStorage.setItem(PIPEK(email), JSON.stringify(list));
+
+/* ==================== Template library — real pages, loaded only when previewed or used ==================== */
+export const FILE_TEMPLATES = [
+  {"key": "f-ai-video-editor-masterclass", "file": "templates/ai-video-editor-masterclass.html", "name": "AI Video Editor Masterclass", "type": "landing", "cat": "Courses & webinars", "note": "Free live masterclass with registration form", "accent": "#d4a843"},
+  {"key": "f-astrology-workshop", "file": "templates/astrology-workshop.html", "name": "Astrology Workshop", "type": "landing", "cat": "Courses & webinars", "note": "Live workshop — understand your birth chart", "accent": "#e3b448"},
+  {"key": "f-landingcraft-webinar", "file": "templates/landingcraft-webinar.html", "name": "LandingCraft AI Webinar", "type": "landing", "cat": "Courses & webinars", "note": "Webinar registration with agenda and countdown", "accent": "#7c3aed"},
+  {"key": "f-marketian-meta-ads", "file": "templates/marketian-meta-ads.html", "name": "Marketian — Meta Ads Masterclass", "type": "landing", "cat": "Courses & webinars", "note": "Course bundle sales page with offer pricing", "accent": "#6e9bff"},
+  {"key": "f-yoga-workshop", "file": "templates/yoga-workshop.html", "name": "Yoga Workshop", "type": "landing", "cat": "Health & wellness", "note": "Calm workshop page with booking form", "accent": "#c07a5b"},
+  {"key": "f-kashmir-journeys", "file": "templates/kashmir-journeys.html", "name": "Kashmir Journeys", "type": "website", "cat": "Travel & hotels", "note": "Travel agency — tours, packages and enquiries", "accent": "#c9a96e"},
+  {"key": "f-grand-luxe-hotel", "file": "templates/grand-luxe-hotel.html", "name": "The Grand Luxe", "type": "website", "cat": "Travel & hotels", "note": "Luxury hotel — rooms, dining and bookings", "accent": "#c9a84c"},
+  {"key": "f-securelife-insurance", "file": "templates/securelife-insurance.html", "name": "SecureLife Insurance", "type": "website", "cat": "Finance & insurance", "note": "Insurance plans, quotes and trust sections", "accent": "#0ea5e9"},
+  {"key": "f-vireo-digital", "file": "templates/vireo-digital.html", "name": "Vireo Digital", "type": "website", "cat": "Agencies & marketing", "note": "Digital marketing agency with services and results", "accent": "#22c55e"},
+  {"key": "f-leadpipeline", "file": "templates/leadpipeline.html", "name": "LeadPipeline", "type": "website", "cat": "Agencies & marketing", "note": "WhatsApp marketing platform — features and pricing", "accent": "#ff6b6b"},
+  {"key": "f-prosell-hub", "file": "templates/prosell-hub.html", "name": "ProSell Hub", "type": "website", "cat": "Agencies & marketing", "note": "Communication agency — services and portfolio", "accent": "#16a34a"},
+  {"key": "f-zenflow-yoga", "file": "templates/zenflow-yoga.html", "name": "ZenFlow Yoga Center", "type": "website", "cat": "Health & wellness", "note": "Yoga studio — classes, teachers and schedule", "accent": "#2a9d8f"},
+  {"key": "f-basera-real-estate", "file": "templates/basera-real-estate.html", "name": "Basera Real Estate", "type": "website", "cat": "Real estate", "note": "Property portal — listings, search and enquiries", "accent": "#ffd394"},
+  {"key": "f-brew-and-co", "file": "templates/brew-and-co.html", "name": "Brew & Co. Café", "type": "website", "cat": "Food & cafés", "note": "Premium café — menu, story and reservations", "accent": "#d4a574"},
+  {"key": "f-prince-public-school", "file": "templates/prince-public-school.html", "name": "Prince Public School", "type": "website", "cat": "Education", "note": "School website — academics, admissions and campus", "accent": "#d4a843"},
+  {"key": "f-velocita-cars", "file": "templates/velocita-cars.html", "name": "Velocita Cars", "type": "website", "cat": "Automotive", "note": "Car showroom — models, features and test drives", "accent": "#c9a84c"}
+];
+export const tplUrl = (t) => (import.meta.env.BASE_URL || "/") + t.file;
+export const loadTemplateHtml = async (t) => {
+  const r = await fetch(tplUrl(t), { cache: "force-cache" });
+  if (!r.ok) throw new Error("Couldn't load the template (" + r.status + "). Check that the templates folder was uploaded.");
+  return r.text();
+};

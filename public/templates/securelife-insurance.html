@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureLife Insurance - Protecting What Matters Most</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #60a5fa;
+            --secondary: #0ea5e9;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --dark: #0f172a;
+            --darker: #0a0f1e;
+            --dark-card: #1e293b;
+            --dark-card-hover: #263449;
+            --text-light: #e2e8f0;
+            --text-muted: #94a3b8;
+            --text-dark: #1e293b;
+            --white: #ffffff;
+            --gradient-1: linear-gradient(135deg, #2563eb, #0ea5e9);
+            --gradient-2: linear-gradient(135deg, #1e40af, #2563eb, #0ea5e9);
+            --gradient-3: linear-gradient(135deg, #f59e0b, #ef4444);
+            --gradient-4: linear-gradient(135deg, #10b981, #0ea5e9);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.2);
+            --shadow-xl: 0 30px 80px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 40px rgba(37, 99, 235, 0.4);
+            --shadow-glow-accent: 0 0 40px rgba(245, 158, 11, 0.4);
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
+            --radius-full: 9999px;
+            --transition-fast: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-medium: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            --font-primary: 'Inter', sans-serif;
+            --font-display: 'Playfair Display', serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; overflow-x: hidden; }
+        body {
+            font-family: var(--font-primary);
+            background: var(--darker);
+            color: var(--text-light);
+            line-height: 1.7;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Cursor Glow */
+        .cursor-glow {
+            position: fixed; width: 400px; height: 400px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%);
+            pointer-events: none; z-index: 1; transform: translate(-50%, -50%); transition: all 0.15s ease-out;
+        }
+        /* Scroll Progress */
+        #scroll-progress {
+            position: fixed; top: 0; left: 0; height: 4px; background: var(--gradient-1);
+            z-index: 99998; width: 0%; border-radius: 0 4px 4px 0; transition: width 0.1s linear; box-shadow: var(--shadow-glow);
+        }
+        /* Navigation */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 16px 40px;
+            display: flex; align-items: center; justify-content: space-between; transition: var(--transition-medium); background: transparent;
+        }
+        .navbar.scrolled {
+            background: rgba(10,15,30,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 10px 40px; box-shadow: 0 4px 30px rgba(0,0,0,0.3); border-bottom: 1px solid rgba(37,99,235,0.2);
+        }
+        .navbar .logo { font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .navbar .logo span { background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .navbar .logo .logo-icon { width: 40px; height: 40px; background: var(--gradient-1); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--white); box-shadow: var(--shadow-glow); }
+        .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.3px; position: relative; transition: var(--transition-fast); padding: 6px 0; }
+        .nav-links a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--gradient-1); transition: var(--transition-medium); border-radius: 2px; }
+        .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+        .nav-links a:hover { color: var(--white); }
+        .nav-cta { padding: 10px 24px; background: var(--gradient-1); color: var(--white) !important; border-radius: var(--radius-full); font-weight: 600; font-size: 0.85rem; box-shadow: var(--shadow-glow); transition: var(--transition-medium); text-decoration: none; letter-spacing: 0.5px; }
+        .nav-cta:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(37,99,235,0.5); color: var(--white) !important; }
+        .nav-cta::after { display: none; }
+        .hamburger { display: none; flex-direction: column; gap: 6px; cursor: pointer; padding: 5px; z-index: 10001; }
+        .hamburger span { width: 28px; height: 2.5px; background: var(--white); border-radius: 4px; transition: var(--transition-medium); }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(6px,6px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; transform: translateX(-20px); }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(6px,-6px); }
+
+        /* Section Common */
+        .section { padding: 100px 60px; position: relative; z-index: 2; }
+        .section-tag { display: inline-block; padding: 6px 18px; background: rgba(37,99,235,0.15); color: var(--primary-light); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; border: 1px solid rgba(37,99,235,0.3); animation: fadeInUp 0.8s ease-out; }
+        .section-title { font-family: var(--font-display); font-size: 2.8rem; font-weight: 700; line-height: 1.2; margin-bottom: 16px; background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .section-subtitle { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; line-height: 1.8; }
+        .section-header { text-align: center; margin-bottom: 60px; }
+        .section-header .section-subtitle { margin: 0 auto; }
+
+        /* Animations */
+        @keyframes fadeInUp { from { opacity:0; transform: translateY(40px);} to {opacity:1; transform: translateY(0);} }
+        @keyframes fadeInDown { from {opacity:0; transform: translateY(-40px);} to {opacity:1; transform: translateY(0);} }
+        @keyframes fadeInLeft { from {opacity:0; transform: translateX(-60px);} to {opacity:1; transform: translateX(0);} }
+        @keyframes fadeInRight { from {opacity:0; transform: translateX(60px);} to {opacity:1; transform: translateX(0);} }
+        @keyframes scaleIn { from {opacity:0; transform: scale(0.8);} to {opacity:1; transform: scale(1);} }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes floatSlow { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(2deg); } }
+        @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.4); } 50% { box-shadow: 0 0 0 20px rgba(37,99,235,0); } }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        @keyframes rotateInfinite { to { transform: rotate(360deg); } }
+        @keyframes borderGlow { 0%,100% { border-color: rgba(37,99,235,0.3); } 50% { border-color: rgba(37,99,235,0.8); } }
+        @keyframes countUp { from { opacity:0; transform: translateY(20px);} to {opacity:1; transform: translateY(0);} }
+        @keyframes waveMove { 0% { transform: translateX(0); } 50% { transform: translateX(-25%); } 100% { transform: translateX(0); } }
+
+        /* Reveal */
+        .reveal { opacity:0; transform: translateY(50px); transition: all 0.8s cubic-bezier(0.4,0,0.2,1); }
+        .reveal.active { opacity:1; transform: translateY(0); }
+        .reveal-left { opacity:0; transform: translateX(-60px); transition: all 0.8s cubic-bezier(0.4,0,0.2,1); }
+        .reveal-left.active { opacity:1; transform: translateX(0); }
+        .reveal-right { opacity:0; transform: translateX(60px); transition: all 0.8s cubic-bezier(0.4,0,0.2,1); }
+        .reveal-right.active { opacity:1; transform: translateX(0); }
+        .reveal-scale { opacity:0; transform: scale(0.85); transition: all 0.8s cubic-bezier(0.4,0,0.2,1); }
+        .reveal-scale.active { opacity:1; transform: scale(1); }
+
+        /* Hero Section */
+        .hero { min-height: 100vh; display: flex; align-items: center; padding: 120px 60px 60px; position: relative; overflow: hidden; background: var(--darker); z-index: 2; }
+        .hero::before { content:''; position:absolute; top:-50%; right:-20%; width:800px; height:800px; background: radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%); border-radius:50%; animation: floatSlow 8s ease-in-out infinite; pointer-events:none; }
+        .hero::after { content:''; position:absolute; bottom:-30%; left:-10%; width:600px; height:600px; background: radial-gradient(circle, rgba(14,165,233,0.1) 0%, transparent 70%); border-radius:50%; animation: floatSlow 10s ease-in-out infinite reverse; pointer-events:none; }
+        .hero-bg-image { position:absolute; inset:0; background-image:url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1600&h=900&fit=crop&q=80'); background-size:cover; background-position:center; opacity:0.1; pointer-events:none; z-index:0; filter:grayscale(50%); }
+        .hero-grid-bg { position:absolute; inset:0; background-image: linear-gradient(rgba(37,99,235,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.05) 1px, transparent 1px); background-size:50px 50px; pointer-events:none; mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%); z-index:0; }
+        .hero-content { position:relative; z-index:2; max-width:650px; }
+        .hero-badge { display:inline-flex; align-items:center; gap:8px; padding:8px 20px; background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.4); border-radius:var(--radius-full); font-size:0.8rem; font-weight:600; color:var(--primary-light); letter-spacing:1px; animation: fadeInDown 1s ease-out; margin-bottom:24px; }
+        .hero-badge .dot { width:8px; height:8px; background:var(--success); border-radius:50%; animation: pulse 2s infinite; }
+        .hero-title { font-family:var(--font-display); font-size:4rem; font-weight:800; line-height:1.1; margin-bottom:24px; background: linear-gradient(135deg, #ffffff 20%, #60a5fa 60%, #0ea5e9 100%); background-size:300% 300%; -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation: gradientShift 5s ease-in-out infinite, fadeInUp 1s ease-out; }
+        .hero-description { font-size:1.15rem; color:var(--text-muted); line-height:1.9; margin-bottom:36px; max-width:550px; animation: fadeInUp 1s ease-out 0.3s both; }
+        .hero-buttons { display:flex; gap:16px; flex-wrap:wrap; animation: fadeInUp 1s ease-out 0.6s both; }
+        .btn-primary { padding:14px 36px; background:var(--gradient-1); color:var(--white); border:none; border-radius:var(--radius-full); font-weight:600; font-size:0.95rem; letter-spacing:0.5px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:10px; transition:var(--transition-medium); box-shadow:var(--shadow-glow); position:relative; overflow:hidden; }
+        .btn-primary::before { content:''; position:absolute; top:0; left:-100%; width:200%; height:100%; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition:var(--transition-medium); }
+        .btn-primary:hover::before { left:100%; }
+        .btn-primary:hover { transform:translateY(-3px); box-shadow:0 20px 50px rgba(37,99,235,0.5); }
+        .btn-secondary { padding:14px 36px; background:transparent; color:var(--white); border:2px solid rgba(255,255,255,0.2); border-radius:var(--radius-full); font-weight:600; font-size:0.95rem; letter-spacing:0.5px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:10px; transition:var(--transition-medium); }
+        .btn-secondary:hover { border-color:var(--primary); background:rgba(37,99,235,0.1); transform:translateY(-3px); box-shadow:var(--shadow-glow); }
+        .hero-stats { display:flex; gap:40px; margin-top:50px; animation: fadeInUp 1s ease-out 0.9s both; }
+        .hero-stat { text-align:left; }
+        .hero-stat .number { font-size:2.2rem; font-weight:800; background:var(--gradient-1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; display:block; }
+        .hero-stat .label { font-size:0.85rem; color:var(--text-muted); letter-spacing:0.5px; }
+        .hero-visual { position:absolute; right:40px; top:50%; transform:translateY(-50%); z-index:2; animation: fadeInRight 1.5s ease-out; }
+        .hero-image-wrapper { width:420px; height:420px; border-radius:50%; overflow:hidden; position:relative; box-shadow:0 40px 80px rgba(37,99,235,0.4); animation: float 6s ease-in-out infinite; border:4px solid rgba(37,99,235,0.4); }
+        .hero-image-wrapper img { width:100%; height:100%; object-fit:cover; transition:transform 0.8s ease; }
+        .hero-image-wrapper:hover img { transform:scale(1.1); }
+        .hero-image-wrapper .orbit-ring { position:absolute; inset:-30px; border:2px dashed rgba(37,99,235,0.3); border-radius:50%; animation: rotateInfinite 20s linear infinite; pointer-events:none; }
+        .hero-image-wrapper .orbit-ring .orbit-dot { position:absolute; top:50%; left:50%; width:20px; height:20px; background:var(--accent); border-radius:50%; box-shadow:var(--shadow-glow-accent); transform:translate(-50%,-50%); animation: float 2s ease-in-out infinite; }
+
+        /* Trust Badges */
+        .trust-badges { padding:40px 60px; background:var(--dark); border-top:1px solid rgba(37,99,235,0.2); border-bottom:1px solid rgba(37,99,235,0.2); position:relative; z-index:2; overflow:hidden; }
+        .trust-badges .badge-track { display:flex; align-items:center; justify-content:space-around; gap:40px; animation: waveMove 15s linear infinite; white-space:nowrap; }
+        .trust-badges .badge-item { display:flex; align-items:center; gap:10px; font-size:1.1rem; font-weight:600; color:var(--text-muted); letter-spacing:1px; transition:var(--transition-fast); cursor:default; }
+        .trust-badges .badge-item:hover { color:var(--white); transform:scale(1.05); }
+        .trust-badges .badge-item i { font-size:1.5rem; color:var(--primary-light); }
+
+        /* Services Section */
+        .services { background:var(--darker); padding:100px 60px; position:relative; z-index:2; }
+        .services-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:28px; max-width:1200px; margin:0 auto; }
+        .service-card { background:var(--dark-card); border-radius:var(--radius-md); padding:32px 28px; border:1px solid rgba(37,99,235,0.15); transition:var(--transition-medium); position:relative; overflow:hidden; cursor:pointer; }
+        .service-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--gradient-1); transform:scaleX(0); transform-origin:left; transition:var(--transition-medium); }
+        .service-card:hover::before { transform:scaleX(1); }
+        .service-card:hover { background:var(--dark-card-hover); border-color:rgba(37,99,235,0.4); transform:translateY(-10px); box-shadow:var(--shadow-lg); }
+        .service-card .service-image { width:100%; height:140px; border-radius:var(--radius-sm); overflow:hidden; margin-bottom:20px; position:relative; }
+        .service-card .service-image img { width:100%; height:100%; object-fit:cover; transition:transform 0.6s ease; }
+        .service-card:hover .service-image img { transform:scale(1.1); }
+        .service-card .service-image::after { content:''; position:absolute; inset:0; background:rgba(37,99,235,0.15); transition:var(--transition-medium); }
+        .service-card:hover .service-image::after { background:rgba(37,99,235,0.05); }
+        .service-card h3 { font-size:1.3rem; font-weight:700; margin-bottom:12px; color:var(--white); transition:var(--transition-fast); }
+        .service-card:hover h3 { color:var(--primary-light); }
+        .service-card p { color:var(--text-muted); font-size:0.9rem; line-height:1.7; margin-bottom:16px; }
+        .service-link { color:var(--primary-light); font-size:0.85rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px; transition:var(--transition-fast); }
+        .service-link i { transition:var(--transition-fast); }
+        .service-link:hover { color:var(--white); }
+        .service-link:hover i { transform:translateX(6px); }
+
+        /* About */
+        .about { background:var(--dark); padding:100px 60px; position:relative; z-index:2; overflow:hidden; }
+        .about::before { content:''; position:absolute; top:0; right:0; width:500px; height:500px; background:radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%); border-radius:50%; pointer-events:none; }
+        .about-container { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; max-width:1200px; margin:0 auto; }
+        .about-image { position:relative; border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-xl); cursor:pointer; }
+        .about-image img { width:100%; height:450px; object-fit:cover; border-radius:var(--radius-lg); transition:var(--transition-slow); }
+        .about-image:hover img { transform:scale(1.05); }
+        .about-image .experience-badge { position:absolute; bottom:30px; right:30px; background:var(--gradient-1); padding:20px 28px; border-radius:var(--radius-md); text-align:center; box-shadow:var(--shadow-glow); animation:float 4s ease-in-out infinite; }
+        .about-image .experience-badge .years { font-size:2.5rem; font-weight:800; color:var(--white); line-height:1; }
+        .about-image .experience-badge .text { font-size:0.85rem; color:rgba(255,255,255,0.8); }
+        .about-features { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:28px; }
+        .about-feature { display:flex; align-items:center; gap:12px; padding:14px 16px; background:rgba(37,99,235,0.08); border-radius:var(--radius-sm); border:1px solid rgba(37,99,235,0.15); transition:var(--transition-fast); }
+        .about-feature:hover { background:rgba(37,99,235,0.15); border-color:rgba(37,99,235,0.4); transform:translateX(6px); }
+        .about-feature i { color:var(--primary-light); font-size:1.1rem; }
+        .about-feature span { font-size:0.9rem; font-weight:500; color:var(--text-light); }
+
+        /* How It Works */
+        .how-it-works { background:var(--darker); padding:100px 60px; position:relative; z-index:2; }
+        .steps-container { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:30px; max-width:1200px; margin:0 auto; position:relative; }
+        .steps-container::before { content:''; position:absolute; top:50%; left:5%; right:5%; height:2px; background:linear-gradient(90deg, rgba(37,99,235,0.2), rgba(37,99,235,0.5), rgba(37,99,235,0.2)); z-index:0; }
+        .step-item { text-align:center; position:relative; z-index:1; cursor:pointer; }
+        .step-number { width:70px; height:70px; background:var(--dark-card); border:3px solid rgba(37,99,235,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:800; color:var(--primary-light); margin:0 auto 18px; transition:var(--transition-medium); position:relative; animation:borderGlow 3s infinite; }
+        .step-item:hover .step-number { background:var(--gradient-1); color:var(--white); border-color:transparent; transform:scale(1.1); box-shadow:var(--shadow-glow); animation:none; }
+        .step-item h4 { font-size:1.05rem; font-weight:700; color:var(--white); margin-bottom:8px; transition:var(--transition-fast); }
+        .step-item:hover h4 { color:var(--primary-light); }
+        .step-item p { font-size:0.85rem; color:var(--text-muted); line-height:1.6; }
+
+        /* Counters */
+        .counters { background:var(--dark); padding:80px 60px; position:relative; z-index:2; overflow:hidden; }
+        .counters::before { content:''; position:absolute; inset:0; background:var(--gradient-1); opacity:0.05; }
+        .counters-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:40px; max-width:1000px; margin:0 auto; position:relative; z-index:1; }
+        .counter-item { text-align:center; cursor:pointer; transition:var(--transition-medium); }
+        .counter-item:hover { transform:translateY(-8px); }
+        .counter-number { font-size:3rem; font-weight:800; background:var(--gradient-1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; transition:var(--transition-fast); }
+        .counter-label { font-size:0.9rem; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; font-weight:500; }
+
+        /* Features */
+        .features { background:var(--darker); padding:100px 60px; position:relative; z-index:2; }
+        .features-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr)); gap:28px; max-width:1200px; margin:0 auto; }
+        .feature-item { display:flex; gap:20px; padding:28px 24px; background:var(--dark-card); border-radius:var(--radius-md); border:1px solid rgba(37,99,235,0.15); transition:var(--transition-medium); cursor:pointer; position:relative; overflow:hidden; }
+        .feature-item::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--gradient-1); transform:scaleX(0); transform-origin:left; transition:var(--transition-medium); }
+        .feature-item:hover::after { transform:scaleX(1); }
+        .feature-item:hover { border-color:rgba(37,99,235,0.5); transform:translateY(-5px); box-shadow:var(--shadow-md); }
+        .feature-item .icon-box { width:50px; height:50px; flex-shrink:0; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:1.4rem; background:rgba(37,99,235,0.12); color:var(--primary-light); transition:var(--transition-medium); }
+        .feature-item:hover .icon-box { background:var(--gradient-1); color:var(--white); transform:rotate(10deg); box-shadow:var(--shadow-glow); }
+        .feature-item h4 { font-size:1.05rem; font-weight:700; color:var(--white); margin-bottom:6px; }
+        .feature-item p { font-size:0.85rem; color:var(--text-muted); line-height:1.6; }
+
+        /* Testimonials */
+        .testimonials { background:var(--dark); padding:100px 60px; position:relative; z-index:2; overflow:hidden; }
+        .testimonials::before { content:'"'; position:absolute; top:20px; left:50px; font-size:20rem; font-family:var(--font-display); color:rgba(37,99,235,0.06); line-height:1; pointer-events:none; }
+        .testimonials-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(350px,1fr)); gap:28px; max-width:1200px; margin:0 auto; }
+        .testimonial-card { background:var(--dark-card); border-radius:var(--radius-md); padding:32px; border:1px solid rgba(37,99,235,0.15); transition:var(--transition-medium); cursor:pointer; position:relative; }
+        .testimonial-card:hover { border-color:rgba(37,99,235,0.4); transform:translateY(-8px); box-shadow:var(--shadow-lg); }
+        .testimonial-stars { color:var(--accent); margin-bottom:16px; font-size:0.9rem; letter-spacing:2px; }
+        .testimonial-text { color:var(--text-light); font-size:0.95rem; line-height:1.8; margin-bottom:20px; font-style:italic; }
+        .testimonial-author { display:flex; align-items:center; gap:14px; }
+        .testimonial-avatar { width:55px; height:55px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.2rem; color:var(--white); transition:var(--transition-medium); border:3px solid rgba(37,99,235,0.4); }
+        .testimonial-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+        .testimonial-avatar.placeholder { background:var(--gradient-1); }
+        .testimonial-card:hover .testimonial-avatar { transform:scale(1.1); border-color:var(--primary); }
+        .testimonial-info h5 { font-size:0.95rem; font-weight:700; color:var(--white); }
+        .testimonial-info span { font-size:0.8rem; color:var(--text-muted); }
+
+        /* Team */
+        .team { background:var(--darker); padding:100px 60px; position:relative; z-index:2; }
+        .team-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); gap:28px; max-width:1100px; margin:0 auto; }
+        .team-member { text-align:center; cursor:pointer; position:relative; }
+        .team-photo { width:160px; height:160px; margin:0 auto 18px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:4rem; color:rgba(255,255,255,0.8); position:relative; transition:var(--transition-medium); border:4px solid rgba(37,99,235,0.3); background:var(--gradient-1); }
+        .team-photo img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+        .team-photo.placeholder { background:var(--gradient-1); }
+        .team-member:hover .team-photo { transform:translateY(-10px) scale(1.05); box-shadow:var(--shadow-glow); border-radius:30%; border-color:var(--primary); }
+        .team-photo::after { content:''; position:absolute; inset:0; border-radius:50%; border:3px dashed rgba(255,255,255,0.3); animation:rotateInfinite 15s linear infinite; pointer-events:none; }
+        .team-member h4 { font-size:1.1rem; font-weight:700; color:var(--white); transition:var(--transition-fast); }
+        .team-member:hover h4 { color:var(--primary-light); }
+        .team-member .role { font-size:0.85rem; color:var(--text-muted); }
+        .team-social { display:flex; justify-content:center; gap:10px; margin-top:12px; opacity:0; transition:var(--transition-medium); }
+        .team-member:hover .team-social { opacity:1; }
+        .team-social a { width:35px; height:35px; border-radius:50%; background:rgba(37,99,235,0.15); display:flex; align-items:center; justify-content:center; color:var(--primary-light); text-decoration:none; font-size:0.85rem; transition:var(--transition-fast); }
+        .team-social a:hover { background:var(--gradient-1); color:var(--white); transform:translateY(-4px); }
+
+        /* Pricing */
+        .pricing { background:var(--dark); padding:100px 60px; position:relative; z-index:2; }
+        .pricing-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:30px; max-width:1100px; margin:0 auto; align-items:stretch; }
+        .pricing-card { background:var(--dark-card); border-radius:var(--radius-lg); padding:40px 32px; border:1px solid rgba(37,99,235,0.15); text-align:center; transition:var(--transition-medium); position:relative; overflow:hidden; cursor:pointer; }
+        .pricing-card.featured { background:var(--gradient-2); border:none; box-shadow:var(--shadow-glow); transform:scale(1.05); }
+        .pricing-card:hover { transform:translateY(-12px); box-shadow:var(--shadow-lg); border-color:rgba(37,99,235,0.5); }
+        .pricing-card.featured:hover { transform:scale(1.05) translateY(-12px); box-shadow:0 30px 70px rgba(37,99,235,0.5); }
+        .pricing-badge { position:absolute; top:20px; right:-35px; background:var(--accent); color:var(--dark); padding:6px 40px; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; transform:rotate(45deg); }
+        .pricing-plan { font-size:0.85rem; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px; }
+        .pricing-card.featured .pricing-plan { color:rgba(255,255,255,0.8); }
+        .pricing-price { font-size:3rem; font-weight:800; color:var(--white); margin-bottom:4px; }
+        .pricing-card.featured .pricing-price { color:var(--white); }
+        .pricing-price span { font-size:1rem; font-weight:500; color:var(--text-muted); }
+        .pricing-card.featured .pricing-price span { color:rgba(255,255,255,0.7); }
+        .pricing-description { font-size:0.85rem; color:var(--text-muted); margin-bottom:24px; }
+        .pricing-card.featured .pricing-description { color:rgba(255,255,255,0.7); }
+        .pricing-features { list-style:none; text-align:left; margin-bottom:28px; }
+        .pricing-features li { padding:8px 0; font-size:0.85rem; color:var(--text-muted); display:flex; align-items:center; gap:10px; }
+        .pricing-features li i { color:var(--success); font-size:0.8rem; }
+        .pricing-card.featured .pricing-features li { color:rgba(255,255,255,0.8); }
+        .pricing-btn { padding:12px 28px; background:transparent; border:2px solid rgba(37,99,235,0.4); color:var(--white); border-radius:var(--radius-full); font-weight:600; font-size:0.9rem; cursor:pointer; text-decoration:none; display:inline-block; transition:var(--transition-medium); width:100%; }
+        .pricing-btn:hover { background:var(--gradient-1); border-color:transparent; box-shadow:var(--shadow-glow); transform:translateY(-3px); }
+        .pricing-card.featured .pricing-btn { background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.4); color:var(--white); }
+        .pricing-card.featured .pricing-btn:hover { background:var(--white); color:var(--dark); border-color:var(--white); box-shadow:0 15px 40px rgba(255,255,255,0.3); }
+
+        /* FAQ (Simple - Always Visible) */
+        .faq { background:var(--darker); padding:100px 60px; position:relative; z-index:2; }
+        .faq-container { max-width:800px; margin:0 auto; }
+        .faq-item {
+            background: var(--dark-card);
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+            border: 1px solid rgba(37,99,235,0.15);
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+            cursor: default;
+        }
+        .faq-item:hover { border-color: rgba(37,99,235,0.4); }
+        .faq-question {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--white);
+            background: rgba(37,99,235,0.05);
+        }
+        .faq-question .faq-number {
+            width: 32px; height: 32px; min-width: 32px; border-radius: var(--radius-sm);
+            background: rgba(37,99,235,0.12); display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 700; color: var(--primary-light);
+        }
+        .faq-question .faq-text { flex: 1; }
+        .faq-answer {
+            padding: 0 24px 20px 72px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        /* Blog */
+        .blog { background:var(--dark); padding:100px 60px; position:relative; z-index:2; }
+        .blog-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:28px; max-width:1100px; margin:0 auto; }
+        .blog-card { background:var(--dark-card); border-radius:var(--radius-md); overflow:hidden; border:1px solid rgba(37,99,235,0.15); transition:var(--transition-medium); cursor:pointer; }
+        .blog-card:hover { transform:translateY(-10px); box-shadow:var(--shadow-lg); border-color:rgba(37,99,235,0.4); }
+        .blog-image { height:200px; overflow:hidden; display:flex; align-items:center; justify-content:center; transition:var(--transition-medium); position:relative; }
+        .blog-image img { width:100%; height:100%; object-fit:cover; transition:transform 0.6s ease; }
+        .blog-card:hover .blog-image img { transform:scale(1.1); }
+        .blog-image.placeholder { background:var(--gradient-2); font-size:3rem; color:rgba(255,255,255,0.6); }
+        .blog-image i { transition:var(--transition-medium); }
+        .blog-card:hover .blog-image i { transform:scale(1.3) rotate(10deg); }
+        .blog-content { padding:24px; }
+        .blog-meta { display:flex; gap:16px; font-size:0.75rem; color:var(--text-muted); margin-bottom:10px; }
+        .blog-meta i { color:var(--primary-light); margin-right:4px; }
+        .blog-card h4 { font-size:1.05rem; font-weight:700; color:var(--white); margin-bottom:8px; transition:var(--transition-fast); line-height:1.4; }
+        .blog-card:hover h4 { color:var(--primary-light); }
+        .blog-card p { font-size:0.85rem; color:var(--text-muted); line-height:1.6; }
+
+        /* CTA */
+        .cta-section { background:var(--darker); padding:80px 60px; position:relative; z-index:2; overflow:hidden; }
+        .cta-section::before { content:''; position:absolute; inset:0; background-image:url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1600&h=600&fit=crop&q=80'); background-size:cover; background-position:center; opacity:0.06; pointer-events:none; }
+        .cta-box { max-width:800px; margin:0 auto; text-align:center; padding:60px 40px; background:var(--dark-card); border-radius:var(--radius-xl); border:1px solid rgba(37,99,235,0.2); position:relative; z-index:1; box-shadow:var(--shadow-lg); transition:var(--transition-medium); }
+        .cta-box:hover { border-color:rgba(37,99,235,0.5); box-shadow:var(--shadow-xl); }
+        .cta-box h2 { font-family:var(--font-display); font-size:2.2rem; font-weight:700; color:var(--white); margin-bottom:16px; }
+        .cta-box p { color:var(--text-muted); font-size:1rem; margin-bottom:28px; }
+        .cta-box .btn-primary { font-size:1rem; padding:16px 40px; }
+
+        /* Contact */
+        .contact { background:var(--dark); padding:100px 60px; position:relative; z-index:2; }
+        .contact-container { display:grid; grid-template-columns:1fr 1fr; gap:50px; max-width:1100px; margin:0 auto; }
+        .contact-info .info-item { display:flex; align-items:center; gap:16px; margin-bottom:24px; padding:18px 20px; background:var(--dark-card); border-radius:var(--radius-sm); border:1px solid rgba(37,99,235,0.15); transition:var(--transition-fast); cursor:pointer; }
+        .contact-info .info-item:hover { border-color:rgba(37,99,235,0.4); transform:translateX(8px); }
+        .contact-info .info-icon { width:45px; height:45px; border-radius:var(--radius-sm); background:rgba(37,99,235,0.12); display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:var(--primary-light); flex-shrink:0; }
+        .contact-info .info-item h5 { font-size:0.95rem; font-weight:600; color:var(--white); }
+        .contact-info .info-item span { font-size:0.85rem; color:var(--text-muted); }
+        .contact-form { background:var(--dark-card); padding:36px; border-radius:var(--radius-md); border:1px solid rgba(37,99,235,0.15); transition:var(--transition-medium); }
+        .contact-form:hover { border-color:rgba(37,99,235,0.4); box-shadow:var(--shadow-md); }
+        .form-group { margin-bottom:18px; }
+        .form-group input, .form-group textarea, .form-group select { width:100%; padding:14px 18px; background:var(--darker); border:1px solid rgba(37,99,235,0.2); border-radius:var(--radius-sm); color:var(--text-light); font-size:0.9rem; font-family:var(--font-primary); transition:var(--transition-fast); outline:none; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color:var(--primary); box-shadow:0 0 20px rgba(37,99,235,0.2); }
+        .form-group textarea { resize:vertical; min-height:120px; }
+        .form-group label { display:block; font-size:0.85rem; font-weight:600; color:var(--text-light); margin-bottom:6px; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+        /* Newsletter */
+        .newsletter { background:var(--darker); padding:60px; position:relative; z-index:2; }
+        .newsletter-box { max-width:600px; margin:0 auto; text-align:center; }
+        .newsletter-box h3 { font-size:1.8rem; font-weight:700; color:var(--white); margin-bottom:12px; }
+        .newsletter-box p { color:var(--text-muted); margin-bottom:24px; }
+        .newsletter-form { display:flex; gap:12px; justify-content:center; }
+        .newsletter-form input { flex:1; max-width:400px; padding:14px 20px; background:var(--dark-card); border:1px solid rgba(37,99,235,0.3); border-radius:var(--radius-full); color:var(--text-light); font-size:0.9rem; outline:none; transition:var(--transition-fast); }
+        .newsletter-form input:focus { border-color:var(--primary); box-shadow:var(--shadow-glow); }
+        .newsletter-form button { padding:14px 30px; background:var(--gradient-1); border:none; border-radius:var(--radius-full); color:var(--white); font-weight:600; font-size:0.9rem; cursor:pointer; transition:var(--transition-medium); white-space:nowrap; }
+        .newsletter-form button:hover { transform:translateY(-3px); box-shadow:var(--shadow-glow); }
+
+        /* Partners */
+        .partners { background:var(--dark); padding:60px; position:relative; z-index:2; overflow:hidden; }
+        .partners-track { display:flex; gap:50px; align-items:center; animation:waveMove 20s linear infinite; white-space:nowrap; }
+        .partner-logo { font-size:1.4rem; font-weight:700; color:var(--text-muted); letter-spacing:2px; cursor:pointer; transition:var(--transition-fast); display:flex; align-items:center; gap:10px; }
+        .partner-logo:hover { color:var(--primary-light); transform:scale(1.1); }
+        .partner-logo i { font-size:1.8rem; }
+
+        /* Emergency CTA */
+        .emergency { background:var(--darker); padding:60px; position:relative; z-index:2; text-align:center; }
+        .emergency-box { display:inline-flex; align-items:center; gap:20px; padding:24px 40px; background:var(--gradient-3); border-radius:var(--radius-full); color:var(--white); font-size:1.1rem; font-weight:700; cursor:pointer; transition:var(--transition-medium); animation:pulse 2s infinite; box-shadow:0 10px 40px rgba(245,158,11,0.4); }
+        .emergency-box:hover { transform:translateY(-5px) scale(1.02); box-shadow:0 20px 60px rgba(245,158,11,0.5); animation:none; }
+        .emergency-box i { font-size:1.5rem; }
+
+        /* Awards */
+        .awards { background:var(--dark); padding:80px 60px; position:relative; z-index:2; }
+        .awards-grid { display:flex; justify-content:center; gap:40px; flex-wrap:wrap; max-width:1000px; margin:0 auto; }
+        .award-item { text-align:center; padding:30px; background:var(--dark-card); border-radius:var(--radius-md); border:1px solid rgba(37,99,235,0.15); min-width:180px; transition:var(--transition-medium); cursor:pointer; }
+        .award-item:hover { transform:translateY(-8px); border-color:rgba(37,99,235,0.4); box-shadow:var(--shadow-md); }
+        .award-item i { font-size:2.5rem; color:var(--accent); margin-bottom:10px; transition:var(--transition-medium); }
+        .award-item:hover i { transform:rotateY(360deg); transition:transform 0.8s ease; }
+        .award-item h5 { font-size:1rem; font-weight:700; color:var(--white); }
+        .award-item span { font-size:0.8rem; color:var(--text-muted); }
+
+        /* Why Choose Us */
+        .why-us { background:var(--darker); padding:100px 60px; position:relative; z-index:2; }
+        .why-us-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); gap:28px; max-width:1100px; margin:0 auto; }
+        .why-item { text-align:center; padding:36px 24px; background:var(--dark-card); border-radius:var(--radius-md); border:1px solid rgba(37,99,235,0.15); transition:var(--transition-medium); cursor:pointer; }
+        .why-item:hover { background:var(--dark-card-hover); border-color:rgba(37,99,235,0.5); transform:translateY(-10px); box-shadow:var(--shadow-lg); }
+        .why-item .why-icon { width:70px; height:70px; margin:0 auto 18px; border-radius:50%; background:rgba(37,99,235,0.12); display:flex; align-items:center; justify-content:center; font-size:2rem; color:var(--primary-light); transition:var(--transition-medium); }
+        .why-item:hover .why-icon { background:var(--gradient-1); color:var(--white); transform:scale(1.1) rotate(10deg); box-shadow:var(--shadow-glow); }
+        .why-item h4 { font-size:1.1rem; font-weight:700; color:var(--white); margin-bottom:8px; }
+        .why-item p { font-size:0.85rem; color:var(--text-muted); line-height:1.6; }
+
+        /* Footer Logo */
+        .footer-logo { font-family:var(--font-display); font-size:1.8rem; font-weight:800; color:var(--white); text-decoration:none; display:inline-flex; align-items:center; gap:10px; margin-bottom:16px; transition:var(--transition-fast); }
+        .footer-logo i { width:40px; height:40px; background:var(--gradient-1); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:var(--white); box-shadow:var(--shadow-glow); }
+        .footer-logo span { background:var(--gradient-1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .footer-logo:hover { color:var(--white); transform:translateY(-2px); text-decoration:none; }
+        .footer-logo:hover span { background:var(--gradient-2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .footer-logo:hover i { box-shadow:0 0 50px rgba(37,99,235,0.6); }
+
+        /* Footer */
+        .footer { background:#080c1a; padding:80px 60px 20px; position:relative; z-index:2; border-top:1px solid rgba(37,99,235,0.2); }
+        .footer-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:40px; max-width:1200px; margin:0 auto; margin-bottom:50px; }
+        .footer-col h4 { font-size:1.1rem; font-weight:700; color:var(--white); margin-bottom:18px; position:relative; padding-bottom:10px; }
+        .footer-col h4::after { content:''; position:absolute; bottom:0; left:0; width:40px; height:2px; background:var(--gradient-1); }
+        .footer-col ul { list-style:none; }
+        .footer-col ul li { margin-bottom:10px; }
+        .footer-col ul a { color:var(--text-muted); text-decoration:none; font-size:0.85rem; transition:var(--transition-fast); display:flex; align-items:center; gap:8px; }
+        .footer-col ul a:hover { color:var(--primary-light); transform:translateX(6px); }
+        .footer-col ul a i { font-size:0.6rem; color:var(--primary-light); }
+        .footer-col .social-links { display:flex; gap:12px; margin-top:18px; }
+        .footer-col .social-links a { width:40px; height:40px; border-radius:50%; background:rgba(37,99,235,0.1); display:flex; align-items:center; justify-content:center; color:var(--text-light); text-decoration:none; font-size:1rem; transition:var(--transition-medium); }
+        .footer-col .social-links a:hover { background:var(--gradient-1); color:var(--white); transform:translateY(-5px); box-shadow:var(--shadow-glow); }
+        .footer-bottom { text-align:center; padding-top:20px; border-top:1px solid rgba(37,99,235,0.1); font-size:0.8rem; color:var(--text-muted); max-width:1200px; margin:0 auto; }
+
+        /* Back to Top */
+        .back-to-top { position:fixed; bottom:30px; right:30px; width:50px; height:50px; background:var(--gradient-1); border:none; border-radius:50%; color:var(--white); font-size:1.2rem; cursor:pointer; z-index:9999; opacity:0; visibility:hidden; transition:var(--transition-medium); box-shadow:var(--shadow-glow); display:flex; align-items:center; justify-content:center; }
+        .back-to-top.visible { opacity:1; visibility:visible; }
+        .back-to-top:hover { transform:translateY(-8px); box-shadow:0 20px 50px rgba(37,99,235,0.5); }
+
+        /* Responsive */
+        @media (max-width:1024px) {
+            .hero-title { font-size:3rem; }
+            .hero-image-wrapper { width:300px; height:300px; right:-50px; }
+            .section { padding:70px 30px; }
+            .services, .about, .how-it-works, .features, .testimonials, .team, .pricing, .faq, .blog, .contact, .why-us { padding:70px 30px; }
+            .about-container { grid-template-columns:1fr; gap:40px; }
+            .contact-container { grid-template-columns:1fr; }
+            .steps-container::before { display:none; }
+        }
+        @media (max-width:768px) {
+            .navbar { padding:12px 20px; }
+            .navbar.scrolled { padding:8px 20px; }
+            .nav-links { position:fixed; top:0; right:-100%; width:70%; height:100vh; background:rgba(10,15,30,0.95); backdrop-filter:blur(20px); flex-direction:column; justify-content:center; gap:24px; transition:var(--transition-medium); z-index:10000; }
+            .nav-links.open { right:0; }
+            .nav-links a { font-size:1.1rem; }
+            .hamburger { display:flex; }
+            .hero { padding:100px 20px 40px; min-height:auto; }
+            .hero-title { font-size:2.2rem; }
+            .hero-visual { display:none; }
+            .hero-stats { gap:20px; flex-wrap:wrap; }
+            .hero-stat .number { font-size:1.6rem; }
+            .section { padding:60px 20px; }
+            .section-title { font-size:2rem; }
+            .trust-badges { padding:30px 20px; }
+            .trust-badges .badge-track { gap:20px; animation-duration:10s; }
+            .counters { padding:60px 20px; }
+            .counter-number { font-size:2.2rem; }
+            .pricing-card.featured { transform:scale(1); }
+            .pricing-card.featured:hover { transform:translateY(-12px); }
+            .form-row { grid-template-columns:1fr; }
+            .newsletter { padding:40px 20px; }
+            .newsletter-form { flex-direction:column; }
+            .newsletter-form input { max-width:100%; }
+            .emergency-box { font-size:0.9rem; padding:18px 28px; gap:12px; }
+            .footer { padding:50px 20px 15px; }
+            .footer-grid { gap:30px; }
+            .back-to-top { bottom:20px; right:20px; width:40px; height:40px; font-size:1rem; }
+        }
+        @media (max-width:480px) {
+            .hero-title { font-size:1.8rem; }
+            .hero-description { font-size:1rem; }
+            .btn-primary, .btn-secondary { padding:12px 24px; font-size:0.85rem; }
+            .section-title { font-size:1.7rem; }
+            .testimonials-grid { grid-template-columns:1fr; }
+            .faq-answer { padding-left:24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SCROLL PROGRESS -->
+    <div id="scroll-progress"></div>
+
+    <!-- CURSOR GLOW -->
+    <div class="cursor-glow" id="cursorGlow"></div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="logo">
+            <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+            <span>SecureLife</span>
+        </a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#home" class="active">Home</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#testimonials">Reviews</a></li>
+            <li><a href="#blog">Blog</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#pricing" class="nav-cta"><i class="fas fa-arrow-right"></i> Get Quote</a></li>
+        </ul>
+        <div class="hamburger" id="hamburger">
+            <span></span><span></span><span></span>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+        <div class="hero-bg-image"></div>
+        <div class="hero-grid-bg"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="dot"></span> Trusted by 500,000+ Clients
+            </div>
+            <h1 class="hero-title">Insurance That<br>Feels Like<br>Family</h1>
+            <p class="hero-description">
+                Protect what matters most with comprehensive, affordable insurance plans tailored to your life.
+                Get peace of mind with SecureLife — where your security is our mission.
+            </p>
+            <div class="hero-buttons">
+                <a href="#pricing" class="btn-primary"><i class="fas fa-shield-halved"></i> Get Protected Today</a>
+                <a href="#how-it-works" class="btn-secondary"><i class="fas fa-play"></i> How It Works</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="number" data-count="25">0</span>
+                    <span class="label">Years of Excellence</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="number" data-count="98">0</span>
+                    <span class="label">% Customer Satisfaction</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="number" data-count="50">0</span>
+                    <span class="label">+ Countries Covered</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-image-wrapper">
+                <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=500&h=500&fit=crop&q=80" alt="SecureLife Insurance Protection" onerror="this.style.display='none'">
+                <div class="orbit-ring">
+                    <div class="orbit-dot"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRUST BADGES -->
+    <section class="trust-badges">
+        <div class="badge-track">
+            <div class="badge-item"><i class="fas fa-award"></i> A+ Rated</div>
+            <div class="badge-item"><i class="fas fa-lock"></i> 256-bit Security</div>
+            <div class="badge-item"><i class="fas fa-certificate"></i> ISO 27001</div>
+            <div class="badge-item"><i class="fas fa-star"></i> 4.9/5 Rating</div>
+            <div class="badge-item"><i class="fas fa-globe"></i> Global Coverage</div>
+            <div class="badge-item"><i class="fas fa-headset"></i> 24/7 Support</div>
+            <div class="badge-item"><i class="fas fa-award"></i> A+ Rated</div>
+            <div class="badge-item"><i class="fas fa-lock"></i> 256-bit Security</div>
+            <div class="badge-item"><i class="fas fa-certificate"></i> ISO 27001</div>
+            <div class="badge-item"><i class="fas fa-star"></i> 4.9/5 Rating</div>
+            <div class="badge-item"><i class="fas fa-globe"></i> Global Coverage</div>
+            <div class="badge-item"><i class="fas fa-headset"></i> 24/7 Support</div>
+        </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section class="services" id="services">
+        <div class="section-header reveal">
+            <span class="section-tag">Our Services</span>
+            <h2 class="section-title">Insurance Solutions For Every Need</h2>
+            <p class="section-subtitle">Comprehensive coverage options designed to protect you, your family, and your assets at every stage of life.</p>
+        </div>
+        <div class="services-grid">
+            <div class="service-card reveal">
+                <div class="service-image">
+                    <img src="https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=400&h=200&fit=crop&q=80" alt="Health Insurance" onerror="this.style.display='none'">
+                </div>
+                <h3>Health Insurance</h3>
+                <p>Comprehensive medical coverage for you and your family, including dental, vision, and mental health support.</p>
+                <a href="#contact" class="service-link">Learn More <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="service-card reveal" style="transition-delay:0.1s;">
+                <div class="service-image">
+                    <img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&h=200&fit=crop&q=80" alt="Auto Insurance" onerror="this.style.display='none'">
+                </div>
+                <h3>Auto Insurance</h3>
+                <p>Full coverage protection for your vehicle with 24/7 roadside assistance and accident support.</p>
+                <a href="#contact" class="service-link">Learn More <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="service-card reveal" style="transition-delay:0.2s;">
+                <div class="service-image">
+                    <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=200&fit=crop&q=80" alt="Home Insurance" onerror="this.style.display='none'">
+                </div>
+                <h3>Home Insurance</h3>
+                <p>Protect your home and belongings against fire, theft, natural disasters, and liability claims.</p>
+                <a href="#contact" class="service-link">Learn More <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="service-card reveal" style="transition-delay:0.3s;">
+                <div class="service-image">
+                    <img src="https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=400&h=200&fit=crop&q=80" alt="Life Insurance" onerror="this.style.display='none'">
+                </div>
+                <h3>Life Insurance</h3>
+                <p>Ensure your loved ones are financially secure with term, whole, and universal life policies.</p>
+                <a href="#contact" class="service-link">Learn More <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="service-card reveal" style="transition-delay:0.4s;">
+                <div class="service-image">
+                    <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=200&fit=crop&q=80" alt="Business Insurance" onerror="this.style.display='none'">
+                </div>
+                <h3>Business Insurance</h3>
+                <p>Customized commercial plans including liability, property, and employee coverage for your company.</p>
+                <a href="#contact" class="service-link">Learn More <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="service-card reveal" style="transition-delay:0.5s;">
+                <div class="service-image">
+                    <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&h=200&fit=crop&q=80" alt="Travel Insurance" onerror="this.style.display='none'">
+                </div>
+                <h3>Travel Insurance</h3>
+                <p>Worldwide coverage for medical emergencies, trip cancellations, lost luggage, and more.</p>
+                <a href="#contact" class="service-link">Learn More <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="about" id="about">
+        <div class="about-container">
+            <div class="about-image reveal-left">
+                <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&h=450&fit=crop&q=80" alt="About SecureLife Insurance" onerror="this.style.display='none'">
+                <div class="experience-badge">
+                    <span class="years">25+</span>
+                    <span class="text">Years of Trust</span>
+                </div>
+            </div>
+            <div class="about-text reveal-right">
+                <span class="section-tag">About Us</span>
+                <h2 class="section-title">Your Trusted Partner In Protection</h2>
+                <p class="section-subtitle" style="margin-bottom:24px;">
+                    At SecureLife Insurance, we believe that everyone deserves access to affordable, reliable protection.
+                    For over two decades, we've been helping families and businesses secure their futures with confidence and care.
+                </p>
+                <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.95rem;">
+                    Our team of certified insurance professionals is dedicated to finding the perfect coverage for your unique needs.
+                    We work with top-rated carriers to bring you the best value without compromising on quality.
+                </p>
+                <div class="about-features">
+                    <div class="about-feature"><i class="fas fa-check-circle"></i><span>Licensed Professionals</span></div>
+                    <div class="about-feature"><i class="fas fa-check-circle"></i><span>Fast Claims Processing</span></div>
+                    <div class="about-feature"><i class="fas fa-check-circle"></i><span>24/7 Support</span></div>
+                    <div class="about-feature"><i class="fas fa-check-circle"></i><span>Tailored Plans</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-header reveal">
+            <span class="section-tag">Process</span>
+            <h2 class="section-title">Simple 4-Step Process</h2>
+            <p class="section-subtitle">Getting insured has never been easier. Follow these simple steps to get covered today.</p>
+        </div>
+        <div class="steps-container">
+            <div class="step-item reveal">
+                <div class="step-number">1</div>
+                <h4>Get a Quote</h4>
+                <p>Fill out our quick form and receive personalized quotes within minutes.</p>
+            </div>
+            <div class="step-item reveal" style="transition-delay:0.15s;">
+                <div class="step-number">2</div>
+                <h4>Choose Your Plan</h4>
+                <p>Compare options and select the coverage that best fits your needs and budget.</p>
+            </div>
+            <div class="step-item reveal" style="transition-delay:0.3s;">
+                <div class="step-number">3</div>
+                <h4>Get Covered</h4>
+                <p>Sign electronically and receive your policy documents instantly in your inbox.</p>
+            </div>
+            <div class="step-item reveal" style="transition-delay:0.45s;">
+                <div class="step-number">4</div>
+                <h4>Live Protected</h4>
+                <p>Enjoy peace of mind knowing you're covered 24/7 with our dedicated support.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- COUNTERS -->
+    <section class="counters">
+        <div class="counters-grid">
+            <div class="counter-item reveal">
+                <div class="counter-number" data-count="500">0</div>
+                <div class="counter-label">Clients Protected</div>
+            </div>
+            <div class="counter-item reveal" style="transition-delay:0.1s;">
+                <div class="counter-number" data-count="1200">0</div>
+                <div class="counter-label">Claims Settled</div>
+            </div>
+            <div class="counter-item reveal" style="transition-delay:0.2s;">
+                <div class="counter-number" data-count="75">0</div>
+                <div class="counter-label">Expert Advisors</div>
+            </div>
+            <div class="counter-item reveal" style="transition-delay:0.3s;">
+                <div class="counter-number" data-count="45">0</div>
+                <div class="counter-label">Partner Carriers</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features">
+        <div class="section-header reveal">
+            <span class="section-tag">Why We Stand Out</span>
+            <h2 class="section-title">Features That Make Us Different</h2>
+            <p class="section-subtitle">We go above and beyond to deliver an exceptional insurance experience for every client.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-item reveal">
+                <div class="icon-box"><i class="fas fa-bolt"></i></div>
+                <div>
+                    <h4>Instant Quotes</h4>
+                    <p>Get personalized insurance quotes in under 60 seconds with our AI-powered comparison tool.</p>
+                </div>
+            </div>
+            <div class="feature-item reveal" style="transition-delay:0.1s;">
+                <div class="icon-box"><i class="fas fa-file-invoice"></i></div>
+                <div>
+                    <h4>Paperless Processing</h4>
+                    <p>Fully digital experience — from application to claims, everything is handled online securely.</p>
+                </div>
+            </div>
+            <div class="feature-item reveal" style="transition-delay:0.2s;">
+                <div class="icon-box"><i class="fas fa-headset"></i></div>
+                <div>
+                    <h4>24/7 Claims Support</h4>
+                    <p>Our dedicated claims team is available around the clock to assist you whenever you need us.</p>
+                </div>
+            </div>
+            <div class="feature-item reveal" style="transition-delay:0.3s;">
+                <div class="icon-box"><i class="fas fa-shield-alt"></i></div>
+                <div>
+                    <h4>Flexible Coverage</h4>
+                    <p>Customize your policy with add-ons and riders to match your exact lifestyle and needs.</p>
+                </div>
+            </div>
+            <div class="feature-item reveal" style="transition-delay:0.4s;">
+                <div class="icon-box"><i class="fas fa-piggy-bank"></i></div>
+                <div>
+                    <h4>Premium Discounts</h4>
+                    <p>Save up to 30% with multi-policy discounts, safe driver rewards, and loyalty programs.</p>
+                </div>
+            </div>
+            <div class="feature-item reveal" style="transition-delay:0.5s;">
+                <div class="icon-box"><i class="fas fa-chart-line"></i></div>
+                <div>
+                    <h4>Transparent Pricing</h4>
+                    <p>No hidden fees or surprise charges. What you see is what you pay — always.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="testimonials" id="testimonials">
+        <div class="section-header reveal">
+            <span class="section-tag">Testimonials</span>
+            <h2 class="section-title">What Our Clients Say</h2>
+            <p class="section-subtitle">Real stories from real people who found peace of mind with SecureLife Insurance.</p>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card reveal">
+                <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="testimonial-text">"I've been with SecureLife for over 8 years. Their claims process is incredibly fast — I got my auto claim approved in just 2 days. Truly exceptional service!"</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&q=80" alt="John Davidson" onerror="this.style.display='none'; this.parentElement.textContent='JD'">
+                    </div>
+                    <div class="testimonial-info">
+                        <h5>John Davidson</h5>
+                        <span>Auto Insurance Client</span>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card reveal" style="transition-delay:0.15s;">
+                <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="testimonial-text">"The team at SecureLife helped me find the perfect health insurance for my family. Their advisors are knowledgeable, patient, and genuinely care about your needs."</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">
+                        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&q=80" alt="Sarah Mitchell" onerror="this.style.display='none'; this.parentElement.textContent='SM'">
+                    </div>
+                    <div class="testimonial-info">
+                        <h5>Sarah Mitchell</h5>
+                        <span>Health Insurance Client</span>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card reveal" style="transition-delay:0.3s;">
+                <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="testimonial-text">"As a small business owner, I needed comprehensive coverage that wouldn't break the bank. SecureLife delivered exactly what I needed with personalized attention."</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&q=80" alt="Robert Kim" onerror="this.style.display='none'; this.parentElement.textContent='RK'">
+                    </div>
+                    <div class="testimonial-info">
+                        <h5>Robert Kim</h5>
+                        <span>Business Insurance Client</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TEAM -->
+    <section class="team">
+        <div class="section-header reveal">
+            <span class="section-tag">Our Team</span>
+            <h2 class="section-title">Meet The Experts</h2>
+            <p class="section-subtitle">Our experienced professionals are here to guide you every step of the way.</p>
+        </div>
+        <div class="team-grid">
+            <div class="team-member reveal">
+                <div class="team-photo">
+                    <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&q=80" alt="David Chen" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-tie\'></i>'">
+                </div>
+                <h4>David Chen</h4>
+                <span class="role">CEO & Founder</span>
+                <div class="team-social">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                </div>
+            </div>
+            <div class="team-member reveal" style="transition-delay:0.1s;">
+                <div class="team-photo">
+                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&q=80" alt="Emily Rodriguez" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-doctor\'></i>'">
+                </div>
+                <h4>Emily Rodriguez</h4>
+                <span class="role">Head of Claims</span>
+                <div class="team-social">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                </div>
+            </div>
+            <div class="team-member reveal" style="transition-delay:0.2s;">
+                <div class="team-photo">
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&q=80" alt="Marcus Johnson" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-graduate\'></i>'">
+                </div>
+                <h4>Marcus Johnson</h4>
+                <span class="role">Chief Risk Officer</span>
+                <div class="team-social">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                </div>
+            </div>
+            <div class="team-member reveal" style="transition-delay:0.3s;">
+                <div class="team-photo">
+                    <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&q=80" alt="Anna Kowalski" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-user-nurse\'></i>'">
+                </div>
+                <h4>Anna Kowalski</h4>
+                <span class="role">VP of Underwriting</span>
+                <div class="team-social">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="pricing" id="pricing">
+        <div class="section-header reveal">
+            <span class="section-tag">Pricing Plans</span>
+            <h2 class="section-title">Affordable Plans For Everyone</h2>
+            <p class="section-subtitle">Choose the coverage level that fits your lifestyle and budget. No hidden fees, ever.</p>
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-card reveal">
+                <span class="pricing-plan">Basic</span>
+                <div class="pricing-price">$29<span>/month</span></div>
+                <p class="pricing-description">Essential coverage for individuals</p>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> $50,000 Coverage</li>
+                    <li><i class="fas fa-check"></i> Basic Health Benefits</li>
+                    <li><i class="fas fa-check"></i> Emergency Support</li>
+                    <li><i class="fas fa-check"></i> Online Portal Access</li>
+                    <li><i class="fas fa-times" style="color:#ef4444;"></i> Dental & Vision</li>
+                    <li><i class="fas fa-times" style="color:#ef4444;"></i> Global Coverage</li>
+                </ul>
+                <a href="#contact" class="pricing-btn">Choose Basic</a>
+            </div>
+            <div class="pricing-card featured reveal" style="transition-delay:0.15s;">
+                <div class="pricing-badge">Most Popular</div>
+                <span class="pricing-plan">Premium</span>
+                <div class="pricing-price">$59<span>/month</span></div>
+                <p class="pricing-description">Comprehensive protection for families</p>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> $250,000 Coverage</li>
+                    <li><i class="fas fa-check"></i> Full Health Benefits</li>
+                    <li><i class="fas fa-check"></i> 24/7 Priority Support</li>
+                    <li><i class="fas fa-check"></i> Dental & Vision Included</li>
+                    <li><i class="fas fa-check"></i> Global Coverage</li>
+                    <li><i class="fas fa-check"></i> Annual Wellness Check</li>
+                </ul>
+                <a href="#contact" class="pricing-btn">Choose Premium</a>
+            </div>
+            <div class="pricing-card reveal" style="transition-delay:0.3s;">
+                <span class="pricing-plan">Ultimate</span>
+                <div class="pricing-price">$99<span>/month</span></div>
+                <p class="pricing-description">Maximum protection & peace of mind</p>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> $1M+ Coverage</li>
+                    <li><i class="fas fa-check"></i> All-Inclusive Benefits</li>
+                    <li><i class="fas fa-check"></i> Concierge Support</li>
+                    <li><i class="fas fa-check"></i> Dental, Vision & Wellness</li>
+                    <li><i class="fas fa-check"></i> Worldwide Coverage</li>
+                    <li><i class="fas fa-check"></i> Family Protection Plan</li>
+                </ul>
+                <a href="#contact" class="pricing-btn">Choose Ultimate</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ - SIMPLE ALWAYS VISIBLE -->
+    <section class="faq" id="faq">
+        <div class="section-header reveal">
+            <span class="section-tag">FAQ</span>
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <p class="section-subtitle">Find quick answers to the most common questions about our insurance services.</p>
+        </div>
+        <div class="faq-container">
+            <div class="faq-item reveal">
+                <div class="faq-question">
+                    <span class="faq-number">01</span>
+                    <span class="faq-text">How do I file an insurance claim?</span>
+                </div>
+                <div class="faq-answer">
+                    You can file a claim directly through our online portal, mobile app, or by calling our 24/7 claims hotline. Simply provide your policy number and details about the incident. Our team typically processes claims within 24-48 hours.
+                </div>
+            </div>
+            <div class="faq-item reveal" style="transition-delay:0.1s;">
+                <div class="faq-question">
+                    <span class="faq-number">02</span>
+                    <span class="faq-text">Can I customize my insurance plan?</span>
+                </div>
+                <div class="faq-answer">
+                    Absolutely! All of our plans are fully customizable. You can add or remove coverage options, adjust your deductible, and choose from various riders to create a plan that perfectly fits your needs.
+                </div>
+            </div>
+            <div class="faq-item reveal" style="transition-delay:0.2s;">
+                <div class="faq-question">
+                    <span class="faq-number">03</span>
+                    <span class="faq-text">How quickly can I get insured?</span>
+                </div>
+                <div class="faq-answer">
+                    Most clients are fully covered within 24 hours of completing their application. The process is entirely online and takes less than 15 minutes. Your policy documents are sent to you immediately via email.
+                </div>
+            </div>
+            <div class="faq-item reveal" style="transition-delay:0.3s;">
+                <div class="faq-question">
+                    <span class="faq-number">04</span>
+                    <span class="faq-text">Do you offer discounts?</span>
+                </div>
+                <div class="faq-answer">
+                    Yes! We offer multiple discount options including multi-policy discounts (up to 30%), safe driver discounts, loyalty rewards, and annual payment discounts. Ask your advisor about all available savings.
+                </div>
+            </div>
+            <div class="faq-item reveal" style="transition-delay:0.4s;">
+                <div class="faq-question">
+                    <span class="faq-number">05</span>
+                    <span class="faq-text">What happens if I miss a payment?</span>
+                </div>
+                <div class="faq-answer">
+                    We offer a 30-day grace period for missed payments. Your coverage remains active during this time. If you need more flexibility, contact our support team to discuss payment arrangement options.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BLOG -->
+    <section class="blog" id="blog">
+        <div class="section-header reveal">
+            <span class="section-tag">Blog & Insights</span>
+            <h2 class="section-title">Latest From Our Blog</h2>
+            <p class="section-subtitle">Expert tips, industry news, and helpful guides to keep you informed and protected.</p>
+        </div>
+        <div class="blog-grid">
+            <div class="blog-card reveal">
+                <div class="blog-image">
+                    <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=250&fit=crop&q=80" alt="Insurance Tips for Homebuyers" onerror="this.style.display='none'">
+                </div>
+                <div class="blog-content">
+                    <div class="blog-meta">
+                        <span><i class="fas fa-calendar"></i> Jan 15, 2024</span>
+                        <span><i class="fas fa-user"></i> David Chen</span>
+                    </div>
+                    <h4>10 Essential Insurance Tips for First-Time Homebuyers</h4>
+                    <p>Buying your first home? Learn what insurance coverage you truly need and how to save on premiums.</p>
+                </div>
+            </div>
+            <div class="blog-card reveal" style="transition-delay:0.15s;">
+                <div class="blog-image">
+                    <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&h=250&fit=crop&q=80" alt="Life Insurance Policies" onerror="this.style.display='none'">
+                </div>
+                <div class="blog-content">
+                    <div class="blog-meta">
+                        <span><i class="fas fa-calendar"></i> Jan 8, 2024</span>
+                        <span><i class="fas fa-user"></i> Emily Rodriguez</span>
+                    </div>
+                    <h4>Understanding Different Types of Life Insurance Policies</h4>
+                    <p>Term, whole, universal — we break down the differences so you can make the right choice.</p>
+                </div>
+            </div>
+            <div class="blog-card reveal" style="transition-delay:0.3s;">
+                <div class="blog-image">
+                    <img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&h=250&fit=crop&q=80" alt="Auto Insurance Savings" onerror="this.style.display='none'">
+                </div>
+                <div class="blog-content">
+                    <div class="blog-meta">
+                        <span><i class="fas fa-calendar"></i> Dec 28, 2023</span>
+                        <span><i class="fas fa-user"></i> Marcus Johnson</span>
+                    </div>
+                    <h4>How to Save 30% on Your Auto Insurance Premium</h4>
+                    <p>Discover proven strategies to lower your car insurance costs without sacrificing coverage.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="cta-box reveal-scale">
+            <h2>Ready to Get Protected?</h2>
+            <p>Join over 500,000 satisfied clients who trust SecureLife for their insurance needs. Get your free quote today.</p>
+            <a href="#contact" class="btn-primary"><i class="fas fa-shield-halved"></i> Start Your Free Quote</a>
+        </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="contact" id="contact">
+        <div class="section-header reveal">
+            <span class="section-tag">Contact Us</span>
+            <h2 class="section-title">Get In Touch</h2>
+            <p class="section-subtitle">Have questions or need a custom quote? Reach out to our team anytime.</p>
+        </div>
+        <div class="contact-container">
+            <div class="contact-info reveal-left">
+                <div class="info-item">
+                    <div class="info-icon"><i class="fas fa-phone"></i></div>
+                    <div>
+                        <h5>Call Us</h5>
+                        <span>+1 (800) 555-SECURE</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon"><i class="fas fa-envelope"></i></div>
+                    <div>
+                        <h5>Email Us</h5>
+                        <span>support@securelife.com</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <div>
+                        <h5>Visit Us</h5>
+                        <span>1234 Protection Ave, Suite 200<br>New York, NY 10001</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon"><i class="fas fa-clock"></i></div>
+                    <div>
+                        <h5>Business Hours</h5>
+                        <span>Monday - Friday: 8AM - 8PM<br>Saturday: 9AM - 5PM</span>
+                    </div>
+                </div>
+            </div>
+            <div class="contact-form reveal-right">
+                <form id="contactForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" placeholder="John" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" placeholder="Doe" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" placeholder="john@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" placeholder="(555) 123-4567">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Insurance Type</label>
+                        <select required>
+                            <option value="">Select a type...</option>
+                            <option>Health Insurance</option>
+                            <option>Auto Insurance</option>
+                            <option>Home Insurance</option>
+                            <option>Life Insurance</option>
+                            <option>Business Insurance</option>
+                            <option>Travel Insurance</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea placeholder="Tell us about your insurance needs..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEWSLETTER -->
+    <section class="newsletter">
+        <div class="newsletter-box reveal">
+            <h3>Stay Informed & Protected</h3>
+            <p>Subscribe to our newsletter for insurance tips, industry updates, and exclusive offers.</p>
+            <form class="newsletter-form" id="newsletterForm">
+                <input type="email" placeholder="Enter your email address..." required>
+                <button type="submit"><i class="fas fa-bell"></i> Subscribe</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- PARTNERS -->
+    <section class="partners">
+        <div class="partners-track">
+            <div class="partner-logo"><i class="fas fa-building"></i> AllState</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> Nationwide</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> Progressive</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> State Farm</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> Liberty Mutual</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> Farmers</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> AllState</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> Nationwide</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> Progressive</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> State Farm</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> Liberty Mutual</div>
+            <div class="partner-logo"><i class="fas fa-building"></i> Farmers</div>
+        </div>
+    </section>
+
+    <!-- EMERGENCY CTA -->
+    <section class="emergency">
+        <div class="emergency-box reveal-scale">
+            <i class="fas fa-phone-alt"></i>
+            <span>24/7 Emergency Claims Hotline: <strong>+1 (800) 911-CLAIM</strong></span>
+        </div>
+    </section>
+
+    <!-- AWARDS -->
+    <section class="awards">
+        <div class="awards-grid">
+            <div class="award-item reveal">
+                <i class="fas fa-trophy"></i>
+                <h5>Best Insurance Provider</h5>
+                <span>2024 Industry Awards</span>
+            </div>
+            <div class="award-item reveal" style="transition-delay:0.1s;">
+                <i class="fas fa-medal"></i>
+                <h5>Top Customer Service</h5>
+                <span>JD Power 2024</span>
+            </div>
+            <div class="award-item reveal" style="transition-delay:0.2s;">
+                <i class="fas fa-star"></i>
+                <h5>5-Star Rating</h5>
+                <span>Trustpilot 2024</span>
+            </div>
+            <div class="award-item reveal" style="transition-delay:0.3s;">
+                <i class="fas fa-shield"></i>
+                <h5>Most Innovative</h5>
+                <span>InsurTech Awards</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY CHOOSE US -->
+    <section class="why-us">
+        <div class="section-header reveal">
+            <span class="section-tag">Why Choose SecureLife</span>
+            <h2 class="section-title">The SecureLife Advantage</h2>
+            <p class="section-subtitle">We're not just an insurance company — we're your partners in protection.</p>
+        </div>
+        <div class="why-us-grid">
+            <div class="why-item reveal">
+                <div class="why-icon"><i class="fas fa-heart"></i></div>
+                <h4>Client-First Approach</h4>
+                <p>Your needs come first. We listen, understand, and deliver solutions that truly work for you.</p>
+            </div>
+            <div class="why-item reveal" style="transition-delay:0.1s;">
+                <div class="why-icon"><i class="fas fa-bolt"></i></div>
+                <h4>Lightning-Fast Service</h4>
+                <p>From quotes to claims, we move quickly so you can get back to living your life without delay.</p>
+            </div>
+            <div class="why-item reveal" style="transition-delay:0.2s;">
+                <div class="why-icon"><i class="fas fa-lock"></i></div>
+                <h4>Bank-Level Security</h4>
+                <p>Your personal data is protected with military-grade encryption and strict privacy protocols.</p>
+            </div>
+            <div class="why-item reveal" style="transition-delay:0.3s;">
+                <div class="why-icon"><i class="fas fa-globe"></i></div>
+                <h4>Global Expertise</h4>
+                <p>With coverage in 50+ countries, we bring world-class insurance knowledge to your doorstep.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <a href="#" class="footer-logo">
+                    <i class="fas fa-shield-halved"></i>
+                    <span>SecureLife</span>
+                </a>
+                <p style="color:var(--text-muted);font-size:0.85rem;line-height:1.7;">
+                    Protecting what matters most since 1999. Trusted by over 500,000 clients worldwide with comprehensive, affordable insurance solutions.
+                </p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#home"><i class="fas fa-chevron-right"></i> Home</a></li>
+                    <li><a href="#services"><i class="fas fa-chevron-right"></i> Services</a></li>
+                    <li><a href="#about"><i class="fas fa-chevron-right"></i> About Us</a></li>
+                    <li><a href="#pricing"><i class="fas fa-chevron-right"></i> Pricing</a></li>
+                    <li><a href="#contact"><i class="fas fa-chevron-right"></i> Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Our Services</h4>
+                <ul>
+                    <li><a href="#services"><i class="fas fa-chevron-right"></i> Health Insurance</a></li>
+                    <li><a href="#services"><i class="fas fa-chevron-right"></i> Auto Insurance</a></li>
+                    <li><a href="#services"><i class="fas fa-chevron-right"></i> Home Insurance</a></li>
+                    <li><a href="#services"><i class="fas fa-chevron-right"></i> Life Insurance</a></li>
+                    <li><a href="#services"><i class="fas fa-chevron-right"></i> Business Insurance</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Contact Info</h4>
+                <ul>
+                    <li><a href="#"><i class="fas fa-map-marker-alt"></i> 1234 Protection Ave, NY</a></li>
+                    <li><a href="#"><i class="fas fa-phone"></i> +1 (800) 555-SECURE</a></li>
+                    <li><a href="#"><i class="fas fa-envelope"></i> support@securelife.com</a></li>
+                    <li><a href="#"><i class="fas fa-clock"></i> Mon-Fri: 8AM-8PM</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 SecureLife Insurance. All rights reserved. | Privacy Policy | Terms of Service | Sitemap</p>
+        </div>
+    </footer>
+
+    <!-- BACK TO TOP -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // ========== SCROLL PROGRESS ==========
+        const scrollProgress = document.getElementById('scroll-progress');
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            scrollProgress.style.width = scrollPercent + '%';
+        });
+
+        // ========== NAVBAR SCROLL ==========
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // ========== HAMBURGER MENU ==========
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('navLinks');
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('open');
+        });
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                navLinks.classList.remove('open');
+            });
+        });
+
+        // ========== ACTIVE NAV LINK ==========
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 150;
+                if (window.scrollY >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // ========== REVEAL ON SCROLL ==========
+        const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // ========== COUNTER ANIMATION ==========
+        const counterElements = document.querySelectorAll('.counter-number');
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const target = parseInt(entry.target.getAttribute('data-count'));
+                    const duration = 2000;
+                    const step = target / (duration / 16);
+                    let current = 0;
+                    const timer = setInterval(() => {
+                        current += step;
+                        if (current >= target) {
+                            current = target;
+                            clearInterval(timer);
+                        }
+                        entry.target.textContent = Math.floor(current) + '+';
+                    }, 16);
+                    counterObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        counterElements.forEach(el => counterObserver.observe(el));
+
+        // ========== CURSOR GLOW ==========
+        const cursorGlow = document.getElementById('cursorGlow');
+        document.addEventListener('mousemove', (e) => {
+            cursorGlow.style.left = e.clientX + 'px';
+            cursorGlow.style.top = e.clientY + 'px';
+        });
+
+        // ========== BACK TO TOP ==========
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // ========== CONTACT FORM ==========
+        document.getElementById('contactForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Thank you for reaching out! Our team will contact you within 24 hours.');
+            e.target.reset();
+        });
+
+        // ========== NEWSLETTER FORM ==========
+        document.getElementById('newsletterForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('You have been subscribed to our newsletter!');
+            e.target.reset();
+        });
+
+        // ========== SMOOTH SCROLL FOR ALL ANCHOR LINKS ==========
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // ========== PARALLAX EFFECT ON HERO ==========
+        window.addEventListener('scroll', () => {
+            const hero = document.querySelector('.hero');
+            const heroVisual = document.querySelector('.hero-visual');
+            if (hero && heroVisual && window.scrollY < window.innerHeight) {
+                const scrollY = window.scrollY;
+                heroVisual.style.transform = `translateY(calc(-50% + ${scrollY * 0.15}px))`;
+            }
+        });
+
+        // ========== TESTIMONIAL CARD TILT EFFECT ==========
+        document.querySelectorAll('.testimonial-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / centerY * -5;
+                const rotateY = (x - centerX) / centerX * 5;
+                card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) translateY(0)';
+            });
+        });
+
+        // ========== PRICING CARD SHINE EFFECT ==========
+        document.querySelectorAll('.pricing-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--shine-x', x + 'px');
+                card.style.setProperty('--shine-y', y + 'px');
+            });
+        });
+    </script>
+</body>
+</html>

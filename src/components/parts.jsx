@@ -1,4 +1,4 @@
-// LaunchBuilder v29 — parts.jsx
+// LaunchBuilder v36 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
@@ -24,7 +24,7 @@ export function Modal({ children, onClose }) {
 
 // Small live preview of a page (no scripts run inside it)
 export function Thumb({ html }) {
-  return <div className="thumb"><iframe title="preview" srcDoc={html} sandbox="" tabIndex={-1} /></div>;
+  return <div className="thumb"><iframe title="preview" srcDoc={html} sandbox="" tabIndex={-1} loading="lazy" /></div>;
 }
 
 
@@ -33,8 +33,8 @@ const NAV = [["pages", "grid", "Dashboard"], ["templates", "card", "Templates"],
 /* grouped menu · collapses to an icon-only rail */
 const SHORT = { build: "Build", collect: "Collect", grow: "Grow", reports: "Reports" };
 const GROUPS = [
-  ["build", "layers", "Build & Manage", [["websites", "globe", "Websites"], ["landings", "pages", "Landing Pages"], ["templates", "card", "Templates"]]],
-  ["collect", "form", "Create & Collect", [["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"]]],
+  ["build", "layers", "Build & Manage", [["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"]]],
+  ["collect", "form", "Create & Collect", [["leads", "users", "Leads"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"]]],
   ["grow", "share", "Connect & Grow", [["domains", "share", "Domains"], ["integrations", "apps", "Integrations"]]],
   ["reports", "gear", "Reports & Settings", [["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]]],
 ];
@@ -67,9 +67,9 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
       </div> : <div className="sb3-scroll">
         <Item k="pages" ic="grid" nm="Dashboard" />
         {GROUPS.map(([g, gic, label, items]) => {
-          const closed = !mini && shut.includes(g) && !items.some(([k]) => isOn(k));
+          const closed = false; // groups always stay open
           return <div key={g} className={"sb3-grp" + (closed ? " shut" : "")}>
-            {!mini ? <button className="sb3-gh" onClick={() => toggle(g)}><Icon n={gic} s={16} /><span>{label}</span><Icon n="chevd" s={12} className={closed ? "rot" : ""} /></button> : <div className="sb3-sep" />}
+            {!mini ? <div className="sb3-gh"><Icon n={gic} s={16} /><span>{label}</span></div> : <div className="sb3-sep" />}
             {!closed && <div className={mini ? "" : "sb3-tree"}>{items.map(([k, ic, nm]) => <Item key={k} k={k} ic={ic} nm={nm} sub />)}</div>}
           </div>;
         })}
@@ -86,8 +86,9 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
 
 const AI_IDEAS = ["AI ad-creation workshop for beginners, ₹21 registration, Hindi + English audience, dark modern style", "Dental clinic in Hamirpur: services, doctors, timings, book appointment form, Google map", "Digital marketing agency: services, case studies, pricing plans, contact form", "Online yoga classes: batches, trainer bio, testimonials, WhatsApp signup"];
 export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI, kind = "landing", mine = [] }) {
-  const [type, setType] = useState(kind), [name, setName] = useState(""), [t, setT] = useState(0), [src, setSrc] = useState("tpl");
+  const [type, setType] = useState(kind), [name, setName] = useState(""), [src, setSrc] = useState("scratch");
   const [brief, setBrief] = useState(""), [busy, setBusy] = useState(false), [err, setErr] = useState("");
+  const blank = TEMPLATES.find((x) => x.type === type && /^blank/.test(x.key || "")) || TEMPLATES.find((x) => x.type === type);
   const list = [...TEMPLATES.filter((x) => x.type === type && x.hidden).sort((a, b) => (/^blank/.test(b.key) ? 1 : 0) - (/^blank/.test(a.key) ? 1 : 0)), ...mine.map(asTemplate).filter((x) => x.type === type), ...TEMPLATES.filter((x) => x.type === type && !x.hidden)];
   const prov = AI_PROVIDERS.find((p) => p.id === (ai && ai.provider)) || AI_PROVIDERS[0], hasKey = ai && ai.keys && ai.keys[prov.id];
   const gen = async () => {
@@ -104,12 +105,16 @@ export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI, kind = "l
     <Modal onClose={busy ? () => {} : onClose}>
       <h3>Create new</h3>
       <div className="opts">
-        <div className={"opt" + (type === "landing" ? " on" : "")} onClick={() => { setType("landing"); setT(0); }}><b>Landing page</b><span>One focused page: offer, signup, webinar, waitlist.</span></div>
-        <div className={"opt" + (type === "website" ? " on" : "")} onClick={() => { setType("website"); setT(0); }}><b>Website</b><span>Several pages (Home, About, Contact…) with a shared menu.</span></div>
+        <div className={"opt" + (type === "landing" ? " on" : "")} onClick={() => setType("landing")}><b>Landing page</b><span>One focused page: offer, signup, webinar, waitlist.</span></div>
+        <div className={"opt" + (type === "website" ? " on" : "")} onClick={() => setType("website")}><b>Website</b><span>Several pages (Home, About, Contact…) with a shared menu.</span></div>
       </div>
       <label>Name<input autoFocus value={name} placeholder="e.g. Autumn Sale Offer" onChange={(e) => setName(e.target.value)} /></label>
-      <div className="chips nm-src"><button className={src === "tpl" ? "on" : ""} onClick={() => setSrc("tpl")}>Start from a template</button><button className={src === "ai" ? "on" : ""} onClick={() => setSrc("ai")}>✨ Create with AI</button></div>
-      {src === "tpl" ? <div className="opts">{list.map((x, i) => <div key={x.name} className={"opt" + (t === i ? " on" : "")} onClick={() => setT(i)}><b>{x.name}</b><span>{x.note}</span></div>)}</div> : <div className="nm-ai">
+      <span className="nm-lbl">How do you want to start?</span>
+      <div className="nm-ways">
+        {[["scratch", "✏️", "Start from scratch", type === "website" ? "A blank website — add pages and sections yourself" : "A blank page — drag in sections and elements"], ["import", "📥", "Import HTML", "Bring in a page you already have (.html file or code)"], ["ai", "✨", "Create with AI", "Describe it in a sentence — AI builds the first draft"]].map(([k, ic, t, d]) => (
+          <button key={k} className={"nm-way" + (src === k ? " on" : "")} onClick={() => (k === "import" ? onImport() : setSrc(k))}><span className="nm-wic">{ic}</span><b>{t}</b><small>{d}</small></button>))}
+      </div>
+      {src === "scratch" ? <p className="mut sm nm-tip">Want a ready design instead? Pick one in <b>Templates</b>.</p> : <div className="nm-ai">
         {!hasKey && <div className="nm-warn">Connect an AI first (Claude, ChatGPT, Gemini or DeepSeek) with your own API key. <button className="pri" onClick={onSetupAI}>Open Integrations</button></div>}<>
           <label>Describe the {type === "website" ? "website" : "page"}<textarea rows={4} value={brief} disabled={busy} onChange={(e) => setBrief(e.target.value)} placeholder="What is it, who is it for, what should visitors do (register, call, buy)? Mention price, city, language, colours, sections you want…" /></label>
           <div className="nm-ideas">{AI_IDEAS.map((x) => <button key={x} disabled={busy} onClick={() => setBrief(x)}>{x.slice(0, 48)}…</button>)}</div>
@@ -121,8 +126,8 @@ export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI, kind = "l
         </>
         {err && <p className="red">{err}</p>}
       </div>}
-      <div className="mrow"><button onClick={onImport} disabled={busy}>Import HTML instead</button><div className="grow" /><button onClick={onClose} disabled={busy}>Cancel</button>
-        {src === "tpl" ? <button className="pri" onClick={() => { const n = name.trim() || "Untitled"; onCreate(n, list[t].make(n), type); }}>Create</button>
+      <div className="mrow"><div className="grow" /><button onClick={onClose} disabled={busy}>Cancel</button>
+        {src === "scratch" ? <button className="pri" onClick={() => { const n = name.trim() || "Untitled"; onCreate(n, blank.make(n), type); }}>Create {type === "website" ? "website" : "page"}</button>
           : <button className="pri" disabled={busy || !hasKey} onClick={gen}>{busy ? "✨ Generating… please wait" : "✨ Generate"}</button>}</div>
     </Modal>
   );

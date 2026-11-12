@@ -1,5 +1,7 @@
 // LaunchBuilder v9 — Leads.jsx
+// LaunchBuilder v36 — Leads.jsx
 import { useMemo, useState } from "react";
+import Pipeline from "./Pipeline.jsx";
 import { saveLeads, LEAD_STATUS, ago, serverOn, phpCall, syncServerLeads, loadLeads } from "../lib.js";
 
 /* ================= Leads / Form CRM: table + pipeline board, status, notes, CSV export ================= */
@@ -43,6 +45,7 @@ export default function Leads({ user, projects = [], forms = [], leads, setLeads
         <div className="row"><div className="chips" style={{ margin: 0 }}><button className={view === "table" ? "on" : ""} onClick={() => setView("table")}>Table</button><button className={view === "board" ? "on" : ""} onClick={() => setView("board")}>Pipeline</button></div>
           {serverOn(integ) && <button onClick={syncNow} title="Fetch leads from your live sites">{syncing || "⟳ Sync live sites"}</button>}
           {leads.length > 0 && <button onClick={exportCsv}>Export CSV</button>}</div></div>
+      {view === "board" ? <Pipeline user={user} leads={leads} update={update} forms={forms} onOpen={setOpen} /> : <>
       <div className="stats">
         <div className="stat"><span>Total leads</span><b>{leads.length}</b></div>
         <div className="stat"><span>Last 24 hours</span><b>{leads.filter((l) => Date.now() - l.ts < 864e5).length}</b></div>
@@ -72,18 +75,8 @@ export default function Leads({ user, projects = [], forms = [], leads, setLeads
                 <td className="mut">{ago(l.ts)}</td>
               </tr>))}</tbody>
           </table></div>
-        ) : (
-          <div className="board">{LEAD_STATUS.map(([k, t]) => { const items = shown.filter((l) => l.status === k); return (
-            <div key={k} className={"bcol " + k + (over === k ? " over" : "")} onDragOver={(e) => { e.preventDefault(); setOver(k); }} onDragLeave={() => setOver("")}
-              onDrop={() => { if (drag) patch(drag, { status: k }); setDrag(null); setOver(""); }}>
-              <div className="bcol-h"><b>{t}</b><span>{items.length}</span></div>
-              {items.map((l) => <div key={l.id} className="bcard" draggable onDragStart={() => setDrag(l.id)} onDragEnd={() => setDrag(null)} onClick={() => setOpen(l.id)}>
-                <b>{nameOf(l)}</b><div className="mut sm">{phoneOf(l) || mailOf(l)}</div>{l.payment && <div style={{ marginTop: 6 }}><PayTag l={l} /></div>}<div className="bmeta"><span>{l.form}</span><span>{ago(l.ts)}</span></div>
-                {l.note && <div className="bnote">📝 {l.note.slice(0, 60)}</div>}
-              </div>)}
-              {!items.length && <div className="bempty">Drop leads here</div>}
-            </div>); })}</div>
-        )}
+        ) : null}
+      </>}
       </>}
       {cur && <div className="ldrawer" onClick={() => setOpen(null)}><div onClick={(e) => e.stopPropagation()}>
         <div className="row between"><h3>{nameOf(cur)}</h3><button onClick={() => setOpen(null)}>Close</button></div>

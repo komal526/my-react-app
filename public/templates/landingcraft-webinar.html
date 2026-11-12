@@ -1,0 +1,2042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LandingCraft AI — Master Landing Page Creation Webinar</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a12;
+            --bg-secondary: #111120;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-bg-hover: rgba(255, 255, 255, 0.06);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-color-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #f1f1f7;
+            --text-secondary: #a0a0b8;
+            --text-muted: #6b6b85;
+            --gradient-main: linear-gradient(135deg, #7c3aed, #ec4899, #06b6d4);
+            --gradient-warm: linear-gradient(135deg, #f59e0b, #ec4899);
+            --gradient-purple: linear-gradient(135deg, #7c3aed, #a78bfa);
+            --radius-sm: 12px;
+            --radius-md: 20px;
+            --radius-lg: 32px;
+            --radius-xl: 48px;
+            --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 60px rgba(124, 58, 237, 0.25);
+            --shadow-glow-pink: 0 0 60px rgba(236, 72, 153, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* ============ AURORA BACKGROUND ============ */
+        .aurora-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 60% 50% at 20% 30%, rgba(124, 58, 237, 0.2) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 80% 60%, rgba(236, 72, 153, 0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 70% 50% at 50% 80%, rgba(6, 182, 212, 0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 35% at 70% 20%, rgba(245, 158, 11, 0.1) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 45% at 10% 70%, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+            animation: aurora-shift 20s ease-in-out infinite;
+        }
+
+        @keyframes aurora-shift {
+            0%,
+            100% {
+                background:
+                    radial-gradient(ellipse 60% 50% at 20% 30%, rgba(124, 58, 237, 0.2) 0%, transparent 70%),
+                    radial-gradient(ellipse 50% 40% at 80% 60%, rgba(236, 72, 153, 0.15) 0%, transparent 70%),
+                    radial-gradient(ellipse 70% 50% at 50% 80%, rgba(6, 182, 212, 0.12) 0%, transparent 70%),
+                    radial-gradient(ellipse 40% 35% at 70% 20%, rgba(245, 158, 11, 0.1) 0%, transparent 70%),
+                    radial-gradient(ellipse 50% 45% at 10% 70%, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+            }
+            25% {
+                background:
+                    radial-gradient(ellipse 65% 55% at 30% 40%, rgba(124, 58, 237, 0.22) 0%, transparent 70%),
+                    radial-gradient(ellipse 45% 35% at 70% 50%, rgba(236, 72, 153, 0.18) 0%, transparent 70%),
+                    radial-gradient(ellipse 65% 45% at 40% 70%, rgba(6, 182, 212, 0.15) 0%, transparent 70%),
+                    radial-gradient(ellipse 50% 40% at 80% 30%, rgba(245, 158, 11, 0.12) 0%, transparent 70%),
+                    radial-gradient(ellipse 55% 50% at 15% 65%, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+            }
+            50% {
+                background:
+                    radial-gradient(ellipse 55% 45% at 40% 25%, rgba(124, 58, 237, 0.18) 0%, transparent 70%),
+                    radial-gradient(ellipse 55% 45% at 60% 65%, rgba(236, 72, 153, 0.2) 0%, transparent 70%),
+                    radial-gradient(ellipse 60% 40% at 30% 60%, rgba(6, 182, 212, 0.1) 0%, transparent 70%),
+                    radial-gradient(ellipse 45% 40% at 75% 15%, rgba(245, 158, 11, 0.15) 0%, transparent 70%),
+                    radial-gradient(ellipse 60% 50% at 20% 75%, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+            }
+            75% {
+                background:
+                    radial-gradient(ellipse 70% 50% at 25% 45%, rgba(124, 58, 237, 0.15) 0%, transparent 70%),
+                    radial-gradient(ellipse 40% 35% at 75% 40%, rgba(236, 72, 153, 0.18) 0%, transparent 70%),
+                    radial-gradient(ellipse 75% 55% at 55% 75%, rgba(6, 182, 212, 0.13) 0%, transparent 70%),
+                    radial-gradient(ellipse 35% 30% at 65% 25%, rgba(245, 158, 11, 0.12) 0%, transparent 70%),
+                    radial-gradient(ellipse 55% 40% at 12% 60%, rgba(124, 58, 237, 0.16) 0%, transparent 70%);
+            }
+        }
+
+        /* ============ GRID OVERLAY ============ */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 50px 50px;
+            -webkit-mask-image: radial-gradient(ellipse 80% 70% at center, black 30%, transparent 70%);
+            mask-image: radial-gradient(ellipse 80% 70% at center, black 30%, transparent 70%);
+        }
+
+        /* ============ FLOATING PARTICLES ============ */
+        .particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            bottom: -10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            animation: float-up linear infinite;
+        }
+
+        @keyframes float-up {
+            0% {
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-110vh) translateX(50px) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        /* ============ NAVIGATION ============ */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(10, 10, 18, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+            padding: 14px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar.scrolled {
+            background: rgba(10, 10, 18, 0.92);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-logo-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: var(--gradient-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .nav-logo-text {
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-cta {
+            background: var(--gradient-main);
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+        }
+
+        /* ============ HERO SECTION ============ */
+        .hero {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 24px 80px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid rgba(124, 58, 237, 0.4);
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #c4b5fd;
+            margin-bottom: 28px;
+            animation: badge-pulse 2s ease-in-out infinite;
+        }
+
+        .hero-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #7c3aed;
+            animation: dot-pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes dot-pulse {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(124, 58, 237, 0);
+            }
+        }
+
+        @keyframes badge-pulse {
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(124, 58, 237, 0.15);
+            }
+            50% {
+                box-shadow: 0 0 35px rgba(124, 58, 237, 0.3);
+            }
+        }
+
+        .hero h1 {
+            font-size: 4.2rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #ffffff 20%, #c4b5fd 50%, #f9a8d4 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            max-width: 900px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 650px;
+            margin: 0 auto 36px;
+            line-height: 1.8;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 56px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-main);
+            color: #fff;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(124, 58, 237, 0.45);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.05rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-color-hover);
+            transform: translateY(-3px);
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 56px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 48px;
+        }
+
+        .hero-stat {
+            text-align: center;
+            padding: 16px;
+        }
+
+        .hero-stat-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .hero-image-wrapper {
+            max-width: 800px;
+            width: 100%;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card), var(--shadow-glow);
+            transition: var(--transition);
+        }
+
+        .hero-image-wrapper:hover {
+            border-color: var(--border-color-hover);
+            box-shadow: var(--shadow-card), 0 0 80px rgba(124, 58, 237, 0.4);
+        }
+
+        .hero-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: var(--radius-md);
+        }
+
+        /* ============ COUNTDOWN ============ */
+        .countdown-section {
+            position: relative;
+            z-index: 3;
+            margin-top: -60px;
+            padding: 0 24px;
+        }
+
+        .countdown-card {
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 32px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-card);
+        }
+
+        .countdown-item {
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .countdown-number {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+            line-height: 1.2;
+        }
+
+        .countdown-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .countdown-separator {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            opacity: 0.4;
+            align-self: flex-start;
+            margin-top: 8px;
+        }
+
+        /* ============ SECTIONS COMMON ============ */
+        section {
+            position: relative;
+            z-index: 2;
+            padding: 80px 48px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-tag {
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #a78bfa;
+            background: rgba(124, 58, 237, 0.12);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            padding: 6px 16px;
+            border-radius: 50px;
+            margin-bottom: 16px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 16px;
+            line-height: 1.25;
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        .section-divider {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+        }
+
+        .section-divider img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ============ CURRICULUM SECTION ============ */
+        .curriculum-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .curriculum-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 32px 24px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        .curriculum-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gradient-main);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .curriculum-card:hover {
+            background: var(--card-bg-hover);
+            border-color: var(--border-color-hover);
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-card), 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .curriculum-card:hover::before {
+            opacity: 1;
+        }
+
+        .curriculum-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .curriculum-card:nth-child(2) .curriculum-icon {
+            animation-delay: 0.2s;
+        }
+        .curriculum-card:nth-child(3) .curriculum-icon {
+            animation-delay: 0.4s;
+        }
+        .curriculum-card:nth-child(4) .curriculum-icon {
+            animation-delay: 0.6s;
+        }
+        .curriculum-card:nth-child(5) .curriculum-icon {
+            animation-delay: 0.8s;
+        }
+        .curriculum-card:nth-child(6) .curriculum-icon {
+            animation-delay: 1s;
+        }
+
+        .curriculum-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.3px;
+        }
+
+        .curriculum-card p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ============ AGENDA SECTION ============ */
+        .agenda-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 48px;
+            max-width: 850px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .agenda-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px 28px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            transition: var(--transition);
+            cursor: default;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            border-left: 3px solid transparent;
+        }
+
+        .agenda-item:hover {
+            background: var(--card-bg-hover);
+            border-color: var(--border-color-hover);
+            border-left: 3px solid #7c3aed;
+            transform: translateX(8px);
+        }
+
+        .agenda-time {
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: #a78bfa;
+            white-space: nowrap;
+            min-width: 90px;
+            padding-top: 4px;
+        }
+
+        .agenda-content h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .agenda-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ============ INSTRUCTOR SECTION ============ */
+        .instructor-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 48px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 40px;
+            align-items: center;
+            box-shadow: var(--shadow-card);
+            max-width: 850px;
+            margin: 0 auto;
+            transition: var(--transition);
+        }
+
+        .instructor-card:hover {
+            border-color: var(--border-color-hover);
+            box-shadow: var(--shadow-card), var(--shadow-glow);
+        }
+
+        .instructor-photo {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid transparent;
+            background: var(--gradient-main);
+            padding: 3px;
+            animation: rotate-border 4s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes rotate-border {
+            0% {
+                background: var(--gradient-main);
+            }
+            25% {
+                background: var(--gradient-warm);
+            }
+            50% {
+                background: linear-gradient(135deg, #06b6d4, #7c3aed);
+            }
+            75% {
+                background: linear-gradient(135deg, #ec4899, #f59e0b);
+            }
+            100% {
+                background: var(--gradient-main);
+            }
+        }
+
+        .instructor-photo img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            border: 3px solid var(--bg-primary);
+        }
+
+        .instructor-info h3 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .instructor-role {
+            color: #a78bfa;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 16px;
+        }
+
+        .instructor-bio {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .instructor-socials {
+            display: flex;
+            gap: 10px;
+        }
+
+        .social-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .social-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-color-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ============ TESTIMONIALS ============ */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .testimonial-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 28px;
+            transition: var(--transition);
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .testimonial-card:hover {
+            background: var(--card-bg-hover);
+            border-color: var(--border-color-hover);
+            transform: translateY(-4px);
+        }
+
+        .testimonial-stars {
+            color: #f59e0b;
+            font-size: 1rem;
+            letter-spacing: 2px;
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            flex: 1;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--gradient-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .testimonial-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: -0.2px;
+        }
+
+        .testimonial-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* ============ PRICING ============ */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        .pricing-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 36px 28px;
+            transition: var(--transition);
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .pricing-card:hover {
+            background: var(--card-bg-hover);
+            border-color: var(--border-color-hover);
+            transform: translateY(-6px);
+        }
+
+        .pricing-card.featured {
+            border: 2px solid transparent;
+            background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+                var(--gradient-main) border-box;
+            box-shadow: var(--shadow-glow), var(--shadow-glow-pink);
+            transform: scale(1.03);
+            z-index: 2;
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.03) translateY(-6px);
+            box-shadow: 0 0 80px rgba(124, 58, 237, 0.4), 0 0 60px rgba(236, 72, 153, 0.25);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -14px;
+            right: 20px;
+            background: var(--gradient-warm);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 6px 14px;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transform: rotate(6deg);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .pricing-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .pricing-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 20px;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 24px;
+            flex: 1;
+        }
+
+        .pricing-features li {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pricing-features li.included::before {
+            content: '✓';
+            color: #10b981;
+            font-weight: 800;
+            margin-right: 4px;
+        }
+
+        .pricing-features li.excluded {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        .pricing-features li.excluded::before {
+            content: '✗';
+            color: #ef4444;
+            font-weight: 800;
+            margin-right: 4px;
+            text-decoration: none;
+        }
+
+        .pricing-btn {
+            background: var(--gradient-main);
+            color: #fff;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .pricing-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+        }
+
+        .pricing-btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .pricing-btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-color-hover);
+        }
+
+        /* ============ FAQ ============ */
+        .faq-container {
+            max-width: 750px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .faq-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: var(--transition);
+            box-shadow: var(--shadow-card);
+        }
+
+        .faq-item:hover {
+            border-color: var(--border-color-hover);
+            background: var(--card-bg-hover);
+        }
+
+        .faq-question {
+            width: 100%;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            text-align: left;
+            font-family: var(--font-family);
+            letter-spacing: -0.2px;
+        }
+
+        .faq-arrow {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .faq-item.active .faq-arrow {
+            transform: rotate(180deg);
+            color: #a78bfa;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0 24px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 300px;
+            padding-bottom: 20px;
+        }
+
+        /* ============ REGISTRATION FORM ============ */
+        .registration-section {
+            max-width: 600px;
+        }
+
+        .registration-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 48px 40px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .registration-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-main);
+        }
+
+        .registration-card h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .registration-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            transition: var(--transition);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-group select {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0a0b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+
+        .form-submit {
+            width: 100%;
+            background: var(--gradient-main);
+            color: #fff;
+            border: none;
+            padding: 16px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font-family);
+            letter-spacing: 0.3px;
+        }
+
+        .form-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(124, 58, 237, 0.45);
+        }
+
+        .form-note {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 16px;
+        }
+
+        /* ============ TOAST ============ */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 18px 24px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            box-shadow: var(--shadow-card), 0 12px 40px rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            pointer-events: none;
+            max-width: 380px;
+            border-left: 3px solid #10b981;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.error {
+            border-left: 3px solid #ef4444;
+        }
+
+        /* ============ FOOTER ============ */
+        footer {
+            position: relative;
+            z-index: 2;
+            background: rgba(10, 10, 18, 0.9);
+            border-top: 1px solid var(--border-color);
+            padding: 48px 48px 32px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .footer-logo {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        .footer-logo span {
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-copyright {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* ============ SCROLL REVEAL ============ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
+        }
+        .reveal-delay-4 {
+            transition-delay: 0.4s;
+        }
+        .reveal-delay-5 {
+            transition-delay: 0.5s;
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 10px 24px;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            section {
+                padding: 56px 24px;
+            }
+
+            .curriculum-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .pricing-card.featured {
+                transform: scale(1);
+            }
+            .pricing-card.featured:hover {
+                transform: scale(1) translateY(-6px);
+            }
+
+            .instructor-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding: 32px 24px;
+            }
+
+            .instructor-photo {
+                margin: 0 auto;
+                width: 110px;
+                height: 110px;
+            }
+
+            .instructor-socials {
+                justify-content: center;
+            }
+
+            .countdown-card {
+                padding: 24px;
+                gap: 20px;
+            }
+
+            .countdown-number {
+                font-size: 1.5rem;
+            }
+
+            .countdown-separator {
+                font-size: 1.5rem;
+            }
+
+            .hero-stats {
+                gap: 24px;
+            }
+
+            .agenda-item {
+                flex-direction: column;
+                gap: 8px;
+                padding: 20px;
+            }
+
+            .agenda-time {
+                min-width: auto;
+            }
+
+            .registration-card {
+                padding: 32px 24px;
+            }
+
+            .section-header h2 {
+                font-size: 2rem;
+            }
+
+            footer {
+                padding: 32px 24px 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 1.9rem;
+            }
+
+            .hero-stat-number {
+                font-size: 1.5rem;
+            }
+
+            .section-header h2 {
+                font-size: 1.7rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                width: 100%;
+                max-width: 350px;
+            }
+
+            .btn-primary,
+            .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .countdown-card {
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .countdown-separator {
+                display: none;
+            }
+
+            .pricing-price {
+                font-size: 2rem;
+            }
+
+            .registration-card h2 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AURORA BACKGROUND -->
+    <div class="aurora-bg" aria-hidden="true"></div>
+
+    <!-- GRID OVERLAY -->
+    <div class="grid-overlay" aria-hidden="true"></div>
+
+    <!-- FLOATING PARTICLES -->
+    <div class="particles-container" id="particles-container" aria-hidden="true"></div>
+
+    <!-- NAVIGATION -->
+    <nav class="navbar" id="navbar" aria-label="Main navigation">
+        <a href="#" class="nav-logo" aria-label="LandingCraft home">
+            <span class="nav-logo-icon" aria-hidden="true">⬡</span>
+            <span class="nav-logo-text">LandingCraft</span>
+        </a>
+        <a href="#register" class="nav-cta" aria-label="Reserve your spot">Reserve Spot</a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="home" aria-label="Hero">
+        <div class="hero-badge">
+            <span class="dot" aria-hidden="true"></span>
+            Live Webinar — Limited Seats
+        </div>
+        <h1>Master the Art of<br>Landing Pages<br>with AI &amp; Code</h1>
+        <p class="hero-subtitle">Join our exclusive 3-hour intensive webinar where you'll learn how to create stunning, high-converting landing pages using AI tools, from scratch with code, or quickly with templates. No prior experience needed.</p>
+        <div class="hero-buttons">
+            <a href="#register" class="btn-primary">🚀 Reserve My Seat</a>
+            <a href="#curriculum" class="btn-outline">Explore Curriculum ↓</a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-number">4,800+</div>
+                <div class="hero-stat-label">Students Taught</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">4.9/5</div>
+                <div class="hero-stat-label">Average Rating</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">3h</div>
+                <div class="hero-stat-label">Intensive Session</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">∞</div>
+                <div class="hero-stat-label">Creative Possibilities</div>
+            </div>
+        </div>
+        <div class="hero-image-wrapper">
+            <img src="https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&q=80" alt="Webinar preview showing landing page design workspace" class="hero-image" loading="eager">
+        </div>
+    </section>
+
+    <!-- COUNTDOWN TIMER -->
+    <div class="countdown-section" aria-label="Countdown to webinar">
+        <div class="countdown-card" id="countdown-card">
+            <div class="countdown-item">
+                <div class="countdown-number" id="countdown-days">3</div>
+                <div class="countdown-label">Days</div>
+            </div>
+            <span class="countdown-separator" aria-hidden="true">:</span>
+            <div class="countdown-item">
+                <div class="countdown-number" id="countdown-hours">0</div>
+                <div class="countdown-label">Hours</div>
+            </div>
+            <span class="countdown-separator" aria-hidden="true">:</span>
+            <div class="countdown-item">
+                <div class="countdown-number" id="countdown-minutes">0</div>
+                <div class="countdown-label">Minutes</div>
+            </div>
+            <span class="countdown-separator" aria-hidden="true">:</span>
+            <div class="countdown-item">
+                <div class="countdown-number" id="countdown-seconds">0</div>
+                <div class="countdown-label">Seconds</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CURRICULUM SECTION -->
+    <section id="curriculum" aria-label="Curriculum highlights">
+        <div class="section-header reveal">
+            <span class="section-tag">Curriculum Highlights</span>
+            <h2>What You'll Master</h2>
+            <p>Six core skills to become a landing page pro — from AI tools to deployment.</p>
+        </div>
+        <div class="curriculum-grid">
+            <div class="curriculum-card reveal">
+                <div class="curriculum-icon" aria-hidden="true">🤖</div>
+                <h3>AI-Powered Creation</h3>
+                <p>Use ChatGPT, Claude, and dedicated AI tools to generate complete landing pages in minutes. Master prompt engineering for design.</p>
+            </div>
+            <div class="curriculum-card reveal reveal-delay-1">
+                <div class="curriculum-icon" aria-hidden="true">💻</div>
+                <h3>Build From Scratch</h3>
+                <p>Hand-code responsive HTML, CSS, and JavaScript. Create pixel-perfect single-file landing pages with zero dependencies.</p>
+            </div>
+            <div class="curriculum-card reveal reveal-delay-2">
+                <div class="curriculum-icon" aria-hidden="true">📐</div>
+                <h3>Template Mastery</h3>
+                <p>Find, customize, and transform premium templates into unique, branded experiences. Learn the best free resources.</p>
+            </div>
+            <div class="curriculum-card reveal reveal-delay-3">
+                <div class="curriculum-icon" aria-hidden="true">🎯</div>
+                <h3>Conversion Optimization</h3>
+                <p>Apply psychology-driven design: persuasive copy, high-converting CTAs, A/B testing, and analytics that boost results.</p>
+            </div>
+            <div class="curriculum-card reveal reveal-delay-4">
+                <div class="curriculum-icon" aria-hidden="true">📱</div>
+                <h3>Responsive Design</h3>
+                <p>Ensure your landing pages look flawless on every device. Mobile-first principles, fluid layouts, and performance tips.</p>
+            </div>
+            <div class="curriculum-card reveal reveal-delay-5">
+                <div class="curriculum-icon" aria-hidden="true">🚀</div>
+                <h3>Deployment &amp; Hosting</h3>
+                <p>Publish your pages to the world. Explore free hosting options, custom domains, and version control with Git.</p>
+            </div>
+        </div>
+        <div class="section-divider reveal">
+            <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1100&q=80" alt="Team collaborating on landing page design" loading="lazy">
+        </div>
+    </section>
+
+    <!-- AGENDA SECTION -->
+    <section id="agenda" aria-label="Webinar agenda">
+        <div class="section-header reveal">
+            <span class="section-tag">Schedule</span>
+            <h2>Webinar Agenda</h2>
+            <p>Three hours of intensive, hands-on learning. Here's exactly what we'll cover.</p>
+        </div>
+        <div class="agenda-timeline">
+            <div class="agenda-item reveal">
+                <span class="agenda-time">0:00–0:20</span>
+                <div class="agenda-content">
+                    <h3>🚀 Opening &amp; The Landing Page Landscape</h3>
+                    <p>Why landing pages matter. The anatomy of a high-converting page. Live examples &amp; teardowns.</p>
+                </div>
+            </div>
+            <div class="agenda-item reveal reveal-delay-1">
+                <span class="agenda-time">0:20–1:00</span>
+                <div class="agenda-content">
+                    <h3>🤖 AI-Powered Landing Page Creation</h3>
+                    <p>Step-by-step: using AI to generate, iterate, and refine landing pages. Live demo with ChatGPT &amp; Claude.</p>
+                </div>
+            </div>
+            <div class="agenda-item reveal reveal-delay-2">
+                <span class="agenda-time">1:00–1:50</span>
+                <div class="agenda-content">
+                    <h3>💻 Building From Scratch: HTML/CSS/JS Fundamentals</h3>
+                    <p>Core structure, styling magic, interactive elements. Creating a complete single-file landing page live.</p>
+                </div>
+            </div>
+            <div class="agenda-item reveal reveal-delay-3">
+                <span class="agenda-time">1:50–2:20</span>
+                <div class="agenda-content">
+                    <h3>📐 Template Customization Masterclass</h3>
+                    <p>Finding great templates, customizing them deeply, and making them your own. The best free resources.</p>
+                </div>
+            </div>
+            <div class="agenda-item reveal reveal-delay-4">
+                <span class="agenda-time">2:20–2:45</span>
+                <div class="agenda-content">
+                    <h3>🎯 Conversion-Focused Design &amp; Copy</h3>
+                    <p>CTA optimization, persuasive copywriting, A/B testing strategies, and analytics setup.</p>
+                </div>
+            </div>
+            <div class="agenda-item reveal reveal-delay-5">
+                <span class="agenda-time">2:45–3:00</span>
+                <div class="agenda-content">
+                    <h3>💬 Live Q&amp;A + Bonus Resources</h3>
+                    <p>Open floor for questions. Get access to exclusive resources, templates, and prompt libraries.</p>
+                </div>
+            </div>
+        </div>
+        <div class="section-divider reveal">
+            <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1100&q=80" alt="Coding on a laptop screen" loading="lazy">
+        </div>
+    </section>
+
+    <!-- INSTRUCTOR SECTION -->
+    <section id="instructor" aria-label="About the instructor">
+        <div class="section-header reveal">
+            <span class="section-tag">Your Instructor</span>
+            <h2>Learn From the Best</h2>
+        </div>
+        <div class="instructor-card reveal">
+            <div class="instructor-photo">
+                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80" alt="Sarah Chen, Senior Front-End Engineer and AI Design Educator" loading="lazy">
+            </div>
+            <div class="instructor-info">
+                <h3>Sarah Chen</h3>
+                <p class="instructor-role">Senior Front-End Engineer &amp; AI Design Educator</p>
+                <p class="instructor-bio">Sarah has spent the last 12 years building high-performance landing pages for startups and Fortune 500 companies. She's taught over 4,800 students how to blend traditional coding with modern AI tools. Her teaching philosophy: "Everyone can create beautiful, functional landing pages — you just need the right approach and tools."</p>
+                <div class="instructor-socials">
+                    <a href="#" class="social-btn" aria-label="Follow Sarah Chen on X (Twitter)">𝕏</a>
+                    <a href="#" class="social-btn" aria-label="Connect with Sarah Chen on LinkedIn">in</a>
+                    <a href="#" class="social-btn" aria-label="Sarah Chen's personal website">⌥</a>
+                    <a href="#" class="social-btn" aria-label="Sarah Chen's portfolio">🌐</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS SECTION -->
+    <section id="testimonials" aria-label="Student testimonials">
+        <div class="section-header reveal">
+            <span class="section-tag">Student Love</span>
+            <h2>What Our Students Say</h2>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card reveal">
+                <div class="testimonial-stars" aria-label="5 star rating">★★★★★</div>
+                <p class="testimonial-text">"I went from knowing absolutely nothing about web design to building my first landing page in the same week. Sarah's approach with AI tools is game-changing. Highly recommend!"</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar" aria-hidden="true">M</div>
+                    <div>
+                        <div class="testimonial-name">Marcus Johnson</div>
+                        <div class="testimonial-title">Startup Founder</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card reveal reveal-delay-1">
+                <div class="testimonial-stars" aria-label="5 star rating">★★★★★</div>
+                <p class="testimonial-text">"The 'single-file landing page' concept blew my mind. Now I can share my pages anywhere without worrying about hosting or dependencies. This webinar was worth every penny."</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar" aria-hidden="true">E</div>
+                    <div>
+                        <div class="testimonial-name">Emma Rodriguez</div>
+                        <div class="testimonial-title">Freelance Designer</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card reveal reveal-delay-2">
+                <div class="testimonial-stars" aria-label="5 star rating">★★★★★</div>
+                <p class="testimonial-text">"I've taken many online courses, but this webinar's practical, hands-on approach is unmatched. The template customization section alone saved me hours of work. Incredible value!"</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar" aria-hidden="true">A</div>
+                    <div>
+                        <div class="testimonial-name">Alex Kim</div>
+                        <div class="testimonial-title">Marketing Manager</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section id="pricing" aria-label="Pricing plans">
+        <div class="section-header reveal">
+            <span class="section-tag">Pricing</span>
+            <h2>Choose Your Access</h2>
+            <p>Invest in your skills. Every plan includes lifetime access to recordings.</p>
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-card reveal">
+                <div class="pricing-icon" aria-hidden="true">🎟️</div>
+                <h3 class="pricing-name">Basic Access</h3>
+                <div class="pricing-price">$29</div>
+                <ul class="pricing-features">
+                    <li class="included">3-hour live webinar</li>
+                    <li class="included">Recording access</li>
+                    <li class="included">Q&amp;A participation</li>
+                    <li class="excluded">Template library</li>
+                    <li class="excluded">AI prompt pack</li>
+                    <li class="excluded">1-on-1 feedback</li>
+                </ul>
+                <a href="#register" class="pricing-btn-outline">Select Basic</a>
+            </div>
+            <div class="pricing-card featured reveal reveal-delay-1">
+                <div class="pricing-badge" aria-label="Most popular">🔥 Most Popular</div>
+                <div class="pricing-icon" aria-hidden="true">⚡</div>
+                <h3 class="pricing-name">Pro Access</h3>
+                <div class="pricing-price">$79</div>
+                <ul class="pricing-features">
+                    <li class="included">3-hour live webinar</li>
+                    <li class="included">Lifetime recording access</li>
+                    <li class="included">Q&amp;A participation</li>
+                    <li class="included">50+ template library</li>
+                    <li class="included">AI prompt pack (100+ prompts)</li>
+                    <li class="included">Certificate of completion</li>
+                    <li class="included">Private community access</li>
+                    <li class="included">Bonus: Landing page teardown</li>
+                </ul>
+                <a href="#register" class="pricing-btn">Get Pro Access</a>
+            </div>
+            <div class="pricing-card reveal reveal-delay-2">
+                <div class="pricing-icon" aria-hidden="true">💎</div>
+                <h3 class="pricing-name">VIP Access</h3>
+                <div class="pricing-price">$149</div>
+                <ul class="pricing-features">
+                    <li class="included">Everything in Pro</li>
+                    <li class="included">1-on-1 feedback session</li>
+                    <li class="included">Priority email support</li>
+                    <li class="included">Custom landing page review</li>
+                    <li class="included">Extended template library</li>
+                    <li class="included">Lifetime updates</li>
+                </ul>
+                <a href="#register" class="pricing-btn-outline">Go VIP</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section id="faq" aria-label="Frequently asked questions">
+        <div class="section-header reveal">
+            <span class="section-tag">FAQ</span>
+            <h2>Frequently Asked Questions</h2>
+            <p>Everything you need to know before joining.</p>
+        </div>
+        <div class="faq-container">
+            <div class="faq-item reveal">
+                <button class="faq-question" aria-expanded="false" aria-controls="faq1-answer" id="faq1-question">
+                    Do I need any coding experience?
+                    <span class="faq-arrow" aria-hidden="true">▼</span>
+                </button>
+                <div class="faq-answer" id="faq1-answer" role="region" aria-labelledby="faq1-question">
+                    Absolutely not! This webinar is designed for complete beginners. We start from the very basics and build up progressively. If you can use a web browser, you can create landing pages.
+                </div>
+            </div>
+            <div class="faq-item reveal reveal-delay-1">
+                <button class="faq-question" aria-expanded="false" aria-controls="faq2-answer" id="faq2-question">
+                    What tools will I need?
+                    <span class="faq-arrow" aria-hidden="true">▼</span>
+                </button>
+                <div class="faq-answer" id="faq2-answer" role="region" aria-labelledby="faq2-question">
+                    Just a laptop with a web browser and internet connection. We'll cover both free AI tools (ChatGPT, Claude) and free code editors (VS Code or even just Notepad). No paid software required!
+                </div>
+            </div>
+            <div class="faq-item reveal reveal-delay-2">
+                <button class="faq-question" aria-expanded="false" aria-controls="faq3-answer" id="faq3-question">
+                    Will the session be recorded?
+                    <span class="faq-arrow" aria-hidden="true">▼</span>
+                </button>
+                <div class="faq-answer" id="faq3-answer" role="region" aria-labelledby="faq3-question">
+                    Yes! All sessions are recorded and you get lifetime access to the recordings. Even if you can't attend live, you'll have full access to all the content.
+                </div>
+            </div>
+            <div class="faq-item reveal reveal-delay-3">
+                <button class="faq-question" aria-expanded="false" aria-controls="faq4-answer" id="faq4-question">
+                    What's a single-file landing page exactly?
+                    <span class="faq-arrow" aria-hidden="true">▼</span>
+                </button>
+                <div class="faq-answer" id="faq4-answer" role="region" aria-labelledby="faq4-question">
+                    It's a complete landing page where all the HTML, CSS, and JavaScript code lives in one .html file. No external dependencies, no hosting complexity — just one file you can share, open, or embed anywhere. Perfect for rapid prototyping and easy sharing.
+                </div>
+            </div>
+            <div class="faq-item reveal reveal-delay-4">
+                <button class="faq-question" aria-expanded="false" aria-controls="faq5-answer" id="faq5-question">
+                    Is there a money-back guarantee?
+                    <span class="faq-arrow" aria-hidden="true">▼</span>
+                </button>
+                <div class="faq-answer" id="faq5-answer" role="region" aria-labelledby="faq5-question">
+                    Yes! If you attend the webinar and feel you didn't learn anything valuable, just email us within 7 days for a full refund. No questions asked.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- REGISTRATION FORM -->
+    <section id="register" class="registration-section" aria-label="Registration form">
+        <div class="registration-card reveal">
+            <h2>🎟️ Reserve Your Spot</h2>
+            <p class="registration-subtitle">Limited to 500 live attendees. Secure your seat today!</p>
+            <form id="registration-form" novalidate>
+                <div class="form-group">
+                    <label for="full-name">Full Name</label>
+                    <input type="text" id="full-name" name="fullName" placeholder="Enter your full name" required autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="plan">Select Your Plan</label>
+                    <select id="plan" name="plan" required>
+                        <option value="">Choose a plan...</option>
+                        <option value="Basic">Basic — $29</option>
+                        <option value="Pro">Pro — $79</option>
+                        <option value="VIP">VIP — $149</option>
+                    </select>
+                </div>
+                <button type="submit" class="form-submit">🔒 Reserve My Seat Now</button>
+                <p class="form-note">🔒 Your information is secure. No spam, ever.</p>
+            </form>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer aria-label="Footer">
+        <div class="footer-logo"><span>⬡ LandingCraft</span></div>
+        <div class="footer-links">
+            <a href="#home">Home</a>
+            <a href="#curriculum">Curriculum</a>
+            <a href="#agenda">Agenda</a>
+            <a href="#instructor">Instructor</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
+            <a href="#register">Register</a>
+        </div>
+        <p class="footer-copyright">© 2026 LandingCraft Academy. All rights reserved. Made with 💜 for creators.</p>
+    </footer>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+    <script>
+        (function() {
+            // ============ FLOATING PARTICLES ============
+            const particlesContainer = document.getElementById('particles-container');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 4 + 2; // 2-6px
+                const posX = Math.random() * 100;
+                const duration = Math.random() * 8 + 6; // 6-14s
+                const delay = Math.random() * 10; // 0-10s
+                const opacity = Math.random() * 0.3 + 0.1;
+
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = posX + '%';
+                particle.style.animationDuration = duration + 's';
+                particle.style.animationDelay = delay + 's';
+                particle.style.opacity = opacity;
+                particle.style.background = `rgba(255, 255, 255, ${opacity})`;
+
+                particlesContainer.appendChild(particle);
+            }
+
+            // ============ NAVBAR SCROLL STATE ============
+            const navbar = document.getElementById('navbar');
+            function handleScroll() {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }
+            window.addEventListener('scroll', handleScroll);
+            handleScroll();
+
+            // ============ INTERSECTION OBSERVER FOR SCROLL REVEAL ============
+            const revealElements = document.querySelectorAll('.reveal');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+            revealElements.forEach(el => observer.observe(el));
+
+            // ============ COUNTDOWN TIMER ============
+            function getTargetDate() {
+                const now = new Date();
+                const target = new Date(now);
+                target.setDate(now.getDate() + 3);
+                target.setHours(18, 0, 0, 0);
+
+                // If target has already passed today, roll forward 7 days
+                if (target <= now) {
+                    target.setDate(target.getDate() + 7);
+                }
+                return target;
+            }
+
+            let targetDate = getTargetDate();
+
+            function updateCountdown() {
+                const now = new Date();
+                let diff = targetDate - now;
+
+                if (diff <= 0) {
+                    // Target passed, roll forward 7 days
+                    targetDate = new Date(targetDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    diff = targetDate - now;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById('countdown-days').textContent = String(days).padStart(2, '0');
+                document.getElementById('countdown-hours').textContent = String(hours).padStart(2, '0');
+                document.getElementById('countdown-minutes').textContent = String(minutes).padStart(2, '0');
+                document.getElementById('countdown-seconds').textContent = String(seconds).padStart(2, '0');
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+
+            // ============ FAQ ACCORDION ============
+            const faqItems = document.querySelectorAll('.faq-item');
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                question.addEventListener('click', () => {
+                    const isActive = item.classList.contains('active');
+
+                    // Close all items
+                    faqItems.forEach(otherItem => {
+                        otherItem.classList.remove('active');
+                        otherItem.querySelector('.faq-question').setAttribute('aria-expanded',
+                            'false');
+                    });
+
+                    // Toggle current item
+                    if (!isActive) {
+                        item.classList.add('active');
+                        question.setAttribute('aria-expanded', 'true');
+                    }
+                });
+            });
+
+            // ============ TOAST NOTIFICATION ============
+            const toast = document.getElementById('toast');
+            let toastTimeout;
+
+            function showToast(message, isError = false) {
+                toast.textContent = message;
+                toast.classList.remove('error');
+                if (isError) {
+                    toast.classList.add('error');
+                }
+                toast.classList.add('show');
+
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 5000);
+            }
+
+            // ============ FORM VALIDATION ============
+            const form = document.getElementById('registration-form');
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const nameInput = document.getElementById('full-name');
+                const emailInput = document.getElementById('email');
+                const planSelect = document.getElementById('plan');
+
+                const name = nameInput.value.trim();
+                const email = emailInput.value.trim();
+                const plan = planSelect.value;
+
+                // Validate name
+                if (!name) {
+                    showToast('⚠️ Please enter your full name.', true);
+                    nameInput.focus();
+                    return;
+                }
+
+                // Validate email
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!email || !emailRegex.test(email)) {
+                    showToast('⚠️ Please enter a valid email address.', true);
+                    emailInput.focus();
+                    return;
+                }
+
+                // Validate plan
+                if (!plan) {
+                    showToast('⚠️ Please select a plan.', true);
+                    planSelect.focus();
+                    return;
+                }
+
+                // Success
+                showToast(`✅ Thanks ${name}! Your ${plan} seat is reserved. Check your email at ${email}.`);
+
+                // Reset form
+                form.reset();
+            });
+
+            // ============ SMOOTH SCROLLING FOR ANCHOR LINKS ============
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        e.preventDefault();
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+
+            // ============ NAV CTA SMOOTH SCROLL ============
+            const navCta = document.querySelector('.nav-cta');
+            navCta.addEventListener('click', function(e) {
+                e.preventDefault();
+                const registerSection = document.getElementById('register');
+                if (registerSection) {
+                    registerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>

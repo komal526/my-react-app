@@ -1,0 +1,3954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prince Public School — Where Young Minds Rise, Lead & Inspire</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #1a2a6c;
+            --navy: #0f1a3a;
+            --navy-light: #1a2745;
+            --gold: #d4a843;
+            --gold-light: #e8c56d;
+            --gold-dark: #b8912e;
+            --white: #ffffff;
+            --off-white: #f8f7f4;
+            --cream: #f5efe6;
+            --beige: #f0e8d8;
+            --text-dark: #1a1a2e;
+            --text-muted: #5a5a6e;
+            --text-light: #e0e0e8;
+            --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 30px 80px rgba(0, 0, 0, 0.2);
+            --transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --transition-slow: 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --font-display: 'Playfair Display', serif;
+            --font-body: 'Inter', sans-serif;
+            --border-radius: 16px;
+            --border-radius-sm: 10px;
+            --border-radius-lg: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+            scroll-padding-top: 80px;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--text-dark);
+            background: var(--white);
+            line-height: 1.7;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        ::selection {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--off-white);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--navy);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .section-tag {
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--gold-dark);
+            margin-bottom: 16px;
+            position: relative;
+            padding-left: 35px;
+        }
+        .section-tag::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 25px;
+            height: 2px;
+            background: var(--gold);
+            transform: translateY(-50%);
+        }
+
+        .section-heading {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 700;
+            line-height: 1.25;
+            color: var(--navy);
+            margin-bottom: 20px;
+        }
+        .section-heading.light {
+            color: var(--white);
+        }
+
+        .section-subheading {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 640px;
+            line-height: 1.7;
+        }
+        .section-subheading.light {
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 32px;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border: none;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+        }
+        .btn-primary {
+            background: var(--gold);
+            color: var(--navy);
+            box-shadow: 0 8px 25px rgba(212, 168, 67, 0.35);
+        }
+        .btn-primary:hover {
+            background: var(--gold-light);
+            box-shadow: 0 12px 35px rgba(212, 168, 67, 0.5);
+            transform: translateY(-3px);
+        }
+        .btn-secondary {
+            background: transparent;
+            color: var(--white);
+            border: 2px solid var(--white);
+        }
+        .btn-secondary:hover {
+            background: var(--white);
+            color: var(--navy);
+            transform: translateY(-3px);
+        }
+        .btn-outline-dark {
+            background: transparent;
+            color: var(--navy);
+            border: 2px solid var(--navy);
+        }
+        .btn-outline-dark:hover {
+            background: var(--navy);
+            color: var(--white);
+            transform: translateY(-3px);
+        }
+
+        /* Reveal animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.85);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal-scale.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Stagger delays */
+        .stagger-1 {
+            transition-delay: 0.1s;
+        }
+        .stagger-2 {
+            transition-delay: 0.2s;
+        }
+        .stagger-3 {
+            transition-delay: 0.3s;
+        }
+        .stagger-4 {
+            transition-delay: 0.4s;
+        }
+        .stagger-5 {
+            transition-delay: 0.5s;
+        }
+
+        /* ==================== NAVBAR ==================== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 18px 0;
+            transition: var(--transition);
+            background: transparent;
+        }
+        .navbar.scrolled {
+            background: rgba(15, 26, 58, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 12px 0;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
+        }
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .navbar-logo {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .navbar-logo .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--navy);
+            font-weight: 900;
+        }
+        .navbar-links {
+            display: flex;
+            list-style: none;
+            gap: 28px;
+            align-items: center;
+        }
+        .navbar-links a {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: var(--transition);
+            position: relative;
+            text-transform: uppercase;
+        }
+        .navbar-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gold);
+            transition: var(--transition);
+        }
+        .navbar-links a:hover {
+            color: var(--white);
+        }
+        .navbar-links a:hover::after {
+            width: 100%;
+        }
+        .navbar-cta {
+            background: var(--gold);
+            color: var(--navy);
+            padding: 10px 22px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+        }
+        .navbar-cta:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212, 168, 67, 0.4);
+        }
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 5px;
+        }
+        .hamburger span {
+            width: 28px;
+            height: 2.5px;
+            background: var(--white);
+            border-radius: 2px;
+            transition: var(--transition);
+        }
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 26, 58, 0.98);
+            z-index: 999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px; /* reduced gap */
+            backdrop-filter: blur(20px);
+        }
+        .mobile-menu.active {
+            display: flex;
+        }
+        .mobile-menu a {
+            color: var(--white);
+            font-size: 1rem; /* smaller font */
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: var(--transition);
+        }
+        .mobile-menu a:hover {
+            color: var(--gold);
+        }
+        .mobile-menu .mobile-close {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            font-size: 2rem;
+            color: var(--white);
+            cursor: pointer;
+        }
+
+        /* ==================== HERO ==================== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            background: linear-gradient(135deg, rgba(15, 26, 58, 0.88), rgba(26, 42, 108, 0.78)), url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1920&q=80') center/cover no-repeat;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(212, 168, 67, 0.15), transparent 70%);
+            border-radius: 50%;
+            animation: heroGlow 8s ease-in-out infinite;
+        }
+        @keyframes heroGlow {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 1;
+            }
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 780px;
+            padding: 120px 0 80px;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(212, 168, 67, 0.15);
+            border: 1px solid rgba(212, 168, 67, 0.4);
+            padding: 8px 18px;
+            border-radius: 50px;
+            color: var(--gold-light);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+            animation: fadeInUp 1s ease 0.2s both;
+        }
+        .hero-badge i {
+            font-size: 0.9rem;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2.8rem, 6vw, 4.8rem);
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1.15;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s ease 0.4s both;
+        }
+        .hero h1 .highlight {
+            color: var(--gold);
+            position: relative;
+            display: inline-block;
+        }
+        .hero h1 .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gold);
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+        .hero-subtext {
+            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 600px;
+            line-height: 1.7;
+            margin-bottom: 35px;
+            animation: fadeInUp 1s ease 0.6s both;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            animation: fadeInUp 1s ease 0.8s both;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .hero-stats {
+            display: flex;
+            gap: 40px;
+            margin-top: 50px;
+            animation: fadeInUp 1s ease 1s both;
+        }
+        .hero-stat {
+            text-align: left;
+        }
+        .hero-stat-number {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold);
+            line-height: 1;
+        }
+        .hero-stat-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: bounceDown 2s ease-in-out infinite;
+        }
+        @keyframes bounceDown {
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            50% {
+                transform: translateX(-50%) translateY(10px);
+            }
+        }
+        .scroll-indicator i {
+            font-size: 1.2rem;
+            color: var(--gold);
+        }
+
+        /* ==================== SECTION 2: INTRO ==================== */
+        .intro-section {
+            padding: 100px 0;
+            background: var(--off-white);
+        }
+        .intro-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .intro-image {
+            position: relative;
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+        }
+        .intro-image img {
+            width: 100%;
+            height: 480px;
+            object-fit: cover;
+            transition: transform 0.8s ease;
+        }
+        .intro-image:hover img {
+            transform: scale(1.05);
+        }
+        .intro-image::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(to top, rgba(15, 26, 58, 0.6), transparent);
+        }
+        .intro-image-badge {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            z-index: 2;
+            background: var(--white);
+            padding: 15px 25px;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-md);
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 0.9rem;
+        }
+        .intro-image-badge i {
+            color: var(--gold);
+            margin-right: 8px;
+        }
+        .intro-text h2 {
+            font-size: clamp(1.8rem, 3vw, 2.6rem);
+        }
+        .intro-text p {
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+        .intro-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        .intro-feature-chip {
+            background: var(--white);
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(26, 42, 108, 0.1);
+            transition: var(--transition);
+        }
+        .intro-feature-chip:hover {
+            background: var(--primary);
+            color: var(--white);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        .intro-feature-chip i {
+            color: var(--gold);
+            margin-right: 6px;
+        }
+
+        /* ==================== SECTION 3: PRINCE DIFFERENCE ==================== */
+        .difference-section {
+            padding: 100px 0;
+            background: var(--navy);
+            position: relative;
+            overflow: hidden;
+        }
+        .difference-section::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(212, 168, 67, 0.08), transparent 70%);
+            border-radius: 50%;
+        }
+        .difference-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-top: 50px;
+        }
+        .diff-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            padding: 35px 25px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .diff-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gold);
+            transform: scaleX(0);
+            transition: var(--transition);
+            transform-origin: left;
+        }
+        .diff-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-10px) scale(1.03);
+            border-color: rgba(212, 168, 67, 0.4);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+        .diff-card:hover::after {
+            transform: scaleX(1);
+        }
+        .diff-icon {
+            width: 65px;
+            height: 65px;
+            background: rgba(212, 168, 67, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            font-size: 1.6rem;
+            color: var(--gold);
+            transition: var(--transition);
+        }
+        .diff-card:hover .diff-icon {
+            background: var(--gold);
+            color: var(--navy);
+            transform: scale(1.1) rotate(5deg);
+        }
+        .diff-card h3 {
+            color: var(--white);
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-family: var(--font-display);
+        }
+        .diff-card p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        /* ==================== SECTION 4: GLANCE ==================== */
+        .glance-section {
+            padding: 80px 0;
+            background: var(--white);
+        }
+        .glance-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            text-align: center;
+        }
+        .glance-item {
+            padding: 35px 20px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+        .glance-item:hover {
+            background: var(--off-white);
+            box-shadow: var(--shadow-sm);
+        }
+        .glance-number {
+            font-family: var(--font-display);
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+        .glance-number .plus {
+            color: var(--gold);
+        }
+        .glance-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        /* ==================== SECTION 5: PRINCIPAL ==================== */
+        .principal-section {
+            padding: 100px 0;
+            background: var(--off-white);
+        }
+        .principal-grid {
+            display: grid;
+            grid-template-columns: 0.9fr 1.1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .principal-image {
+            position: relative;
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+        }
+        .principal-image img {
+            width: 100%;
+            height: 520px;
+            object-fit: cover;
+        }
+        .principal-image::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30%;
+            background: linear-gradient(to top, rgba(15, 26, 58, 0.7), transparent);
+        }
+        .principal-quote {
+            font-family: var(--font-display);
+            font-style: italic;
+            font-size: 1.3rem;
+            color: var(--primary);
+            line-height: 1.6;
+            margin: 20px 0;
+            padding-left: 20px;
+            border-left: 4px solid var(--gold);
+        }
+        .principal-name {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 1.1rem;
+        }
+        .principal-designation {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* ==================== SECTION 6: VISION MISSION ==================== */
+        .vision-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--navy), var(--primary));
+            position: relative;
+            overflow: hidden;
+        }
+        .vision-section .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(212, 168, 67, 0.1);
+            animation: floatShape 10s ease-in-out infinite;
+        }
+        .vision-section .shape-1 {
+            width: 300px;
+            height: 300px;
+            top: -50px;
+            right: -50px;
+        }
+        .vision-section .shape-2 {
+            width: 200px;
+            height: 200px;
+            bottom: -30px;
+            left: -30px;
+            animation-delay: 3s;
+        }
+        @keyframes floatShape {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            50% {
+                transform: translate(20px, -20px) scale(1.1);
+            }
+        }
+        .vision-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            position: relative;
+            z-index: 2;
+        }
+        .vision-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--border-radius-lg);
+            padding: 45px 40px;
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+        }
+        .vision-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        .vision-card .icon-circle {
+            width: 60px;
+            height: 60px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--navy);
+            margin-bottom: 20px;
+        }
+        .vision-card h3 {
+            font-family: var(--font-display);
+            color: var(--white);
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        .vision-card p {
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.7;
+        }
+
+        /* ==================== SECTION 7: TIMELINE ==================== */
+        .timeline-section {
+            padding: 100px 0;
+            background: var(--white);
+        }
+        .timeline {
+            position: relative;
+            max-width: 900px;
+            margin: 50px auto 0;
+            padding: 20px 0;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, transparent, var(--gold), var(--primary), transparent);
+            transform: translateX(-50%);
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 50px;
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.7s ease;
+        }
+        .timeline-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .timeline-item:nth-child(odd) {
+            flex-direction: row;
+        }
+        .timeline-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: var(--gold);
+            border-radius: 50%;
+            border: 4px solid var(--white);
+            box-shadow: 0 0 20px rgba(212, 168, 67, 0.5);
+            z-index: 2;
+        }
+        .timeline-content {
+            width: 45%;
+            background: var(--off-white);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+        .timeline-content:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-5px);
+        }
+        .timeline-content .year {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--gold);
+            line-height: 1;
+        }
+        .timeline-content h4 {
+            font-family: var(--font-display);
+            color: var(--navy);
+            margin: 8px 0;
+            font-size: 1.2rem;
+        }
+        .timeline-content p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* ==================== SECTION 8: ACADEMIC EXCELLENCE ==================== */
+        .academic-section {
+            padding: 100px 0;
+            background: var(--off-white);
+        }
+        .academic-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 50px;
+        }
+        .academic-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 30px 25px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            cursor: pointer;
+            border: 1px solid rgba(26, 42, 108, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .academic-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gold);
+            transform: scaleX(0);
+            transition: var(--transition);
+            transform-origin: left;
+        }
+        .academic-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-8px);
+            border-color: rgba(212, 168, 67, 0.3);
+        }
+        .academic-card:hover::before {
+            transform: scaleX(1);
+        }
+        .academic-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(26, 42, 108, 0.08);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 1.4rem;
+            color: var(--primary);
+            transition: var(--transition);
+        }
+        .academic-card:hover .academic-icon {
+            background: var(--primary);
+            color: var(--white);
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 10px 25px rgba(26, 42, 108, 0.3);
+        }
+        .academic-card h4 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+        .academic-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* ==================== SECTION 9: CURRICULUM TABS ==================== */
+        .curriculum-section {
+            padding: 100px 0;
+            background: var(--white);
+        }
+        .tabs {
+            margin-top: 40px;
+        }
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        .tab-btn {
+            padding: 12px 24px;
+            background: var(--off-white);
+            border: 2px solid transparent;
+            border-radius: 50px;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+            box-shadow: 0 8px 20px rgba(26, 42, 108, 0.3);
+        }
+        .tab-btn:hover:not(.active) {
+            background: #e8e8f0;
+            transform: translateY(-2px);
+        }
+        .tab-panel {
+            display: none;
+            background: var(--off-white);
+            border-radius: var(--border-radius-lg);
+            padding: 40px;
+            box-shadow: var(--shadow-sm);
+            animation: fadeInPanel 0.5s ease;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+        @keyframes fadeInPanel {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .tab-panel h3 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--navy);
+            margin-bottom: 10px;
+        }
+        .tab-panel .tab-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .tab-panel .tab-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--white);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+        .tab-panel .tab-meta i {
+            color: var(--gold);
+        }
+
+        /* ==================== SECTION 10: TEACHERS ==================== */
+        .teachers-section {
+            padding: 100px 0;
+            background: var(--off-white);
+            overflow: hidden;
+        }
+        .teachers-carousel {
+            display: flex;
+            gap: 25px;
+            overflow-x: auto;
+            padding: 20px 5px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            cursor: grab;
+            scrollbar-width: none;
+        }
+        .teachers-carousel::-webkit-scrollbar {
+            display: none;
+        }
+        .teacher-card {
+            min-width: 260px;
+            scroll-snap-align: start;
+            background: var(--white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            position: relative;
+        }
+        .teacher-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-8px);
+        }
+        .teacher-card img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+        .teacher-card:hover img {
+            transform: scale(1.05);
+        }
+        .teacher-info {
+            padding: 20px;
+            text-align: center;
+        }
+        .teacher-info h4 {
+            font-family: var(--font-display);
+            color: var(--navy);
+            font-size: 1.1rem;
+        }
+        .teacher-info .dept {
+            color: var(--gold-dark);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .teacher-info .exp {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        .teacher-hover-info {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 26, 58, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            opacity: 0;
+            transition: var(--transition);
+            text-align: center;
+        }
+        .teacher-card:hover .teacher-hover-info {
+            opacity: 1;
+        }
+        .teacher-hover-info p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .teacher-hover-info h5 {
+            color: var(--gold);
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+        }
+
+        /* ==================== SECTION 11: CAMPUS ==================== */
+        .campus-section {
+            position: relative;
+            padding: 120px 0;
+            background: linear-gradient(rgba(15, 26, 58, 0.75), rgba(15, 26, 58, 0.75)), url('https://images.unsplash.com/photo-1562774053-701939374585?w=1920&q=80') center/cover fixed no-repeat;
+            text-align: center;
+            overflow: hidden;
+        }
+        .campus-floating-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .campus-float-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            padding: 25px 30px;
+            color: var(--white);
+            transition: var(--transition);
+            min-width: 170px;
+        }
+        .campus-float-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+        .campus-float-card i {
+            font-size: 1.8rem;
+            color: var(--gold);
+            margin-bottom: 10px;
+            display: block;
+        }
+        .campus-float-card span {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* ==================== SECTION 12: SMART CLASSROOMS ==================== */
+        .smart-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #0d1b3e, #1a2745);
+            position: relative;
+            overflow: hidden;
+        }
+        .smart-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(212, 168, 67, 0.02) 50px, rgba(212, 168, 67, 0.02) 51px);
+        }
+        .smart-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-top: 50px;
+            position: relative;
+            z-index: 2;
+        }
+        .smart-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(212, 168, 67, 0.2);
+            border-radius: var(--border-radius);
+            padding: 35px 25px;
+            text-align: center;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .smart-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(212, 168, 67, 0.05), transparent, rgba(212, 168, 67, 0.05), transparent);
+            animation: rotateGlow 6s linear infinite;
+        }
+        @keyframes rotateGlow {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .smart-card:hover {
+            border-color: rgba(212, 168, 67, 0.6);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+        .smart-card i {
+            font-size: 2.2rem;
+            color: var(--gold);
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+        .smart-card h4 {
+            color: var(--white);
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 2;
+        }
+        .smart-card p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            position: relative;
+            z-index: 2;
+            margin-top: 8px;
+        }
+
+        /* ==================== SECTION 13: LABS ==================== */
+        .labs-section {
+            padding: 100px 0;
+            background: var(--white);
+        }
+        .labs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .labs-image {
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+        }
+        .labs-image img {
+            width: 100%;
+            height: 420px;
+            object-fit: cover;
+        }
+        .labs-list {
+            list-style: none;
+        }
+        .labs-list li {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 20px;
+            background: var(--off-white);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 12px;
+            transition: var(--transition);
+            font-weight: 500;
+            color: var(--navy);
+            cursor: default;
+        }
+        .labs-list li:hover {
+            background: var(--primary);
+            color: var(--white);
+            transform: translateX(8px);
+            box-shadow: var(--shadow-md);
+        }
+        .labs-list li i {
+            color: var(--gold);
+            font-size: 1.3rem;
+            width: 30px;
+            text-align: center;
+        }
+        .labs-list li:hover i {
+            color: var(--gold-light);
+        }
+
+        /* ==================== SECTION 14: LIBRARY ==================== */
+        .library-section {
+            padding: 100px 0;
+            background: var(--cream);
+        }
+        .library-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: center;
+        }
+        .library-image {
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+        }
+        .library-image img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            transition: transform 0.7s ease;
+        }
+        .library-image:hover img {
+            transform: scale(1.04);
+        }
+        .library-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        .library-feature {
+            background: var(--white);
+            padding: 15px 22px;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-sm);
+            font-weight: 600;
+            color: var(--primary);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .library-feature:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-5px);
+        }
+        .library-feature i {
+            color: var(--gold-dark);
+            font-size: 1.2rem;
+        }
+
+        /* ==================== SECTION 15: STUDENT LIFE ==================== */
+        .student-life-section {
+            padding: 120px 0;
+            background: var(--navy);
+            position: relative;
+            overflow: hidden;
+        }
+        .student-life-photos {
+            display: flex;
+            gap: 25px;
+            margin-top: 50px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .student-photo {
+            width: 220px;
+            height: 280px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+        .student-photo:hover {
+            transform: translateY(-15px) scale(1.03);
+            box-shadow: var(--shadow-xl);
+        }
+        .student-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .student-photo .photo-label {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(15, 26, 58, 0.85);
+            padding: 8px 16px;
+            border-radius: 50px;
+            color: var(--white);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* ==================== SECTION 16: CLUBS BENTO ==================== */
+        .clubs-section {
+            padding: 100px 0;
+            background: var(--off-white);
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto auto;
+            gap: 20px;
+            margin-top: 50px;
+        }
+        .bento-card {
+            border-radius: var(--border-radius);
+            padding: 35px 30px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .bento-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+        .bento-card.large {
+            grid-column: span 2;
+            grid-row: span 1;
+        }
+        .bento-card h4 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        .bento-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .bento-card i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        .bento-card.color-1 {
+            background: #fff;
+            color: var(--navy);
+        }
+        .bento-card.color-1 i {
+            color: var(--primary);
+        }
+        .bento-card.color-2 {
+            background: var(--navy);
+            color: var(--white);
+        }
+        .bento-card.color-2 p {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .bento-card.color-2 i {
+            color: var(--gold);
+        }
+        .bento-card.color-3 {
+            background: #fff;
+            color: var(--navy);
+        }
+        .bento-card.color-3 i {
+            color: var(--gold-dark);
+        }
+        .bento-card.color-4 {
+            background: var(--primary);
+            color: var(--white);
+        }
+        .bento-card.color-4 p {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .bento-card.color-4 i {
+            color: var(--gold);
+        }
+
+        /* ==================== SECTION 17: ACHIEVEMENTS ==================== */
+        .achievements-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #0a1525, #0f1a3a);
+            position: relative;
+            overflow: hidden;
+        }
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-top: 50px;
+            position: relative;
+            z-index: 2;
+        }
+        .achievement-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(212, 168, 67, 0.25);
+            border-radius: var(--border-radius);
+            padding: 30px 20px;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .achievement-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(212, 168, 67, 0.5);
+            transform: translateY(-8px);
+        }
+        .achievement-item i {
+            font-size: 2.5rem;
+            color: var(--gold);
+            margin-bottom: 15px;
+        }
+        .achievement-item h4 {
+            color: var(--white);
+            font-family: var(--font-display);
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        .achievement-item p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+        }
+
+        /* ==================== SECTION 18: AWARDS ==================== */
+        .awards-section {
+            padding: 80px 0;
+            background: var(--white);
+            overflow: hidden;
+        }
+        .awards-carousel {
+            display: flex;
+            gap: 30px;
+            overflow-x: auto;
+            padding: 20px 5px;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+        }
+        .awards-carousel::-webkit-scrollbar {
+            display: none;
+        }
+        .award-card {
+            min-width: 220px;
+            scroll-snap-align: start;
+            background: linear-gradient(135deg, #fffbe6, #fff8d6);
+            border: 1px solid rgba(212, 168, 67, 0.3);
+            border-radius: var(--border-radius);
+            padding: 35px 25px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .award-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(212, 168, 67, 0.1), transparent);
+            animation: shineSweep 3s ease-in-out infinite;
+        }
+        @keyframes shineSweep {
+            0%,
+            100% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            50% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+        .award-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+            border-color: rgba(212, 168, 67, 0.6);
+        }
+        .award-card i {
+            font-size: 2.2rem;
+            color: var(--gold);
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 2;
+        }
+        .award-card h4 {
+            font-family: var(--font-display);
+            color: var(--navy);
+            position: relative;
+            z-index: 2;
+        }
+        .award-card p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ==================== SECTION 19: EVENTS ==================== */
+        .events-section {
+            padding: 100px 0;
+            background: var(--off-white);
+        }
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 50px;
+        }
+        .event-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 30px 25px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(26, 42, 108, 0.05);
+        }
+        .event-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-8px);
+            border-color: rgba(212, 168, 67, 0.4);
+        }
+        .event-card .event-date {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--white);
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .event-card i {
+            font-size: 2rem;
+            color: var(--gold);
+            margin-bottom: 12px;
+        }
+        .event-card h4 {
+            font-family: var(--font-display);
+            color: var(--navy);
+            font-size: 1.05rem;
+        }
+        .event-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* ==================== SECTION 20: GALLERY (5 columns, 10 images) ==================== */
+        .gallery-section {
+            padding: 100px 0;
+            background: var(--white);
+        }
+        .gallery-masonry {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-auto-rows: 180px;
+            gap: 15px;
+            margin-top: 50px;
+        }
+        .gallery-item {
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+        .gallery-item:hover img {
+            transform: scale(1.08);
+        }
+        .gallery-item .gallery-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 26, 58, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+        }
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+        .gallery-overlay span {
+            color: var(--white);
+            font-weight: 600;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .lightbox.active {
+            display: flex;
+        }
+        .lightbox img {
+            max-width: 85%;
+            max-height: 85%;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 2.5rem;
+            color: var(--white);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .lightbox-close:hover {
+            color: var(--gold);
+            transform: scale(1.2);
+        }
+
+        /* ==================== SECTION 21: TESTIMONIALS ==================== */
+        .testimonials-section {
+            padding: 100px 0;
+            background: var(--cream);
+        }
+        .testimonial-carousel {
+            max-width: 750px;
+            margin: 40px auto 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .testimonial-slide {
+            display: none;
+            text-align: center;
+            animation: fadeInPanel 0.6s ease;
+        }
+        .testimonial-slide.active {
+            display: block;
+        }
+        .testimonial-quote {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-style: italic;
+            color: var(--navy);
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        .testimonial-quote i {
+            color: var(--gold);
+            font-size: 1.2rem;
+            margin: 0 5px;
+        }
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        .testimonial-author img {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: var(--shadow-sm);
+        }
+        .testimonial-author .name {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 1rem;
+        }
+        .testimonial-author .role {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .testimonial-nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        .testimonial-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ddd;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+        .testimonial-dot.active {
+            background: var(--gold);
+            transform: scale(1.3);
+        }
+
+        /* ==================== SECTION 22: ALUMNI ==================== */
+        .alumni-section {
+            padding: 100px 0;
+            background: var(--navy);
+            position: relative;
+            overflow: hidden;
+        }
+        .alumni-section::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(212, 168, 67, 0.1), transparent 70%);
+            border-radius: 50%;
+        }
+        .alumni-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 50px;
+            position: relative;
+            z-index: 2;
+        }
+        .alumni-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--border-radius);
+            padding: 30px 25px;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .alumni-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(212, 168, 67, 0.4);
+            transform: translateY(-8px);
+        }
+        .alumni-card img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 15px;
+            border: 3px solid var(--gold);
+        }
+        .alumni-card h4 {
+            color: var(--white);
+            font-family: var(--font-display);
+        }
+        .alumni-card .grad-year {
+            color: var(--gold);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .alumni-card .profession {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        /* ==================== SECTION 23: ADMISSIONS ==================== */
+        .admissions-section {
+            padding: 100px 0;
+            background: var(--white);
+        }
+        .admissions-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin: 50px 0;
+        }
+        .admission-step {
+            text-align: center;
+            padding: 35px 25px;
+            background: var(--off-white);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            position: relative;
+        }
+        .admission-step:hover {
+            background: var(--primary);
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+        .admission-step:hover .step-number,
+        .admission-step:hover h4,
+        .admission-step:hover p {
+            color: var(--white);
+        }
+        .admission-step .step-number {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--gold);
+            line-height: 1;
+            transition: var(--transition);
+        }
+        .admission-step h4 {
+            font-family: var(--font-display);
+            color: var(--navy);
+            margin: 12px 0 8px;
+            transition: var(--transition);
+        }
+        .admission-step p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        .admissions-cta {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        /* ==================== SECTION 24: WHY PARENTS ==================== */
+        .why-section {
+            padding: 100px 0;
+            background: var(--off-white);
+        }
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-top: 50px;
+        }
+        .why-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 30px 28px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            text-align: center;
+            border: 1px solid rgba(26, 42, 108, 0.05);
+        }
+        .why-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-6px);
+            border-color: rgba(212, 168, 67, 0.3);
+        }
+        .why-card i {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            transition: var(--transition);
+        }
+        .why-card:hover i {
+            color: var(--gold);
+            transform: scale(1.15);
+        }
+        .why-card h4 {
+            font-family: var(--font-display);
+            color: var(--navy);
+            font-size: 1.05rem;
+            margin-bottom: 8px;
+        }
+        .why-card p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* ==================== SECTION 25: FAQ ==================== */
+        .faq-section {
+            padding: 100px 0;
+            background: var(--white);
+        }
+        .faq-header {
+            text-align: center;
+            max-width: 650px;
+            margin: 0 auto 40px;
+        }
+        .faq-header .section-tag {
+            padding-left: 0;
+        }
+        .faq-header .section-tag::before {
+            display: none;
+        }
+        .faq-list {
+            max-width: 750px;
+            margin: 0 auto;
+        }
+        .faq-item {
+            border: 1px solid #e8e8e8;
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .faq-item:hover {
+            border-color: var(--gold);
+        }
+        .faq-question {
+            padding: 20px 25px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--navy);
+            background: var(--off-white);
+            transition: var(--transition);
+            gap: 15px;
+        }
+        .faq-question:hover {
+            background: #f0f0f5;
+        }
+        .faq-question .faq-icon {
+            flex-shrink: 0;
+            color: var(--gold);
+            transition: var(--transition);
+            font-size: 1.1rem;
+        }
+        .faq-item.active .faq-icon {
+            transform: rotate(45deg);
+            color: var(--navy);
+        }
+        .faq-answer {
+            padding: 0 25px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease, padding 0.5s ease;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+        .faq-item.active .faq-answer {
+            max-height: 200px;
+            padding: 0 25px 20px;
+        }
+
+        /* ==================== SECTION 26: CONTACT ==================== */
+        .contact-section {
+            padding: 100px 0;
+            background: var(--off-white);
+        }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: start;
+        }
+        .contact-details {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .contact-item {
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+        }
+        .contact-item .contact-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold);
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .contact-item h5 {
+            font-family: var(--font-display);
+            color: var(--navy);
+            font-size: 1rem;
+            margin-bottom: 3px;
+        }
+        .contact-item p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .contact-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .contact-map {
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            position: relative;
+            height: 400px;
+            background: linear-gradient(135deg, #1a2745, #0f1a3a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+        }
+        .contact-map .map-badge {
+            background: var(--white);
+            padding: 15px 25px;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            color: var(--navy);
+        }
+        .contact-map .map-badge i {
+            color: var(--gold);
+            font-size: 1.5rem;
+        }
+        .contact-map .map-grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(212, 168, 67, 0.08) 40px, rgba(212, 168, 67, 0.08) 41px), repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(212, 168, 67, 0.08) 40px, rgba(212, 168, 67, 0.08) 41px);
+            pointer-events: none;
+        }
+
+        /* ==================== SECTION 27: FINAL CTA ==================== */
+        .final-cta {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(rgba(15, 26, 58, 0.82), rgba(15, 26, 58, 0.82)), url('https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=1920&q=80') center/cover fixed no-repeat;
+            position: relative;
+            padding: 80px 0;
+        }
+        .final-cta h2 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4.5vw, 3.5rem);
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1.25;
+            margin-bottom: 20px;
+        }
+        .final-cta p {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 1.1rem;
+            max-width: 550px;
+            margin: 0 auto 35px;
+            line-height: 1.7;
+        }
+
+        /* ==================== FOOTER ==================== */
+        .footer {
+            background: var(--navy);
+            padding: 70px 0 25px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        .footer-brand .navbar-logo {
+            margin-bottom: 15px;
+        }
+        .footer-brand p {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.55);
+        }
+        .footer-col h5 {
+            font-family: var(--font-display);
+            color: var(--white);
+            font-size: 1rem;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+        .footer-col ul {
+            list-style: none;
+        }
+        .footer-col ul li {
+            margin-bottom: 8px;
+        }
+        .footer-col ul li a {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+        .footer-col ul li a:hover {
+            color: var(--gold);
+            padding-left: 5px;
+        }
+        .footer-social {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            transition: var(--transition);
+            font-size: 1rem;
+        }
+        .footer-social a:hover {
+            background: var(--gold);
+            color: var(--navy);
+            transform: translateY(-3px);
+        }
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 1024px) {
+            .difference-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .academic-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .events-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .smart-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .achievement-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .alumni-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .why-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .admissions-steps {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .gallery-masonry {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .bento-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .bento-card.large {
+                grid-column: span 2;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+            }
+            .timeline::before {
+                left: 20px;
+            }
+            .timeline-item,
+            .timeline-item:nth-child(even) {
+                flex-direction: row;
+                padding-left: 50px;
+            }
+            .timeline-dot {
+                left: 20px;
+            }
+            .timeline-content {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 20px;
+            }
+            .navbar-links {
+                display: none;
+            }
+            .navbar-cta {
+                display: none;
+            }
+            .hamburger {
+                display: flex;
+            }
+            .hero-stats {
+                gap: 20px;
+                flex-wrap: wrap;
+            }
+            .intro-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            .principal-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            .labs-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            .library-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            .vision-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .difference-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            .glance-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            .academic-grid {
+                grid-template-columns: 1fr;
+            }
+            .events-grid {
+                grid-template-columns: 1fr;
+            }
+            .smart-grid {
+                grid-template-columns: 1fr;
+            }
+            .achievement-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            .alumni-grid {
+                grid-template-columns: 1fr;
+            }
+            .why-grid {
+                grid-template-columns: 1fr;
+            }
+            .admissions-steps {
+                grid-template-columns: 1fr;
+            }
+            .gallery-masonry {
+                grid-template-columns: repeat(2, 1fr);
+                grid-auto-rows: 160px;
+            }
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+            .bento-card.large {
+                grid-column: span 1;
+            }
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+            .section-heading {
+                font-size: 1.8rem;
+            }
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            .teacher-card {
+                min-width: 220px;
+            }
+            .campus-float-card {
+                min-width: 130px;
+                padding: 18px 20px;
+            }
+            .student-photo {
+                width: 150px;
+                height: 200px;
+            }
+            .contact-map {
+                height: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .difference-grid {
+                grid-template-columns: 1fr;
+            }
+            .glance-grid {
+                grid-template-columns: 1fr;
+            }
+            .gallery-masonry {
+                grid-template-columns: 1fr;
+                grid-auto-rows: 160px;
+            }
+            .achievement-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-buttons {
+                flex-direction: column;
+            }
+            .hero-stats {
+                gap: 15px;
+            }
+            .hero-stat-number {
+                font-size: 1.4rem;
+            }
+            .tab-btn {
+                padding: 10px 16px;
+                font-size: 0.8rem;
+            }
+            .tab-panel {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== NAVBAR ==================== -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <!-- Only logo icon, no text -->
+            <a href="#" class="navbar-logo">
+                <span class="logo-icon">P</span>
+            </a>
+            <ul class="navbar-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#academics">Academics</a></li>
+                <li><a href="#campus">Campus</a></li>
+                <!-- Student Life removed from nav -->
+                <li><a href="#achievements">Achievements</a></li>
+                <li><a href="#admissions">Admissions</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <button class="navbar-cta" onclick="document.getElementById('admissions').scrollIntoView({behavior:'smooth'})">Admission Enquiry</button>
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+        <span class="mobile-close" id="mobileClose">&times;</span>
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#academics">Academics</a>
+        <a href="#campus">Campus</a>
+        <!-- Student Life removed from mobile menu -->
+        <a href="#achievements">Achievements</a>
+        <a href="#admissions">Admissions</a>
+        <a href="#contact">Contact</a>
+        <button class="btn btn-primary" style="margin-top:15px;" onclick="document.getElementById('mobileMenu').classList.remove('active');document.getElementById('admissions').scrollIntoView({behavior:'smooth'})">ADMISSION ENQUIRY</button>
+    </div>
+
+    <!-- ==================== SECTION 1: HERO ==================== -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-graduation-cap"></i> Admissions Open 2026-27
+                </div>
+                <h1>Where Young Minds <span class="highlight">Rise, Lead & Inspire</span></h1>
+                <p class="hero-subtext">Prince Public School — nurturing knowledge, character and confidence for a brighter tomorrow. A legacy of excellence in education since 1996.</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">Explore Our School <i class="fas fa-arrow-right"></i></button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('admissions').scrollIntoView({behavior:'smooth'})">Admissions Open</button>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-number">Since 1996</div>
+                        <div class="hero-stat-label">Established</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number">1000+</div>
+                        <div class="hero-stat-label">Students</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number">25+</div>
+                        <div class="hero-stat-label">Years of Excellence</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <span>Scroll</span>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 2: INTRO ==================== -->
+    <section class="intro-section" id="about">
+        <div class="container">
+            <div class="intro-grid">
+                <div class="intro-image reveal-left">
+                    <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&q=80" alt="Prince Public School Campus" loading="lazy">
+                    <div class="intro-image-badge">
+                        <i class="fas fa-star"></i> Rated among top schools in the region
+                    </div>
+                </div>
+                <div class="intro-text reveal-right">
+                    <span class="section-tag">Welcome to Prince Public School</span>
+                    <h2 class="section-heading">More Than A School. A Foundation For Life.</h2>
+                    <p>At Prince Public School, we believe education is not just about academics — it's about building character, nurturing curiosity, and developing the confidence to lead. Our holistic approach blends rigorous curriculum with creative exploration, sports, values, and real-world learning.</p>
+                    <p>With over 25 years of educational excellence, we have shaped thousands of young minds into responsible citizens, critical thinkers, and compassionate leaders who make a difference in the world.</p>
+                    <div class="intro-features">
+                        <span class="intro-feature-chip"><i class="fas fa-check-circle"></i> CBSE Curriculum</span>
+                        <span class="intro-feature-chip"><i class="fas fa-check-circle"></i> Experienced Faculty</span>
+                        <span class="intro-feature-chip"><i class="fas fa-check-circle"></i> Modern Infrastructure</span>
+                        <span class="intro-feature-chip"><i class="fas fa-check-circle"></i> Sports & Arts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 3: PRINCE DIFFERENCE ==================== -->
+    <section class="difference-section">
+        <div class="container">
+            <div class="reveal">
+                <span class="section-tag" style="color:var(--gold-light);">The Prince Advantage</span>
+                <h2 class="section-heading light">What Makes Prince Different?</h2>
+                <p class="section-subheading light">We go beyond textbooks to create an environment where every child discovers their unique potential.</p>
+            </div>
+            <div class="difference-grid">
+                <div class="diff-card reveal stagger-1">
+                    <div class="diff-icon"><i class="fas fa-brain"></i></div>
+                    <h3>Academic Excellence</h3>
+                    <p>Rigorous curriculum with consistent outstanding results.</p>
+                </div>
+                <div class="diff-card reveal stagger-2">
+                    <div class="diff-icon"><i class="fas fa-heart"></i></div>
+                    <h3>Character Building</h3>
+                    <p>Values-based education that shapes ethical leaders.</p>
+                </div>
+                <div class="diff-card reveal stagger-3">
+                    <div class="diff-icon"><i class="fas fa-rocket"></i></div>
+                    <h3>Future-Ready Learning</h3>
+                    <p>Technology-integrated education for tomorrow's world.</p>
+                </div>
+                <div class="diff-card reveal stagger-4">
+                    <div class="diff-icon"><i class="fas fa-futbol"></i></div>
+                    <h3>Sports & Creativity</h3>
+                    <p>Holistic development through sports and arts.</p>
+                </div>
+                <div class="diff-card reveal stagger-5">
+                    <div class="diff-icon"><i class="fas fa-user-friends"></i></div>
+                    <h3>Individual Attention</h3>
+                    <p>Personalized care for every student's growth.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 4: GLANCE ==================== -->
+    <section class="glance-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">School at a Glance</span>
+                <h2 class="section-heading">Numbers That Speak</h2>
+            </div>
+            <div class="glance-grid">
+                <div class="glance-item reveal stagger-1">
+                    <div class="glance-number"><span class="counter" data-target="25">0</span><span class="plus">+</span></div>
+                    <div class="glance-label">Years of Excellence</div>
+                </div>
+                <div class="glance-item reveal stagger-2">
+                    <div class="glance-number"><span class="counter" data-target="1000">0</span><span class="plus">+</span></div>
+                    <div class="glance-label">Students Enrolled</div>
+                </div>
+                <div class="glance-item reveal stagger-3">
+                    <div class="glance-number"><span class="counter" data-target="50">0</span><span class="plus">+</span></div>
+                    <div class="glance-label">Expert Educators</div>
+                </div>
+                <div class="glance-item reveal stagger-4">
+                    <div class="glance-number"><span class="counter" data-target="100">0</span><span class="plus">+</span></div>
+                    <div class="glance-label">Achievements & Awards</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 5: PRINCIPAL ==================== -->
+    <section class="principal-section">
+        <div class="container">
+            <div class="principal-grid">
+                <div class="principal-image reveal-left">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80" alt="Principal of Prince Public School" loading="lazy">
+                </div>
+                <div class="reveal-right">
+                    <span class="section-tag">Principal's Message</span>
+                    <h2 class="section-heading">Education Begins With A Vision</h2>
+                    <div class="principal-quote">"Every child carries within them a spark of genius. Our role as educators is to provide the right environment — the right fuel — for that spark to become a flame that lights up the world."</div>
+                    <p style="color:var(--text-muted);margin-bottom:20px;">Dear Parents and Students, it is with immense pride that I welcome you to Prince Public School. For over two decades, we have been committed to providing an education that goes beyond academics — one that builds character, fosters creativity, and instills a lifelong love for learning. Our dedicated faculty, modern infrastructure, and values-driven approach ensure that every child receives the individual attention they deserve.</p>
+                    <p style="color:var(--text-muted);">We believe in partnership between school and home, and together, we can help your child discover their unique path to success.</p>
+                    <p style="margin-top:20px;"><strong class="principal-name">Dr. Rajesh Sharma</strong><br><span class="principal-designation">Principal, Prince Public School</span></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 6: VISION MISSION ==================== -->
+    <section class="vision-section">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="container">
+            <div class="vision-grid">
+                <div class="vision-card reveal-left">
+                    <div class="icon-circle"><i class="fas fa-eye"></i></div>
+                    <h3>Our Vision</h3>
+                    <p>To create a transformative learning environment that empowers every student to become a confident, compassionate, and creative global citizen — ready to lead with integrity and purpose in a rapidly changing world. We envision a future where our students are not just successful professionals but also responsible human beings who contribute meaningfully to society.</p>
+                </div>
+                <div class="vision-card reveal-right">
+                    <div class="icon-circle"><i class="fas fa-bullseye"></i></div>
+                    <h3>Our Mission</h3>
+                    <p>To deliver a world-class education that combines academic rigor with character development, creativity, and critical thinking. We are committed to nurturing each child's unique talents, fostering a love for lifelong learning, and building strong ethical foundations. Through innovative teaching methods and holistic development programs, we prepare students for success in every sphere of life.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 7: TIMELINE ==================== -->
+    <section class="timeline-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Our Journey</span>
+                <h2 class="section-heading">A Journey of Excellence</h2>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="year">1996</div>
+                        <h4>The Foundation</h4>
+                        <p>Prince Public School was established with just 50 students and 5 teachers, built on a vision of accessible quality education.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="year">2005</div>
+                        <h4>Growth & Expansion</h4>
+                        <p>Campus expanded with new blocks, science labs, and a library. Student strength crossed 400 with 20+ educators.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="year">2012</div>
+                        <h4>Academic Excellence</h4>
+                        <p>Consistently outstanding CBSE board results. First batch of students achieving top ranks in state-level examinations.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="year">2018</div>
+                        <h4>Modern Learning</h4>
+                        <p>Introduction of smart classrooms, digital learning resources, and STEM education programs across all grades.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="year">2024</div>
+                        <h4>Future Vision</h4>
+                        <p>Expanding into holistic education with enhanced sports facilities, performing arts center, and global learning partnerships.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 8: ACADEMIC EXCELLENCE ==================== -->
+    <section class="academic-section" id="academics">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Academics at Prince</span>
+                <h2 class="section-heading">Learning That Goes Beyond The Classroom</h2>
+                <p class="section-subheading" style="margin:0 auto;">Our curriculum is designed to ignite curiosity, build critical thinking, and prepare students for the future.</p>
+            </div>
+            <div class="academic-grid">
+                <div class="academic-card reveal stagger-1">
+                    <div class="academic-icon"><i class="fas fa-puzzle-piece"></i></div>
+                    <h4>Foundational Learning</h4>
+                    <p>Strong basics in literacy and numeracy that set the stage for lifelong learning.</p>
+                </div>
+                <div class="academic-card reveal stagger-2">
+                    <div class="academic-icon"><i class="fas fa-flask"></i></div>
+                    <h4>STEM Education</h4>
+                    <p>Hands-on science, technology, engineering, and math experiences.</p>
+                </div>
+                <div class="academic-card reveal stagger-3">
+                    <div class="academic-icon"><i class="fas fa-laptop-code"></i></div>
+                    <h4>Digital Learning</h4>
+                    <p>Technology-integrated lessons with smart boards and digital resources.</p>
+                </div>
+                <div class="academic-card reveal stagger-4">
+                    <div class="academic-icon"><i class="fas fa-lightbulb"></i></div>
+                    <h4>Experiential Learning</h4>
+                    <p>Learning by doing through projects, field trips, and real-world applications.</p>
+                </div>
+                <div class="academic-card reveal stagger-1">
+                    <div class="academic-icon"><i class="fas fa-brain"></i></div>
+                    <h4>Critical Thinking</h4>
+                    <p>Developing analytical and problem-solving skills for the 21st century.</p>
+                </div>
+                <div class="academic-card reveal stagger-2">
+                    <div class="academic-icon"><i class="fas fa-globe-asia"></i></div>
+                    <h4>Global Awareness</h4>
+                    <p>Understanding diverse cultures, perspectives, and global challenges.</p>
+                </div>
+                <div class="academic-card reveal stagger-3">
+                    <div class="academic-icon"><i class="fas fa-palette"></i></div>
+                    <h4>Creative Arts</h4>
+                    <p>Exploring creativity through visual arts, music, dance, and drama.</p>
+                </div>
+                <div class="academic-card reveal stagger-4">
+                    <div class="academic-icon"><i class="fas fa-handshake"></i></div>
+                    <h4>Life Skills</h4>
+                    <p>Building communication, collaboration, and emotional intelligence.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 9: CURRICULUM TABS ==================== -->
+    <section class="curriculum-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Classes & Curriculum</span>
+                <h2 class="section-heading">Programs For Every Stage</h2>
+                <p class="section-subheading" style="margin:0 auto;">Tailored learning journeys for each phase of a child's development.</p>
+            </div>
+            <div class="tabs">
+                <div class="tab-buttons reveal">
+                    <button class="tab-btn active" data-tab="pre-primary">Pre-Primary</button>
+                    <button class="tab-btn" data-tab="primary">Primary</button>
+                    <button class="tab-btn" data-tab="middle">Middle School</button>
+                    <button class="tab-btn" data-tab="secondary">Secondary</button>
+                    <button class="tab-btn" data-tab="senior">Senior Secondary</button>
+                </div>
+                <div class="tab-panel active" id="pre-primary">
+                    <h3>Pre-Primary (Nursery - KG)</h3>
+                    <div class="tab-meta">
+                        <span><i class="fas fa-book"></i> Phonics & Literacy</span>
+                        <span><i class="fas fa-calculator"></i> Number Skills</span>
+                        <span><i class="fas fa-paint-brush"></i> Creative Play</span>
+                        <span><i class="fas fa-music"></i> Music & Movement</span>
+                    </div>
+                    <p style="color:var(--text-muted);">Our pre-primary program focuses on play-based learning that develops foundational literacy, numeracy, social skills, and motor abilities in a nurturing environment. Children learn through stories, songs, art, and guided exploration.</p>
+                </div>
+                <div class="tab-panel" id="primary">
+                    <h3>Primary (Classes 1 - 5)</h3>
+                    <div class="tab-meta">
+                        <span><i class="fas fa-language"></i> English, Hindi, Maths</span>
+                        <span><i class="fas fa-flask"></i> Science Explorations</span>
+                        <span><i class="fas fa-globe-asia"></i> Social Studies</span>
+                        <span><i class="fas fa-running"></i> Physical Education</span>
+                    </div>
+                    <p style="color:var(--text-muted);">Primary years build strong academic foundations with an emphasis on reading, writing, numeracy, and inquiry-based learning. We foster curiosity and develop independent learning habits through interactive and hands-on activities.</p>
+                </div>
+                <div class="tab-panel" id="middle">
+                    <h3>Middle School (Classes 6 - 8)</h3>
+                    <div class="tab-meta">
+                        <span><i class="fas fa-atom"></i> Physics & Chemistry</span>
+                        <span><i class="fas fa-dna"></i> Biology</span>
+                        <span><i class="fas fa-square-root-variable"></i> Algebra & Geometry</span>
+                        <span><i class="fas fa-laptop-code"></i> Computer Science</span>
+                    </div>
+                    <p style="color:var(--text-muted);">The middle school curriculum deepens subject knowledge while encouraging independent research, critical thinking, and collaborative projects. Students begin to discover their academic interests and passions.</p>
+                </div>
+                <div class="tab-panel" id="secondary">
+                    <h3>Secondary (Classes 9 - 10)</h3>
+                    <div class="tab-meta">
+                        <span><i class="fas fa-certificate"></i> CBSE Board Prep</span>
+                        <span><i class="fas fa-flask"></i> Science Stream</span>
+                        <span><i class="fas fa-chart-line"></i> Mathematics</span>
+                        <span><i class="fas fa-book-open"></i> Social Sciences</span>
+                    </div>
+                    <p style="color:var(--text-muted);">Our secondary program prepares students for CBSE board examinations with rigorous academic coaching, regular assessments, and personalized mentoring. We focus on conceptual clarity and exam readiness.</p>
+                </div>
+                <div class="tab-panel" id="senior">
+                    <h3>Senior Secondary (Classes 11 - 12)</h3>
+                    <div class="tab-meta">
+                        <span><i class="fas fa-flask"></i> Science (PCM/PCB)</span>
+                        <span><i class="fas fa-chart-bar"></i> Commerce</span>
+                        <span><i class="fas fa-landmark"></i> Humanities</span>
+                        <span><i class="fas fa-graduation-cap"></i> Career Guidance</span>
+                    </div>
+                    <p style="color:var(--text-muted);">Senior secondary offers specialized streams with expert faculty, competitive exam preparation, and career counseling. We guide students toward their higher education goals with confidence.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 10: TEACHERS ==================== -->
+    <section class="teachers-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Our Faculty</span>
+                <h2 class="section-heading">Dedicated Educators. Inspiring Mentors.</h2>
+                <p class="section-subheading" style="margin:0 auto;">Our teachers are not just instructors — they are mentors who guide, inspire, and nurture.</p>
+            </div>
+            <div class="teachers-carousel" id="teachersCarousel">
+                <div class="teacher-card reveal stagger-1">
+                    <img src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&q=80" alt="Dr. Rajesh Sharma" loading="lazy">
+                    <div class="teacher-info">
+                        <h4>Dr. Rajesh Sharma</h4>
+                        <div class="dept">Principal</div>
+                        <div class="exp">25+ Years Experience</div>
+                    </div>
+                    <div class="teacher-hover-info">
+                        <h5>Dr. Rajesh Sharma</h5>
+                        <p>PhD in Education Leadership. Believes in holistic development and student-centered learning.</p>
+                    </div>
+                </div>
+                <div class="teacher-card reveal stagger-2">
+                    <img src="https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=400&q=80" alt="Priya Mehta" loading="lazy">
+                    <div class="teacher-info">
+                        <h4>Priya Mehta</h4>
+                        <div class="dept">Head of Science</div>
+                        <div class="exp">15 Years Experience</div>
+                    </div>
+                    <div class="teacher-hover-info">
+                        <h5>Priya Mehta</h5>
+                        <p>MSc Physics, passionate about making science accessible and exciting for every student.</p>
+                    </div>
+                </div>
+                <div class="teacher-card reveal stagger-3">
+                    <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80" alt="Amit Verma" loading="lazy">
+                    <div class="teacher-info">
+                        <h4>Amit Verma</h4>
+                        <div class="dept">Mathematics</div>
+                        <div class="exp">12 Years Experience</div>
+                    </div>
+                    <div class="teacher-hover-info">
+                        <h5>Amit Verma</h5>
+                        <p>MSc Mathematics, known for making complex concepts simple and engaging for all learners.</p>
+                    </div>
+                </div>
+                <div class="teacher-card reveal stagger-4">
+                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80" alt="Sarah Johnson" loading="lazy">
+                    <div class="teacher-info">
+                        <h4>Sarah Johnson</h4>
+                        <div class="dept">English Department</div>
+                        <div class="exp">10 Years Experience</div>
+                    </div>
+                    <div class="teacher-hover-info">
+                        <h5>Sarah Johnson</h5>
+                        <p>MA English Literature, fosters creative writing and critical reading among students.</p>
+                    </div>
+                </div>
+                <div class="teacher-card reveal stagger-5">
+                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80" alt="Vikram Singh" loading="lazy">
+                    <div class="teacher-info">
+                        <h4>Vikram Singh</h4>
+                        <div class="dept">Sports Director</div>
+                        <div class="exp">14 Years Experience</div>
+                    </div>
+                    <div class="teacher-hover-info">
+                        <h5>Vikram Singh</h5>
+                        <p>National-level athlete, coaching students in football, cricket, and athletics with passion.</p>
+                    </div>
+                </div>
+                <div class="teacher-card reveal">
+                    <img src="https://images.unsplash.com/photo-1598550874175-4d0ef436c909?w=400&q=80" alt="Neha Gupta" loading="lazy">
+                    <div class="teacher-info">
+                        <h4>Neha Gupta</h4>
+                        <div class="dept">Arts & Culture</div>
+                        <div class="exp">8 Years Experience</div>
+                    </div>
+                    <div class="teacher-hover-info">
+                        <h5>Neha Gupta</h5>
+                        <p>MFA in Fine Arts, nurturing creativity through visual arts, drama, and cultural activities.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 11: CAMPUS ==================== -->
+    <section class="campus-section" id="campus">
+        <div class="container">
+            <div class="reveal">
+                <span class="section-tag" style="color:var(--gold-light);">Our Campus</span>
+                <h2 class="section-heading light">A Campus Designed To Inspire</h2>
+                <p class="section-subheading light" style="margin:0 auto;">State-of-the-art facilities that create the perfect environment for learning, growth, and discovery.</p>
+            </div>
+            <div class="campus-floating-cards">
+                <div class="campus-float-card reveal stagger-1">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <span>Smart Classrooms</span>
+                </div>
+                <div class="campus-float-card reveal stagger-2">
+                    <i class="fas fa-flask"></i>
+                    <span>Modern Labs</span>
+                </div>
+                <div class="campus-float-card reveal stagger-3">
+                    <i class="fas fa-book-open"></i>
+                    <span>Library</span>
+                </div>
+                <div class="campus-float-card reveal stagger-4">
+                    <i class="fas fa-futbol"></i>
+                    <span>Playgrounds</span>
+                </div>
+                <div class="campus-float-card reveal stagger-5">
+                    <i class="fas fa-paint-brush"></i>
+                    <span>Activity Rooms</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 12: SMART CLASSROOMS ==================== -->
+    <section class="smart-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag" style="color:var(--gold-light);">Digital Learning</span>
+                <h2 class="section-heading light">Technology Meets Teaching</h2>
+            </div>
+            <div class="smart-grid">
+                <div class="smart-card reveal stagger-1">
+                    <i class="fas fa-chalkboard"></i>
+                    <h4>Interactive Learning</h4>
+                    <p>Smart boards and interactive displays in every classroom.</p>
+                </div>
+                <div class="smart-card reveal stagger-2">
+                    <i class="fas fa-cloud"></i>
+                    <h4>Digital Resources</h4>
+                    <p>Access to online libraries, educational apps, and e-learning platforms.</p>
+                </div>
+                <div class="smart-card reveal stagger-3">
+                    <i class="fas fa-tv"></i>
+                    <h4>Smart Boards</h4>
+                    <p>HD interactive screens for immersive visual learning.</p>
+                </div>
+                <div class="smart-card reveal stagger-4">
+                    <i class="fas fa-video"></i>
+                    <h4>Multimedia Education</h4>
+                    <p>Video lessons, virtual labs, and digital assessments.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 13: LABS ==================== -->
+    <section class="labs-section">
+        <div class="container">
+            <div class="labs-grid">
+                <div class="labs-image reveal-left">
+                    <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=700&q=80" alt="Science Laboratory" loading="lazy">
+                </div>
+                <div class="reveal-right">
+                    <span class="section-tag">Science & Computer Labs</span>
+                    <h2 class="section-heading">Hands-On Discovery</h2>
+                    <ul class="labs-list">
+                        <li><i class="fas fa-atom"></i> State-of-the-art Physics, Chemistry & Biology labs</li>
+                        <li><i class="fas fa-laptop"></i> 40+ workstations in Computer Science lab</li>
+                        <li><i class="fas fa-robot"></i> Robotics & AI learning kit</li>
+                        <li><i class="fas fa-microscope"></i> Advanced microscopes & lab equipment</li>
+                        <li><i class="fas fa-safety"></i> Strict safety protocols & trained staff</li>
+                        <li><i class="fas fa-project-diagram"></i> Project-based lab work for deeper understanding</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 14: LIBRARY ==================== -->
+    <section class="library-section">
+        <div class="container">
+            <div class="library-grid">
+                <div class="reveal-left">
+                    <span class="section-tag">The Library</span>
+                    <h2 class="section-heading">A World Of Stories, Ideas & Discovery</h2>
+                    <p style="color:var(--text-muted);margin-bottom:20px;">Our library houses an extensive collection of books, journals, and digital resources. With over 15,000 titles spanning fiction, non-fiction, reference, and academic texts, students are encouraged to explore, read, and grow their knowledge beyond the classroom.</p>
+                    <div class="library-features">
+                        <div class="library-feature"><i class="fas fa-book"></i> 15,000+ Books</div>
+                        <div class="library-feature"><i class="fas fa-tablet-alt"></i> Digital Resources</div>
+                        <div class="library-feature"><i class="fas fa-couch"></i> Reading Spaces</div>
+                        <div class="library-feature"><i class="fas fa-search"></i> Research Support</div>
+                    </div>
+                </div>
+                <div class="library-image reveal-right">
+                    <img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=700&q=80" alt="School Library" loading="lazy">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 15: STUDENT LIFE ==================== -->
+    <section class="student-life-section" id="student-life">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag" style="color:var(--gold-light);">Student Life</span>
+                <h2 class="section-heading light">Every Day Is A New Adventure</h2>
+            </div>
+            <div class="student-life-photos">
+                <div class="student-photo reveal stagger-1">
+                    <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=500&q=80" alt="Students Learning" loading="lazy">
+                    <span class="photo-label">LEARN</span>
+                </div>
+                <div class="student-photo reveal stagger-2">
+                    <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=500&q=80" alt="Students Playing" loading="lazy">
+                    <span class="photo-label">PLAY</span>
+                </div>
+                <div class="student-photo reveal stagger-3">
+                    <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=500&q=80" alt="Students Creating" loading="lazy">
+                    <span class="photo-label">CREATE</span>
+                </div>
+                <div class="student-photo reveal stagger-4">
+                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=500&q=80" alt="Students Leading" loading="lazy">
+                    <span class="photo-label">LEAD</span>
+                </div>
+                <div class="student-photo reveal stagger-5">
+                    <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&q=80" alt="Students Celebrating" loading="lazy">
+                    <span class="photo-label">CELEBRATE</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 16: CLUBS BENTO (Eco Club removed) ==================== -->
+    <section class="clubs-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Clubs & Activities</span>
+                <h2 class="section-heading">Discover Your Passion</h2>
+                <p class="section-subheading" style="margin:0 auto;">Join clubs that spark your interests and develop new skills.</p>
+            </div>
+            <div class="bento-grid">
+                <div class="bento-card color-1 reveal stagger-1">
+                    <i class="fas fa-dna"></i>
+                    <h4>Science Club</h4>
+                    <p>Experiments, science fairs, and innovation challenges.</p>
+                </div>
+                <div class="bento-card color-2 reveal stagger-2 large">
+                    <i class="fas fa-pen-fancy"></i>
+                    <h4>Literary Club</h4>
+                    <p>Creative writing, poetry, debates, and storytelling workshops for aspiring writers and speakers.</p>
+                </div>
+                <!-- Eco Club card removed as requested -->
+                <div class="bento-card color-4 reveal stagger-4">
+                    <i class="fas fa-palette"></i>
+                    <h4>Art Club</h4>
+                    <p>Painting, sketching, sculpture, and creative expression.</p>
+                </div>
+                <div class="bento-card color-1 reveal stagger-5">
+                    <i class="fas fa-music"></i>
+                    <h4>Music Club</h4>
+                    <p>Vocal training, instrumental music, and school band.</p>
+                </div>
+                <div class="bento-card color-2 reveal stagger-1">
+                    <i class="fas fa-microchip"></i>
+                    <h4>Technology Club</h4>
+                    <p>Coding, robotics, and digital innovation.</p>
+                </div>
+                <div class="bento-card color-3 reveal stagger-2">
+                    <i class="fas fa-gavel"></i>
+                    <h4>Debate Club</h4>
+                    <p>Public speaking, argumentation, and critical discourse.</p>
+                </div>
+                <div class="bento-card color-4 reveal stagger-3">
+                    <i class="fas fa-medal"></i>
+                    <h4>Sports Club</h4>
+                    <p>Athletics, team sports, and fitness training.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 17: ACHIEVEMENTS ==================== -->
+    <section class="achievements-section" id="achievements">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag" style="color:var(--gold-light);">Student Achievements</span>
+                <h2 class="section-heading light">Proud Moments. Remarkable Journeys.</h2>
+            </div>
+            <div class="achievement-grid">
+                <div class="achievement-item reveal stagger-1">
+                    <i class="fas fa-trophy"></i>
+                    <h4>Academic Excellence</h4>
+                    <p>Top CBSE scores with 95%+ average in board exams.</p>
+                </div>
+                <div class="achievement-item reveal stagger-2">
+                    <i class="fas fa-medal"></i>
+                    <h4>Sports Championships</h4>
+                    <p>District & state-level victories in football, cricket, and athletics.</p>
+                </div>
+                <div class="achievement-item reveal stagger-3">
+                    <i class="fas fa-star"></i>
+                    <h4>Cultural Achievements</h4>
+                    <p>National-level awards in music, dance, and drama.</p>
+                </div>
+                <div class="achievement-item reveal stagger-4">
+                    <i class="fas fa-brain"></i>
+                    <h4>Olympiads</h4>
+                    <p>International rank holders in Mathematics and Science Olympiads.</p>
+                </div>
+                <div class="achievement-item reveal stagger-5">
+                    <i class="fas fa-award"></i>
+                    <h4>Competitions</h4>
+                    <p>Winners at inter-school debate, quiz, and innovation contests.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 18: AWARDS ==================== -->
+    <section class="awards-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Awards & Recognition</span>
+                <h2 class="section-heading">Celebrated For Excellence</h2>
+            </div>
+            <div class="awards-carousel">
+                <div class="award-card reveal">
+                    <i class="fas fa-trophy"></i>
+                    <h4>Best School Award</h4>
+                    <p>Recognized among top 50 schools in the state.</p>
+                </div>
+                <div class="award-card reveal stagger-1">
+                    <i class="fas fa-star"></i>
+                    <h4>Excellence in Education</h4>
+                    <p>National Education Excellence Award 2023.</p>
+                </div>
+                <div class="award-card reveal stagger-2">
+                    <i class="fas fa-medal"></i>
+                    <h4>Innovative Teaching</h4>
+                    <p>Best Use of Technology in Education Award.</p>
+                </div>
+                <div class="award-card reveal stagger-3">
+                    <i class="fas fa-award"></i>
+                    <h4>Green Campus Award</h4>
+                    <p>Recognized for environmental sustainability initiatives.</p>
+                </div>
+                <div class="award-card reveal stagger-4">
+                    <i class="fas fa-heart"></i>
+                    <h4>Community Impact</h4>
+                    <p>Best Social Responsibility Program by a School.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 19: EVENTS ==================== -->
+    <section class="events-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Events & Celebrations</span>
+                <h2 class="section-heading">Moments That Bring Us Together</h2>
+            </div>
+            <div class="events-grid">
+                <div class="event-card reveal stagger-1">
+                    <span class="event-date">Jan 26</span>
+                    <i class="fas fa-flag"></i>
+                    <h4>Republic Day</h4>
+                    <p>Patriotic celebrations with flag hoisting and cultural programs.</p>
+                </div>
+                <div class="event-card reveal stagger-2">
+                    <span class="event-date">Aug 15</span>
+                    <i class="fas fa-dove"></i>
+                    <h4>Independence Day</h4>
+                    <p>Celebrating freedom with performances and tributes.</p>
+                </div>
+                <div class="event-card reveal stagger-3">
+                    <span class="event-date">Dec 10</span>
+                    <i class="fas fa-running"></i>
+                    <h4>Sports Day</h4>
+                    <p>Annual athletics meet showcasing student athletic talent.</p>
+                </div>
+                <div class="event-card reveal stagger-4">
+                    <span class="event-date">Nov 15</span>
+                    <i class="fas fa-flask"></i>
+                    <h4>Science Exhibition</h4>
+                    <p>Student-led projects and innovations on display.</p>
+                </div>
+                <div class="event-card reveal stagger-1">
+                    <span class="event-date">Oct 20</span>
+                    <i class="fas fa-music"></i>
+                    <h4>Cultural Fest</h4>
+                    <p>A celebration of art, music, dance, and diversity.</p>
+                </div>
+                <div class="event-card reveal stagger-2">
+                    <span class="event-date">Feb 28</span>
+                    <i class="fas fa-masks-theater"></i>
+                    <h4>Annual Day</h4>
+                    <p>The grand showcase of student talent and achievements.</p>
+                </div>
+                <div class="event-card reveal stagger-3">
+                    <span class="event-date">Sep 05</span>
+                    <i class="fas fa-book-open"></i>
+                    <h4>Literary Fest</h4>
+                    <p>Celebrating literature, poetry, and the written word.</p>
+                </div>
+                <div class="event-card reveal stagger-4">
+                    <span class="event-date">Jan 10</span>
+                    <i class="fas fa-robot"></i>
+                    <h4>Tech Summit</h4>
+                    <p>Exploring innovation, coding, and future technology.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 20: GALLERY (5 columns, 10 images) ==================== -->
+    <section class="gallery-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">School Gallery</span>
+                <h2 class="section-heading">Life At Prince Public School</h2>
+            </div>
+            <div class="gallery-masonry">
+                <!-- 10 images in 5 columns (2 rows) -->
+                <div class="gallery-item reveal stagger-1" onclick="openLightbox('https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80')">
+                    <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80" alt="Campus" loading="lazy">
+                    <div class="gallery-overlay"><span>Campus</span></div>
+                </div>
+                <div class="gallery-item reveal stagger-2" onclick="openLightbox('https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80')">
+                    <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80" alt="Classroom" loading="lazy">
+                    <div class="gallery-overlay"><span>Classroom</span></div>
+                </div>
+                <div class="gallery-item reveal stagger-3" onclick="openLightbox('https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80')">
+                    <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80" alt="Science Lab" loading="lazy">
+                    <div class="gallery-overlay"><span>Science Lab</span></div>
+                </div>
+                <div class="gallery-item reveal stagger-4" onclick="openLightbox('https://images.unsplash.com/photo-1526976668912-1a811878dd37?w=800&q=80')">
+                    <img src="https://images.unsplash.com/photo-1526976668912-1a811878dd37?w=800&q=80" alt="Sports Field" loading="lazy">
+                    <div class="gallery-overlay"><span>Sports</span></div>
+                </div>
+                <div class="gallery-item reveal stagger-5" onclick="openLightbox('https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&q=80')">
+                    <img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&q=80" alt="Library" loading="lazy">
+                    <div class="gallery-overlay"><span>Library</span></div>
+                </div>
+                <div class="gallery-item reveal stagger-1" onclick="openLightbox('https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80')">
+                    <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80" alt="Event" loading="lazy">
+                    <div class="gallery-overlay"><span>Events</span></div>
+                </div>
+                <div class="gallery-item reveal stagger-2" onclick="openLightbox('https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80')">
+                    <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80" alt="Playground" loading="lazy">
+                    <div class="gallery-overlay"><span>Playground</span></div>
+                </div>
+                <div class="gallery-item reveal stagger-3" onclick="openLightbox('https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80')">
+                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80" alt="Students" loading="lazy">
+                    <div class="gallery-overlay"><span>Students</span></div>
+                </div>
+                <div class="gallery-item reveal stagger-4" onclick="openLightbox('https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80')">
+                    <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80" alt="Art Class" loading="lazy">
+                    <div class="gallery-overlay"><span>Art</span></div>
+                </div>
+                <div class="gallery-item reveal stagger-5" onclick="openLightbox('https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=800&q=80')">
+                    <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=800&q=80" alt="Assembly" loading="lazy">
+                    <div class="gallery-overlay"><span>Assembly</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img src="" alt="Gallery Image" id="lightboxImage">
+    </div>
+
+    <!-- ==================== SECTION 21: TESTIMONIALS ==================== -->
+    <section class="testimonials-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Voices of Our Community</span>
+                <h2 class="section-heading">What Our Community Says</h2>
+            </div>
+            <div class="testimonial-carousel">
+                <div class="testimonial-slide active">
+                    <div class="testimonial-quote">
+                        <i class="fas fa-quote-left"></i>
+                        Prince Public School has been a blessing for our daughter. The teachers genuinely care about each child's growth — academically, emotionally, and socially. She has blossomed into a confident and curious learner.
+                        <i class="fas fa-quote-right"></i>
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80" alt="Parent" loading="lazy">
+                        <div>
+                            <div class="name">Mrs. Anjali Kapoor</div>
+                            <div class="role">Parent — Class 4</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="testimonial-quote">
+                        <i class="fas fa-quote-left"></i>
+                        I've been studying at Prince Public School since Class 1, and I can honestly say it feels like a second home. The teachers encourage us to think beyond textbooks and pursue our passions.
+                        <i class="fas fa-quote-right"></i>
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&q=80" alt="Student" loading="lazy">
+                        <div>
+                            <div class="name">Arjun Singh</div>
+                            <div class="role">Student — Class 10</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-slide">
+                    <div class="testimonial-quote">
+                        <i class="fas fa-quote-left"></i>
+                        As an alumnus, I can say that the foundation I received at Prince Public School has been instrumental in my success. The values of discipline, integrity, and excellence stay with you for life.
+                        <i class="fas fa-quote-right"></i>
+                    </div>
+                    <div class="testimonial-author">
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80" alt="Alumni" loading="lazy">
+                        <div>
+                            <div class="name">Rahul Sharma</div>
+                            <div class="role">Alumnus — Class of 2015</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-nav">
+                <button class="testimonial-dot active" data-slide="0"></button>
+                <button class="testimonial-dot" data-slide="1"></button>
+                <button class="testimonial-dot" data-slide="2"></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 22: ALUMNI ==================== -->
+    <section class="alumni-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag" style="color:var(--gold-light);">Our Alumni</span>
+                <h2 class="section-heading light">Once A Prince Student. Always Part Of The Family.</h2>
+            </div>
+            <div class="alumni-grid">
+                <div class="alumni-card reveal stagger-1">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80" alt="Alumni" loading="lazy">
+                    <h4>Aditya Sharma</h4>
+                    <div class="grad-year">Class of 2018</div>
+                    <div class="profession">Software Engineer at Google</div>
+                </div>
+                <div class="alumni-card reveal stagger-2">
+                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80" alt="Alumni" loading="lazy">
+                    <h4>Priya Nair</h4>
+                    <div class="grad-year">Class of 2016</div>
+                    <div class="profession">Doctor, AIIMS</div>
+                </div>
+                <div class="alumni-card reveal stagger-3">
+                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80" alt="Alumni" loading="lazy">
+                    <h4>Arjun Mehta</h4>
+                    <div class="grad-year">Class of 2019</div>
+                    <div class="profession">IIT Delhi — B.Tech</div>
+                </div>
+                <div class="alumni-card reveal stagger-4">
+                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&q=80" alt="Alumni" loading="lazy">
+                    <h4>Sneha Reddy</h4>
+                    <div class="grad-year">Class of 2017</div>
+                    <div class="profession">Entrepreneur & Designer</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 23: ADMISSIONS ==================== -->
+    <section class="admissions-section" id="admissions">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Admissions 2026-27</span>
+                <h2 class="section-heading">Your Child's Journey Starts Here</h2>
+                <p class="section-subheading" style="margin:0 auto;">Join a community that nurtures excellence, character, and confidence. Admissions are now open for all classes.</p>
+            </div>
+            <div class="admissions-steps">
+                <div class="admission-step reveal stagger-1">
+                    <div class="step-number">01</div>
+                    <h4>Enquire</h4>
+                    <p>Fill out the enquiry form or call us to learn about admission process.</p>
+                </div>
+                <div class="admission-step reveal stagger-2">
+                    <div class="step-number">02</div>
+                    <h4>Visit</h4>
+                    <p>Tour our campus and experience the Prince Public School environment.</p>
+                </div>
+                <div class="admission-step reveal stagger-3">
+                    <div class="step-number">03</div>
+                    <h4>Apply</h4>
+                    <p>Submit the application form along with the required documents.</p>
+                </div>
+                <div class="admission-step reveal stagger-4">
+                    <div class="step-number">04</div>
+                    <h4>Begin The Journey</h4>
+                    <p>Welcome to the Prince Public School family. Your adventure begins!</p>
+                </div>
+            </div>
+            <div class="admissions-cta reveal">
+                <button class="btn btn-primary" style="font-size:1rem;padding:18px 40px;">START ADMISSION ENQUIRY <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 24: WHY PARENTS ==================== -->
+    <section class="why-section">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Why Parents Choose Us</span>
+                <h2 class="section-heading">The Prince Public School Promise</h2>
+            </div>
+            <div class="why-grid">
+                <div class="why-card reveal stagger-1">
+                    <i class="fas fa-shield-alt"></i>
+                    <h4>Safe & Secure Campus</h4>
+                    <p>24/7 security, CCTV surveillance, and strict safety protocols.</p>
+                </div>
+                <div class="why-card reveal stagger-2">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <h4>Experienced Faculty</h4>
+                    <p>Qualified educators with years of experience and passion.</p>
+                </div>
+                <div class="why-card reveal stagger-3">
+                    <i class="fas fa-heart"></i>
+                    <h4>Holistic Development</h4>
+                    <p>Academics, sports, arts, and values — all in one place.</p>
+                </div>
+                <div class="why-card reveal stagger-4">
+                    <i class="fas fa-building"></i>
+                    <h4>Modern Infrastructure</h4>
+                    <p>Smart classrooms, labs, library, and world-class facilities.</p>
+                </div>
+                <div class="why-card reveal stagger-5">
+                    <i class="fas fa-book-open"></i>
+                    <h4>Strong Academic Foundation</h4>
+                    <p>Consistently outstanding results with conceptual clarity.</p>
+                </div>
+                <div class="why-card reveal">
+                    <i class="fas fa-user-check"></i>
+                    <h4>Individual Attention</h4>
+                    <p>Low student-teacher ratio for personalized learning.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 25: FAQ ==================== -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="faq-header reveal">
+                <span class="section-tag" style="padding-left:0;">FAQ</span>
+                <h2 class="section-heading">Frequently Asked Questions</h2>
+                <p class="section-subheading" style="margin:0 auto;">Everything you need to know about admissions, academics, and campus life.</p>
+            </div>
+            <div class="faq-list">
+                <div class="faq-item reveal stagger-1">
+                    <div class="faq-question">
+                        What is the admission process for new students?
+                        <span class="faq-icon"><i class="fas fa-plus"></i></span>
+                    </div>
+                    <div class="faq-answer">The admission process involves filling out an enquiry form, visiting the campus, submitting the application with required documents (birth certificate, previous school records, photographs), and a brief interaction with the student and parents. Admissions are confirmed based on seat availability and eligibility criteria.</div>
+                </div>
+                <div class="faq-item reveal stagger-2">
+                    <div class="faq-question">
+                        What curriculum does Prince Public School follow?
+                        <span class="faq-icon"><i class="fas fa-plus"></i></span>
+                    </div>
+                    <div class="faq-answer">We follow the CBSE (Central Board of Secondary Education) curriculum from Pre-Primary through Senior Secondary. Our curriculum is enriched with experiential learning, STEM education, digital resources, and a wide range of co-curricular activities.</div>
+                </div>
+                <div class="faq-item reveal stagger-3">
+                    <div class="faq-question">
+                        What are the school timings?
+                        <span class="faq-icon"><i class="fas fa-plus"></i></span>
+                    </div>
+                    <div class="faq-answer">School timings are Monday to Friday from 8:00 AM to 2:30 PM, and Saturdays from 8:00 AM to 12:30 PM (for co-curricular activities and enrichment programs). Pre-Primary students have slightly shorter hours.</div>
+                </div>
+                <div class="faq-item reveal stagger-4">
+                    <div class="faq-question">
+                        Is transportation available?
+                        <span class="faq-icon"><i class="fas fa-plus"></i></span>
+                    </div>
+                    <div class="faq-answer">Yes, we provide safe and reliable bus transportation across major routes in the city. Our buses are equipped with GPS tracking, CCTV cameras, and trained attendants. Transport fees are additional and based on distance.</div>
+                </div>
+                <div class="faq-item reveal stagger-5">
+                    <div class="faq-question">
+                        What co-curricular activities are available?
+                        <span class="faq-icon"><i class="fas fa-plus"></i></span>
+                    </div>
+                    <div class="faq-answer">We offer a wide range of activities including sports (football, cricket, basketball, athletics), performing arts (music, dance, drama), visual arts, debate club, science club, technology club, and more. Every student is encouraged to participate in at least one co-curricular activity.</div>
+                </div>
+                <div class="faq-item reveal">
+                    <div class="faq-question">
+                        What documents are required for admission?
+                        <span class="faq-icon"><i class="fas fa-plus"></i></span>
+                    </div>
+                    <div class="faq-answer">Required documents include: birth certificate, previous school report card and transfer certificate (if applicable), passport-size photographs of student and parents, and address proof. Original documents should be presented for verification at the time of admission.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 26: CONTACT ==================== -->
+    <section class="contact-section" id="contact">
+        <div class="container">
+            <div class="reveal" style="text-align:center;">
+                <span class="section-tag">Contact Us</span>
+                <h2 class="section-heading">Visit Our Campus</h2>
+            </div>
+            <div class="contact-grid">
+                <div class="reveal-left">
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+                            <div>
+                                <h5>Address</h5>
+                                <p>Prince Public School, 123 Knowledge Park,<br>Main Road, New Delhi - 110001, India</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon"><i class="fas fa-phone"></i></div>
+                            <div>
+                                <h5>Phone</h5>
+                                <p>+91 11 2345 6789<br>+91 98765 43210</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                            <div>
+                                <h5>Email</h5>
+                                <p>info@princepublicschool.edu<br>admissions@princepublicschool.edu</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon"><i class="fas fa-clock"></i></div>
+                            <div>
+                                <h5>Office Hours</h5>
+                                <p>Monday - Saturday: 8:00 AM - 4:00 PM<br>Sunday: Closed</p>
+                            </div>
+                        </div>
+                        <div class="contact-buttons">
+                            <button class="btn btn-outline-dark">GET DIRECTIONS <i class="fas fa-arrow-right"></i></button>
+                            <button class="btn btn-primary">CONTACT SCHOOL <i class="fas fa-comment"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-map reveal-right">
+                    <div class="map-grid-overlay"></div>
+                    <div class="map-badge">
+                        <i class="fas fa-map-pin"></i>
+                        <span>Prince Public School — New Delhi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 27: FINAL CTA ==================== -->
+    <section class="final-cta">
+        <div class="container">
+            <div class="reveal">
+                <h2>The Future Begins With The Right Foundation.</h2>
+                <p>Give your child a place to learn, grow, discover and lead. Join the Prince Public School family today.</p>
+                <button class="btn btn-primary" style="font-size:1rem;padding:18px 40px;">ENQUIRE FOR ADMISSION <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="navbar-logo">
+                        <span class="logo-icon">P</span>
+                    </a>
+                    <p>Nurturing knowledge, character, and confidence for over 25 years. A legacy of academic excellence and holistic development.</p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h5>About Us</h5>
+                    <ul>
+                        <li><a href="#">Our Story</a></li>
+                        <li><a href="#">Vision & Mission</a></li>
+                        <li><a href="#">Principal's Message</a></li>
+                        <li><a href="#">Faculty</a></li>
+                        <li><a href="#">Achievements</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h5>Academics</h5>
+                    <ul>
+                        <li><a href="#">Curriculum</a></li>
+                        <li><a href="#">Pre-Primary</a></li>
+                        <li><a href="#">Primary School</a></li>
+                        <li><a href="#">Middle School</a></li>
+                        <li><a href="#">Senior Secondary</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h5>Campus</h5>
+                    <ul>
+                        <li><a href="#">Smart Classrooms</a></li>
+                        <li><a href="#">Laboratories</a></li>
+                        <li><a href="#">Library</a></li>
+                        <li><a href="#">Sports Facilities</a></li>
+                        <li><a href="#">Activity Rooms</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h5>Student Life</h5>
+                    <ul>
+                        <li><a href="#">Clubs & Activities</a></li>
+                        <li><a href="#">Events</a></li>
+                        <li><a href="#">Gallery</a></li>
+                        <li><a href="#">Alumni</a></li>
+                        <li><a href="#">Testimonials</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 Prince Public School. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script>
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Mobile menu
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileClose = document.getElementById('mobileClose');
+
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+        mobileClose.addEventListener('click', () => {
+            hamburger.classList.remove('active');
+            mobileMenu.classList.remove('active');
+        });
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            });
+        });
+
+        // Intersection Observer for reveal animations
+        const revealElements = document.querySelectorAll(
+            '.reveal, .reveal-left, .reveal-right, .reveal-scale, .timeline-item');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.15,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // Counter animation
+        const counters = document.querySelectorAll('.counter');
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const target = parseInt(entry.target.getAttribute('data-target'));
+                    let current = 0;
+                    const duration = 2000;
+                    const step = Math.max(1, Math.ceil(target / (duration / 16)));
+                    const interval = setInterval(() => {
+                        current += step;
+                        if (current >= target) {
+                            current = target;
+                            clearInterval(interval);
+                        }
+                        entry.target.textContent = current.toLocaleString();
+                    }, 16);
+                    counterObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.5
+        });
+        counters.forEach(counter => counterObserver.observe(counter));
+
+        // Tab functionality
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.getAttribute('data-tab');
+                tabButtons.forEach(b => b.classList.remove('active'));
+                tabPanels.forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(target).classList.add('active');
+            });
+        });
+
+        // Teachers carousel auto-scroll
+        const teachersCarousel = document.getElementById('teachersCarousel');
+        let scrollInterval;
+
+        function startAutoScroll() {
+            scrollInterval = setInterval(() => {
+                if (teachersCarousel.scrollLeft + teachersCarousel.clientWidth >= teachersCarousel
+                    .scrollWidth) {
+                    teachersCarousel.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    teachersCarousel.scrollBy({ left: 280, behavior: 'smooth' });
+                }
+            }, 3000);
+        }
+
+        function stopAutoScroll() {
+            clearInterval(scrollInterval);
+        }
+
+        if (teachersCarousel) {
+            startAutoScroll();
+            teachersCarousel.addEventListener('mouseenter', stopAutoScroll);
+            teachersCarousel.addEventListener('mouseleave', startAutoScroll);
+        }
+
+        // Testimonial carousel
+        const testimonialDots = document.querySelectorAll('.testimonial-dot');
+        const testimonialSlides = document.querySelectorAll('.testimonial-slide');
+        let currentTestimonial = 0;
+
+        function showTestimonial(index) {
+            testimonialSlides.forEach(s => s.classList.remove('active'));
+            testimonialDots.forEach(d => d.classList.remove('active'));
+            testimonialSlides[index].classList.add('active');
+            testimonialDots[index].classList.add('active');
+            currentTestimonial = index;
+        }
+
+        testimonialDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                showTestimonial(parseInt(dot.getAttribute('data-slide')));
+            });
+        });
+
+        // Auto-rotate testimonials
+        setInterval(() => {
+            showTestimonial((currentTestimonial + 1) % testimonialSlides.length);
+        }, 6000);
+
+        // FAQ accordion
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            question.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                faqItems.forEach(i => i.classList.remove('active'));
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        // Lightbox
+        function openLightbox(src) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImage = document.getElementById('lightboxImage');
+            lightboxImage.src = src;
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+
+        // Gallery item click
+        document.querySelectorAll('.gallery-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const img = item.querySelector('img');
+                if (img) {
+                    openLightbox(img.src);
+                }
+            });
+        });
+
+        // Awards carousel auto-scroll
+        const awardsCarousel = document.querySelector('.awards-carousel');
+        if (awardsCarousel) {
+            let awardScrollInterval;
+            const startAwardScroll = () => {
+                awardScrollInterval = setInterval(() => {
+                    if (awardsCarousel.scrollLeft + awardsCarousel.clientWidth >= awardsCarousel
+                        .scrollWidth) {
+                        awardsCarousel.scrollTo({ left: 0, behavior: 'smooth' });
+                    } else {
+                        awardsCarousel.scrollBy({ left: 240, behavior: 'smooth' });
+                    }
+                }, 2500);
+            };
+            const stopAwardScroll = () => clearInterval(awardScrollInterval);
+            startAwardScroll();
+            awardsCarousel.addEventListener('mouseenter', stopAwardScroll);
+            awardsCarousel.addEventListener('mouseleave', startAwardScroll);
+        }
+
+        // Hero animation on load
+        window.addEventListener('load', () => {
+            document.querySelector('.hero-content').style.opacity = '1';
+        });
+
+        console.log('👑 Prince Public School — Premium Website Loaded Successfully');
+        console.log('🏫 30 Sections | ✨ Animations | 📱 Fully Responsive');
+    </script>
+</body>
+</html>

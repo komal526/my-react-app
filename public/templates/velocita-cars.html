@@ -1,0 +1,2702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VELOCITA — The Art of Automotive Excellence</title>
+    <meta name="description" content="Experience the pinnacle of automotive engineering with VELOCITA.">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-tertiary: #1a1a1a;
+            --bg-card: #141414;
+            --text-primary: #f5f5f5;
+            --text-secondary: #b0b0b0;
+            --text-muted: #707070;
+            --accent-gold: #c9a84c;
+            --accent-gold-bright: #e8c95c;
+            --accent-gold-dim: #8a7330;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-gold: rgba(201, 168, 76, 0.3);
+            --font-heading: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Helvetica Neue', 'Arial', sans-serif;
+            --transition-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --section-padding: 60px 0;
+            --max-width: 1200px;
+            --nav-height: 70px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: var(--nav-height);
+            overflow-x: hidden;
+        }
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(201, 168, 76, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(201, 168, 76, 0.02) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 80%, rgba(201, 168, 76, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: var(--font-heading);
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            line-height: 1.2;
+        }
+        h1 {
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            font-weight: 300;
+        }
+        h2 {
+            font-size: clamp(1.8rem, 3.5vw, 3rem);
+            font-weight: 300;
+            margin-bottom: 1.2rem;
+        }
+        h3 {
+            font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+            font-weight: 300;
+        }
+        h4 {
+            font-size: clamp(1rem, 1.6vw, 1.3rem);
+            font-weight: 400;
+        }
+        a {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        a:hover {
+            color: var(--accent-gold);
+        }
+        .gold-text {
+            color: var(--accent-gold);
+            background: linear-gradient(135deg, var(--accent-gold-bright), var(--accent-gold), var(--accent-gold-dim));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .section-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            color: var(--accent-gold);
+            margin-bottom: 0.8rem;
+            display: inline-block;
+            position: relative;
+            padding-left: 36px;
+        }
+        .section-label::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 26px;
+            height: 1px;
+            background: var(--accent-gold);
+            transform: translateY(-50%);
+        }
+        section {
+            position: relative;
+            padding: var(--section-padding);
+            overflow: hidden;
+        }
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--nav-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            z-index: 1000;
+            transition: background 0.4s ease, box-shadow 0.4s ease, backdrop-filter 0.4s ease;
+            background: transparent;
+        }
+        .navbar.scrolled {
+            background: rgba(10, 10, 10, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 1px 30px rgba(0, 0, 0, 0.4);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .navbar .logo {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            letter-spacing: 0.2em;
+            font-weight: 300;
+        }
+        .navbar .logo span {
+            color: var(--accent-gold);
+        }
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+        .nav-links a {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--text-secondary);
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent-gold);
+            transition: width 0.3s;
+        }
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+        .nav-cta {
+            padding: 9px 20px;
+            border: 1px solid var(--accent-gold);
+            border-radius: 50px;
+            font-size: 0.65rem !important;
+            letter-spacing: 0.12em !important;
+            color: var(--accent-gold) !important;
+        }
+        .nav-cta:hover {
+            background: var(--accent-gold) !important;
+            color: #000 !important;
+        }
+        .nav-cta::after {
+            display: none !important;
+        }
+        .mobile-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 5px;
+        }
+        .mobile-toggle span {
+            width: 25px;
+            height: 1px;
+            background: var(--text-primary);
+            transition: 0.3s ease;
+        }
+
+        /* HERO */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+        .hero-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.45;
+            animation: heroZoom 20s ease-in-out infinite alternate;
+            filter: brightness(0.65);
+        }
+        @keyframes heroZoom {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.15);
+            }
+        }
+        .hero-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 40%, rgba(0, 0, 0, 0.8) 100%);
+        }
+        .hero-particles {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+            animation: floatParticle 8s infinite ease-in-out;
+            opacity: 0.6;
+        }
+        @keyframes floatParticle {
+            0%,
+            100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0.5;
+            }
+            25% {
+                transform: translateY(-30px) translateX(10px);
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(-60px) translateX(-5px);
+                opacity: 0.3;
+            }
+            75% {
+                transform: translateY(-20px) translateX(-15px);
+                opacity: 0.8;
+            }
+        }
+        .hero-content {
+            text-align: center;
+            z-index: 5;
+            position: relative;
+            padding: 0 20px;
+        }
+        .hero-title {
+            font-size: clamp(3rem, 8vw, 7rem);
+            font-weight: 200;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+            opacity: 0;
+            animation: titleReveal 1.5s forwards;
+            transform: translateY(40px);
+        }
+        .hero-title .letter {
+            display: inline-block;
+            animation: letterIn 0.7s forwards;
+            opacity: 0;
+            transform: translateY(60px) rotateX(90deg);
+        }
+        .hero-title .letter:nth-child(1) {
+            animation-delay: 0.3s;
+        }
+        .hero-title .letter:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+        .hero-title .letter:nth-child(3) {
+            animation-delay: 0.5s;
+        }
+        .hero-title .letter:nth-child(4) {
+            animation-delay: 0.6s;
+        }
+        .hero-title .letter:nth-child(5) {
+            animation-delay: 0.7s;
+        }
+        .hero-title .letter:nth-child(6) {
+            animation-delay: 0.8s;
+        }
+        .hero-title .letter:nth-child(7) {
+            animation-delay: 0.9s;
+        }
+        .hero-title .letter:nth-child(8) {
+            animation-delay: 1s;
+        }
+        @keyframes letterIn {
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(0);
+            }
+        }
+        @keyframes titleReveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .hero-subtitle {
+            font-size: clamp(0.9rem, 1.8vw, 1.3rem);
+            color: var(--text-secondary);
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeUp 1s 1.2s forwards;
+        }
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+            }
+        }
+        .hero-cta-group {
+            display: flex;
+            gap: 1.2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeUp 1s 1.5s forwards;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            transition: all 0.4s;
+            border: 1px solid transparent;
+        }
+        .btn-primary {
+            background: var(--accent-gold);
+            color: #000;
+            border-color: var(--accent-gold);
+        }
+        .btn-primary:hover {
+            background: var(--accent-gold-bright);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(201, 168, 76, 0.3);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        .btn-outline:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            transform: translateY(-3px);
+        }
+        .hero-scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            font-size: 0.55rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            opacity: 0;
+            animation: fadeUp 1s 2s forwards;
+        }
+        .scroll-line {
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--accent-gold), transparent);
+            animation: scrollLine 2s infinite ease-in-out;
+        }
+        @keyframes scrollLine {
+            0%,
+            100% {
+                transform: scaleY(0);
+                transform-origin: top;
+            }
+            50% {
+                transform: scaleY(1);
+                transform-origin: top;
+            }
+        }
+        .hero-sweep {
+            position: absolute;
+            top: -50%;
+            left: -100%;
+            width: 50%;
+            height: 200%;
+            background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.08), transparent);
+            transform: skewX(-20deg);
+            animation: lightSweep 6s 2s infinite ease-in-out;
+            z-index: 3;
+            pointer-events: none;
+        }
+        @keyframes lightSweep {
+            0% {
+                left: -100%;
+            }
+            30% {
+                left: 150%;
+            }
+            100% {
+                left: 150%;
+            }
+        }
+
+        /* EXTERIOR */
+        .exterior-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            align-items: center;
+        }
+        .exterior-image-wrapper {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            aspect-ratio: 4/3;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+        }
+        .exterior-image-wrapper:hover {
+            transform: perspective(1000px) rotateY(3deg) rotateX(2deg);
+        }
+        .exterior-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s;
+        }
+        .exterior-image-wrapper:hover img {
+            transform: scale(1.05);
+        }
+        .hotspot {
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-gold);
+            background: rgba(10, 10, 10, 0.7);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 5;
+            backdrop-filter: blur(5px);
+        }
+        .hotspot::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--accent-gold);
+            animation: hotspotPulse 2s infinite ease-out;
+        }
+        @keyframes hotspotPulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+        .hotspot:hover {
+            background: var(--accent-gold);
+            transform: scale(1.2);
+        }
+        .hotspot-label {
+            position: absolute;
+            background: rgba(10, 10, 10, 0.9);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.6rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-gold);
+        }
+        .hotspot:hover .hotspot-label {
+            opacity: 1;
+        }
+        .exterior-feature {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.4s;
+            opacity: 0;
+            transform: translateY(25px);
+        }
+        .exterior-feature.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .exterior-feature:hover {
+            background: rgba(201, 168, 76, 0.05);
+            border-color: var(--border-gold);
+            transform: translateX(6px);
+        }
+        .exterior-feature-icon {
+            font-size: 1.6rem;
+            color: var(--accent-gold);
+            flex-shrink: 0;
+        }
+        .exterior-feature h4 {
+            margin-bottom: 0.3rem;
+        }
+        .exterior-feature p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* INTERIOR */
+        .interior-parallax {
+            position: relative;
+            height: 55vh;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .interior-parallax img {
+            width: 100%;
+            height: 130%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            will-change: transform;
+            filter: brightness(0.65);
+        }
+        .interior-overlay-text {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            z-index: 5;
+        }
+        .interior-overlay-text h3 {
+            font-size: 1.6rem;
+            margin-bottom: 0.3rem;
+        }
+        .interior-overlay-text p {
+            color: var(--text-secondary);
+            max-width: 380px;
+            font-size: 0.9rem;
+        }
+        .interior-features-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.2rem;
+        }
+        .interior-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            text-align: center;
+            transition: all 0.4s;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        .interior-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .interior-card:hover {
+            border-color: var(--border-gold);
+            transform: translateY(-6px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+        .interior-card-icon {
+            font-size: 2.2rem;
+            margin-bottom: 0.8rem;
+            color: var(--accent-gold);
+        }
+        .interior-card p {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* FEATURES BENTO */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: 180px;
+            gap: 1rem;
+        }
+        .bento-card {
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.5s;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0.9) translateY(25px);
+        }
+        .bento-card.visible {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+        .bento-card:hover {
+            border-color: var(--border-gold);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transform: scale(1.03) translateY(-4px);
+            z-index: 3;
+        }
+        .bento-card.large {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+        .bento-card.medium {
+            grid-column: span 2;
+        }
+        .bento-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s;
+        }
+        .bento-card:hover img {
+            transform: scale(1.08);
+        }
+        .bento-card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.2rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            z-index: 2;
+        }
+        .bento-card-overlay h4 {
+            font-size: 1rem;
+        }
+        .bento-card-overlay p {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+        .bento-card .bento-icon {
+            position: absolute;
+            top: 0.8rem;
+            right: 0.8rem;
+            z-index: 2;
+            font-size: 1.3rem;
+            color: var(--accent-gold);
+            background: rgba(10, 10, 10, 0.7);
+            padding: 6px;
+            border-radius: 50%;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-gold);
+        }
+
+        /* PERFORMANCE */
+        .performance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            align-items: center;
+        }
+        .speedometer {
+            width: 240px;
+            height: 240px;
+            position: relative;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, #1a1a1a, #0a0a0a);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 50px rgba(201, 168, 76, 0.1), inset 0 0 50px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        .speedometer-svg {
+            width: 200px;
+            height: 200px;
+            transform: rotate(-90deg);
+        }
+        .speedometer-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 10;
+            stroke-linecap: round;
+        }
+        .speedometer-progress {
+            fill: none;
+            stroke: var(--accent-gold);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 565.48;
+            stroke-dashoffset: 565.48;
+            transition: stroke-dashoffset 2s;
+            filter: drop-shadow(0 0 12px rgba(201, 168, 76, 0.4));
+        }
+        .speedometer-value {
+            position: absolute;
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: var(--accent-gold);
+        }
+        .speedometer-unit {
+            position: absolute;
+            bottom: 55px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            letter-spacing: 0.08em;
+        }
+        .perf-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
+        }
+        .perf-stat {
+            padding: 1.2rem;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            text-align: center;
+            transition: all 0.4s;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .perf-stat.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .perf-stat:hover {
+            border-color: var(--border-gold);
+        }
+        .perf-stat-value {
+            font-family: var(--font-heading);
+            font-size: 1.7rem;
+            font-weight: 300;
+            color: var(--accent-gold);
+            display: block;
+        }
+        .perf-stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+        }
+        .perf-bar-track {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            margin-top: 0.6rem;
+            overflow: hidden;
+        }
+        .perf-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-gold-dim), var(--accent-gold-bright));
+            border-radius: 2px;
+            width: 0;
+            transition: width 1.5s;
+        }
+
+        /* DRIVING */
+        .driving-parallax {
+            position: relative;
+            height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .driving-parallax img {
+            position: absolute;
+            width: 100%;
+            height: 110%;
+            object-fit: cover;
+            filter: brightness(0.45);
+            will-change: transform;
+        }
+        .driving-content {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            max-width: 650px;
+            padding: 0 20px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s;
+        }
+        .driving-content.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .driving-content p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        /* TECHNOLOGY */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+        .tech-card {
+            text-align: center;
+            padding: 1.8rem 1.2rem;
+            border-radius: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.5s;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        .tech-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .tech-card:hover {
+            border-color: var(--border-gold);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transform: translateY(-8px);
+        }
+        .tech-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-gold);
+        }
+        .tech-card p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* SAFETY */
+        .safety-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            align-items: center;
+        }
+        .safety-radar {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 0 auto;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(201, 168, 76, 0.05), transparent 70%);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .safety-radar-svg {
+            width: 210px;
+            height: 210px;
+        }
+        .safety-sweep {
+            animation: radarSweep 3s infinite linear;
+            transform-origin: center;
+        }
+        @keyframes radarSweep {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .safety-blips {
+            animation: blipPulse 2s infinite ease-in-out;
+        }
+        @keyframes blipPulse {
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+        .safety-shield {
+            position: absolute;
+            font-size: 2rem;
+            color: var(--accent-gold);
+        }
+        .safety-item {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.3s;
+            opacity: 0;
+            transform: translateX(-25px);
+        }
+        .safety-item.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .safety-item:hover {
+            border-color: var(--border-gold);
+        }
+        .safety-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            flex-shrink: 0;
+            animation: dotPulse 2s infinite;
+        }
+        @keyframes dotPulse {
+            0%,
+            100% {
+                box-shadow: 0 0 5px rgba(201, 168, 76, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(201, 168, 76, 0.9);
+            }
+        }
+        .safety-item span {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .safety-item small {
+            color: var(--text-muted);
+            display: block;
+            font-size: 0.75rem;
+        }
+
+        /* GALLERY */
+        .gallery {
+            padding: 0;
+            overflow: hidden;
+        }
+        .gallery-track {
+            display: flex;
+            gap: 1rem;
+            padding: 50px 20px;
+            will-change: transform;
+            transition: transform 0.2s linear;
+        }
+        .gallery-item {
+            flex-shrink: 0;
+            width: 350px;
+            height: 260px;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            border: 1px solid var(--border-subtle);
+            transition: all 0.5s;
+        }
+        .gallery-item:hover {
+            border-color: var(--border-gold);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transform: scale(1.03);
+            z-index: 2;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s;
+        }
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+        .gallery-item-label {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            padding: 5px 12px;
+            background: rgba(10, 10, 10, 0.8);
+            border-radius: 50px;
+            font-size: 0.65rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            backdrop-filter: blur(10px);
+            z-index: 2;
+        }
+
+        /* MODELS SECTION - ENHANCED */
+        .models {
+            background: var(--bg-secondary);
+            text-align: center;
+        }
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.8rem;
+            margin-top: 2rem;
+        }
+        .model-card {
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.5s;
+            text-align: left;
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        .model-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .model-card:hover {
+            border-color: var(--border-gold);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            transform: translateY(-8px);
+        }
+        .model-image {
+            width: 100%;
+            height: 240px;
+            overflow: hidden;
+            position: relative;
+        }
+        .model-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.7s;
+            filter: brightness(0.8);
+        }
+        .model-card:hover .model-image img {
+            transform: scale(1.08);
+            filter: brightness(1);
+        }
+        .model-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-gold);
+            color: var(--accent-gold);
+            z-index: 2;
+        }
+        .model-body {
+            padding: 1.5rem;
+        }
+        .model-name {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: 300;
+            margin-bottom: 0.3rem;
+            color: var(--text-primary);
+        }
+        .model-price {
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+            font-weight: 500;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+        }
+        .model-price span {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            display: block;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .model-specs {
+            display: flex;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+        .model-spec-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+        }
+        .model-spec-item .value {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        .model-spec-item .label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+        .model-btn {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 10px 24px;
+            border-radius: 50px;
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            transition: all 0.3s;
+            background: transparent;
+            cursor: pointer;
+            font-family: var(--font-body);
+        }
+        .model-btn:hover {
+            background: var(--accent-gold);
+            color: #000;
+        }
+
+        /* CONFIGURATOR - ENHANCED */
+        .configurator {
+            background: var(--bg-primary);
+            text-align: center;
+        }
+        .configurator-car-wrap {
+            max-width: 900px;
+            margin: 0 auto 2rem;
+            position: relative;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            background: #0d0d0d;
+        }
+        .configurator-car-wrap img {
+            width: 100%;
+            height: auto;
+            display: block;
+            mix-blend-mode: normal;
+            transition: filter 0.6s;
+        }
+        .configurator-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            mix-blend-mode: color;
+            transition: background-color 0.6s;
+            z-index: 2;
+        }
+        .configurator-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .color-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .color-swatch {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.4);
+        }
+        .color-swatch:hover {
+            transform: scale(1.12);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        .color-swatch.active {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 25px rgba(201, 168, 76, 0.5);
+        }
+        .color-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+        .color-option:hover .color-label {
+            color: var(--text-primary);
+        }
+        .color-option.active .color-label {
+            color: var(--accent-gold);
+        }
+        .config-price {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: var(--accent-gold);
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+        .config-price span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: block;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        /* COMPARISON */
+        .comparison-slider {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            cursor: ew-resize;
+            border: 1px solid var(--border-subtle);
+        }
+        .comparison-before,
+        .comparison-after {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+        }
+        .comparison-before {
+            background-image: url('https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=1200&q=80&auto=format&fit=crop');
+            z-index: 1;
+        }
+        .comparison-after {
+            background-image: url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200&q=80&auto=format&fit=crop');
+            z-index: 2;
+            width: 50%;
+            border-right: 3px solid var(--accent-gold);
+        }
+        .comparison-divider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 3px;
+            background: var(--accent-gold);
+            z-index: 3;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+        .comparison-divider::after {
+            content: '⟷';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--accent-gold);
+            color: #000;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        .comparison-label {
+            position: absolute;
+            top: 12px;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 0.65rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            z-index: 4;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .comparison-label.before-label {
+            left: 12px;
+            color: var(--text-secondary);
+        }
+        .comparison-label.after-label {
+            right: 12px;
+            color: var(--accent-gold);
+        }
+        .comparison-specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+        }
+        .comparison-spec {
+            text-align: center;
+            padding: 0.8rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.5s;
+        }
+        .comparison-spec.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .comparison-spec .value {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            color: var(--accent-gold);
+            display: block;
+        }
+        .comparison-spec .label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        /* REVIEWS */
+        .reviews-stack {
+            position: relative;
+            max-width: 650px;
+            margin: 0 auto;
+            height: 320px;
+        }
+        .review-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1.8rem;
+            border-radius: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.5s;
+            opacity: 0;
+            transform: translateY(35px) scale(0.95);
+        }
+        .review-card.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            z-index: 2;
+        }
+        .review-card.prev {
+            opacity: 0.5;
+            transform: translateY(-25px) scale(0.9);
+            z-index: 1;
+        }
+        .review-card.next {
+            opacity: 0.25;
+            transform: translateY(25px) scale(0.85);
+            z-index: 0;
+        }
+        .review-stars {
+            color: var(--accent-gold);
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            letter-spacing: 0.15em;
+        }
+        .review-text {
+            font-style: italic;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1.2rem;
+        }
+        .review-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-gold-dim), var(--accent-gold));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .review-author {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .review-author-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .review-author-title {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .review-nav {
+            display: flex;
+            gap: 0.6rem;
+            justify-content: center;
+            margin-top: 1.2rem;
+        }
+        .review-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border-subtle);
+            background: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .review-btn:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+            background: rgba(201, 168, 76, 0.1);
+        }
+
+        /* SPECS */
+        .specs-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .specs-table tr {
+            border-bottom: 1px solid var(--border-subtle);
+            transition: background 0.3s;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        .specs-table tr.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .specs-table tr:hover {
+            background: rgba(201, 168, 76, 0.03);
+        }
+        .specs-table td {
+            padding: 0.9rem 1.2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .specs-table td:first-child {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.7rem;
+            width: 180px;
+        }
+        .specs-table td:last-child {
+            color: var(--text-primary);
+            font-weight: 500;
+            text-align: right;
+        }
+        .spec-value {
+            color: var(--accent-gold);
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+        }
+
+        /* AWARDS */
+        .awards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .award-badge {
+            padding: 1.5rem;
+            border-radius: 50%;
+            border: 1px solid var(--border-gold);
+            background: rgba(201, 168, 76, 0.03);
+            transition: all 0.5s;
+            opacity: 0;
+            transform: scale(0.5);
+            cursor: pointer;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            text-align: center;
+        }
+        .award-badge.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .award-badge:hover {
+            box-shadow: 0 0 40px rgba(201, 168, 76, 0.2);
+            border-color: var(--accent-gold);
+            transform: scale(1.08);
+        }
+        .award-badge .award-icon {
+            font-size: 2rem;
+            color: var(--accent-gold);
+        }
+        .award-badge .award-year {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            color: var(--accent-gold);
+        }
+        .award-badge .award-name {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+        }
+
+        /* CTA */
+        .cta-section {
+            background: linear-gradient(135deg, var(--bg-primary), #1a1400);
+            text-align: center;
+            padding: 60px 0;
+        }
+        .cta-section h2 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            margin-bottom: 0.8rem;
+        }
+        .cta-section p {
+            color: var(--text-secondary);
+            max-width: 450px;
+            margin: 0 auto 1.5rem;
+        }
+        .magnetic-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            border-radius: 50px;
+            background: var(--accent-gold);
+            color: #000;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            box-shadow: 0 8px 30px rgba(201, 168, 76, 0.3);
+        }
+        .magnetic-btn:hover {
+            box-shadow: 0 15px 50px rgba(201, 168, 76, 0.5);
+            transform: scale(1.04);
+        }
+
+        /* NEWSLETTER */
+        .newsletter-form {
+            max-width: 450px;
+            margin: 0 auto;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .newsletter-form input {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 50px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .newsletter-form input:focus {
+            border-color: var(--accent-gold);
+        }
+        .newsletter-form button {
+            padding: 14px 24px;
+            border-radius: 50px;
+            background: var(--accent-gold);
+            color: #000;
+            border: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .newsletter-form button:hover {
+            background: var(--accent-gold-bright);
+        }
+
+        /* CONTACT */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.5s;
+        }
+        .contact-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .contact-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(201, 168, 76, 0.1);
+            border: 1px solid var(--border-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+            flex-shrink: 0;
+        }
+        .contact-item h4 {
+            margin-bottom: 0.1rem;
+            font-size: 0.9rem;
+        }
+        .contact-item p {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .contact-form input,
+        .contact-form textarea {
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.3s;
+            font-family: var(--font-body);
+            resize: vertical;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        .contact-form input.visible,
+        .contact-form textarea.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .contact-form input:focus,
+        .contact-form textarea:focus {
+            border-color: var(--accent-gold);
+        }
+        .contact-form button {
+            padding: 14px 24px;
+            border-radius: 50px;
+            background: var(--accent-gold);
+            color: #000;
+            border: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        .contact-form button.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .contact-form button:hover {
+            background: var(--accent-gold-bright);
+        }
+
+        /* FOOTER */
+        .footer {
+            background: #050505;
+            padding: 40px 0 25px;
+            border-top: 1px solid var(--border-subtle);
+        }
+        .footer-marquee {
+            padding: 15px 0;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 25px;
+        }
+        .footer-marquee-inner {
+            display: flex;
+            gap: 2rem;
+            animation: marquee 20s linear infinite;
+            white-space: nowrap;
+            font-size: 1.2rem;
+            font-family: var(--font-heading);
+            letter-spacing: 0.12em;
+            color: rgba(201, 168, 76, 0.3);
+        }
+        @keyframes marquee {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .footer-brand .logo {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            letter-spacing: 0.18em;
+        }
+        .footer-brand .logo span {
+            color: var(--accent-gold);
+        }
+        .footer-brand p {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            max-width: 220px;
+        }
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .footer-col h5 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-gold);
+            margin-bottom: 0.7rem;
+        }
+        .footer-col ul {
+            list-style: none;
+        }
+        .footer-col ul li {
+            margin-bottom: 0.4rem;
+        }
+        .footer-col ul li a {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .footer-col ul li a:hover {
+            color: var(--accent-gold);
+        }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        /* SCROLL PROGRESS */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-gold-dim), var(--accent-gold-bright));
+            z-index: 9999;
+            transition: width 0.1s linear;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .exterior-grid,
+            .performance-grid,
+            .safety-grid,
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 1.8rem;
+            }
+            .bento-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-auto-rows: 160px;
+            }
+            .tech-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .exterior-image-wrapper {
+                aspect-ratio: 16/9;
+            }
+            .models-grid {
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            }
+        }
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 16px;
+            }
+            .nav-links {
+                display: none;
+                position: fixed;
+                top: var(--nav-height);
+                left: 0;
+                right: 0;
+                background: rgba(10, 10, 10, 0.98);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                padding: 1.5rem;
+                gap: 1rem;
+                border-bottom: 1px solid var(--border-subtle);
+            }
+            .nav-links.open {
+                display: flex;
+            }
+            .mobile-toggle {
+                display: flex;
+            }
+            .bento-grid {
+                grid-template-columns: 1fr;
+                grid-auto-rows: 180px;
+            }
+            .bento-card.large,
+            .bento-card.medium {
+                grid-column: span 1;
+                grid-row: span 1;
+            }
+            .tech-grid {
+                grid-template-columns: 1fr;
+            }
+            .gallery-item {
+                width: 280px;
+                height: 210px;
+            }
+            .models-grid {
+                grid-template-columns: 1fr;
+            }
+            .newsletter-form {
+                flex-direction: column;
+            }
+            .footer-content {
+                flex-direction: column;
+            }
+            .speedometer {
+                width: 200px;
+                height: 200px;
+            }
+            .speedometer-svg {
+                width: 165px;
+                height: 165px;
+            }
+            .safety-radar {
+                width: 200px;
+                height: 200px;
+            }
+            .safety-radar-svg {
+                width: 165px;
+                height: 165px;
+            }
+            section {
+                padding: 40px 0;
+            }
+        }
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: clamp(2rem, 7vw, 3.5rem);
+                letter-spacing: 0.08em;
+            }
+            .hero-subtitle {
+                font-size: 0.7rem;
+                letter-spacing: 0.12em;
+            }
+            .btn {
+                padding: 12px 24px;
+                font-size: 0.65rem;
+            }
+            .award-badge {
+                width: 110px;
+                height: 110px;
+                padding: 1rem;
+            }
+            .color-swatch {
+                width: 38px;
+                height: 38px;
+            }
+            .model-image {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="logo">VELO<span>CITA</span></a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#exterior">Design</a></li>
+            <li><a href="#performance">Performance</a></li>
+            <li><a href="#models">Models</a></li>
+            <li><a href="#technology">Technology</a></li>
+            <li><a href="#contact" class="nav-cta">Book a Test Drive</a></li>
+        </ul>
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero" id="hero">
+        <div class="hero-bg">
+            <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920&q=80&auto=format&fit=crop" alt="VELOCITA Supercar" loading="eager">
+        </div>
+        <div class="hero-sweep"></div>
+        <div class="hero-particles" id="heroParticles"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="letter">V</span><span class="letter">E</span><span class="letter">L</span><span class="letter">O</span><span class="letter">C</span><span class="letter">I</span><span class="letter">T</span><span class="letter">A</span>
+            </h1>
+            <p class="hero-subtitle">The Art of Automotive Excellence</p>
+            <div class="hero-cta-group">
+                <a href="#models" class="btn btn-primary">Explore Models <span>→</span></a>
+                <a href="#contact" class="btn btn-outline">Book a Test Drive</a>
+            </div>
+        </div>
+        <div class="hero-scroll-indicator">
+            <span>Scroll</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- EXTERIOR -->
+    <section class="exterior" id="exterior">
+        <div class="container">
+            <span class="section-label">Exterior Design</span>
+            <h2>Sculpted by <span class="gold-text">Wind</span></h2>
+            <div class="exterior-grid">
+                <div class="exterior-image-wrapper" id="exteriorImage">
+                    <img src="https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=1200&q=80&auto=format&fit=crop" alt="VELOCITA Exterior" loading="lazy">
+                    <div class="hotspot" style="top:25%;left:60%;"><span class="hotspot-label">LED Matrix Headlights</span></div>
+                    <div class="hotspot" style="top:55%;left:30%;"><span class="hotspot-label">Aerodynamic Splitter</span></div>
+                    <div class="hotspot" style="top:40%;left:75%;"><span class="hotspot-label">Carbon Fiber Mirrors</span></div>
+                    <div class="hotspot" style="top:70%;left:45%;"><span class="hotspot-label">Forged Alloy Wheels</span></div>
+                </div>
+                <div>
+                    <div class="exterior-feature" data-delay="0">
+                        <div class="exterior-feature-icon">🏎️</div>
+                        <div><h4>Active Aerodynamics</h4><p>Adaptive spoiler responds in milliseconds.</p></div>
+                    </div>
+                    <div class="exterior-feature" data-delay="150">
+                        <div class="exterior-feature-icon">💡</div>
+                        <div><h4>Matrix LED</h4><p>1024 LED elements adapt to conditions.</p></div>
+                    </div>
+                    <div class="exterior-feature" data-delay="300">
+                        <div class="exterior-feature-icon">⚡</div>
+                        <div><h4>Lightweight Chassis</h4><p>Carbon fiber monocoque, 235kg.</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERIOR -->
+    <section class="interior" id="interior">
+        <div class="container">
+            <span class="section-label">Interior Luxury</span>
+            <h2>Crafted for <span class="gold-text">Perfection</span></h2>
+            <div class="interior-parallax" id="interiorParallax">
+                <img src="https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=1600&q=80&auto=format&fit=crop" alt="VELOCITA Interior" loading="lazy" id="interiorParallaxImg">
+                <div class="interior-overlay-text">
+                    <h3>Hand-Stitched Luxury</h3>
+                    <p>Nappa leather, meticulous craftsmanship.</p>
+                </div>
+            </div>
+            <div class="interior-features-row">
+                <div class="interior-card" data-delay="0"><div class="interior-card-icon">🪑</div><h4>Carbon Sport Seats</h4><p>18-way adjustable</p></div>
+                <div class="interior-card" data-delay="150"><div class="interior-card-icon">🎵</div><h4>B&W Audio</h4><p>20-speaker system</p></div>
+                <div class="interior-card" data-delay="300"><div class="interior-card-icon">📱</div><h4>Digital Cockpit</h4><p>12.3-inch curved display</p></div>
+                <div class="interior-card" data-delay="450"><div class="interior-card-icon">🌡️</div><h4>4-Zone Climate</h4><p>Individual zones</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features" id="features">
+        <div class="container">
+            <span class="section-label">Signature Features</span>
+            <h2>Every Detail <span class="gold-text">Considered</span></h2>
+            <div class="bento-grid">
+                <div class="bento-card large" data-delay="0">
+                    <img src="https://images.unsplash.com/photo-1555215695-3004980ad54e?w=1200&q=80&auto=format&fit=crop" alt="Track Mode" loading="lazy">
+                    <div class="bento-icon">🏁</div>
+                    <div class="bento-card-overlay"><h4>Track Mode</h4><p>Race-tuned settings</p></div>
+                </div>
+                <div class="bento-card" data-delay="150">
+                    <img src="https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=800&q=80&auto=format&fit=crop" alt="Adaptive LED" loading="lazy">
+                    <div class="bento-icon">🔦</div>
+                    <div class="bento-card-overlay"><h4>Adaptive LED</h4><p>Intelligent lighting</p></div>
+                </div>
+                <div class="bento-card" data-delay="300">
+                    <img src="https://images.unsplash.com/photo-1600661653561-629509216228?w=800&q=80&auto=format&fit=crop" alt="Wheels" loading="lazy">
+                    <div class="bento-icon">🛞</div>
+                    <div class="bento-card-overlay"><h4>Forged Wheels</h4><p>Ultra-light alloy</p></div>
+                </div>
+                <div class="bento-card medium" data-delay="450">
+                    <img src="https://images.unsplash.com/photo-1542362567-b07e54358753?w=800&q=80&auto=format&fit=crop" alt="Design" loading="lazy">
+                    <div class="bento-icon">✨</div>
+                    <div class="bento-card-overlay"><h4>Signature Design</h4><p>Every curve tells a story</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PERFORMANCE -->
+    <section class="performance" id="performance">
+        <div class="container">
+            <span class="section-label">Performance</span>
+            <h2>Numbers That <span class="gold-text">Speak</span></h2>
+            <div class="performance-grid">
+                <div class="speedometer">
+                    <svg class="speedometer-svg" viewBox="0 0 200 200">
+                        <circle class="speedometer-bg" cx="100" cy="100" r="90"/>
+                        <circle class="speedometer-progress" id="speedProgress" cx="100" cy="100" r="90" stroke-dasharray="565.48" stroke-dashoffset="565.48"/>
+                    </svg>
+                    <span class="speedometer-value" id="speedValue">0</span>
+                    <span class="speedometer-unit">km/h</span>
+                </div>
+                <div class="perf-stats">
+                    <div class="perf-stat" data-delay="0"><span class="perf-stat-value" data-target="3.1">0</span><span class="perf-stat-label">0-100 km/h (s)</span><div class="perf-bar-track"><div class="perf-bar-fill" data-width="95%"></div></div></div>
+                    <div class="perf-stat" data-delay="150"><span class="perf-stat-value" data-target="330">0</span><span class="perf-stat-label">Top Speed (km/h)</span><div class="perf-bar-track"><div class="perf-bar-fill" data-width="90%"></div></div></div>
+                    <div class="perf-stat" data-delay="300"><span class="perf-stat-value" data-target="720">0</span><span class="perf-stat-label">Horsepower</span><div class="perf-bar-track"><div class="perf-bar-fill" data-width="85%"></div></div></div>
+                    <div class="perf-stat" data-delay="450"><span class="perf-stat-value" data-target="850">0</span><span class="perf-stat-label">Torque (Nm)</span><div class="perf-bar-track"><div class="perf-bar-fill" data-width="80%"></div></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DRIVING -->
+    <section class="driving" id="driving">
+        <div class="driving-parallax" id="drivingParallax">
+            <img src="https://images.unsplash.com/photo-1502877338535-766e1452684a?w=1600&q=80&auto=format&fit=crop" alt="Driving" loading="lazy" id="drivingParallaxImg">
+            <div class="driving-content" id="drivingContent">
+                <span class="section-label" style="display:inline-block;padding-left:0;">The Drive</span>
+                <h2>Feel Every <span class="gold-text">Heartbeat</span></h2>
+                <p>The road becomes yours. Every moment is a symphony of sensation.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- TECHNOLOGY -->
+    <section class="technology" id="technology">
+        <div class="container">
+            <span class="section-label">Technology</span>
+            <h2>Innovation <span class="gold-text">Unleashed</span></h2>
+            <div class="tech-grid">
+                <div class="tech-card" data-delay="0"><div class="tech-icon">🧠</div><h4>AI Assistance</h4><p>Neural network-powered</p></div>
+                <div class="tech-card" data-delay="150"><div class="tech-icon">🔋</div><h4>Hybrid Powertrain</h4><p>Instant torque, reduced emissions</p></div>
+                <div class="tech-card" data-delay="300"><div class="tech-icon">🖥️</div><h4>Holographic Display</h4><p>AR navigation on windshield</p></div>
+                <div class="tech-card" data-delay="450"><div class="tech-icon">📡</div><h4>5G Connectivity</h4><p>OTA updates, real-time traffic</p></div>
+                <div class="tech-card" data-delay="600"><div class="tech-icon">🔊</div><h4>Active Sound</h4><p>Digitally enhanced acoustics</p></div>
+                <div class="tech-card" data-delay="750"><div class="tech-icon">🛡️</div><h4>Predictive Safety</h4><p>Sensors predict hazards</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SAFETY -->
+    <section class="safety" id="safety">
+        <div class="container">
+            <span class="section-label">Safety</span>
+            <h2>Protection <span class="gold-text">Reimagined</span></h2>
+            <div class="safety-grid">
+                <div class="safety-radar">
+                    <svg class="safety-radar-svg" viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+                        <circle cx="100" cy="100" r="55" fill="none" stroke="rgba(201,168,76,0.1)" stroke-width="1"/>
+                        <circle cx="100" cy="100" r="30" fill="none" stroke="rgba(201,168,76,0.08)" stroke-width="1"/>
+                        <g class="safety-sweep"><line x1="100" y1="100" x2="100" y2="20" stroke="rgba(201,168,76,0.6)" stroke-width="2"/></g>
+                        <g class="safety-blips"><circle cx="140" cy="70" r="4" fill="#c9a84c" opacity="0.8"/><circle cx="60" cy="130" r="3" fill="#c9a84c" opacity="0.6"/></g>
+                    </svg>
+                    <div class="safety-shield">🛡️</div>
+                </div>
+                <div>
+                    <div class="safety-item" data-delay="0"><div class="safety-dot"></div><div><span>360° Surround Vision</span><small>8 cameras</small></div></div>
+                    <div class="safety-item" data-delay="150"><div class="safety-dot"></div><div><span>Autonomous Braking</span><small>Detects up to 150m</small></div></div>
+                    <div class="safety-item" data-delay="300"><div class="safety-dot"></div><div><span>Blind Spot Intelligence</span><small>Radar-based detection</small></div></div>
+                    <div class="safety-item" data-delay="450"><div class="safety-dot"></div><div><span>Night Vision Assist</span><small>Infrared camera</small></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODELS - ENHANCED -->
+    <section class="models" id="models">
+        <div class="container">
+            <span class="section-label">Our Models</span>
+            <h2>The <span class="gold-text">Lineup</span></h2>
+            <p style="color:var(--text-secondary);max-width:500px;margin:0 auto 0.5rem;">Choose your weapon. Every VELOCITA is a masterpiece of engineering.</p>
+            <div class="models-grid">
+                <div class="model-card" data-delay="0">
+                    <div class="model-image">
+                        <span class="model-badge">Flagship</span>
+                        <img src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&q=80&auto=format&fit=crop" alt="GT Coupe" loading="lazy">
+                    </div>
+                    <div class="model-body">
+                        <h3 class="model-name">GT Coupe</h3>
+                        <div class="model-price">₹1,89,50,000<span>Ex-showroom India</span></div>
+                        <div class="model-specs">
+                            <div class="model-spec-item"><span class="value">720 HP</span><span class="label">Power</span></div>
+                            <div class="model-spec-item"><span class="value">3.1s</span><span class="label">0-100</span></div>
+                            <div class="model-spec-item"><span class="value">330 km/h</span><span class="label">Top Speed</span></div>
+                        </div>
+                        <button class="model-btn">Configure</button>
+                    </div>
+                </div>
+                <div class="model-card" data-delay="150">
+                    <div class="model-image">
+                        <span class="model-badge">Open Top</span>
+                        <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=80&auto=format&fit=crop" alt="Spyder" loading="lazy">
+                    </div>
+                    <div class="model-body">
+                        <h3 class="model-name">Spyder</h3>
+                        <div class="model-price">₹2,15,00,000<span>Ex-showroom India</span></div>
+                        <div class="model-specs">
+                            <div class="model-spec-item"><span class="value">750 HP</span><span class="label">Power</span></div>
+                            <div class="model-spec-item"><span class="value">3.0s</span><span class="label">0-100</span></div>
+                            <div class="model-spec-item"><span class="value">325 km/h</span><span class="label">Top Speed</span></div>
+                        </div>
+                        <button class="model-btn">Configure</button>
+                    </div>
+                </div>
+                <div class="model-card" data-delay="300">
+                    <div class="model-image">
+                        <span class="model-badge">Track Focus</span>
+                        <img src="https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80&auto=format&fit=crop" alt="GT-R" loading="lazy">
+                    </div>
+                    <div class="model-body">
+                        <h3 class="model-name">GT-R</h3>
+                        <div class="model-price">₹2,45,00,000<span>Ex-showroom India</span></div>
+                        <div class="model-specs">
+                            <div class="model-spec-item"><span class="value">800 HP</span><span class="label">Power</span></div>
+                            <div class="model-spec-item"><span class="value">2.8s</span><span class="label">0-100</span></div>
+                            <div class="model-spec-item"><span class="value">340 km/h</span><span class="label">Top Speed</span></div>
+                        </div>
+                        <button class="model-btn">Configure</button>
+                    </div>
+                </div>
+                <div class="model-card" data-delay="450">
+                    <div class="model-image">
+                        <span class="model-badge">Grand Touring</span>
+                        <img src="https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=80&auto=format&fit=crop" alt="S" loading="lazy">
+                    </div>
+                    <div class="model-body">
+                        <h3 class="model-name">S</h3>
+                        <div class="model-price">₹1,65,00,000<span>Ex-showroom India</span></div>
+                        <div class="model-specs">
+                            <div class="model-spec-item"><span class="value">680 HP</span><span class="label">Power</span></div>
+                            <div class="model-spec-item"><span class="value">3.3s</span><span class="label">0-100</span></div>
+                            <div class="model-spec-item"><span class="value">315 km/h</span><span class="label">Top Speed</span></div>
+                        </div>
+                        <button class="model-btn">Configure</button>
+                    </div>
+                </div>
+                <div class="model-card" data-delay="600">
+                    <div class="model-image">
+                        <span class="model-badge">Ultimate</span>
+                        <img src="https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800&q=80&auto=format&fit=crop" alt="Aventador" loading="lazy">
+                    </div>
+                    <div class="model-body">
+                        <h3 class="model-name">Aventador</h3>
+                        <div class="model-price">₹3,25,00,000<span>Ex-showroom India</span></div>
+                        <div class="model-specs">
+                            <div class="model-spec-item"><span class="value">820 HP</span><span class="label">Power</span></div>
+                            <div class="model-spec-item"><span class="value">2.6s</span><span class="label">0-100</span></div>
+                            <div class="model-spec-item"><span class="value">350 km/h</span><span class="label">Top Speed</span></div>
+                        </div>
+                        <button class="model-btn">Configure</button>
+                    </div>
+                </div>
+                <div class="model-card" data-delay="750">
+                    <div class="model-image">
+                        <span class="model-badge">Electric</span>
+                        <img src="https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&q=80&auto=format&fit=crop" alt="Elettrica" loading="lazy">
+                    </div>
+                    <div class="model-body">
+                        <h3 class="model-name">Elettrica</h3>
+                        <div class="model-price">₹2,85,00,000<span>Ex-showroom India</span></div>
+                        <div class="model-specs">
+                            <div class="model-spec-item"><span class="value">950 HP</span><span class="label">Power</span></div>
+                            <div class="model-spec-item"><span class="value">2.4s</span><span class="label">0-100</span></div>
+                            <div class="model-spec-item"><span class="value">320 km/h</span><span class="label">Top Speed</span></div>
+                        </div>
+                        <button class="model-btn">Configure</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- GALLERY -->
+    <section class="gallery" id="gallery">
+        <div class="container" style="padding-top:40px;">
+            <span class="section-label">Gallery</span>
+            <h2>Captured <span class="gold-text">Moments</span></h2>
+        </div>
+        <div class="gallery-track" id="galleryTrack">
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&q=80&auto=format&fit=crop" alt="Gallery" loading="lazy"><span class="gallery-item-label">Studio</span></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=80&auto=format&fit=crop" alt="Gallery" loading="lazy"><span class="gallery-item-label">Highway</span></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80&auto=format&fit=crop" alt="Gallery" loading="lazy"><span class="gallery-item-label">Golden Hour</span></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=80&auto=format&fit=crop" alt="Gallery" loading="lazy"><span class="gallery-item-label">City</span></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80&auto=format&fit=crop" alt="Gallery" loading="lazy"><span class="gallery-item-label">Track Day</span></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1542362567-b07e54358753?w=800&q=80&auto=format&fit=crop" alt="Gallery" loading="lazy"><span class="gallery-item-label">Precision</span></div>
+        </div>
+    </section>
+
+    <!-- CONFIGURATOR - ENHANCED -->
+    <section class="configurator" id="configurator">
+        <div class="container">
+            <span class="section-label">Configurator</span>
+            <h2>Make It <span class="gold-text">Yours</span></h2>
+            <div class="configurator-car-wrap">
+                <img src="https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?w=1400&q=80&auto=format&fit=crop" alt="VELOCITA Configurator" id="configuratorImg" loading="lazy">
+                <div class="configurator-overlay" id="configuratorOverlay"></div>
+            </div>
+            <div class="configurator-options">
+                <div class="color-option active" data-color="red" data-overlay="rgba(180,30,30,0.45)" data-price="18950000" data-name="Rosso Corsa">
+                    <div class="color-swatch" style="background:#c0392b;"></div>
+                    <span class="color-label">Rosso Corsa</span>
+                </div>
+                <div class="color-option" data-color="blue" data-overlay="rgba(30,80,180,0.45)" data-price="19200000" data-name="Azzurro Blue">
+                    <div class="color-swatch" style="background:#2980b9;"></div>
+                    <span class="color-label">Azzurro Blue</span>
+                </div>
+                <div class="color-option" data-color="black" data-overlay="rgba(20,20,20,0.55)" data-price="18800000" data-name="Nero Black">
+                    <div class="color-swatch" style="background:#1a1a1a;"></div>
+                    <span class="color-label">Nero Black</span>
+                </div>
+                <div class="color-option" data-color="white" data-overlay="rgba(200,200,210,0.3)" data-price="19050000" data-name="Bianco Pearl">
+                    <div class="color-swatch" style="background:#f5f5f5;"></div>
+                    <span class="color-label">Bianco Pearl</span>
+                </div>
+                <div class="color-option" data-color="gold" data-overlay="rgba(180,140,30,0.4)" data-price="19800000" data-name="Oro Gold">
+                    <div class="color-swatch" style="background:#c9a84c;"></div>
+                    <span class="color-label">Oro Gold</span>
+                </div>
+                <div class="color-option" data-color="green" data-overlay="rgba(20,120,50,0.45)" data-price="19350000" data-name="Verde Green">
+                    <div class="color-swatch" style="background:#27ae60;"></div>
+                    <span class="color-label">Verde Green</span>
+                </div>
+            </div>
+            <div class="config-price" id="configPrice">₹1,89,50,000<span>Base Price (Ex-showroom India)</span></div>
+        </div>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="comparison" id="comparison">
+        <div class="container">
+            <span class="section-label">Comparison</span>
+            <h2>See the <span class="gold-text">Difference</span></h2>
+            <div class="comparison-slider" id="comparisonSlider">
+                <div class="comparison-before"></div>
+                <div class="comparison-after" id="comparisonAfter"></div>
+                <div class="comparison-divider" id="comparisonDivider"></div>
+                <span class="comparison-label before-label">Standard</span>
+                <span class="comparison-label after-label">VELOCITA</span>
+            </div>
+            <div class="comparison-specs">
+                <div class="comparison-spec" data-delay="0"><span class="value">+120</span><span class="label">More HP</span></div>
+                <div class="comparison-spec" data-delay="150"><span class="value">-0.8s</span><span class="label">0-100</span></div>
+                <div class="comparison-spec" data-delay="300"><span class="value">+45%</span><span class="label">Downforce</span></div>
+                <div class="comparison-spec" data-delay="450"><span class="value">-200kg</span><span class="label">Weight</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- REVIEWS -->
+    <section class="reviews" id="reviews">
+        <div class="container">
+            <span class="section-label">Testimonials</span>
+            <h2>What Drivers <span class="gold-text">Say</span></h2>
+            <div class="reviews-stack" id="reviewsStack">
+                <div class="review-card active"><div class="review-stars">★★★★★</div><p class="review-text">"The VELOCITA GT is pure adrenaline. This is what driving should feel like."</p><div class="review-author"><div class="review-avatar">MR</div><div><div class="review-author-name">Marcus Rossi</div><div class="review-author-title">Racing Driver</div></div></div></div>
+                <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Surpasses Ferraris and Lamborghinis in build quality and driving pleasure."</p><div class="review-author"><div class="review-avatar">SK</div><div><div class="review-author-name">Sarah Kim</div><div class="review-author-title">Journalist</div></div></div></div>
+                <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Extraordinary craftsmanship. Like a bespoke suit at 300 km/h."</p><div class="review-author"><div class="review-avatar">JD</div><div><div class="review-author-name">James Dubois</div><div class="review-author-title">Collector</div></div></div></div>
+            </div>
+            <div class="review-nav">
+                <button class="review-btn" id="reviewPrev">←</button>
+                <button class="review-btn" id="reviewNext">→</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- SPECS -->
+    <section class="specs" id="specs">
+        <div class="container">
+            <span class="section-label">Specifications</span>
+            <h2>Technical <span class="gold-text">Excellence</span></h2>
+            <table class="specs-table">
+                <tr data-delay="0"><td>Engine</td><td><span class="spec-value">4.0L Twin-Turbo V8 Hybrid</span></td></tr>
+                <tr data-delay="100"><td>Transmission</td><td><span class="spec-value">8-Speed Dual-Clutch</span></td></tr>
+                <tr data-delay="200"><td>Power</td><td><span class="spec-value">720 HP</span></td></tr>
+                <tr data-delay="300"><td>Torque</td><td><span class="spec-value">850 Nm</span></td></tr>
+                <tr data-delay="400"><td>0-100 km/h</td><td><span class="spec-value">3.1 seconds</span></td></tr>
+                <tr data-delay="500"><td>Top Speed</td><td><span class="spec-value">330 km/h</span></td></tr>
+                <tr data-delay="600"><td>Weight</td><td><span class="spec-value">1,540 kg</span></td></tr>
+                <tr data-delay="700"><td>Chassis</td><td><span class="spec-value">Carbon Fiber Monocoque</span></td></tr>
+            </table>
+        </div>
+    </section>
+
+    <!-- AWARDS -->
+    <section class="awards" id="awards">
+        <div class="container">
+            <span class="section-label">Recognition</span>
+            <h2>Awards & <span class="gold-text">Honors</span></h2>
+            <div class="awards-grid">
+                <div class="award-badge" data-delay="0"><div class="award-icon">🏆</div><div class="award-year">2025</div><div class="award-name">Car of the Year</div></div>
+                <div class="award-badge" data-delay="200"><div class="award-icon">⚡</div><div class="award-year">2025</div><div class="award-name">Best Performance</div></div>
+                <div class="award-badge" data-delay="400"><div class="award-icon">🎨</div><div class="award-year">2024</div><div class="award-name">Design Excellence</div></div>
+                <div class="award-badge" data-delay="600"><div class="award-icon">🛡️</div><div class="award-year">2024</div><div class="award-name">Safest Vehicle</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section" id="cta">
+        <div class="container">
+            <h2>Ready to <span class="gold-text">Experience</span> It?</h2>
+            <p>Book a private test drive and feel the VELOCITA difference.</p>
+            <button class="magnetic-btn" id="magneticBtn">Book Your Test Drive <span>→</span></button>
+        </div>
+    </section>
+
+    <!-- NEWSLETTER -->
+    <section class="newsletter" id="newsletter">
+        <div class="container">
+            <span class="section-label">Stay Connected</span>
+            <h2>Join the <span class="gold-text">Inner Circle</span></h2>
+            <form class="newsletter-form" id="newsletterForm">
+                <input type="email" placeholder="Enter your email address" required>
+                <button type="submit">Subscribe</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="contact" id="contact">
+        <div class="container">
+            <span class="section-label">Get in Touch</span>
+            <h2>Contact <span class="gold-text">Us</span></h2>
+            <div class="contact-grid">
+                <div>
+                    <div class="contact-item" data-delay="0"><div class="contact-icon">📍</div><div><h4>Showroom</h4><p>MG Road, Bengaluru, India</p></div></div>
+                    <div class="contact-item" data-delay="150"><div class="contact-icon">📞</div><div><h4>Phone</h4><p>+91 80 5555 8888</p></div></div>
+                    <div class="contact-item" data-delay="300"><div class="contact-icon">✉️</div><div><h4>Email</h4><p>concierge@velocita.in</p></div></div>
+                    <div class="contact-item" data-delay="450"><div class="contact-icon">🕐</div><div><h4>Hours</h4><p>Mon-Sat: 9 AM - 8 PM</p></div></div>
+                </div>
+                <form class="contact-form" id="contactForm">
+                    <input type="text" placeholder="Your Name" required data-delay="0">
+                    <input type="email" placeholder="Your Email" required data-delay="150">
+                    <input type="tel" placeholder="Phone Number" data-delay="300">
+                    <textarea placeholder="Your Message" rows="4" required data-delay="450"></textarea>
+                    <button type="submit" data-delay="600">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer" id="footer">
+        <div class="footer-marquee"><div class="footer-marquee-inner"><span>VELOCITA • PERFORMANCE • LUXURY • INNOVATION • VELOCITA • PERFORMANCE • LUXURY • INNOVATION •</span><span>VELOCITA • PERFORMANCE • LUXURY • INNOVATION • VELOCITA • PERFORMANCE • LUXURY • INNOVATION •</span></div></div>
+        <div class="footer-content">
+            <div class="footer-brand"><div class="logo">VELO<span>CITA</span></div><p>Pinnacle of automotive excellence.</p></div>
+            <div class="footer-links">
+                <div class="footer-col"><h5>Company</h5><ul><li><a href="#">About</a></li><li><a href="#">Careers</a></li><li><a href="#">Press</a></li></ul></div>
+                <div class="footer-col"><h5>Support</h5><ul><li><a href="#">Contact</a></li><li><a href="#">FAQ</a></li><li><a href="#">Warranty</a></li></ul></div>
+                <div class="footer-col"><h5>Follow</h5><ul><li><a href="#">Instagram</a></li><li><a href="#">YouTube</a></li><li><a href="#">X</a></li></ul></div>
+            </div>
+        </div>
+        <div class="footer-bottom">&copy; 2026 VELOCITA Automobili India. All rights reserved.</div>
+    </footer>
+
+    <script>
+        (function() {
+            document.addEventListener('DOMContentLoaded', function() {
+                const navbar = document.getElementById('navbar');
+                const navLinks = document.getElementById('navLinks');
+                const mobileToggle = document.getElementById('mobileToggle');
+                const scrollProgress = document.getElementById('scrollProgress');
+                const heroParticles = document.getElementById('heroParticles');
+                const interiorParallax = document.getElementById('interiorParallax');
+                const interiorParallaxImg = document.getElementById('interiorParallaxImg');
+                const drivingParallax = document.getElementById('drivingParallax');
+                const drivingParallaxImg = document.getElementById('drivingParallaxImg');
+                const drivingContent = document.getElementById('drivingContent');
+                const speedProgress = document.getElementById('speedProgress');
+                const speedValue = document.getElementById('speedValue');
+                const galleryTrack = document.getElementById('galleryTrack');
+                const comparisonSlider = document.getElementById('comparisonSlider');
+                const comparisonAfter = document.getElementById('comparisonAfter');
+                const comparisonDivider = document.getElementById('comparisonDivider');
+                const reviewsStack = document.getElementById('reviewsStack');
+                const reviewPrev = document.getElementById('reviewPrev');
+                const reviewNext = document.getElementById('reviewNext');
+                const configuratorOverlay = document.getElementById('configuratorOverlay');
+                const configPrice = document.getElementById('configPrice');
+                const magneticBtn = document.getElementById('magneticBtn');
+
+                let currentReview = 0;
+                const totalReviews = document.querySelectorAll('.review-card').length;
+                let scrollRAF = null;
+
+                // Particles
+                function createParticles() {
+                    if (!heroParticles) return;
+                    heroParticles.innerHTML = '';
+                    for (let i = 0; i < 40; i++) {
+                        const p = document.createElement('div');
+                        p.classList.add('particle');
+                        p.style.left = Math.random() * 100 + '%';
+                        p.style.top = Math.random() * 100 + '%';
+                        p.style.animationDelay = Math.random() * 8 + 's';
+                        p.style.animationDuration = (6 + Math.random() * 6) + 's';
+                        p.style.width = (1 + Math.random() * 2) + 'px';
+                        p.style.height = p.style.width;
+                        heroParticles.appendChild(p);
+                    }
+                }
+                createParticles();
+
+                // Scroll
+                window.addEventListener('scroll', function() {
+                    if (scrollRAF) return;
+                    scrollRAF = requestAnimationFrame(function() {
+                        const st = window.scrollY;
+                        const dh = document.documentElement.scrollHeight - window.innerHeight;
+                        if (scrollProgress) scrollProgress.style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
+                        if (navbar) { if (st > 60) navbar.classList.add('scrolled');
+                            else navbar.classList.remove('scrolled'); }
+                        scrollRAF = null;
+                    });
+                }, { passive: true });
+
+                // Mobile toggle
+                if (mobileToggle && navLinks) {
+                    mobileToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+                    navLinks.querySelectorAll('a').forEach(l => l.addEventListener('click', () => navLinks.classList.remove('open')));
+                }
+
+                // Reveal observer
+                const revObs = new IntersectionObserver((entries) => {
+                    entries.forEach(e => {
+                        if (e.isIntersecting) {
+                            const el = e.target;
+                            const d = parseInt(el.getAttribute('data-delay') || '0');
+                            setTimeout(() => el.classList.add('visible'), d);
+                            revObs.unobserve(el);
+                        }
+                    });
+                }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+                document.querySelectorAll('.exterior-feature,.interior-card,.bento-card,.perf-stat,.tech-card,.safety-item,.comparison-spec,.award-badge,.contact-item,.specs-table tr,.driving-content,.model-card').forEach(el => revObs.observe(el));
+
+                // Contact form inputs
+                const cObs = new IntersectionObserver((entries) => {
+                    entries.forEach(e => {
+                        if (e.isIntersecting) { const el = e.target;
+                            const d = parseInt(el.getAttribute('data-delay') || '0');
+                            setTimeout(() => el.classList.add('visible'), d);
+                            cObs.unobserve(el); }
+                    });
+                }, { threshold: 0.2 });
+                document.querySelectorAll('.contact-form input,.contact-form textarea,.contact-form button').forEach(el => cObs.observe(el));
+
+                // Interior parallax
+                function interiorPar() {
+                    if (!interiorParallax || !interiorParallaxImg) return;
+                    const r = interiorParallax.getBoundingClientRect();
+                    const vh = window.innerHeight;
+                    if (r.top < vh && r.bottom > 0) {
+                        const prog = (vh - r.top) / (vh + r.height);
+                        interiorParallaxImg.style.transform = `translateY(${(prog-0.5)*80}px)`;
+                    }
+                }
+                window.addEventListener('scroll', interiorPar, { passive: true });
+
+                // Driving parallax
+                function drivingPar() {
+                    if (!drivingParallax || !drivingParallaxImg) return;
+                    const r = drivingParallax.getBoundingClientRect();
+                    const vh = window.innerHeight;
+                    if (r.top < vh && r.bottom > 0) {
+                        const prog = (vh - r.top) / (vh + r.height);
+                        drivingParallaxImg.style.transform = `translateY(${(prog-0.5)*100}px) scale(1.1)`;
+                        if (prog > 0.3 && drivingContent) drivingContent.classList.add('visible');
+                    }
+                }
+                window.addEventListener('scroll', drivingPar, { passive: true });
+
+                // Speedometer
+                let spAnimated = false;
+                const spObs = new IntersectionObserver((entries) => {
+                    entries.forEach(e => { if (e.isIntersecting && !spAnimated) { spAnimated = true;
+                            animateSpeed(); } });
+                }, { threshold: 0.4 });
+                if (document.querySelector('.speedometer')) spObs.observe(document.querySelector('.speedometer'));
+
+                function animateSpeed() {
+                    const target = 330,
+                        circ = 565.48,
+                        max = 350,
+                        toff = circ * (1 - target / max);
+                    const dur = 1800,
+                        st = performance.now();
+                    function upd(t) { const el = Math.min((t - st) / dur, 1),
+                            ease = 1 - Math.pow(1 - el, 3); if (speedProgress) speedProgress.style.strokeDashoffset = circ - (circ - toff) *
+                            ease; if (speedValue) speedValue.textContent = Math.round(target * ease); if (el < 1) requestAnimationFrame(
+                            upd); }
+                    requestAnimationFrame(upd);
+                }
+                // Counters
+                const cntObs = new IntersectionObserver((entries) => {
+                    entries.forEach(e => { if (e.isIntersecting) { const el = e.target;
+                            animateCnt(el);
+                            cntObs.unobserve(el); const p = el.closest('.perf-stat'); if (p) { const b = p.querySelector(
+                                    '.perf-bar-fill'); if (b) setTimeout(() => b.style.width = b.getAttribute('data-width'),
+                                300); } } });
+                }, { threshold: 0.4 });
+                document.querySelectorAll('.perf-stat-value[data-target]').forEach(el => cntObs.observe(el));
+
+                function animateCnt(el) { const target = parseFloat(el.getAttribute('data-target')),
+                        isF = target % 1 !== 0,
+                        dur = 1500,
+                        st = performance.now();
+
+                    function upd(t) { const el2 = Math.min((t - st) / dur, 1),
+                            ease = 1 - Math.pow(1 - el2, 3),
+                            cur = target * ease;
+                        el.textContent = isF ? cur.toFixed(1) : Math.round(cur); if (el2 < 1) requestAnimationFrame(upd); }
+                    requestAnimationFrame(upd); }
+                // Gallery
+                const galSec = document.querySelector('.gallery');
+                function galScroll() { if (!galSec || !galleryTrack) return; const r = galSec.getBoundingClientRect(),
+                        vh = window.innerHeight; if (r.top < vh && r.bottom > 0) { const ts = r.height - vh,
+                            prog = Math.min(Math.max(-r.top / ts, 0), 1),
+                            maxOff = galleryTrack.scrollWidth - window.innerWidth;
+                        galleryTrack.style.transform = `translateX(-${prog*maxOff*0.8}px)`; } }
+                window.addEventListener('scroll', galScroll, { passive: true });
+                // Comparison
+                if (comparisonSlider) { let drag = false;
+                    function updComp(cx) { const r = comparisonSlider.getBoundingClientRect(),
+                            pct = Math.min(Math.max(((cx - r.left) / r.width) * 100, 0), 100); if (comparisonAfter)
+                            comparisonAfter.style.width = pct + '%'; if (comparisonDivider) comparisonDivider.style.left =
+                            pct + '%'; }
+                    comparisonSlider.addEventListener('mousedown', e => { drag = true;
+                        updComp(e.clientX); });
+                    comparisonSlider.addEventListener('touchstart', e => { drag = true;
+                        updComp(e.touches[0].clientX); }, { passive: true });
+                    window.addEventListener('mousemove', e => { if (drag) updComp(e.clientX); });
+                    window.addEventListener('touchmove', e => { if (drag) updComp(e.touches[0].clientX); }, { passive: true });
+                    window.addEventListener('mouseup', () => drag = false);
+                    window.addEventListener('touchend', () => drag = false);
+                    updComp(comparisonSlider.getBoundingClientRect().left + comparisonSlider.getBoundingClientRect().width / 2); }
+                // Reviews
+                function updReviews() { const cards = document.querySelectorAll('.review-card');
+                    cards.forEach((c, i) => { c.classList.remove('active', 'prev', 'next'); if (i === currentReview) c
+                            .classList.add('active');
+                        else if (i === (currentReview - 1 + totalReviews) % totalReviews) c.classList.add('prev');
+                        else if (i === (currentReview + 1) % totalReviews) c.classList.add('next');
+                        else { c.style.opacity = '0';
+                            c.style.transform = 'translateY(50px) scale(0.8)'; } if (c.classList.contains('active') || c
+                            .classList.contains('prev') || c.classList.contains('next')) { c.style.opacity = '';
+                            c.style.transform = ''; } }); }
+                if (reviewPrev) reviewPrev.addEventListener('click', () => { currentReview = (currentReview - 1 + totalReviews) %
+                        totalReviews;
+                    updReviews(); });
+                if (reviewNext) reviewNext.addEventListener('click', () => { currentReview = (currentReview + 1) % totalReviews;
+                    updReviews(); });
+                setInterval(() => { currentReview = (currentReview + 1) % totalReviews;
+                    updReviews(); }, 6000);
+                updReviews();
+                // Configurator
+                const colorOpts = document.querySelectorAll('.color-option');
+                colorOpts.forEach(opt => { opt.addEventListener('click', function() { colorOpts.forEach(o => o.classList
+                            .remove('active'));
+                        opt.classList.add('active'); if (configuratorOverlay) { configuratorOverlay.style
+                                .backgroundColor = opt.getAttribute('data-overlay'); } const price = parseInt(opt
+                            .getAttribute('data-price')); if (configPrice) configPrice.innerHTML = '₹' + price
+                            .toLocaleString('en-IN') + '<span>Base Price (Ex-showroom India)</span>'; }); });
+                // Magnetic button
+                if (magneticBtn) { magneticBtn.addEventListener('mousemove', function(e) { const r = magneticBtn
+                            .getBoundingClientRect(),
+                            x = e.clientX - r.left - r.width / 2,
+                            y = e.clientY - r.top - r.height / 2;
+                        magneticBtn.style.transform = `translate(${x*0.2}px, ${y*0.2}px) scale(1.04)`; });
+                    magneticBtn.addEventListener('mouseleave', function() { magneticBtn.style.transform =
+                        'translate(0,0) scale(1)'; });
+                    magneticBtn.addEventListener('click', () => document.getElementById('contact').scrollIntoView({ behavior: 'smooth' })); }
+                // Forms
+                const nlForm = document.getElementById('newsletterForm');
+                if (nlForm) nlForm.addEventListener('submit', function(e) { e.preventDefault();
+                    nlForm.querySelector('input').value = '';
+                    alert('🎉 Subscribed successfully!'); });
+                const ctForm = document.getElementById('contactForm');
+                if (ctForm) ctForm.addEventListener('submit', function(e) { e.preventDefault();
+                    ctForm.reset();
+                    alert('✅ Message sent! Our team will contact you.'); });
+                // Smooth anchors
+                document.querySelectorAll('a[href^="#"]').forEach(a => { a.addEventListener('click', function(e) { const id =
+                            this.getAttribute('href'); if (id && id.length > 1) { const t = document.querySelector(id); if (t) { e
+                                .preventDefault();
+                                t.scrollIntoView({ behavior: 'smooth' }); } } }); });
+                // Resize
+                let rt;
+                window.addEventListener('resize', () => { clearTimeout(rt);
+                    rt = setTimeout(() => { interiorPar();
+                        drivingPar();
+                        galScroll(); }, 200); });
+                interiorPar();
+                drivingPar();
+                galScroll();
+                console.log('🚗 VELOCITA — Premium India Edition');
+            });
+        })();
+    </script>
+</body>
+</html>

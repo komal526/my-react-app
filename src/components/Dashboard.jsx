@@ -1,4 +1,4 @@
-// LaunchBuilder v35 — Dashboard.jsx
+// LaunchBuilder v38 — Dashboard.jsx
 import { useState, useEffect, useRef } from "react";
 import Editor from "./Editor.jsx";
 import { Sidebar, NewModal, PublishModal } from "./parts.jsx";
@@ -14,7 +14,7 @@ import { Icon } from "./Inspector.jsx";
 import Settings from "./Settings.jsx";
 import Pixels from "./Pixels.jsx";
 import ImportPage from "./ImportPage.jsx";
-import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl } from "../lib.js";
+import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml } from "../lib.js";
 import { formHtml, bookingWidget } from "./tools.js";
 
 /* replace every copy of a linked calendar inside a page with its latest version */
@@ -39,7 +39,7 @@ const syncFormInHtml = (html, f, integ) => {
 
 /* greeting · search · notifications · account */
 /* search across projects, forms, calendars and pages */
-const PAGES = [["pages", "grid", "Dashboard"], ["websites", "globe", "Websites"], ["landings", "pages", "Landing Pages"], ["templates", "card", "Templates"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"], ["domains", "share", "Domains"], ["integrations", "apps", "Integrations"], ["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]];
+const PAGES = [["pages", "grid", "Dashboard"], ["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"], ["domains", "share", "Domains"], ["integrations", "apps", "Integrations"], ["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]];
 function Search({ projects, forms, cal, onOpenProject, onGo }) {
   const [q, setQ] = useState(""), [open, setOpen] = useState(false), [hi, setHi] = useState(0), ref = useRef(null), box = useRef(null);
   useEffect(() => {
@@ -80,12 +80,18 @@ function Search({ projects, forms, cal, onOpenProject, onGo }) {
   );
 }
 
-function TopBar({ user, newLeads, onLeads, onSettings, onLogout, um, setUm, onGo = () => {}, projects = [], forms = [], cal = [], onOpenProject = () => {} }) {
+function TopBar({ full = true, title = "", onHome = () => {}, user, newLeads, onLeads, onSettings, onLogout, um, setUm, onGo = () => {}, projects = [], forms = [], cal = [], onOpenProject = () => {} }) {
   const h = new Date().getHours(), hi = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
   const first = (user.name || "").split(" ")[0] || "there";
   return (
-    <div className="tb2">
-      <div className="tb2-hi"><h1>{hi}, <span>{first}</span> 👋</h1><p>Build high-converting landing pages and websites in minutes.</p></div>
+    <div className={"tb2" + (full ? "" : " slim")}>
+      {full ? <div className="tb2-hi">
+        <h1>{hi}, <span className="tb2-name">{first}</span> <span className="tb2-wave">👋</span></h1>
+        <span className="tb2-date"><Icon n="calendar" s={13} />{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
+      </div> : <div className="tb2-hi tb2-crumb">
+        <button className="tb2-home" onClick={onHome}><Icon n="grid" s={15} /><span>Dashboard</span></button>
+        {title && <><i className="tb2-sl">/</i><b>{title}</b></>}
+      </div>}
       <Search projects={projects} forms={forms} cal={cal} onOpenProject={onOpenProject} onGo={onGo} />
       <button className="tb2-bell" onClick={onLeads} title="Leads"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg></button>
       <div className="tb2-me" onClick={(e) => { e.stopPropagation(); setUm(!um); }}><span className="av">{(user.name || "U")[0].toUpperCase()}</span><b>{first}</b><Icon n="chevd" s={14} />
@@ -208,15 +214,19 @@ export default function Dashboard({ user, onLogout }) {
       <section>
         <div className="mbar"><button className="mbar-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
           <div className="mbar-brand"><span className="mbar-logo">⬡</span>LaunchBuilder</div>
-          {["pages", "websites", "landings"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
-        <TopBar user={user} newLeads={leads.filter((l) => l.status === "new").length}
+          {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
+        <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML" })[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={projects} forms={forms} cal={cal} onOpenProject={setOpenId} />
         {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={projects} leads={leads} events={events} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
           onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} />}
         {view === "import" && <ImportPage onBack={() => setView("pages")} onFile={importFile} />}
-        {view === "templates" && <Templates mine={myTpl} onDeleteMine={(id) => putTpl(myTpl.filter((x) => x.id !== id))} onUse={(t) => !full() && create(t.mine ? t.name + " (copy)" : t.name, t.make(t.name), t.type)} />}
+        {view === "templates" && <Templates mine={myTpl} onDeleteMine={(id) => putTpl(myTpl.filter((x) => x.id !== id))} onUse={async (t) => {
+          if (full()) return;
+          if (t.file) { try { create(t.name, [pg("Home", "index.html", await loadTemplateHtml(t))], t.type); } catch (e) { alert(e.message); } return; }
+          create(t.mine ? t.name + " (copy)" : t.name, t.make(t.name), t.type);
+        }} />}
         {view === "forms" && <Forms forms={forms} onSave={onSaveForms} projects={projects} leads={leads} onAddToPage={addFormToPage} onLeads={() => setView("leads")} integ={integ} onIntegrations={() => setView("integrations")} />}
         {view === "calendar" && <Calendar events={cal} onSave={onSaveCal} leads={leads} projects={projects} integ={integ} onInteg={onInteg} onAddToPage={addHtmlToPage} onPatchLead={patchLead} onDeleteLead={deleteLead} />}
         {view === "integrations" && <Integrations key={igTile} initial={igTile} integ={integ} onChange={onInteg} />}
