@@ -1,20 +1,20 @@
-// LaunchBuilder v41 — Dashboard.jsx
-import { useState, useEffect, useRef } from "react";
-import Editor from "./Editor.jsx";
+// LaunchBuilder v42 — Dashboard.jsx
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
+const Editor = lazy(() => import("./Editor.jsx"));
 import { Sidebar, NewModal, PublishModal } from "./parts.jsx";
 import MyPages from "./MyPages.jsx";
-import Templates from "./Templates.jsx";
-import Domains from "./Domains.jsx";
+const Templates = lazy(() => import("./Templates.jsx"));
+const Domains = lazy(() => import("./Domains.jsx"));
 import Leads from "./Leads.jsx";
-import Forms from "./Forms.jsx";
-import Analytics from "./Analytics.jsx";
-import Integrations from "./Integrations.jsx";
-import Calendar from "./Calendar.jsx";
-import { Icon } from "./Inspector.jsx";
-import Settings from "./Settings.jsx";
-import Pixels from "./Pixels.jsx";
-import LMS from "./LMS.jsx";
-import ImportPage from "./ImportPage.jsx";
+const Forms = lazy(() => import("./Forms.jsx"));
+const Analytics = lazy(() => import("./Analytics.jsx"));
+const Integrations = lazy(() => import("./Integrations.jsx"));
+const Calendar = lazy(() => import("./Calendar.jsx"));
+import { Icon } from "./icons.jsx";
+const Settings = lazy(() => import("./Settings.jsx"));
+const Pixels = lazy(() => import("./Pixels.jsx"));
+const LMS = lazy(() => import("./LMS.jsx"));
+const ImportPage = lazy(() => import("./ImportPage.jsx"));
 import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml } from "../lib.js";
 import { formHtml, bookingWidget } from "./tools.js";
 
@@ -40,7 +40,7 @@ const syncFormInHtml = (html, f, integ) => {
 
 /* greeting · search · notifications · account */
 /* search across projects, forms, calendars and pages */
-const PAGES = [["pages", "grid", "Dashboard"], ["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"], ["lms", "star", "LMS Courses"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"], ["domains", "share", "Domains"], ["integrations", "apps", "Integrations"], ["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]];
+const PAGES = [["pages", "grid", "Dashboard"], ["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"], ["lms", "pages", "Courses (Academy)"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"], ["domains", "share", "Domains"], ["integrations", "apps", "Integrations"], ["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]];
 function Search({ projects, forms, cal, onOpenProject, onGo }) {
   const [q, setQ] = useState(""), [open, setOpen] = useState(false), [hi, setHi] = useState(0), ref = useRef(null), box = useRef(null);
   useEffect(() => {
@@ -121,6 +121,7 @@ export default function Dashboard({ user, onLogout }) {
   useEffect(() => { const f = () => setWide(window.innerWidth > 900); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
   const [cal, setCal] = useState(() => loadCal(E));
   const [myTpl, setMyTpl] = useState(() => loadMyTpl(E));
+  useEffect(() => { const t = setTimeout(() => { import("./Editor.jsx"); import("./Templates.jsx"); }, 2500); return () => clearTimeout(t); }, []);
   /* live updates from your other devices — refresh what's on screen (projects wait while the editor is open) */
   const openRef = useRef(null);
   useEffect(() => {
@@ -217,22 +218,22 @@ export default function Dashboard({ user, onLogout }) {
   const pubModal = pub && <PublishModal page={pub} integ={integ} onInteg={onInteg} onClose={() => setModal(null)} onDone={(o, keep) => { patch(pub.id, o); if (!keep) setModal(null); }} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onDomains={() => goView("domains")} />;
 
   if (open) return (
-    <>
+    <Suspense fallback={<div className="boot"><span className="pub-spin" />Opening the editor…</div>}>
       <Editor key={open.id} page={open} user={user} forms={forms} events={cal} integ={integ} onSave={(pid, h) => patchHtml(open.id, pid, h)} onPages={(fn) => patchPages(open.id, fn)} onType={(t) => patch(open.id, { type: t })}
         onBack={() => setOpenId(null)} onPublish={() => setModal({ type: "publish", id: open.id })} />
       {pubModal}
-    </>
+    </Suspense>
   );
 
   return (
     <div className={"dash" + (mini && wide ? " mini" : "")} onClick={() => um && setUm(false)}>
       <Sidebar mini={mini && wide} onMini={() => { const v = !mini; setMini(v); localStorage.setItem("lb_nav_mini", v ? "1" : "0"); }} open={navOpen} onClose={() => setNavOpen(false)} view={view} onView={setView} count={projects.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, forms: forms.length, calendar: cal.length }} />
       {navOpen && <div className="nv-ov" onClick={() => setNavOpen(false)} />}
-      <section>
+      <section><Suspense fallback={<div className="lazy-load"><span className="pub-spin" /></div>}>
         <div className="mbar"><button className="mbar-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
           <div className="mbar-brand"><span className="mbar-logo">⬡</span>LaunchBuilder</div>
           {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
-        <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML" })[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
+        <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses" })[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={projects} forms={forms} cal={cal} onOpenProject={setOpenId} />
         {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={projects} leads={leads} events={events} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
@@ -253,7 +254,7 @@ export default function Dashboard({ user, onLogout }) {
         {view === "lms" && <LMS user={user} />}
         {view === "pixels" && <Pixels integ={integ} onChange={onInteg} projects={projects} />}
         {view === "settings" && <Settings user={user} count={projects.length} onDeleteAll={() => setProjects([])} />}
-      </section>
+      </Suspense></section>
       {modal && modal.type === "new" && <NewModal mine={myTpl} kind={modal.kind || "landing"} onClose={() => setModal(null)} onCreate={create} onImport={() => { setModal(null); setView("import"); }} ai={integ.ai} onSetupAI={() => { setModal(null); setView("integrations"); }} />}
       {pubModal}
     </div>

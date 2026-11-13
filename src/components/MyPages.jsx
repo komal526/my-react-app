@@ -1,7 +1,7 @@
-// LaunchBuilder v35 — MyPages.jsx (Dashboard · Websites · Landing pages)
+// LaunchBuilder v42 — MyPages.jsx (Dashboard · Websites · Landing pages)
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Thumb } from "./parts.jsx";
-import { Icon } from "./Inspector.jsx";
+import { Icon } from "./icons.jsx";
 import { ago, addr, LIMIT } from "../lib.js";
 
 const DAY = 864e5;
@@ -51,9 +51,10 @@ function Donut({ parts }) {
 }
 
 export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates }) {
-  const [filter, setFilter] = useState("All"), [menu, setMenu] = useState(null);
+  const [filter, setFilter] = useState("All"), [menu, setMenu] = useState(null), [kind, setKind] = useState("all");
   const act = (fn, p) => () => { setMenu(null); fn(p); };
-  const typed = mode === "website" ? projects.filter((p) => p.type === "website") : mode === "landing" ? projects.filter((p) => p.type !== "website") : projects;
+  const nWeb = projects.filter((p) => p.type === "website").length, nLand = projects.length - nWeb;
+  const typed = mode === "website" || (mode === "all" && kind === "website") ? projects.filter((p) => p.type === "website") : mode === "landing" || (mode === "all" && kind === "landing") ? projects.filter((p) => p.type !== "website") : projects;
   const matching = typed.filter((p) => (filter === "All" || p.status === filter.toLowerCase()) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
   const shown = mode === "dash" && !query ? [...matching].sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 3) : matching;
 
@@ -88,7 +89,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
           <button className="pri" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ Create new</button> <button onClick={onImport}>Import HTML</button></div>
       ) : (
         <div className={mode === "dash" && !query ? "grid pc-grid" : "grid"}>{shown.map((p) => (
-          <div key={p.id} className="card" onClick={() => onOpen(p.id)}>
+          <div key={p.id} className="card" onClick={() => onOpen(p.id)} onContextMenu={(e) => { e.preventDefault(); setMenu(p.id); }} title="Click to edit · right-click for more">
             <Thumb html={p.pages[0].html} />
             <div className="cb">
               <div className="ct"><b>{p.name}</b></div>
@@ -102,7 +103,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
             <button className="dots" onClick={(e) => { e.stopPropagation(); setMenu(menu === p.id ? null : p.id); }}>⋯</button>
             {menu === p.id && (
               <div className="menu" onClick={(e) => e.stopPropagation()}>
-                <div onClick={() => onOpen(p.id)}>Edit</div>{onPreview && <div onClick={act(onPreview, p)}>Open preview link</div>}<div onClick={act(onRename, p)}>Rename</div><div onClick={act(onDuplicate, p)}>Duplicate</div>{onSaveTpl && <div onClick={act(onSaveTpl, p)}>★ Save as template</div>}
+                <div onClick={() => onOpen(p.id)}>Edit</div>{onPreview && <div onClick={act(onPreview, p)}>↗ Open in new tab</div>}<div onClick={act(onRename, p)}>Rename</div><div onClick={act(onDuplicate, p)}>Duplicate</div>{onSaveTpl && <div onClick={act(onSaveTpl, p)}>★ Save as template</div>}
                 <div onClick={act(onPublish, p)}>{p.status === "published" ? "Change address / republish" : "Publish"}</div>
                 {p.status === "published" && <div onClick={act(onUnpublish, p)}>Unpublish</div>}
                 <div className="red" onClick={act(onDelete, p)}>Delete</div>
@@ -120,6 +121,8 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
     <div onClick={() => setMenu(null)}>
       <div className="top"><div><h1>{mode === "website" ? "Websites" : mode === "landing" ? "Landing Pages" : "All projects"}</h1><p className="mut">{mode === "website" ? "Multi-page sites with a shared menu." : mode === "landing" ? "Single pages built to convert — offers, events, sign-ups." : "Every website and landing page you've built."}</p></div>
         <button className="pri big" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ New {mode === "website" ? "website" : mode === "landing" ? "landing page" : "project"}</button></div>
+      {mode === "all" && <div className="pj-kinds">{[["all", "All projects", projects.length, "layers"], ["website", "Websites", nWeb, "globe"], ["landing", "Landing pages", nLand, "pages"]].map(([k, l, n, ic]) => (
+        <button key={k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}><Icon n={ic} s={16} /><b>{l}</b><em>{n}</em></button>))}</div>}
       {list}
     </div>
   );

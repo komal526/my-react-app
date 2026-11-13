@@ -1,6 +1,6 @@
 // LaunchBuilder v3 — Analytics.jsx
 import { useMemo, useState } from "react";
-import { Icon } from "./Inspector.jsx";
+import { Icon } from "./icons.jsx";
 
 /* ================= Analytics: visits, visitors, leads, conversion, pages, devices, forms ================= */
 const DAY = 864e5;
@@ -46,6 +46,9 @@ export default function Analytics({ projects, events, leads, onOpenProject }) {
   const pname = (id) => (projects.find((p) => p.id === id) || {}).name || "Deleted project";
   const topPages = by(views, (e) => e.pid + "|" + e.page).slice(0, 8);
   const devices = by(views, (e) => e.dev || "desktop"), formsPerf = by(ld, (l) => l.form || "Form").slice(0, 6);
+  /* leads by city — from the visitor's location, or a "City" field in the form */
+  const cityOf = (l) => { const g = l.geo || {}; const k = Object.keys(l.data || {}).find((x) => /^(city|town|location|place)$/i.test(x.trim())); const c = (g.city || (k ? l.data[k] : "") || "").toString().trim(); return c ? c.replace(/\b\w/g, (m) => m.toUpperCase()) : ""; };
+  const cities = by(ld.filter((l) => cityOf(l)), cityOf), unknownCity = ld.filter((l) => !cityOf(l)).length, cityMax = cities.length ? cities[0][1] : 1;
   const maxPage = topPages[0] ? topPages[0][1] : 1;
 
   return (
@@ -69,6 +72,11 @@ export default function Analytics({ projects, events, leads, onOpenProject }) {
         <div className="panel"><b>Top pages</b>{!topPages.length ? <p className="mut">No visits yet in this period.</p> : topPages.map(([k, n]) => { const [p, page] = k.split("|"); return <div key={k} className="an-bar"><div className="grow"><div>{page}<span className="mut"> · {pname(p)}</span></div><div className="an-track"><i style={{ width: (n / maxPage) * 100 + "%" }} /></div></div><b>{n}</b></div>; })}</div>
         <div className="panel"><b>Devices</b>{!devices.length ? <p className="mut">No visits yet.</p> : devices.map(([d, n]) => <div key={d} className="an-bar"><div className="grow"><div style={{ textTransform: "capitalize" }}>{d}</div><div className="an-track"><i style={{ width: (n / views.length) * 100 + "%" }} /></div></div><b>{Math.round((n / views.length) * 100)}%</b></div>)}
           <b style={{ display: "block", marginTop: 18 }}>Leads by form</b>{!formsPerf.length ? <p className="mut">No leads yet.</p> : formsPerf.map(([f, n]) => <div key={f} className="an-bar"><div className="grow">{f}</div><b>{n}</b></div>)}</div>
+      </div>
+      <div className="panel an-cities"><div className="row between"><b>📍 Leads by city</b><span className="mut sm">{cities.length} {cities.length === 1 ? "city" : "cities"} · last {range} days</span></div>
+        {!cities.length ? <p className="mut">No city data yet. New leads from your live sites include the visitor's city automatically — or add a <b>City</b> field to your form.</p>
+          : <div className="an-citylist">{cities.slice(0, 10).map(([c, n], i) => <div key={c} className="an-city" style={{ "--d": i * 0.05 + "s" }}><span className="an-rank">{i + 1}</span><b>{c}</b><div className="an-track"><div className="v" style={{ width: Math.max(6, (n / cityMax) * 100) + "%" }} /></div><em>{n} lead{n === 1 ? "" : "s"}</em></div>)}</div>}
+        {cities.length > 0 && unknownCity > 0 && <p className="mut sm">{unknownCity} lead{unknownCity === 1 ? "" : "s"} without a city (older leads or location blocked).</p>}
       </div>
       <div className="panel"><b>Live site tracking</b>
         <p className="mut">Numbers above count visits to your preview links and form share links. For visitors on your live domain, connect Google Analytics 4 or Tag Manager — they're added to every exported page automatically.</p>

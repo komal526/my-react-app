@@ -1,4 +1,4 @@
-// LaunchBuilder v41 — parts.jsx
+// LaunchBuilder v42 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
@@ -12,7 +12,7 @@ function CloudStatus() {
   const M = { saved: ["☁", "Saved to cloud"], saving: ["⟳", "Saving…"], loading: ["⟳", "Loading…"], offline: ["⚠", "Not saved to cloud"] }[st] || ["☁", "Saved to cloud"];
   return <div className={"cloud-st " + st}><div><span>{M[0]}</span> {M[1]}</div>{st === "offline" && why && <small>{why}</small>}</div>;
 }
-import { Icon } from "./Inspector.jsx";
+import { Icon } from "./icons.jsx";
 
 /* ==================== Modal, Thumb, Sidebar, NewModal, PublishModal ==================== */
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal
@@ -32,10 +32,11 @@ const NAV = [["pages", "grid", "Dashboard"], ["templates", "card", "Templates"],
 
 /* grouped menu · collapses to an icon-only rail */
 const SHORT = { build: "Build", collect: "Collect", grow: "Grow", reports: "Reports" };
-const MINI = { projects: "Projects", templates: "Templates", landings: "Landing", lms: "LMS", leads: "Leads", forms: "Forms", calendar: "Calendar", domains: "Domains", integrations: "Apps", analytics: "Analytics", pixels: "Pixels", settings: "Settings" };
+const MINI = { projects: "Projects", templates: "Templates", landings: "Landing", lms: "Courses", leads: "Leads", forms: "Forms", calendar: "Calendar", domains: "Domains", integrations: "Apps", analytics: "Analytics", pixels: "Pixels", settings: "Settings" };
 const GROUPS = [
-  ["build", "layers", "Build & Manage", [["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"], ["lms", "star", "LMS"]]],
+  ["build", "layers", "Build & Manage", [["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"]]],
   ["collect", "form", "Create & Collect", [["leads", "users", "Leads"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"]]],
+  ["academy", "star", "Academy", [["lms", "pages", "Courses"]]],
   ["grow", "share", "Connect & Grow", [["domains", "share", "Domains"], ["integrations", "apps", "Integrations"]]],
   ["reports", "gear", "Reports & Settings", [["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]]],
 ];

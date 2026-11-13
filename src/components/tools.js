@@ -1,4 +1,4 @@
-// LaunchBuilder v27 — tools.js
+// LaunchBuilder v42 — tools.js
 // Editor toolbox: draggable elements, settings, site runtime, video storage, zip export
 
 
@@ -328,6 +328,7 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
  if(!lead){var data={};Array.prototype.forEach.call(f.elements,function(el,i){if(!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)||/^(submit|button|reset|file|password)$/.test(el.type))return;var k=el.name||labelOf(el,i);
   if(el.type==='checkbox'||el.type==='radio'){if(el.checked)data[k]=data[k]?data[k]+', '+(el.value==='on'?'Yes':el.value):(el.value==='on'?'Yes':el.value)}else if(el.value!=='')data[k]=el.value});
   lead={lid:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),form:f.getAttribute('data-lb-form')||'Form',formId:f.getAttribute('data-lb-form-id')||'',page:cur,url:location.href,data:data,ts:Date.now()};
+  if(W.__lbGeo)lead.geo=W.__lbGeo;
   if(pay)lead.payment={status:'pending',amount:+pay.amount,mode:pay.mode,currency:'INR'};
   if(wa&&wa.hook){var ph=phoneOf(data).replace(/\\D/g,'');if(ph.length===10)ph=String(wa.cc||'91')+ph;lead.whatsapp={to:ph,message:fillT(wa.msg,data)}}
   if(W.LB_PREVIEW)parent.postMessage({lb:'lead',lead:lead},'*');
@@ -374,6 +375,9 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
  box.querySelector('.lbw-paid').onclick=function(){paid({status:'claimed',mode:pay.mode,ref:box.querySelector('.lbw-utr').value})};
  box.querySelector('.lbw-back').onclick=function(){box.remove();f.style.display=''};
 },true);
+/* visitor city for "leads by city" — looked up once per visit, in the background */
+if(W.LB_LEAD_URL&&!W.LB_PREVIEW){try{var gg=sessionStorage.getItem('lb_geo');if(gg)W.__lbGeo=JSON.parse(gg)}catch(e){}
+ if(!W.__lbGeo&&W.fetch)fetch('https://ipapi.co/json/').then(function(r){return r.json()}).then(function(j){if(j&&!j.error&&j.city){W.__lbGeo={city:j.city,region:j.region||'',country:j.country_name||''};try{sessionStorage.setItem('lb_geo',JSON.stringify(W.__lbGeo))}catch(e){}}}).catch(function(){})}
 })();`;
 
 const ok = (v) => /^[A-Za-z0-9_-]{3,40}$/.test(v || "");
