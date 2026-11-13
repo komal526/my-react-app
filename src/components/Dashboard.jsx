@@ -121,7 +121,10 @@ export default function Dashboard({ user, onLogout }) {
   useEffect(() => { const f = () => setWide(window.innerWidth > 900); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
   const [cal, setCal] = useState(() => loadCal(E));
   const [myTpl, setMyTpl] = useState(() => loadMyTpl(E));
-  useEffect(() => { const t = setTimeout(() => { import("./Editor.jsx"); import("./Templates.jsx"); }, 2500); return () => clearTimeout(t); }, []);
+  /* warm up the builder in the background — skipped when the browser asks to save data */
+  useEffect(() => { const c = navigator.connection; if (c && (c.saveData || /2g/.test(c.effectiveType || ""))) return; const t = setTimeout(() => { import("./Editor.jsx"); import("./Templates.jsx"); }, 2500); return () => clearTimeout(t); }, []);
+  /* pause every animation while the tab is in the background */
+  useEffect(() => { const f = () => document.documentElement.classList.toggle("lb-hidden", document.visibilityState === "hidden"); document.addEventListener("visibilitychange", f); return () => document.removeEventListener("visibilitychange", f); }, []);
   /* live updates from your other devices — refresh what's on screen (projects wait while the editor is open) */
   const openRef = useRef(null);
   useEffect(() => {

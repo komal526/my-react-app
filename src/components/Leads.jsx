@@ -44,7 +44,7 @@ export default function Leads({ user, projects = [], forms = [], leads, setLeads
     <>
       {(() => { const views = <div className="chips ld-views" style={{ margin: 0 }}><button className={view === "table" ? "on" : ""} onClick={() => setView("table")}>Table</button><button className={view === "board" ? "on" : ""} onClick={() => setView("board")}>Pipeline</button></div>;
         const acts = <>{serverOn(integ) && <button className="ld-act" onClick={syncNow} title="Fetch leads from your live sites">{syncing || "⟳ Sync live sites"}</button>}{leads.length > 0 && <button className="ld-act" onClick={exportCsv}>Export CSV</button>}</>;
-        return view === "board" ? <Pipeline user={user} leads={leads} update={update} forms={forms} onOpen={setOpen} toolbar={<div className="ld-tools">{views}{acts}</div>} /> : <>
+        return view === "board" ? <Pipeline user={user} leads={leads} update={update} forms={forms} onOpen={setOpen} onBack={() => setView("table")} toolbar={<div className="ld-tools">{views}{acts}</div>} /> : <>
       <div className="top"><div><h1>Leads</h1><p className="mut">Your form CRM — every submission from every page and form link.</p></div>
         <div className="row">{views}{acts}<button className={"ld-act ld-mask" + (masked ? " on" : "")} onClick={() => setMasked(!masked)} title={masked ? "Show contact details" : "Hide contact details"}>{masked ? "🙈 Masked" : "👁 Visible"}</button></div></div>
       <div className="stats">

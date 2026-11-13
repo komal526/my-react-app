@@ -1,6 +1,6 @@
-// LaunchBuilder v41 — Pipeline.jsx (several lead pipelines · custom stages · manual leads · drag & drop)
+// LaunchBuilder v43 — Pipeline.jsx (several lead pipelines · custom stages · manual leads · drag & drop)
 import { useEffect, useMemo, useState } from "react";
-import { Icon } from "./Inspector.jsx";
+import { Icon } from "./icons.jsx";
 import { ago, uid, loadPipes, savePipes, PIPE_COLORS, LEAD_STATUS } from "../lib.js";
 
 const pickK = (d, re) => { const k = Object.keys(d || {}).find((x) => re.test(x)); return k ? d[k] : ""; };
@@ -24,7 +24,7 @@ function Modal({ title, children, onClose, onOk, ok = "Save", okOff }) {
   );
 }
 
-export default function Pipeline({ user, leads, update, forms = [], onOpen, toolbar = null }) {
+export default function Pipeline({ user, leads, update, forms = [], onOpen, toolbar = null, onBack = null }) {
   const E = user.email;
   const [pipes, setPipes] = useState(() => loadPipes(E));
   const [pid, setPid] = useState(() => localStorage.getItem("lb_pipe_cur") || "default");
@@ -118,6 +118,7 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen, tool
       {/* pipeline bar */}
       <div className="pl-bar">
         <div className="pl-pick">
+          {onBack && <button className="pl-back" onClick={onBack} title="Back to the leads table"><Icon n="back" s={15} /> Back</button>}
           <select value={pipe.id} onChange={(e) => choose(e.target.value)} aria-label="Pipeline">{pipes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
           {pipe.def && <span className="pl-def">Default</span>}
           <button className="pl-ib" title="New pipeline" onClick={() => setMd({ k: "pipe", name: "", forms: [] })}>＋</button>

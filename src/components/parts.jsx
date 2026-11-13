@@ -1,4 +1,4 @@
-// LaunchBuilder v42 — parts.jsx
+// LaunchBuilder v43 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
@@ -23,8 +23,16 @@ export function Modal({ children, onClose }) {
 }
 
 // Small live preview of a page (no scripts run inside it)
+/* project preview: renders only when it scrolls into view and the browser is idle */
 export function Thumb({ html }) {
-  return <div className="thumb"><iframe title="preview" srcDoc={html} sandbox="" tabIndex={-1} loading="lazy" /></div>;
+  const ref = useRef(null), [on, setOn] = useState(false);
+  useEffect(() => {
+    const el = ref.current; if (!el || on) return;
+    if (!("IntersectionObserver" in window)) { setOn(true); return; }
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); (window.requestIdleCallback || ((f) => setTimeout(f, 150)))(() => setOn(true)); } }, { rootMargin: "250px" });
+    io.observe(el); return () => io.disconnect();
+  }, [on]);
+  return <div className="thumb" ref={ref}>{on ? <iframe title="preview" srcDoc={html} sandbox="" tabIndex={-1} /> : <div className="thumb-ph" />}</div>;
 }
 
 
@@ -77,7 +85,7 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
       <CloudStatus />
       <div className="sb3-user" title={mini ? user.email : undefined}><span className="av">{(user.name || "U")[0].toUpperCase()}</span>
         <span className="sb3-l"><b>{user.name}</b><small>{user.email}</small></span>
-        <button title="Log out" onClick={onLogout}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg></button></div>
+        <button title="Log out" onClick={onLogout}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg><small className="sb3-lo">Logout</small></button></div>
     </nav>
   );
 }

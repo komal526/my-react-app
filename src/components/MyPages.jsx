@@ -137,7 +137,14 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
           <h2><span className="hb-w">Create High-Converting</span> <span className="hb-y">Landing Pages &amp; Websites</span></h2>
           <div className="hb-feats">{["Drag & Drop", "Ready Templates", "Mobile Responsive", "Launch in Minutes"].map((c, i) => <span key={c} style={{ "--d": 0.35 + i * 0.08 + "s" }}><i>✓</i>{c}</span>)}</div>
         </div>
-        <button className="hb-cta" onClick={() => onNew("landing")}><span>＋ Create New Project</span><b>→</b></button>
+        <div className="hb-ctaw">
+          <svg className="hb-wave" viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120 C 90 70 150 150 230 100 S 360 40 400 70" /><path d="M0 40 C 80 90 170 20 250 60 S 350 120 400 100" /></svg>
+          {[["c1", "🚀", "Landing Pages"], ["c2", "📊", "Analytics"], ["c3", "🌐", "Websites"], ["c4", "👥", "Leads"], ["c5", "🗄", "Domains"], ["c6", "⚡", "Conversions"], ["c7", "📈", "Growth"], ["c8", "☁", "Publish"]].map(([k, ic, t]) => (
+            <span key={k} className={"hb-chip " + k} aria-hidden="true"><i>{ic}</i>{t}</span>))}
+          {[...Array(8)].map((_, i) => <i key={i} className={"hb-dot d" + i} aria-hidden="true" />)}
+          <i className="hb-ray r1" /><i className="hb-ray r2" /><i className="hb-ray r3" /><i className="hb-ray r4" />
+          <button className="hb-cta hb-cta2" onClick={() => onNew("landing")}><span>Create New Project</span><b>→</b></button>
+        </div>
         <div className="hb-fanwrap" aria-hidden="true"><div className="hx-art hb-fan">
           {[["c1", "#f97316", "Bloom"], ["c2", "#0ea5e9", "Studio"], ["c5", "#ec4899", "Event"], ["c6", "#eab308", "Shop"]].map(([k, c, t]) => (
             <div key={k} className={"hx-card " + k} style={{ "--c": c }}><i /><b>{t}</b><span /><span className="s" /><em /></div>))}

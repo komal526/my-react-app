@@ -1,17 +1,30 @@
 <!doctype html>
-<!-- LaunchBuilder v3 — index.html -->
+<!-- LaunchBuilder v44 — index.html (fast first paint) -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f1238" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>LaunchBuilder</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <title>LaunchBuilder</title>
+    <!-- fonts load in parallel and never block the page -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap" /></noscript>
+    <style>
+      html,body{margin:0;background:#f4f5fa}
+      .lb-boot{position:fixed;inset:0;display:flex;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+      .lb-boot i{width:208px;background:linear-gradient(180deg,#0f1330,#11163a)}
+      .lb-boot div{flex:1;display:grid;place-items:center;color:#475569;font-size:15px}
+      .lb-boot b{display:inline-block;width:18px;height:18px;border:3px solid #f5b301;border-right-color:transparent;border-radius:50%;margin-right:10px;vertical-align:-4px;animation:lbspin .8s linear infinite}
+      @keyframes lbspin{to{transform:rotate(360deg)}}
+      @media (max-width:900px){.lb-boot i{display:none}}
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="lb-boot"><i></i><div><span><b></b>Loading LaunchBuilder…</span></div></div></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
