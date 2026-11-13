@@ -1,8 +1,9 @@
-// LaunchBuilder v28 — Calendar.jsx
+// LaunchBuilder v46 — Calendar.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
+import ScratchCard from "./Scratch.jsx";
 import { newEvent, EVENT_TEMPLATES, LOCATIONS, eventSlug, eventUrl, gcalLink, uid, serverOn, phpCall, defaultServerUrl, autoServer, filesForServer } from "../lib.js";
 import { bookingWidget, bookingPageHtml, buildSite, finalize } from "./tools.js";
-import { Icon } from "./Inspector.jsx";
+import { Icon } from "./icons.jsx";
 
 /* ================= Calendar: event types (templates + full settings), booking links, embeds and a meetings CRM ================= */
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -21,14 +22,17 @@ function Preview({ ev, integ, dev = "desktop", h = 820 }) {
 }
 
 /* ---------- template gallery ---------- */
+/* six ready-made calendars (plus "Start from scratch") */
+const SIX = ["discovery", "demo", "consult", "class", "coaching", "clinic"].map((k) => EVENT_TEMPLATES.find((x) => x.key === k)).filter(Boolean);
+
 /* templates shown right on the Calendar page */
 function InlineTemplates({ onPick, onPreview, title }) {
   return (
     <div className="inl-tpl">
       <div className="inl-h"><div><h2>{title}</h2><p className="mut">Every setting — hours, questions, payment, reminders — can be changed afterwards.</p></div></div>
       <div className="ce-gal">
-        <button className="ce-card blank" onClick={() => onPick({ o: {} })}><span className="ce-ic">＋</span><b>Blank calendar</b><span className="mut sm">Start from scratch</span></button>
-        {EVENT_TEMPLATES.map((x) => <div key={x.key} className="ce-card" style={{ "--c": x.o.color || "#3d6bff" }}>
+        <ScratchCard icon="calendar" text="Set your own hours, questions and payment" onClick={() => onPick({ o: {} })} />
+        {SIX.map((x) => <div key={x.key} className="ce-card" style={{ "--c": x.o.color || "#3d6bff" }}>
           <span className="ce-ic">{x.ic}</span><b>{x.label}</b><span className="mut sm">{x.note}</span>
           <div className="ce-meta"><span>🕒 {x.o.duration || 30} min</span>{x.o.pay && <span>₹{x.o.pay.amount}</span>}{x.o.location === "inperson" && <span>📍 In person</span>}</div>
           <div className="row"><button onClick={() => onPreview(x.key)}>Preview</button><button className="pri" onClick={() => onPick(x)}>Use</button></div>
@@ -46,8 +50,8 @@ function Gallery({ onPick, onClose, integ, initial = null }) {
       {!t ? <>
         <div className="fm-gh"><div><h3>Create a calendar</h3><p className="mut">Start from a template — every setting can be changed afterwards.</p></div><button onClick={onClose}>✕</button></div>
         <div className="ce-gal">
-          <button className="ce-card blank" onClick={() => onPick({ o: {} })}><span className="ce-ic">＋</span><b>Blank calendar</b><span className="mut sm">Start from scratch</span></button>
-          {EVENT_TEMPLATES.map((x) => <div key={x.key} className="ce-card" style={{ "--c": x.o.color || "#3d6bff" }}>
+          <ScratchCard icon="calendar" text="Set your own hours, questions and payment" onClick={() => onPick({ o: {} })} />
+          {SIX.map((x) => <div key={x.key} className="ce-card" style={{ "--c": x.o.color || "#3d6bff" }}>
             <span className="ce-ic">{x.ic}</span><b>{x.label}</b><span className="mut sm">{x.note}</span>
             <div className="ce-meta"><span>🕒 {x.o.duration || 30} min</span>{x.o.pay && <span>₹{x.o.pay.amount}</span>}{x.o.location === "inperson" && <span>📍 In person</span>}</div>
             <div className="row"><button onClick={() => setView(x.key)}>Preview</button><button className="pri" onClick={() => onPick(x)}>Use</button></div>

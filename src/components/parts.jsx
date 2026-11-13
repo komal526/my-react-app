@@ -1,4 +1,4 @@
-// LaunchBuilder v43 — parts.jsx
+// LaunchBuilder v45 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
@@ -23,6 +23,8 @@ export function Modal({ children, onClose }) {
 }
 
 // Small live preview of a page (no scripts run inside it)
+/* images further down a preview only load if they come into view */
+const lazyImgs = (h) => String(h || "").replace(/<img\b(?![^>]*\bloading=)/gi, '<img loading="lazy" decoding="async" ');
 /* project preview: renders only when it scrolls into view and the browser is idle */
 export function Thumb({ html }) {
   const ref = useRef(null), [on, setOn] = useState(false);
@@ -32,7 +34,7 @@ export function Thumb({ html }) {
     const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); (window.requestIdleCallback || ((f) => setTimeout(f, 150)))(() => setOn(true)); } }, { rootMargin: "250px" });
     io.observe(el); return () => io.disconnect();
   }, [on]);
-  return <div className="thumb" ref={ref}>{on ? <iframe title="preview" srcDoc={html} sandbox="" tabIndex={-1} /> : <div className="thumb-ph" />}</div>;
+  return <div className="thumb" ref={ref}><div className="thumb-ph" />{on && <iframe title="preview" srcDoc={lazyImgs(html)} sandbox="" tabIndex={-1} onLoad={(e) => e.currentTarget.classList.add("on")} />}</div>;
 }
 
 

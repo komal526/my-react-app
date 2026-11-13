@@ -2471,3 +2471,136 @@ html,body{zoom:1!important;transform:none!important;margin:0!important;padding:0
 .dash .grid>.card,.tg-grid>.tg-card,.lms-cards>.lms-cc,.ac-cards>.ac-card{content-visibility:auto;contain-intrinsic-size:auto 340px}
 .db-row2,.db-list{content-visibility:auto;contain-intrinsic-size:auto 420px}
 .thumb-ph{width:100%;height:100%;min-height:160px;background:linear-gradient(110deg,#eef1f8 30%,#f7f8fc 50%,#eef1f8 70%);background-size:200% 100%;animation:dbFlow 1.4s linear infinite}
+
+/* =====================================================================
+   v45 — hero breathing room · top project · forms & calendar builder · pipeline columns
+   ===================================================================== */
+/* hero: more padding, nothing tight against the edges */
+.hb{height:184px!important;padding:0 40px!important}
+.hb-ctaw{height:184px!important}
+.hb-chip.c1,.hb-chip.c3{top:18px!important}.hb-chip.c2{top:14px!important}
+.hb-chip.c5,.hb-chip.c7{bottom:18px!important}.hb-chip.c6{bottom:14px!important}
+.hb-chip.c1,.hb-chip.c5{left:4%!important}.hb-chip.c3,.hb-chip.c7{right:4%!important}
+.hb-ray.r1,.hb-ray.r3{top:54px!important}
+@media (min-width:1560px){.hb-chip.c4,.hb-chip.c8{top:78px!important}.hb-chip.c4{right:1%!important}.hb-chip.c8{left:1%!important}}
+@media (max-width:1000px){.hb{height:auto!important;padding:22px!important}}
+
+/* project previews: shimmer, then fade in */
+.thumb{position:relative}
+.thumb>.thumb-ph{position:absolute;inset:0;min-height:0}
+.thumb>iframe{position:relative;opacity:0;transition:opacity .5s ease}.thumb>iframe.on{opacity:1}
+
+/* top performing: both boxes yellow · navy icon button with animation */
+.db-row3>.db-card:last-child .db-topst div:first-child{background:linear-gradient(135deg,#ffd35c,#f5b301,#ffd35c)!important;box-shadow:0 12px 24px -14px rgba(245,179,1,.9)!important;border:0!important}
+.db-row3>.db-card:last-child .db-topst div:last-child{background:linear-gradient(135deg,#f59e0b,#f5b301,#f59e0b)!important}
+.db-row3>.db-card:last-child .db-topst div b,.db-row3>.db-card:last-child .db-topst div span,.db-row3>.db-card:last-child .db-topst div svg{color:#0f1238!important}
+.db-row3>.db-card:last-child .db-topst div{transition:transform .25s}.db-row3>.db-card:last-child .db-topst div:hover{transform:translateY(-3px)}
+.db-row3>.db-card:last-child .ib2{position:relative;animation:openBob 3s ease-in-out infinite;transition:transform .25s}
+.db-row3>.db-card:last-child .ib2 svg{color:#1e3a8a!important;transition:transform .25s}
+.db-row3>.db-card:last-child .ib2::after{content:"";position:absolute;inset:-4px;border-radius:12px;border:2px solid rgba(245,179,1,.6);animation:openRing 2.2s ease-out infinite;pointer-events:none}
+.db-row3>.db-card:last-child .ib2:hover{transform:scale(1.08)}.db-row3>.db-card:last-child .ib2:hover svg{transform:translate(2px,-2px)}
+@keyframes openBob{0%,100%{translate:0 0}50%{translate:0 -3px}}
+@keyframes openRing{0%{opacity:.9;transform:scale(.9)}100%{opacity:0;transform:scale(1.35)}}
+.db-row3>.db-card:last-child .db-topimg{position:relative}
+
+/* forms: template library + scratch card in the theme */
+.dash .fm-scratch{display:flex!important;flex-direction:column;align-items:flex-start;justify-content:center;gap:8px;min-height:260px;padding:22px!important;border-radius:14px!important;cursor:pointer;text-align:left;
+  background:radial-gradient(200px 140px at 100% 0%,rgba(245,179,1,.25),transparent 70%),linear-gradient(160deg,#0f1238,#1b1a4f)!important;border:1.5px dashed rgba(245,179,1,.6)!important;color:#fff!important;transition:transform .25s,box-shadow .25s}
+.dash .fm-scratch:hover{transform:translateY(-4px);box-shadow:0 22px 40px -24px rgba(15,18,56,.9)}
+.fm-plus{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#f5b301;color:#0f1238;font-size:24px;font-weight:700;animation:qaRing 2.2s ease-out infinite}
+.fm-scratch b{font:800 17px Inter,sans-serif;color:#fff!important}.fm-scratch span{color:#c7cbe6;font-size:13px;line-height:1.5}
+.fm-scratch em{margin-top:6px;font-style:normal;font:700 13px Inter,sans-serif;color:#ffd35c}
+.inl-tpl .fm-t:not(.fm-scratch){border-color:#e6e9f2;transition:transform .25s,border-color .2s,box-shadow .25s}
+.inl-tpl .fm-t:not(.fm-scratch):hover{border-color:#f5b301!important;box-shadow:0 18px 32px -24px rgba(15,18,56,.6)}
+.dash .fm-hov .pri,.dash .fm-pbar .pri{background:#f5b301!important;color:#0f1238!important}
+.inl-h h2{color:#0f1238}
+/* form builder */
+.dash .fb-top{background:#0f1238;border-radius:14px;padding:10px 14px!important;color:#fff}
+.dash .fb-top .fb-name{color:#fff!important;background:transparent!important}
+.dash .fb-top button{background:rgba(255,255,255,.08)!important;color:#fff!important;border-color:rgba(255,255,255,.14)!important}
+.dash .fb-top .pri{background:#f5b301!important;color:#0f1238!important}
+.fb-h{color:#0f1238;font-weight:700}
+.dash .fb-type{border:1px solid #e6e9f2!important;border-radius:10px!important;transition:transform .15s,border-color .15s,background .15s;cursor:grab}
+.dash .fb-type:hover{border-color:#f5b301!important;background:#fffbea!important;transform:translateY(-2px)}
+.dash .fb-type i{color:#d97706}
+.dash .fb-row.on{border-color:#0f1238!important;box-shadow:0 0 0 3px rgba(245,179,1,.25)!important}
+.dash .fb-tabs button.on{background:#0f1238!important;color:#fff!important}
+.fb-prev{position:relative}
+.fb-drop{position:absolute;inset:44px 10px 10px;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:14px;border:2.5px dashed #f5b301;background:rgba(255,251,234,.92);color:#0f1238;animation:lbFade .15s ease both;transition:background .15s,transform .15s}
+.fb-drop.over{background:rgba(245,179,1,.28);transform:scale(.99)}
+.fb-drop span{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#0f1238;color:#f5b301;font-size:26px;animation:qaRing 1.6s ease-out infinite}
+.fb-drop b{font:700 16px Inter,sans-serif}.fb-drop small{color:#64748b}
+/* calendar: template library in the theme */
+.dash .ce-card{border-radius:14px!important;transition:transform .25s,box-shadow .25s,border-color .2s}
+.dash .ce-card:hover{transform:translateY(-4px);border-color:#f5b301!important;box-shadow:0 18px 32px -24px rgba(15,18,56,.6)}
+.dash .ce-card .pri{background:#0f1238!important;color:#fff!important}.dash .ce-card .pri:hover{background:#f5b301!important;color:#0f1238!important}
+.dash .ce-card.blank{background:radial-gradient(200px 140px at 100% 0%,rgba(245,179,1,.25),transparent 70%),linear-gradient(160deg,#0f1238,#1b1a4f)!important;border:1.5px dashed rgba(245,179,1,.6)!important;color:#fff!important}
+.dash .ce-card.blank b{color:#fff}.dash .ce-card.blank .mut{color:#c7cbe6!important}
+.dash .ce-card.blank .ce-ic{background:#f5b301!important;color:#0f1238!important;animation:qaRing 2.2s ease-out infinite}
+.ce-go{font-style:normal;font:700 13px Inter,sans-serif;color:#ffd35c;margin-top:4px}
+.dash .fm-gh{background:#0f1238;color:#fff;border-radius:14px 14px 0 0;padding:14px 18px!important}.dash .fm-gh h3{color:#fff}.dash .fm-gh .mut{color:#c7cbe6!important}
+
+/* pipeline: narrower columns that fit the screen · navy headers, yellow counts */
+.pl-col{flex:1 1 0!important;min-width:230px!important;max-width:330px}
+.dash .pl-addstage{flex:0 0 170px!important}
+.pl-colh{background:linear-gradient(135deg,#0f1238,#1b1a4f)!important;border-radius:13px 13px 0 0!important;border-bottom:3px solid var(--c)!important}
+.pl-colh b{color:#fff!important}
+.pl-n{background:#f5b301!important;border:0!important;color:#0f1238!important}
+.dash .pl-colh button{color:#aab0cc!important}.dash .pl-colh button:hover{background:rgba(255,255,255,.1)!important;color:#ffd35c!important}
+.pl-col{transition:transform .2s,box-shadow .25s,border-color .2s!important}
+.pl-col:hover{box-shadow:0 18px 34px -26px rgba(15,18,56,.55)}
+.pl-col.over{transform:translateY(-3px)}
+.pl-drop{border-color:#d9dde8;transition:border-color .2s,background .2s}.pl-col.over .pl-drop{border-color:#f5b301;background:#fffbea;color:#92400e}
+.pl-card{border-left-color:var(--c)!important}
+.hb-chip.c1,.hb-chip.c3{top:26px!important}.hb-chip.c2{top:22px!important}
+.pl-board{gap:10px!important}
+.pl-col{min-width:205px!important}
+.dash .pl-addstage{flex:0 0 150px!important}
+
+/* =====================================================================
+   v46 — "Start from scratch" card (Forms + Calendar) · tighter calendar page · yellow tab badges
+   ===================================================================== */
+.dash .scr-card{position:relative;overflow:hidden;isolation:isolate;display:flex!important;flex-direction:column;align-items:flex-start;gap:8px;min-height:260px;padding:24px 24px 22px!important;text-align:left;cursor:pointer;
+  border-radius:20px!important;border:1.5px solid transparent!important;color:#fff!important;
+  background:linear-gradient(150deg,#141a4d,#0d1035 55%,#1b1563) padding-box,linear-gradient(135deg,#f5b301,rgba(245,179,1,.15) 40%,rgba(124,77,255,.25) 65%,#7c4dff) border-box!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.02),0 18px 40px -22px rgba(124,77,255,.7),0 0 28px -10px rgba(245,179,1,.45)!important;
+  animation:fxIn .55s cubic-bezier(.2,.7,.2,1) both;transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s}
+.dash .scr-card:hover{transform:translateY(-5px);box-shadow:0 26px 50px -22px rgba(124,77,255,.85),0 0 40px -8px rgba(245,179,1,.6)!important}
+.scr-art{position:absolute;right:-18px;top:18px;z-index:-1;color:rgba(124,77,255,.32);transform:rotate(-8deg);transition:transform .6s ease}
+.scr-card:hover .scr-art{transform:rotate(-3deg) scale(1.05)}
+.scr-orbit{position:absolute;left:-40px;top:40px;width:230px;height:90px;border-radius:50%;border:3px solid rgba(124,77,255,.45);transform:rotate(-12deg);animation:scrOrbit 9s linear infinite}
+@keyframes scrOrbit{to{transform:rotate(348deg)}}
+.scr-ic{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(145deg,#ffd35c,#f5b301);color:#1b1300;box-shadow:0 0 0 6px rgba(245,179,1,.12),0 0 26px rgba(245,179,1,.55);animation:scrGlow 2.6s ease-in-out infinite}
+.scr-ic svg{color:#1b1300}
+@keyframes scrGlow{0%,100%{box-shadow:0 0 0 6px rgba(245,179,1,.12),0 0 20px rgba(245,179,1,.45)}50%{box-shadow:0 0 0 9px rgba(245,179,1,.06),0 0 34px rgba(245,179,1,.75)}}
+.scr-t{margin-top:10px;font:800 24px/1.15 Inter,system-ui,sans-serif;color:#fff!important;letter-spacing:-.02em}
+.scr-t em{font-style:normal;color:#f5b301;text-shadow:0 0 18px rgba(245,179,1,.45)}
+.scr-sub{font:500 14px/1.5 Inter,system-ui,sans-serif;color:#b9bdf0!important;max-width:80%}
+.scr-foot{margin-top:auto;width:100%;display:flex;align-items:center;justify-content:space-between;padding-top:10px}
+.scr-dots{display:flex;gap:6px}.scr-dots i{width:18px;height:6px;border-radius:99px;background:rgba(255,255,255,.14)}.scr-dots i:first-child{width:26px;background:#f5b301;animation:scrDot 2.4s ease-in-out infinite}
+@keyframes scrDot{0%,100%{width:26px}50%{width:36px}}
+.scr-go{position:relative;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ffd35c,#f5b301);color:#1b1300;font:800 20px Inter,sans-serif;box-shadow:0 0 0 6px rgba(245,179,1,.14),0 0 24px rgba(245,179,1,.6);transition:transform .3s}
+.scr-line{position:absolute;right:100%;top:50%;width:70px;height:2px;margin-right:4px;background:linear-gradient(90deg,transparent,#f5b301);opacity:.8}
+.scr-card:hover .scr-go{transform:translateX(4px)}
+@media (max-width:560px){.dash .scr-card{min-height:220px}.scr-t{font-size:21px}.scr-art{opacity:.6}}
+
+/* calendar page: content a bit closer together */
+.dash .ce-tabsbar{margin:6px 0 12px!important}
+.dash section .stats{gap:12px!important;margin-bottom:14px!important}
+.dash section .stats .stat{padding:16px 18px!important;min-height:0!important}
+.dash section .stats .stat b{font-size:26px!important}
+.dash .ce-list{gap:10px!important}
+.dash .inl-tpl{margin-top:16px!important}.dash .inl-h{margin-bottom:10px!important}
+.dash .ce-gal{gap:12px!important}
+
+/* tab count badges: yellow with navy text */
+.dash .ce-tabsbar em{background:#f5b301!important;color:#0f1238!important;font-style:normal;font-weight:800!important;min-width:20px;text-align:center;border-radius:999px;padding:1px 7px}
+.dash .ce-tabsbar button:not(.on) em{background:#fff3c4!important;color:#92400e!important}
+/* v47 — Forms "Start from scratch" card looks exactly like the Calendar one (old grid button styles no longer apply) */
+.dash .fm-tpls .scr-card,.dash .fm-tpls .scr-card:hover{
+  background:linear-gradient(150deg,#141a4d,#0d1035 55%,#1b1563) padding-box,linear-gradient(135deg,#f5b301,rgba(245,179,1,.15) 40%,rgba(124,77,255,.25) 65%,#7c4dff) border-box!important;
+  border:1.5px solid transparent!important;padding:24px 24px 22px!important;border-radius:20px!important;gap:8px!important}
+.dash .fm-tpls .scr-art{color:rgba(124,77,255,.32)!important}
+.dash .fm-tpls .scr-sub{color:#b9bdf0!important}
+.dash .fm-tpls .scr-t{color:#fff!important}
+.dash .fm-tpls .scr-ic,.dash .fm-tpls .scr-go{color:#1b1300!important}

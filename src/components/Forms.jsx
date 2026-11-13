@@ -1,6 +1,7 @@
-// LaunchBuilder v28 — Forms.jsx
+// LaunchBuilder v46 — Forms.jsx
 import { useMemo, useRef, useState } from "react";
-import { FORM_TEMPLATES, FIELD_TYPES, newForm, newField, uid, ago, formUrl } from "../lib.js";
+import ScratchCard from "./Scratch.jsx";
+import { FORM_TEMPLATES as FT0, FIELD_TYPES, newForm, newField, uid, ago, formUrl } from "../lib.js";
 import { formHtml, formPageHtml } from "./tools.js";
 
 /* ================= Forms: templates, drag & drop builder, share link, embed, add to page ================= */
@@ -8,12 +9,16 @@ const TYPE_IC = { text: "Aa", email: "@", tel: "☎", number: "#", textarea: "¶
 const copy = async (t, done) => { try { await navigator.clipboard.writeText(t); done && done(); } catch { window.prompt("Copy this:", t); } };
 
 /* templates shown right on the Forms page */
+/* "Start from scratch" always comes first */
+const FORM_TEMPLATES = [...FT0.filter((t) => t.key === "blank"), ...FT0.filter((t) => t.key !== "blank")];
+
 function InlineTemplates({ integ, onPick, onPreview, title }) {
   const forms = useMemo(() => Object.fromEntries(FORM_TEMPLATES.map((t) => [t.key, formPageHtml(newForm(t), integ)])), [integ]);
   return (
     <div className="inl-tpl">
       <div className="inl-h"><div><h2>{title}</h2><p className="mut">Pick one, then change every field, colour and automation.</p></div></div>
-      <div className="fm-tpls">{FORM_TEMPLATES.map((t) => (
+      <div className="fm-tpls">{FORM_TEMPLATES.map((t) => t.key === "blank" ? (
+        <ScratchCard key={t.key} icon="form" text="Build your own form — drag fields in, edit everything." onClick={() => onPick(t)} />) : (
         <div key={t.key} className="fm-t">
           <div className="fm-shot" onClick={() => onPreview(t.key)}><iframe title={t.name} srcDoc={forms[t.key]} sandbox="" tabIndex={-1} loading="lazy" />
             <div className="fm-hov"><button onClick={(e) => { e.stopPropagation(); onPreview(t.key); }}>Preview</button><button className="pri" onClick={(e) => { e.stopPropagation(); onPick(t); }}>Use</button></div></div>
@@ -50,7 +55,7 @@ function Gallery({ onPick, onClose, integ, initial = null }) {
 
 function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leadCount, integ, onIntegrations }) {
   const [sel, setSel] = useState(form.fields[0] ? form.fields[0].id : null), [tab, setTab] = useState("field"), [note, setNote] = useState("");
-  const [dropAt, setDropAt] = useState(null), drag = useRef(null), [target, setTarget] = useState({ pid: "", page: "" });
+  const [dropAt, setDropAt] = useState(null), [dragType, setDragType] = useState(""), [overPrev, setOverPrev] = useState(false), drag = useRef(null), [target, setTarget] = useState({ pid: "", page: "" });
   const s = form.settings, f = form.fields.find((x) => x.id === sel);
   const bt = { full: true, align: "center", size: "md", bg: "", fg: "#ffffff", note: true, extra: false, extraText: "Chat on WhatsApp", extraUrl: "", ...(s.btn || {}) }, setB = (o) => setS({ btn: { ...bt, ...o } });
   const em = s.email || {}, gem = (integ && integ.email) || {}, setE = (o) => setS({ email: { ...em, ...o } });
@@ -84,7 +89,7 @@ function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leadCo
         <div className="fb-col">
           <div className="fb-h">Add a field <span className="mut sm">drag or click</span></div>
           <div className="fb-types">{FIELD_TYPES.map(([t, l]) => (
-            <div key={t} className="fb-type" draggable onDragStart={() => (drag.current = { type: t })} onDragEnd={() => setDropAt(null)} onClick={() => insert(t)}><i>{TYPE_IC[t]}</i>{l}</div>))}</div>
+            <div key={t} className="fb-type" draggable onDragStart={(e) => { drag.current = { type: t }; setDragType(l); try { e.dataTransfer.setData("text/plain", t); } catch { /* old browsers */ } }} onDragEnd={() => { setDropAt(null); setDragType(""); setOverPrev(false); }} onClick={() => insert(t)}><i>{TYPE_IC[t]}</i>{l}</div>))}</div>
           <div className="fb-h">Fields <span className="mut sm">drag to reorder</span></div>
           <div className="fb-list" onDragOver={(e) => { e.preventDefault(); if (e.target === e.currentTarget) setDropAt(form.fields.length); }} onDrop={() => onDrop(dropAt ?? form.fields.length)}>
             {form.fields.map((x, i) => (
@@ -103,7 +108,9 @@ function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leadCo
           </div>
         </div>
         {/* ---- center: live preview ---- */}
-        <div className="fb-prev"><div className="fb-prev-bar"><span className="dot" /><span className="dot" /><span className="dot" /><code>{formUrl(form.id).replace(/^https?:\/\//, "")}</code></div><iframe title="Form preview" srcDoc={html} sandbox="" /></div>
+        <div className="fb-prev"><div className="fb-prev-bar"><span className="dot" /><span className="dot" /><span className="dot" /><code>{formUrl(form.id).replace(/^https?:\/\//, "")}</code></div><iframe title="Form preview" srcDoc={html} sandbox="" />
+          {dragType && <div className={"fb-drop" + (overPrev ? " over" : "")} onDragOver={(e) => { e.preventDefault(); setOverPrev(true); }} onDragLeave={() => setOverPrev(false)}
+            onDrop={(e) => { e.preventDefault(); const d = drag.current; drag.current = null; setDragType(""); setOverPrev(false); if (d && d.type) insert(d.type); }}><span>＋</span><b>Drop to add “{dragType}”</b><small>It goes to the end — drag it in the Fields list to reorder</small></div>}</div>
         {/* ---- right: settings ---- */}
         <div className="fb-col">
           <div className="fb-tabs">{[["field", "Field"], ["settings", "Settings"], ["pay", "Payment"], ["design", "Design"], ["use", "Use it"]].map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</div>
