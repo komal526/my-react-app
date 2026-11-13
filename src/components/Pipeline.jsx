@@ -1,5 +1,5 @@
-// LaunchBuilder v36 — Pipeline.jsx (several lead pipelines · custom stages · manual leads · drag & drop)
-import { useMemo, useState } from "react";
+// LaunchBuilder v41 — Pipeline.jsx (several lead pipelines · custom stages · manual leads · drag & drop)
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "./Inspector.jsx";
 import { ago, uid, loadPipes, savePipes, PIPE_COLORS, LEAD_STATUS } from "../lib.js";
 
@@ -8,6 +8,9 @@ const nameOf = (l) => pickK(l.data, /name/i) || Object.values(l.data || {})[0] |
 const phoneOf = (l) => pickK(l.data, /phone|tel|mobile|whats/i);
 const noteOf = (l) => pickK(l.data, /message|note|comment|query|enquir|interest/i) || l.note || "";
 const mask = (p) => { const d = String(p || ""); return d.length > 4 ? "•".repeat(Math.min(8, d.length - 4)) + d.slice(-4) : d; };
+const mailOf = (l) => pickK(l.data, /mail/i);
+/* WhatsApp link: 10-digit Indian numbers get +91 */
+const waLink = (p) => { let d = String(p || "").replace(/\D/g, ""); if (d.length === 11 && d[0] === "0") d = d.slice(1); if (d.length === 10) d = "91" + d; return d.length >= 11 ? "https://wa.me/" + d : ""; };
 const PRI = ["Low", "Medium", "High"];
 const STATUS_IDS = LEAD_STATUS.map(([k]) => k);
 
@@ -21,7 +24,7 @@ function Modal({ title, children, onClose, onOk, ok = "Save", okOff }) {
   );
 }
 
-export default function Pipeline({ user, leads, update, forms = [], onOpen }) {
+export default function Pipeline({ user, leads, update, forms = [], onOpen, toolbar = null }) {
   const E = user.email;
   const [pipes, setPipes] = useState(() => loadPipes(E));
   const [pid, setPid] = useState(() => localStorage.getItem("lb_pipe_cur") || "default");
@@ -29,12 +32,18 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen }) {
   const [mode, setMode] = useState("board"), [masked, setMasked] = useState(true), [drag, setDrag] = useState(null), [over, setOver] = useState("");
   const [md, setMd] = useState(null), [menu, setMenu] = useState(false);
   const putPipes = (l) => { setPipes(l); savePipes(E, l); };
+  useEffect(() => { const f = (e) => { const k = e.detail || []; if (k.includes("all") || k.includes("lb_pipes_")) setPipes(loadPipes(E)); }; window.addEventListener("lb-cloud-pull", f); return () => window.removeEventListener("lb-cloud-pull", f); }, [E]);
   const pipe = pipes.find((p) => p.id === pid) || pipes[0];
   const choose = (id) => { setPid(id); localStorage.setItem("lb_pipe_cur", id); setFStage(""); };
 
   /* which leads belong to this pipeline */
   const claimed = new Set(pipes.filter((p) => !p.def).flatMap((p) => p.forms || []));
-  const inPipe = (l) => (pipe.forms && pipe.forms.length ? pipe.forms.includes(l.form) : pipe.def ? !claimed.has(l.form) : true);
+  const otherPipes = new Set(pipes.filter((p) => p.id !== pipe.id).map((p) => p.id));
+  const inPipe = (l) => {
+    if (l.pipe) return l.pipe === pipe.id || (pipe.def && !otherPipes.has(l.pipe) && !pipes.some((p) => p.id === l.pipe));
+    if (pipe.forms && pipe.forms.length) return pipe.forms.includes(l.form);
+    return !!pipe.def && !claimed.has(l.form);
+  };
   const stageOf = (l) => { const s = (l.pst || {})[pipe.id] || (pipe.def ? l.status : ""); return pipe.stages.some((x) => x.id === s) ? s : pipe.stages[0].id; };
   const moveTo = (id, stage) => update(leads.map((l) => (l.id === id ? { ...l, pst: { ...(l.pst || {}), [pipe.id]: stage }, ...(pipe.def && STATUS_IDS.includes(stage) ? { status: stage } : {}), updated: Date.now() } : l)));
   const patchLead = (id, o) => update(leads.map((l) => (l.id === id ? { ...l, ...o, updated: Date.now() } : l)));
@@ -69,10 +78,19 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen }) {
     update(leads.map((l) => (inPipe(l) && stageOf(l) === s.id ? { ...l, pst: { ...(l.pst || {}), [pipe.id]: first }, ...(pipe.def && STATUS_IDS.includes(first) ? { status: first } : {}) } : l)));
     putPipes(pipes.map((p) => (p.id === pipe.id ? { ...p, stages: rest } : p)));
   };
+  const saveEdit = () => {
+    const d = md.lead; if (!(d.name || "").trim()) return;
+    update(leads.map((l) => { if (l.id !== md.id) return l;
+      const data = { ...(l.data || {}) }, setK = (re, key, v) => { const k = Object.keys(data).find((x) => re.test(x)) || key; if (v) data[k] = v; else delete data[k]; };
+      setK(/name/i, "name", d.name.trim()); setK(/phone|tel|mobile|whats/i, "phone", d.phone); setK(/mail/i, "email", d.email); setK(/message|note|comment|query|enquir|interest/i, "message", d.message);
+      return { ...l, data, priority: d.priority, pst: { ...(l.pst || {}), [pipe.id]: d.stage }, ...(pipe.def && STATUS_IDS.includes(d.stage) ? { status: d.stage } : {}), updated: Date.now() }; }));
+    setMd(null);
+  };
+  const editLead = (l) => setMd({ k: "lead", id: l.id, lead: { name: String(nameOf(l)), phone: phoneOf(l), email: mailOf(l), message: noteOf(l), priority: l.priority || "Medium", stage: stageOf(l) } });
   const addLead = () => {
     const d = md.lead; if (!(d.name || "").trim()) return;
     const stage = d.stage || pipe.stages[0].id;
-    const l = { id: uid(), lid: "M" + uid(), ts: Date.now(), updated: Date.now(), form: d.form || (pipe.forms && pipe.forms[0]) || "Manual", source: "manual", projectName: "Added manually", priority: d.priority || "Medium",
+    const l = { id: uid(), lid: "M" + uid(), ts: Date.now(), updated: Date.now(), pipe: pipe.id, form: d.form || (pipe.forms && pipe.forms[0]) || "Manual", source: "manual", projectName: "Added manually", priority: d.priority || "Medium",
       status: pipe.def && STATUS_IDS.includes(stage) ? stage : "new", pst: { [pipe.id]: stage }, data: { name: d.name.trim(), ...(d.phone ? { phone: d.phone } : {}), ...(d.email ? { email: d.email } : {}), ...(d.message ? { message: d.message } : {}) } };
     update([l, ...leads]); setMd(null);
   };
@@ -83,10 +101,14 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen }) {
         <select className={"pl-pri p-" + (l.priority || "Medium")} value={l.priority || "Medium"} onClick={(e) => e.stopPropagation()} onChange={(e) => patchLead(l.id, { priority: e.target.value })}>{PRI.map((p) => <option key={p}>{p}</option>)}</select></div>
       {noteOf(l) && <p className="pl-note">{String(noteOf(l)).slice(0, 70)}</p>}
       <div className="pl-tags">{l.form && <span>{l.form}</span>}{l.payment && <span className={"pay " + l.payment.status}>{l.payment.status === "paid" ? "Paid" : "Payment " + l.payment.status}</span>}</div>
+      <div className="pl-ph">{phoneOf(l) && <code>📞 {masked ? mask(phoneOf(l)) : phoneOf(l)}</code>}{mailOf(l) && <code>✉ {masked ? String(mailOf(l)).slice(0, 2) + "•••@" + String(mailOf(l)).split("@")[1] : mailOf(l)}</code>}</div>
       <div className="pl-cf">
-        {phoneOf(l) && <code>{masked ? mask(phoneOf(l)) : phoneOf(l)}</code>}
         <span className="pl-ago">{ago(l.updated || l.ts)}</span>
-        <button className="pl-del" title="Delete lead" onClick={(e) => { e.stopPropagation(); delLead(l.id); }}><Icon n="trash" s={14} /></button>
+        <div className="pl-acts" onClick={(e) => e.stopPropagation()}>
+          {waLink(phoneOf(l)) && <a className="pl-wa" href={waLink(phoneOf(l))} target="_blank" rel="noopener" title="Chat on WhatsApp"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9s-.5-.1-.7.1-.8.9-.9 1.1-.3.2-.6.1a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.6-2c-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.8.4 3.5 3.5 0 0 0-1.1 2.6 6 6 0 0 0 1.3 3.2 13.6 13.6 0 0 0 5.2 4.6c3.2 1.3 3.2.9 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.2-.3-.2-.6-.4zM12 21.8a9.8 9.8 0 0 1-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8zM12 0a12 12 0 0 0-10.3 18.1L0 24l6.1-1.6A12 12 0 1 0 12 0z" /></svg></a>}
+          <button className="pl-ed" title="Edit lead" onClick={() => editLead(l)}><Icon n="pen" s={14} /></button>
+          <button className="pl-del" title="Delete lead" onClick={() => delLead(l.id)}><Icon n="trash" s={14} /></button>
+        </div>
       </div>
     </div>
   );
@@ -105,11 +127,11 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen }) {
               {!pipe.def && <button onClick={makeDefault}>Set as default</button>}
               {!pipe.def ? <button className="red" onClick={delPipe}>Delete pipeline</button> : <span className="mut sm">The default pipeline can't be deleted.</span>}
             </div>}</div>
-          <span className="pl-src">{pipe.forms && pipe.forms.length ? "Forms: " + pipe.forms.join(", ") : pipe.def ? "All forms not used by another pipeline" : "All forms"}</span>
+          <span className="pl-src">{pipe.forms && pipe.forms.length ? "Forms: " + pipe.forms.join(", ") : pipe.def ? "All other forms" : "No forms linked yet"}</span>
         </div>
+        {toolbar && <div className="pl-mid">{toolbar}</div>}
         <div className="pl-right">
           <div className="pl-seg"><button className={mode === "board" ? "on" : ""} onClick={() => setMode("board")}><Icon n="grid" s={14} /> Board</button><button className={mode === "list" ? "on" : ""} onClick={() => setMode("list")}><Icon n="pages" s={14} /> List</button></div>
-          <button className={"pl-mask" + (masked ? " on" : "")} onClick={() => setMasked(!masked)}><Icon n="eye" s={14} /> {masked ? "Masked" : "Visible"}</button>
           <button className="pri pl-add" onClick={() => setMd({ k: "lead", lead: { priority: "Medium", stage: pipe.stages[0].id } })}>＋ Add lead</button>
         </div>
       </div>
@@ -121,9 +143,11 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen }) {
         <label className="pl-f"><span>Priority:</span><select value={fPri} onChange={(e) => setFPri(e.target.value)}><option value="">All priorities</option>{PRI.map((p) => <option key={p}>{p}</option>)}</select></label>
         <label className="pl-f"><span>Source:</span><select value={fSrc} onChange={(e) => setFSrc(e.target.value)}><option value="">All sources</option>{formNames.map((f) => <option key={f}>{f}</option>)}</select></label>
         <label className="pl-f"><select value={sort} onChange={(e) => setSort(e.target.value)}><option value="updated">Recently updated</option><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">Name A–Z</option></select></label>
+        <button className={"pl-mask" + (masked ? " on" : "")} onClick={() => setMasked(!masked)} title={masked ? "Show phone numbers and emails" : "Hide phone numbers and emails"}><Icon n="eye" s={14} /> {masked ? "Masked" : "Visible"}</button>
         <span className="pl-count">{list.length} lead{list.length === 1 ? "" : "s"}</span>
       </div>
 
+      {!pipe.def && !(pipe.forms || []).length && !list.length && <div className="pl-hint">This pipeline has no forms linked yet. Click <b>⋯ → Rename / choose forms</b> to pick which form's leads come here — or add leads by hand with <b>＋ Add lead</b>.</div>}
       {mode === "board" ? (
         <div className="pl-board">
           {pipe.stages.filter((s) => !fStage || s.id === fStage).map((s, i) => { const items = list.filter((l) => stageOf(l) === s.id); return (
@@ -141,11 +165,11 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen }) {
           <thead><tr><th>Lead</th><th>Phone</th><th>Stage</th><th>Priority</th><th>Source</th><th>Updated</th><th /></tr></thead>
           <tbody>{list.map((l) => <tr key={l.id} onClick={() => onOpen(l.id)}>
             <td><b>{nameOf(l)}</b>{noteOf(l) && <div className="mut sm">{String(noteOf(l)).slice(0, 50)}</div>}</td>
-            <td><code>{masked ? mask(phoneOf(l)) : phoneOf(l)}</code></td>
+            <td><code>{masked ? mask(phoneOf(l)) : phoneOf(l)}</code>{waLink(phoneOf(l)) && <a className="pl-wa sm" href={waLink(phoneOf(l))} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} title="WhatsApp"> 💬</a>}</td>
             <td onClick={(e) => e.stopPropagation()}><select value={stageOf(l)} onChange={(e) => moveTo(l.id, e.target.value)}>{pipe.stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></td>
             <td onClick={(e) => e.stopPropagation()}><select className={"pl-pri p-" + (l.priority || "Medium")} value={l.priority || "Medium"} onChange={(e) => patchLead(l.id, { priority: e.target.value })}>{PRI.map((p) => <option key={p}>{p}</option>)}</select></td>
             <td>{l.form}</td><td className="mut">{ago(l.updated || l.ts)}</td>
-            <td><button className="pl-del" onClick={(e) => { e.stopPropagation(); delLead(l.id); }}><Icon n="trash" s={14} /></button></td></tr>)}
+            <td><div className="pl-acts"><button className="pl-ed" title="Edit" onClick={(e) => { e.stopPropagation(); editLead(l); }}><Icon n="pen" s={14} /></button><button className="pl-del" onClick={(e) => { e.stopPropagation(); delLead(l.id); }}><Icon n="trash" s={14} /></button></div></td></tr>)}
             {!list.length && <tr><td colSpan={7} className="mut" style={{ textAlign: "center", padding: 24 }}>No leads match.</td></tr>}</tbody>
         </table></div>
       )}
@@ -154,14 +178,14 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen }) {
         <label className="pl-l">Pipeline name<input autoFocus value={md.name} onChange={(e) => setMd({ ...md, name: e.target.value })} placeholder="e.g. Inbound Sales" onKeyDown={(e) => e.key === "Enter" && savePipe()} /></label>
         <span className="pl-l">Leads from these forms</span>
         <div className="pl-forms">{formNames.length ? formNames.map((f) => <label key={f} className="chk"><input type="checkbox" checked={md.forms.includes(f)} onChange={(e) => setMd({ ...md, forms: e.target.checked ? [...md.forms, f] : md.forms.filter((x) => x !== f) })} />{f}</label>) : <span className="mut sm">No forms yet — this pipeline will show every lead.</span>}</div>
-        <p className="mut sm">Leave all unticked to include every form.</p>
+        <p className="mut sm">Only leads from the ticked forms appear in this pipeline — each form stays in its own pipeline.</p>
       </Modal>}
       {md && md.k === "stage" && <Modal title={md.sid ? "Edit stage" : "Add stage"} ok={md.sid ? "Save" : "Add stage"} okOff={!(md.name || "").trim()} onClose={() => setMd(null)} onOk={saveStage}>
         <label className="pl-l">Stage name<input autoFocus value={md.name} onChange={(e) => setMd({ ...md, name: e.target.value })} placeholder="e.g. Demo scheduled" onKeyDown={(e) => e.key === "Enter" && saveStage()} /></label>
         <span className="pl-l">Colour</span>
         <div className="pl-colors">{PIPE_COLORS.map((c) => <button key={c} className={md.c === c ? "on" : ""} style={{ background: c }} onClick={() => setMd({ ...md, c })} aria-label={c} />)}</div>
       </Modal>}
-      {md && md.k === "lead" && <Modal title="Add lead" ok="Add lead" okOff={!(md.lead.name || "").trim()} onClose={() => setMd(null)} onOk={addLead}>
+      {md && md.k === "lead" && <Modal title={md.id ? "Edit lead" : "Add lead"} ok={md.id ? "Save changes" : "Add lead"} okOff={!(md.lead.name || "").trim()} onClose={() => setMd(null)} onOk={md.id ? saveEdit : addLead}>
         {[["name", "Name *", "e.g. Rahul Jain"], ["phone", "Phone / WhatsApp", "e.g. 98765 43210"], ["email", "Email", "e.g. rahul@example.com"], ["message", "Note", "What are they interested in?"]].map(([k, l, ph], i) => (
           <label key={k} className="pl-l">{l}<input autoFocus={!i} value={md.lead[k] || ""} placeholder={ph} onChange={(e) => setMd({ ...md, lead: { ...md.lead, [k]: e.target.value } })} /></label>))}
         <div className="pl-two">

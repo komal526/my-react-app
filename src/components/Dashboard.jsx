@@ -1,4 +1,4 @@
-// LaunchBuilder v38 — Dashboard.jsx
+// LaunchBuilder v41 — Dashboard.jsx
 import { useState, useEffect, useRef } from "react";
 import Editor from "./Editor.jsx";
 import { Sidebar, NewModal, PublishModal } from "./parts.jsx";
@@ -13,6 +13,7 @@ import Calendar from "./Calendar.jsx";
 import { Icon } from "./Inspector.jsx";
 import Settings from "./Settings.jsx";
 import Pixels from "./Pixels.jsx";
+import LMS from "./LMS.jsx";
 import ImportPage from "./ImportPage.jsx";
 import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml } from "../lib.js";
 import { formHtml, bookingWidget } from "./tools.js";
@@ -39,7 +40,7 @@ const syncFormInHtml = (html, f, integ) => {
 
 /* greeting · search · notifications · account */
 /* search across projects, forms, calendars and pages */
-const PAGES = [["pages", "grid", "Dashboard"], ["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"], ["domains", "share", "Domains"], ["integrations", "apps", "Integrations"], ["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]];
+const PAGES = [["pages", "grid", "Dashboard"], ["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"], ["lms", "star", "LMS Courses"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"], ["domains", "share", "Domains"], ["integrations", "apps", "Integrations"], ["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]];
 function Search({ projects, forms, cal, onOpenProject, onGo }) {
   const [q, setQ] = useState(""), [open, setOpen] = useState(false), [hi, setHi] = useState(0), ref = useRef(null), box = useRef(null);
   useEffect(() => {
@@ -87,11 +88,11 @@ function TopBar({ full = true, title = "", onHome = () => {}, user, newLeads, on
     <div className={"tb2" + (full ? "" : " slim")}>
       {full ? <div className="tb2-hi">
         <h1>{hi}, <span className="tb2-name">{first}</span> <span className="tb2-wave">👋</span></h1>
-        <span className="tb2-date"><Icon n="calendar" s={13} />{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
       </div> : <div className="tb2-hi tb2-crumb">
         <button className="tb2-home" onClick={onHome}><Icon n="grid" s={15} /><span>Dashboard</span></button>
         {title && <><i className="tb2-sl">/</i><b>{title}</b></>}
       </div>}
+      <span className="tb2-date"><Icon n="calendar" s={15} /><b>{new Date().toLocaleDateString("en-IN", { weekday: "long" })}</b><span>{new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span></span>
       <Search projects={projects} forms={forms} cal={cal} onOpenProject={onOpenProject} onGo={onGo} />
       <button className="tb2-bell" onClick={onLeads} title="Leads"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg></button>
       <div className="tb2-me" onClick={(e) => { e.stopPropagation(); setUm(!um); }}><span className="av">{(user.name || "U")[0].toUpperCase()}</span><b>{first}</b><Icon n="chevd" s={14} />
@@ -120,6 +121,21 @@ export default function Dashboard({ user, onLogout }) {
   useEffect(() => { const f = () => setWide(window.innerWidth > 900); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
   const [cal, setCal] = useState(() => loadCal(E));
   const [myTpl, setMyTpl] = useState(() => loadMyTpl(E));
+  /* live updates from your other devices — refresh what's on screen (projects wait while the editor is open) */
+  const openRef = useRef(null);
+  useEffect(() => {
+    const f = (e) => {
+      const k = e.detail || [], all = k.includes("all"), has = (x) => all || k.includes(x);
+      if (has("lb_pages_") && !openRef.current) setProjects(loadProjects(E));
+      if (has("lb_forms_")) setForms(loadForms(E));
+      if (has("lb_leads_")) setLeads(loadLeads(E));
+      if (has("lb_events_")) setEvents(loadEvents(E));
+      if (has("lb_cal_")) setCal(loadCal(E));
+      if (has("lb_integrations_")) setInteg(loadInteg(E));
+      if (has("lb_mytpl_")) setMyTpl(loadMyTpl(E));
+    };
+    window.addEventListener("lb-cloud-pull", f); return () => window.removeEventListener("lb-cloud-pull", f);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const putTpl = (list) => { setMyTpl(list); saveMyTpl(E, list); };
   const saveAsTpl = (p) => {
     const n = window.prompt("Template name", p.name); if (!n || !n.trim()) return;
@@ -195,6 +211,7 @@ export default function Dashboard({ user, onLogout }) {
   const visits7 = events.filter((e) => e.t === "view" && Date.now() - e.ts < 7 * 864e5).length;
 
   const open = projects.find((p) => p.id === openId);
+  openRef.current = openId;
   const pub = modal && modal.type === "publish" && projects.find((p) => p.id === modal.id);
   const goView = (v, tile = "") => { setModal(null); setOpenId(null); setIgTile(tile); setView(v); };
   const pubModal = pub && <PublishModal page={pub} integ={integ} onInteg={onInteg} onClose={() => setModal(null)} onDone={(o, keep) => { patch(pub.id, o); if (!keep) setModal(null); }} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onDomains={() => goView("domains")} />;
@@ -233,6 +250,7 @@ export default function Dashboard({ user, onLogout }) {
         {view === "leads" && <Leads user={user} projects={projects} forms={forms} leads={leads} setLeads={setLeads} integ={integ} />}
         {view === "analytics" && <Analytics projects={projects} events={events} leads={leads} onOpenProject={setOpenId} />}
         {view === "domains" && <Domains projects={projects} onPatch={patch} onPatchPage={patchPage} onInteg={onInteg} onOpen={setOpenId} integ={integ} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onPublish={(p) => setModal({ type: "publish", id: p.id })} />}
+        {view === "lms" && <LMS user={user} />}
         {view === "pixels" && <Pixels integ={integ} onChange={onInteg} projects={projects} />}
         {view === "settings" && <Settings user={user} count={projects.length} onDeleteAll={() => setProjects([])} />}
       </section>

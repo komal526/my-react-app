@@ -1,4 +1,4 @@
-// LaunchBuilder v39 — cloud.js
+// LaunchBuilder v41 — cloud.js (login · sync · live updates across devices)
 // Supabase login + automatic cloud sync of each user's data (pages, forms, leads, calendars, analytics, integrations).
 // Works with Supabase's standard REST API — no extra npm package needed.
 // Settings come from the .env file:  VITE_SUPABASE_URL  and  VITE_SUPABASE_ANON_KEY
@@ -13,7 +13,8 @@ const tfetch = (url, opts = {}, ms = 12000) => {
 };
 
 /* which saved data belongs to a user (stored in the browser as  prefix + email) */
-const SYNC = ["lb_pages_", "lb_forms_", "lb_leads_sync_", "lb_leads_", "lb_cal_", "lb_events_", "lb_integrations_", "lb_mytpl_", "lb_pipes_"];
+const SYNC = ["lb_pages_", "lb_forms_", "lb_leads_sync_", "lb_leads_", "lb_cal_", "lb_events_", "lb_integrations_", "lb_mytpl_", "lb_pipes_", "lb_lms_"];
+const stamps = {}; /* key → last updated_at we know about (to spot changes made on other devices) */
 const SK = "lb_supa_session";
 
 /* ---------------- session ---------------- */
@@ -56,7 +57,7 @@ export async function cloudLogout() {
   await flush();
   const t = getSession() && getSession().access_token;
   if (t) { try { await tfetch(BASE + "/auth/v1/logout", { method: "POST", headers: H(t) }, 5000); } catch { /* offline */ } }
-  setSession(null); uid = null; email = null;
+  setSession(null); uid = null; email = null; clearInterval(liveT); liveT = 0;
 }
 export const cloudUser = () => { const s = getSession(); return s && s.user ? s.user : null; };
 
@@ -101,6 +102,7 @@ function patch() {
 }
 function queue(k, v) {
   const ck = cloudKey(k); if (!ck || !uid) return;
+  if (v !== null && localStorage.getItem(SYNCED(ck)) === hash(v)) return; // identical to the cloud copy
   pending.set(ck, v); status("saving");
   clearTimeout(timer); timer = setTimeout(flush, 1200);
 }
@@ -116,7 +118,7 @@ export async function flush() {
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || "save failed");
     }
     for (const k of del) await tfetch(BASE + `/rest/v1/lb_user_data?user_id=eq.${uid}&key=eq.${encodeURIComponent(k)}`, { method: "DELETE", headers: H(t) });
-    up.forEach((x) => _set.call(localStorage, SYNCED(x.key), hash(x.value)));
+    up.forEach((x) => { _set.call(localStorage, SYNCED(x.key), hash(x.value)); stamps[x.key] = x.updated_at; });
     status("saved");
   } catch (e) {
     items.forEach(([k, v]) => { if (!pending.has(k)) pending.set(k, v); });
@@ -129,11 +131,12 @@ export async function startCloud(user) {
   const t = await token(); if (!t) { status("offline", reason("jwt expired")); return false; }
   let rows = [];
   try {
-    const r = await tfetch(BASE + "/rest/v1/lb_user_data?select=key,value", { headers: H(t) }, 15000);
+    const r = await tfetch(BASE + "/rest/v1/lb_user_data?select=key,value,updated_at", { headers: H(t) }, 15000);
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.message || j.code || "HTTP " + r.status); }
     rows = await r.json();
   } catch (e) { status("offline", reason(e.message)); console.warn("cloud load:", e.message); return false; }
   const cloud = new Map(rows.map((x) => [x.key, x.value])); let changed = false;
+  rows.forEach((x) => { stamps[x.key] = x.updated_at; });
   SYNC.forEach((p) => {
     const lv = localStorage.getItem(p + email), cv = cloud.has(p) ? cloud.get(p) : null, last = localStorage.getItem(SYNCED(p));
     let next;
@@ -145,7 +148,44 @@ export async function startCloud(user) {
     if (next !== cv) pending.set(p, next); else _set.call(localStorage, SYNCED(p), hash(next));
   });
   if (pending.size) await flush(); else status("saved");
+  startLive();
   return { ok: true, changed };
+}
+/* ---------- live updates: see changes from your other devices within ~15 seconds ---------- */
+let liveT = 0, pulling = false;
+export async function pullCloud() {
+  if (!uid || pulling || pending.size) return [];
+  pulling = true;
+  try {
+    const t = await token(); if (!t) return [];
+    const r = await tfetch(BASE + "/rest/v1/lb_user_data?select=key,updated_at", { headers: H(t) }, 8000);
+    if (!r.ok) return [];
+    const list = await r.json();
+    const keys = list.filter((x) => SYNC.includes(x.key) && x.updated_at !== stamps[x.key]).map((x) => x.key);
+    if (!keys.length) return [];
+    const r2 = await tfetch(BASE + `/rest/v1/lb_user_data?select=key,value,updated_at&key=in.(${keys.map(encodeURIComponent).join(",")})`, { headers: H(t) }, 15000);
+    if (!r2.ok) return [];
+    const changed = [];
+    for (const x of await r2.json()) {
+      stamps[x.key] = x.updated_at;
+      if (pending.has(x.key) || x.value == null) continue;               // you're editing it right now — keep yours
+      const lv = localStorage.getItem(x.key + email), last = localStorage.getItem(SYNCED(x.key));
+      const next = lv == null || (last && last === hash(lv)) ? x.value : mergeVals(x.value, lv);
+      if (next === lv) continue;
+      try { _set.call(localStorage, x.key + email, next); } catch { continue; }
+      _set.call(localStorage, SYNCED(x.key), hash(next)); changed.push(x.key);
+      if (next !== x.value) pending.set(x.key, next);
+    }
+    if (pending.size) flush();
+    if (changed.length) window.dispatchEvent(new CustomEvent("lb-cloud-pull", { detail: changed }));
+    return changed;
+  } catch { return []; } finally { pulling = false; }
+}
+export function startLive() {
+  if (liveT) return;
+  liveT = setInterval(() => { if (document.visibilityState === "visible") pullCloud(); }, 15000);
+  window.addEventListener("focus", () => pullCloud());
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pullCloud(); });
 }
 window.addEventListener("beforeunload", () => { if (pending.size) flush(); });
 

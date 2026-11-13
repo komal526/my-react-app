@@ -1,4 +1,4 @@
-// LaunchBuilder v40 — Templates.jsx
+// LaunchBuilder v41 — Templates.jsx
 import { useMemo, useState } from "react";
 import { FILE_TEMPLATES, asTemplate, tplUrl } from "../lib.js";
 import { Icon } from "./Inspector.jsx";
@@ -21,6 +21,18 @@ function PreviewModal({ t, onClose, onUse }) {
       <div className="tp-stage">{t.file ? <iframe title={t.name} src={tplUrl(t)} style={{ width: W[dev] }} sandbox="allow-scripts allow-same-origin allow-forms" /> : <iframe title={t.name} srcDoc={pages[i].html} style={{ width: W[dev] }} sandbox="allow-same-origin" />}</div>
     </div></div>
   );
+}
+
+/* hover a card: the page inside slowly scrolls down; leave: it glides back to the top */
+const scrollers = new WeakMap();
+function glide(card, down) {
+  const f = card && card.querySelector(".tg-frame iframe"); if (!f) return;
+  let w; try { w = f.contentWindow; if (!w || !w.document || !w.document.documentElement) return; } catch { return; }
+  cancelAnimationFrame(scrollers.get(f));
+  const d = w.document.documentElement, max = Math.max(0, d.scrollHeight - w.innerHeight), from = w.scrollY, to = down ? max : 0;
+  const ms = down ? Math.min(9000, Math.max(2500, (max - from) * 1.6)) : 500, t0 = performance.now();
+  const step = (t) => { const k = Math.min(1, (t - t0) / ms), e = down ? k : 1 - Math.pow(1 - k, 3); w.scrollTo({ top: from + (to - from) * e, behavior: "instant" }); if (k < 1) scrollers.set(f, requestAnimationFrame(step)); };
+  scrollers.set(f, requestAnimationFrame(step));
 }
 
 export default function Templates({ onUse, mine = [], onDeleteMine = () => {} }) {
@@ -54,10 +66,10 @@ export default function Templates({ onUse, mine = [], onDeleteMine = () => {} })
       {!list.length && (type === "mine" ? <div className="empty"><b>No saved templates yet</b><p className="mut">Open <b>Projects</b>, click <b>⋯</b> on any project and choose <b>Save as template</b>. It appears here for you to reuse.</p></div>
         : <div className="empty"><b>No templates match</b><p className="mut">Try another word or clear the filters.</p></div>)}
       <div className="tg-grid">{list.map((t) => { const pages = thumbs[t.key] || [{ html: "" }]; return (
-        <div key={t.key || t.name} className="tg-card">
+        <div key={t.key || t.name} className="tg-card" onMouseEnter={(e) => glide(e.currentTarget, true)} onMouseLeave={(e) => glide(e.currentTarget, false)}>
           <div className="tg-shot" onClick={() => setOpen(t)}>
             <div className="tg-chrome"><i /><i /><i /><span>{t.file ? (t.type === "website" ? "Website" : "Landing page") : pages.length > 1 ? `${pages.length} pages` : "1 page"}</span></div>
-            <div className="tg-frame">{t.file ? <iframe title={t.name} src={tplUrl(t)} loading="lazy" sandbox="allow-scripts allow-same-origin" tabIndex={-1} /> : <iframe title={t.name} srcDoc={pages[0].html} sandbox="allow-same-origin" tabIndex={-1} />}</div>
+            <div className="tg-frame">{t.file ? <iframe title={t.name} src={tplUrl(t)} loading="lazy" sandbox="allow-scripts allow-same-origin" tabIndex={-1} scrolling="no" /> : <iframe title={t.name} srcDoc={pages[0].html} sandbox="allow-same-origin" tabIndex={-1} />}</div>
             <div className="tg-hover"><button onClick={(e) => { e.stopPropagation(); setOpen(t); }}>👁 Preview</button><button className="pri" onClick={(e) => { e.stopPropagation(); onUse(t); }}>Use template</button></div>
           </div>
           <div className="tg-info">

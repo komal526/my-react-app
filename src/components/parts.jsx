@@ -1,4 +1,4 @@
-// LaunchBuilder v36 — parts.jsx
+// LaunchBuilder v41 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
@@ -32,8 +32,9 @@ const NAV = [["pages", "grid", "Dashboard"], ["templates", "card", "Templates"],
 
 /* grouped menu · collapses to an icon-only rail */
 const SHORT = { build: "Build", collect: "Collect", grow: "Grow", reports: "Reports" };
+const MINI = { projects: "Projects", templates: "Templates", landings: "Landing", lms: "LMS", leads: "Leads", forms: "Forms", calendar: "Calendar", domains: "Domains", integrations: "Apps", analytics: "Analytics", pixels: "Pixels", settings: "Settings" };
 const GROUPS = [
-  ["build", "layers", "Build & Manage", [["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"]]],
+  ["build", "layers", "Build & Manage", [["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"], ["lms", "star", "LMS"]]],
   ["collect", "form", "Create & Collect", [["leads", "users", "Leads"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"]]],
   ["grow", "share", "Connect & Grow", [["domains", "share", "Domains"], ["integrations", "apps", "Integrations"]]],
   ["reports", "gear", "Reports & Settings", [["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]]],
@@ -45,7 +46,7 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
   const isOn = (k) => view === k || (k === "pages" && view === "import");
   const Item = ({ k, ic, nm, sub }) => (
     <div className={"sb3-item" + (sub && !mini ? " sub" : "") + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={mini ? nm : undefined}>
-      {sub && !mini ? <i className="sb3-node" /> : <Icon n={ic} s={17} />}<span className="sb3-l">{nm}</span>{badges[k] ? <em className="sb3-b">{badges[k]}</em> : null}
+      {sub && !mini ? <i className="sb3-node" /> : <Icon n={ic} s={17} />}<span className="sb3-l">{nm}</span>{k === "lms" ? <em className="sb3-beta">Beta</em> : badges[k] ? <em className="sb3-b">{badges[k]}</em> : null}
     </div>);
   return (
     <nav className={"sb3" + (open ? " open" : "") + (mini ? " mini" : "")}>
@@ -55,15 +56,11 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
         <div className="sb3-name"><b>LaunchBuilder</b><small>Studio</small></div>
         <button className="sb3-mini" onClick={onMini} title={mini ? "Expand menu" : "Collapse menu"} aria-label="Toggle menu"><Icon n={mini ? "chev" : "back"} s={15} /></button>
       </div>
-      {mini ? <div className="sb3-scroll sb3-rail" onMouseLeave={() => setFly("")}>
-        {/* collapsed: main sections with small labels; a panel shows each section's pages */}
-        <div className={"sb3-m" + (isOn("pages") ? " on" : "")} onClick={() => go("pages")}><Icon n="grid" s={18} /><small>Dashboard</small></div>
-        {GROUPS.map(([g, gic, label, items]) => (
-          <div key={g} className={"sb3-mg" + (items.some(([k]) => isOn(k)) ? " on" : "") + (fly === g ? " open" : "")} onMouseEnter={() => setFly(g)}>
-            <div className="sb3-m" onClick={() => setFly(fly === g ? "" : g)}><Icon n={gic} s={18} /><small>{SHORT[g]}</small></div>
-            <div className="sb3-fly"><b>{label}</b>{items.map(([k, ic, nm]) => (
-              <div key={k} className={"sb3-fi" + (isOn(k) ? " on" : "")} onClick={() => { setFly(""); go(k); }}><Icon n={ic} s={15} /><span>{nm}</span>{badges[k] ? <em className="sb3-b">{badges[k]}</em> : null}</div>))}</div>
-          </div>))}
+      {mini ? <div className="sb3-scroll sb3-rail">
+        {/* collapsed: every page as an icon with a small name */}
+        <div className={"sb3-m" + (isOn("pages") ? " on" : "")} onClick={() => go("pages")} title="Dashboard"><Icon n="grid" s={17} /><small>Home</small></div>
+        {GROUPS.map(([g, , , items]) => <div key={g} className="sb3-mgrp">{items.map(([k, ic, nm]) => (
+          <div key={k} className={"sb3-m" + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={nm}><Icon n={ic} s={17} /><small>{MINI[k] || nm}</small>{badges[k] ? <i className="sb3-dotb" /> : null}</div>))}</div>)}
       </div> : <div className="sb3-scroll">
         <Item k="pages" ic="grid" nm="Dashboard" />
         {GROUPS.map(([g, gic, label, items]) => {

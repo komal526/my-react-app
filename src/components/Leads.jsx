@@ -1,5 +1,5 @@
 // LaunchBuilder v9 — Leads.jsx
-// LaunchBuilder v36 — Leads.jsx
+// LaunchBuilder v41 — Leads.jsx
 import { useMemo, useState } from "react";
 import Pipeline from "./Pipeline.jsx";
 import { saveLeads, LEAD_STATUS, ago, serverOn, phpCall, syncServerLeads, loadLeads } from "../lib.js";
@@ -15,7 +15,8 @@ const phoneOf = (l) => pick(l.data, /phone|tel|mobile|whats/i), mailOf = (l) => 
 
 export default function Leads({ user, projects = [], forms = [], leads, setLeads, integ }) {
   const [proj, setProj] = useState(""), [form, setForm] = useState(""), [st, setSt] = useState(""), [q, setQ] = useState(""), [open, setOpen] = useState(null);
-  const [view, setView] = useState("table"), [drag, setDrag] = useState(null), [over, setOver] = useState("");
+  const [view, setView] = useState("table"), [drag, setDrag] = useState(null), [over, setOver] = useState(""), [masked, setMasked] = useState(true);
+  const hide = (v, keep = 4) => { const t = String(v || ""); if (!masked || !t) return t; if (t.includes("@")) { const [u, d] = t.split("@"); return u.slice(0, 2) + "•••@" + d; } return "•".repeat(Math.max(0, Math.min(8, t.length - keep))) + t.slice(-keep); };
   const update = (list) => { setLeads(list); saveLeads(user.email, list); };
   const patch = (id, o) => update(leads.map((l) => (l.id === id ? { ...l, ...o } : l)));
   const remove = (id) => {
@@ -41,11 +42,11 @@ export default function Leads({ user, projects = [], forms = [], leads, setLeads
 
   return (
     <>
+      {(() => { const views = <div className="chips ld-views" style={{ margin: 0 }}><button className={view === "table" ? "on" : ""} onClick={() => setView("table")}>Table</button><button className={view === "board" ? "on" : ""} onClick={() => setView("board")}>Pipeline</button></div>;
+        const acts = <>{serverOn(integ) && <button className="ld-act" onClick={syncNow} title="Fetch leads from your live sites">{syncing || "⟳ Sync live sites"}</button>}{leads.length > 0 && <button className="ld-act" onClick={exportCsv}>Export CSV</button>}</>;
+        return view === "board" ? <Pipeline user={user} leads={leads} update={update} forms={forms} onOpen={setOpen} toolbar={<div className="ld-tools">{views}{acts}</div>} /> : <>
       <div className="top"><div><h1>Leads</h1><p className="mut">Your form CRM — every submission from every page and form link.</p></div>
-        <div className="row"><div className="chips" style={{ margin: 0 }}><button className={view === "table" ? "on" : ""} onClick={() => setView("table")}>Table</button><button className={view === "board" ? "on" : ""} onClick={() => setView("board")}>Pipeline</button></div>
-          {serverOn(integ) && <button onClick={syncNow} title="Fetch leads from your live sites">{syncing || "⟳ Sync live sites"}</button>}
-          {leads.length > 0 && <button onClick={exportCsv}>Export CSV</button>}</div></div>
-      {view === "board" ? <Pipeline user={user} leads={leads} update={update} forms={forms} onOpen={setOpen} /> : <>
+        <div className="row">{views}{acts}<button className={"ld-act ld-mask" + (masked ? " on" : "")} onClick={() => setMasked(!masked)} title={masked ? "Show contact details" : "Hide contact details"}>{masked ? "🙈 Masked" : "👁 Visible"}</button></div></div>
       <div className="stats">
         <div className="stat"><span>Total leads</span><b>{leads.length}</b></div>
         <div className="stat"><span>Last 24 hours</span><b>{leads.filter((l) => Date.now() - l.ts < 864e5).length}</b></div>
@@ -68,7 +69,7 @@ export default function Leads({ user, projects = [], forms = [], leads, setLeads
             <tbody>{shown.map((l) => (
               <tr key={l.id} className={open === l.id ? "on" : ""} onClick={() => setOpen(l.id)}>
                 <td><div className="lname"><div className="lav">{String(nameOf(l))[0].toUpperCase()}</div><b>{nameOf(l)}</b></div></td>
-                <td><div>{mailOf(l)}</div><div className="mut">{phoneOf(l)}</div></td>
+                <td><div>{hide(mailOf(l))}</div><div className="mut">{hide(phoneOf(l))}</div></td>
                 <td><div>{l.form}</div><div className="mut">{l.projectName}{l.page ? " · " + l.page : ""}</div></td>
                 <td><PayTag l={l} /></td>
                 <td onClick={(e) => e.stopPropagation()}><select className={"lst " + l.status} value={l.status} onChange={(e) => patch(l.id, { status: e.target.value })}>{LEAD_STATUS.map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></td>
@@ -77,7 +78,7 @@ export default function Leads({ user, projects = [], forms = [], leads, setLeads
           </table></div>
         ) : null}
       </>}
-      </>}
+      </>; })()}
       {cur && <div className="ldrawer" onClick={() => setOpen(null)}><div onClick={(e) => e.stopPropagation()}>
         <div className="row between"><h3>{nameOf(cur)}</h3><button onClick={() => setOpen(null)}>Close</button></div>
         <p className="mut">{new Date(cur.ts).toLocaleString()} · {cur.form} · {cur.projectName}{cur.page ? " / " + cur.page : ""}</p>
