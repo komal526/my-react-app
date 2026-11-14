@@ -209,7 +209,11 @@ export const AI_PROVIDERS = [
 const strip = (t) => { let v = String(t || "").trim(); const m = v.match(/```(?:html)?[^\n]*\n([\s\S]*?)```/i); if (m) v = m[1]; return v.trim(); };
 export async function callAI(ai, system, prompt, maxTokens = 12000) {
   const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0], key = (ai.keys || {})[pr.id], model = (ai.models || {})[pr.id] || pr.model;
-  if (!key) throw new Error(`Add your ${pr.name} API key in Integrations → AI first.`);
+  if (!key) {
+    /* no key in this browser → ask through your server (your encrypted key, or the platform Gemini key) */
+    try { return (await phpCall({ url: defaultServerUrl(), key: accountKey() }, { action: "ai", system, messages: [{ role: "user", content: prompt }], max: Math.min(maxTokens, 12000) })).text; }
+    catch (e) { if (/NO_AI_KEY/.test(e.message)) throw new Error(`Add an AI key in Integrations → AI (or AI Consultant → Settings) first.`); throw e; }
+  }
   let r, j, text = "";
   if (pr.id === "claude") {
     r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: prompt }] }) });
@@ -347,6 +351,20 @@ export async function askAI(integ, system, messages, max = 1500) {
   }
 }
 export const aiStatus = (integ) => phpCall(srvFor(integ), { action: "aistatus" });
+/* is AI available without a browser key? (cached for the session) */
+let _srvAi = null;
+export const serverAiReady = () => (_srvAi ||= phpCall({ url: defaultServerUrl(), key: accountKey() }, { action: "aistatus" }).then((j) => !!(j.own || j.platform)).catch(() => false));
+/* voice notes on leads: saved on your server (all devices) or, without it, in this browser */
+export const voiceSave = async (blob) => {
+  const b64 = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.readAsDataURL(blob); });
+  try { const j = await phpCall({ url: defaultServerUrl(), key: accountKey() }, { action: "voice", data: b64, type: blob.type }); return { id: j.id, where: "srv" }; }
+  catch { const { putAsset } = await import("./components/tools.js"); return { id: await putAsset(new File([blob], "voice.webm", { type: blob.type })), where: "local" }; }
+};
+export const voiceUrl = async (v) => {
+  if (v.where === "srv") { const j = await phpCall({ url: defaultServerUrl(), key: accountKey() }, { action: "voiceget", id: v.id }); return "data:" + (j.type || "audio/webm") + ";base64," + j.data; }
+  const { getAsset } = await import("./components/tools.js"); const a = await getAsset(v.id); if (!a) throw new Error("This recording is saved on another device."); return URL.createObjectURL(a.blob);
+};
+export const voiceDelete = (v) => (v.where === "srv" ? phpCall({ url: defaultServerUrl(), key: accountKey() }, { action: "voicedel", id: v.id }).catch(() => {}) : Promise.resolve());
 export const aiSaveKey = (integ, provider, apikey, model, test = true) => phpCall(srvFor(integ), { action: "aikey", provider, apikey, model, test });
 export const aiRemoveKey = (integ) => phpCall(srvFor(integ), { action: "aikey", remove: 1 });
 /* turn an AI answer into pages (same format as "Create with AI") */
@@ -472,9 +490,39 @@ export const asTemplate = (m) => ({ key: "my_" + m.id, mine: true, id: m.id, typ
 export const PIPE_COLORS = ["#3b82f6", "#f97316", "#06b6d4", "#a855f7", "#ec4899", "#22c55e", "#eab308", "#94a3b8"];
 export const defaultPipe = () => ({ id: "default", name: "Sales Pipeline", def: true, forms: [], stages: [
   { id: "new", name: "New", c: "#3b82f6" }, { id: "contacted", name: "Contacted", c: "#f97316" }, { id: "qualified", name: "Qualified", c: "#06b6d4" },
-  { id: "won", name: "Won", c: "#22c55e" }, { id: "lost", name: "Lost", c: "#94a3b8" }] });
+  { id: "followup", name: "Follow-up", c: "#eab308" }, { id: "won", name: "Won", c: "#22c55e" }, { id: "lost", name: "Lost", c: "#94a3b8" }], fuAdded: true });
 const PIPEK = (email) => "lb_pipes_" + email;
-export const loadPipes = (email) => { try { const l = JSON.parse(localStorage.getItem(PIPEK(email)) || "[]"); return l.length ? l : [defaultPipe()]; } catch { return [defaultPipe()]; } };
+/* every pipeline gets a "Follow-up" stage once (before Won) — if you delete it, it stays deleted */
+const addFollowStage = (p) => {
+  if (p.fuAdded) return p;
+  if (p.stages.some((x) => /follow/i.test(x.name))) return { ...p, fuAdded: true };
+  const st = [...p.stages], w = st.findIndex((x) => /won|closed|converted/i.test(x.name)), at = w >= 0 ? w : Math.max(0, st.length - 1);
+  st.splice(at, 0, { id: p.def && !st.some((x) => x.id === "followup") ? "followup" : "s" + uid(), name: "Follow-up", c: "#eab308" });
+  return { ...p, stages: st, fuAdded: true };
+};
+export const loadPipes = (email) => {
+  try {
+    const l = JSON.parse(localStorage.getItem(PIPEK(email)) || "[]"); if (!l.length) return [defaultPipe()];
+    const m = l.map(addFollowStage); if (m.some((p, i) => p !== l[i])) localStorage.setItem(PIPEK(email), JSON.stringify(m));
+    return m;
+  } catch { return [defaultPipe()]; }
+};
+
+/* follow-ups on leads: l.fu = { at, note }, finished ones go to l.fuLog */
+const DAYMS = 864e5;
+export const fuState = (l, now = Date.now()) => {
+  if (!l.fu || !l.fu.at) return null;
+  const end = new Date(now); end.setHours(23, 59, 59, 999);
+  return l.fu.at < now ? "overdue" : l.fu.at <= end.getTime() ? "today" : "upcoming";
+};
+export const fuDue = (leads, now = Date.now()) => leads.filter((l) => { const s = fuState(l, now); return s === "overdue" || s === "today"; }).length;
+export const fuLabel = (at, now = Date.now()) => {
+  const d = new Date(at), t = d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
+  const day0 = new Date(now); day0.setHours(0, 0, 0, 0); const diff = Math.floor((new Date(at).setHours(0, 0, 0, 0) - day0) / DAYMS);
+  return diff === 0 ? "Today " + t : diff === 1 ? "Tomorrow " + t : diff === -1 ? "Yesterday " + t : d.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) + " " + t;
+};
+export const FU_QUICK = [["In 1 hour", () => Date.now() + 36e5], ["Today 6 PM", () => { const d = new Date(); d.setHours(18, 0, 0, 0); return d < Date.now() ? Date.now() + 36e5 : d.getTime(); }], ["Tomorrow 11 AM", () => { const d = new Date(Date.now() + DAYMS); d.setHours(11, 0, 0, 0); return d.getTime(); }], ["In 3 days", () => { const d = new Date(Date.now() + 3 * DAYMS); d.setHours(11, 0, 0, 0); return d.getTime(); }], ["Next week", () => { const d = new Date(Date.now() + 7 * DAYMS); d.setHours(11, 0, 0, 0); return d.getTime(); }]];
+export const toLocalInput = (ts) => { const d = new Date(ts - new Date(ts).getTimezoneOffset() * 6e4); return d.toISOString().slice(0, 16); };
 export const savePipes = (email, list) => localStorage.setItem(PIPEK(email), JSON.stringify(list));
 
 /* ==================== Template library — real pages, loaded only when previewed or used ==================== */

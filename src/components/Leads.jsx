@@ -15,7 +15,7 @@ const phoneOf = (l) => pick(l.data, /phone|tel|mobile|whats/i), mailOf = (l) => 
 
 export default function Leads({ user, projects = [], forms = [], leads, setLeads, integ }) {
   const [proj, setProj] = useState(""), [form, setForm] = useState(""), [st, setSt] = useState(""), [q, setQ] = useState(""), [open, setOpen] = useState(null);
-  const [view, setView] = useState("table"), [drag, setDrag] = useState(null), [over, setOver] = useState(""), [masked, setMasked] = useState(true);
+  const [view, setView] = useState(() => { const v = localStorage.getItem("lb_leads_view"); localStorage.removeItem("lb_leads_view"); return v === "pipeline" ? "board" : "table"; }), [drag, setDrag] = useState(null), [over, setOver] = useState(""), [masked, setMasked] = useState(true);
   const hide = (v, keep = 4) => { const t = String(v || ""); if (!masked || !t) return t; if (t.includes("@")) { const [u, d] = t.split("@"); return u.slice(0, 2) + "•••@" + d; } return "•".repeat(Math.max(0, Math.min(8, t.length - keep))) + t.slice(-keep); };
   const update = (list) => { setLeads(list); saveLeads(user.email, list); };
   const patch = (id, o) => update(leads.map((l) => (l.id === id ? { ...l, ...o } : l)));

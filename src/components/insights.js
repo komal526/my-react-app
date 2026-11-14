@@ -99,13 +99,14 @@ export function metrics(events, leads, { pid = null, days = 7, now = Date.now() 
   const calc = (a, b) => {
     const ev = events.filter((e) => inP(e, a, b)), views = ev.filter((e) => e.t === "view");
     const visitors = new Set(views.map((e) => e.sid || e.ts)).size, clicks = ev.filter((e) => e.t === "cta").length, starts = ev.filter((e) => e.t === "fstart").length;
-    const subs = leads.filter((l) => leadIn(l, a, b)).length;
+    const inL = leads.filter((l) => leadIn(l, a, b)), subs = inL.filter((l) => l.source !== "manual").length, allLeads = inL.length;
+    const fuDone = leads.reduce((n, l) => n + (l.fuLog || []).filter((f) => f.done >= a && f.done < b && (!pid || l.projectId === pid)).length, 0);
     const mob = views.filter((e) => e.dev === "mobile").length;
-    return { views: views.length, visitors, clicks, starts, subs, conv: visitors ? (subs / visitors) * 100 : 0, mob, labels: ev.filter((e) => e.t === "cta").reduce((m, e) => { const k = e.label || "Button"; m[k] = (m[k] || 0) + 1; return m; }, {}) };
+    return { views: views.length, visitors, clicks, starts, subs, leads: allLeads, fuDone, conv: visitors ? (subs / visitors) * 100 : 0, mob, labels: ev.filter((e) => e.t === "cta").reduce((m, e) => { const k = e.label || "Button"; m[k] = (m[k] || 0) + 1; return m; }, {}) };
   };
   const cur = calc(now - days * DAY, now + 1), prev = calc(now - 2 * days * DAY, now - days * DAY);
   const ch = (a, b) => (b ? Math.round(((a - b) / b) * 100) : a ? 100 : 0);
-  return { ...cur, prev, trend: { visitors: ch(cur.visitors, prev.visitors), clicks: ch(cur.clicks, prev.clicks), subs: ch(cur.subs, prev.subs), conv: Math.round((cur.conv - prev.conv) * 10) / 10 } };
+  return { ...cur, prev, trend: { visitors: ch(cur.visitors, prev.visitors), clicks: ch(cur.clicks, prev.clicks), subs: ch(cur.subs, prev.subs), leads: ch(cur.leads, prev.leads), fuDone: ch(cur.fuDone, prev.fuDone), conv: Math.round((cur.conv - prev.conv) * 10) / 10 } };
 }
 
 /* ---------- 3. live performance checks → direct, actionable suggestions ---------- */

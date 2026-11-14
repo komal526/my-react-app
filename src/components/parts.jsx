@@ -1,7 +1,7 @@
 // LaunchBuilder v45 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
-import { LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
+import { serverAiReady, LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
 import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
 import { cloudOn, lastStatus } from "../cloud.js";
 /* small "saved to cloud" indicator in the sidebar */
@@ -42,10 +42,10 @@ const NAV = [["pages", "grid", "Dashboard"], ["templates", "card", "Templates"],
 
 /* grouped menu · collapses to an icon-only rail */
 const SHORT = { build: "Build", collect: "Collect", grow: "Grow", reports: "Reports" };
-const MINI = { projects: "Projects", templates: "Templates", landings: "Landing", lms: "Courses", leads: "Leads", forms: "Forms", calendar: "Calendar", domains: "Domains", integrations: "Apps", analytics: "Analytics", pixels: "Pixels", settings: "Settings" };
+const MINI = { followups: "Follow-ups", projects: "Projects", templates: "Templates", landings: "Landing", lms: "Courses", leads: "Leads", forms: "Forms", calendar: "Calendar", domains: "Domains", integrations: "Apps", analytics: "Analytics", pixels: "Pixels", settings: "Settings" };
 const GROUPS = [
-  ["build", "layers", "Build & Manage", [["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"]]],
-  ["collect", "form", "Create & Collect", [["leads", "users", "Leads"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"]]],
+  ["build", "layers", "Build & Manage", [["projects", "globe", "Projects"], ["templates", "card", "Templates"]]],
+  ["collect", "form", "Create & Collect", [["leads", "users", "Leads"], ["followups", "clock", "Follow-ups"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"]]],
   ["academy", "star", "Academy", [["lms", "pages", "Courses"]]],
   ["grow", "share", "Connect & Grow", [["domains", "share", "Domains"], ["integrations", "apps", "Integrations"]]],
   ["reports", "gear", "Reports & Settings", [["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]]],
@@ -69,9 +69,9 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
       </div>
       {mini ? <div className="sb3-scroll sb3-rail">
         {/* collapsed: every page as an icon with a small name */}
-        <div className={"sb3-m" + (isOn("pages") ? " on" : "")} onClick={() => go("pages")} title="Dashboard"><Icon n="grid" s={19} /><small>Home</small></div>
-        {GROUPS.flatMap(([, , , items]) => items).map(([k, ic, nm]) => (
-          <div key={k} className={"sb3-m" + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={nm}><Icon n={ic} s={19} /><small>{MINI[k] || nm}</small>{badges[k] ? <i className="sb3-dotb" /> : null}</div>))}
+        <div className={"sb3-m" + (isOn("pages") ? " on" : "")} onClick={() => go("pages")} title="Dashboard"><Icon n="grid" s={24} /><small>Home</small></div>
+        {GROUPS.flatMap(([, , , items]) => items).filter(([k]) => k !== "followups").map(([k, ic, nm]) => (
+          <div key={k} className={"sb3-m" + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={nm}><Icon n={ic} s={24} /><small>{MINI[k] || nm}</small>{badges[k] ? <i className="sb3-dotb" /> : null}</div>))}
       </div> : <div className="sb3-scroll">
         <Item k="pages" ic="grid" nm="Dashboard" />
         {GROUPS.map(([g, gic, label, items]) => {
@@ -98,7 +98,8 @@ export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI, kind = "l
   const [brief, setBrief] = useState(""), [busy, setBusy] = useState(false), [err, setErr] = useState("");
   const blank = TEMPLATES.find((x) => x.type === type && /^blank/.test(x.key || "")) || TEMPLATES.find((x) => x.type === type);
   const list = [...TEMPLATES.filter((x) => x.type === type && x.hidden).sort((a, b) => (/^blank/.test(b.key) ? 1 : 0) - (/^blank/.test(a.key) ? 1 : 0)), ...mine.map(asTemplate).filter((x) => x.type === type), ...TEMPLATES.filter((x) => x.type === type && !x.hidden)];
-  const prov = AI_PROVIDERS.find((p) => p.id === (ai && ai.provider)) || AI_PROVIDERS[0], hasKey = ai && ai.keys && ai.keys[prov.id];
+  const prov = AI_PROVIDERS.find((p) => p.id === (ai && ai.provider)) || AI_PROVIDERS[0], hasKey0 = ai && ai.keys && ai.keys[prov.id], [srvAi, setSrvAi] = useState(false), hasKey = hasKey0 || srvAi;
+  useEffect(() => { if (!hasKey0) serverAiReady().then(setSrvAi); }, [hasKey0]);
   const gen = async () => {
     if (brief.trim().length < 15) return setErr("Describe your business in a sentence or two (what, who for, what you want visitors to do).");
     setErr(""); setBusy(true);

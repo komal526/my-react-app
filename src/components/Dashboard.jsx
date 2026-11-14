@@ -15,8 +15,9 @@ const Settings = lazy(() => import("./Settings.jsx"));
 const Pixels = lazy(() => import("./Pixels.jsx"));
 const LMS = lazy(() => import("./LMS.jsx"));
 const ImportPage = lazy(() => import("./ImportPage.jsx"));
+const FollowUps = lazy(() => import("./FollowUps.jsx"));
 const Consultant = lazy(() => import("./Consultant.jsx"));
-import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents } from "../lib.js";
+import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue } from "../lib.js";
 import { formHtml, bookingWidget } from "./tools.js";
 import { resolveEvents } from "./insights.js";
 
@@ -42,7 +43,7 @@ const syncFormInHtml = (html, f, integ) => {
 
 /* greeting · search · notifications · account */
 /* search across projects, forms, calendars and pages */
-const PAGES = [["pages", "grid", "Dashboard"], ["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"], ["lms", "pages", "Courses (Academy)"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"], ["domains", "share", "Domains"], ["integrations", "apps", "Integrations"], ["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]];
+const PAGES = [["pages", "grid", "Dashboard"], ["projects", "globe", "Projects"], ["templates", "card", "Templates"], ["landings", "pages", "Landing Pages"], ["followups", "clock", "Follow-ups"], ["lms", "pages", "Courses (Academy)"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"], ["leads", "users", "Leads"], ["domains", "share", "Domains"], ["integrations", "apps", "Integrations"], ["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]];
 function Search({ projects, forms, cal, onOpenProject, onGo }) {
   const [q, setQ] = useState(""), [open, setOpen] = useState(false), [hi, setHi] = useState(0), ref = useRef(null), box = useRef(null);
   useEffect(() => {
@@ -173,7 +174,7 @@ export default function Dashboard({ user, onLogout }) {
   useEffect(() => {
     if (/^(localhost|127\.)/.test(location.hostname) && !srv) return;
     const run = () => syncServerEvents(E, integ, projRef.current).then((n) => { if (n) setEvents(loadEvents(E)); }).catch(() => {});
-    const t0 = setTimeout(run, 1500), t = setInterval(run, 120000); return () => { clearTimeout(t0); clearInterval(t); };
+    const t0 = setTimeout(run, 1500), t = setInterval(run, 60000); return () => { clearTimeout(t0); clearInterval(t); };
   }, [srv, E]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!saveProjects(E, projects)) alert("Browser storage is full. Delete some projects or use smaller images."); }, [projects, E]);
   /* leads / visits arrive from preview & form-link tabs */
@@ -246,7 +247,7 @@ export default function Dashboard({ user, onLogout }) {
 
   return (
     <div className={"dash" + (mini && wide ? " mini" : "")} onClick={() => um && setUm(false)}>
-      <Sidebar mini={mini && wide} onMini={() => { const v = !mini; setMini(v); localStorage.setItem("lb_nav_mini", v ? "1" : "0"); }} open={navOpen} onClose={() => setNavOpen(false)} view={view} onView={setView} count={projects.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, forms: forms.length, calendar: cal.length }} />
+      <Sidebar mini={mini && wide} onMini={() => { const v = !mini; setMini(v); localStorage.setItem("lb_nav_mini", v ? "1" : "0"); }} open={navOpen} onClose={() => setNavOpen(false)} view={view} onView={setView} count={projects.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, followups: fuDue(leads), forms: forms.length, calendar: cal.length }} />
       {navOpen && <div className="nv-ov" onClick={() => setNavOpen(false)} />}
       <section><Suspense fallback={<div className="lazy-load"><span className="pub-spin" /></div>}>
         <div className="mbar"><button className="mbar-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
@@ -263,6 +264,7 @@ export default function Dashboard({ user, onLogout }) {
         {view === "forms" && <Forms forms={forms} onSave={onSaveForms} projects={projects} leads={leads} onAddToPage={addFormToPage} onLeads={() => setView("leads")} integ={integ} onIntegrations={() => setView("integrations")} />}
         {view === "calendar" && <Calendar events={cal} onSave={onSaveCal} leads={leads} projects={projects} integ={integ} onInteg={onInteg} onAddToPage={addHtmlToPage} onPatchLead={patchLead} onDeleteLead={deleteLead} />}
         {view === "integrations" && <Integrations key={igTile} initial={igTile} integ={integ} onChange={onInteg} />}
+        {view === "followups" && <FollowUps leads={leads} setLeads={(list) => { setLeads(list); saveLeads(E, list); }} onPipeline={() => { localStorage.setItem("lb_leads_view", "pipeline"); setView("leads"); }} />}
         {view === "leads" && <Leads user={user} projects={projects} forms={forms} leads={leads} setLeads={setLeads} integ={integ} />}
         {view === "analytics" && <Analytics projects={projects} events={evs} leads={leads} onOpenProject={setOpenId} />}
         {view === "domains" && <Domains projects={projects} onPatch={patch} onPatchPage={patchPage} onInteg={onInteg} onOpen={setOpenId} integ={integ} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onPublish={(p) => setModal({ type: "publish", id: p.id })} />}

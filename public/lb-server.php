@@ -1,5 +1,5 @@
 <?php
-// LaunchBuilder server v11 — runs on your own hosting (Hostinger etc.), no extra service needed.
+// LaunchBuilder server v12 — runs on your own hosting (Hostinger etc.), no extra service needed.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
 // • Routes your own domains to a published site
@@ -125,7 +125,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 11, 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 12, 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
 
 if ($act === 'lead') {
   // simple flood protection: max 30 submissions per minute per visitor
@@ -361,6 +361,27 @@ if ($act === 'ai') {
   }
   if (trim($txt) === '') fail('The AI returned an empty answer. Try again.');
   out(array('ok' => true, 'text' => $txt, 'source' => $src));
+}
+
+/* ---------------- voice notes on leads (recorded in the pipeline) ---------------- */
+$VDIR = $DATA . '/voice/' . substr(hash('sha256', $key), 0, 16);
+if ($act === 'voice') {
+  $b = base64_decode(isset($d['data']) ? (string)$d['data'] : '', true);
+  if ($b === false || strlen($b) < 200) fail('Empty recording.');
+  if (strlen($b) > 8 * 1024 * 1024) fail('Recording is too long (max about 5 minutes).');
+  if (!is_dir($VDIR)) @mkdir($VDIR, 0755, true);
+  $id = 'v' . bin2hex(random_bytes(8));
+  $type = preg_match('#^audio/(webm|ogg|mp4|mpeg|wav|x-m4a|aac)(;.*)?$#', isset($d['type']) ? (string)$d['type'] : '') ? preg_replace('/;.*/', '', $d['type']) : 'audio/webm';
+  if (!@file_put_contents($VDIR . '/' . $id . '.bin', $b)) fail('Could not save the recording — check folder permissions of lb-data.');
+  @file_put_contents($VDIR . '/' . $id . '.type', $type);
+  out(array('ok' => true, 'id' => $id));
+}
+if ($act === 'voiceget' || $act === 'voicedel') {
+  $id = preg_replace('/[^a-z0-9]/', '', isset($d['id']) ? (string)$d['id'] : '');
+  $f = $VDIR . '/' . $id . '.bin';
+  if ($id === '' || !file_exists($f)) fail('Recording not found.');
+  if ($act === 'voicedel') { @unlink($f); @unlink($VDIR . '/' . $id . '.type'); out(array('ok' => true)); }
+  out(array('ok' => true, 'type' => (string)@file_get_contents($VDIR . '/' . $id . '.type') ?: 'audio/webm', 'data' => base64_encode((string)file_get_contents($f))));
 }
 
 /* full step-by-step check of one domain — tells the user exactly which step is missing */

@@ -1,7 +1,8 @@
-// LaunchBuilder v43 — Pipeline.jsx (several lead pipelines · custom stages · manual leads · drag & drop)
-import { useEffect, useMemo, useState } from "react";
+// LaunchBuilder v50 — Pipeline.jsx (several lead pipelines · custom stages · manual leads · drag & drop)
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "./icons.jsx";
-import { ago, uid, loadPipes, savePipes, PIPE_COLORS, LEAD_STATUS } from "../lib.js";
+import { ago, uid, loadPipes, savePipes, PIPE_COLORS, LEAD_STATUS, fuState, fuLabel, voiceSave, voiceUrl, voiceDelete } from "../lib.js";
+import { FuModal } from "./FollowUps.jsx";
 
 const pickK = (d, re) => { const k = Object.keys(d || {}).find((x) => re.test(x)); return k ? d[k] : ""; };
 const nameOf = (l) => pickK(l.data, /name/i) || Object.values(l.data || {})[0] || "—";
@@ -24,13 +25,64 @@ function Modal({ title, children, onClose, onOk, ok = "Save", okOff }) {
   );
 }
 
+
+/* voice notes: record with the mic, play back, delete — saved on your server so every device hears them */
+const MAX_SEC = 180;
+function VoiceModal({ lead, onSave, onClose }) {
+  const [rec, setRec] = useState(null), [sec, setSec] = useState(0), [busy, setBusy] = useState(""), [err, setErr] = useState(""), [urls, setUrls] = useState({});
+  const list = lead.voice || [], chunks = useRef([]), timer = useRef(0), stream = useRef(null);
+  const stop = () => { if (rec && rec.state !== "inactive") rec.stop(); };
+  useEffect(() => () => { clearInterval(timer.current); if (stream.current) stream.current.getTracks().forEach((t) => t.stop()); }, []);
+  useEffect(() => { if (sec >= MAX_SEC) stop(); }, [sec]); // eslint-disable-line react-hooks/exhaustive-deps
+  const start = async () => {
+    setErr("");
+    if (!navigator.mediaDevices || !window.MediaRecorder) return setErr("This browser can't record audio. Try Chrome or Edge.");
+    try {
+      const st = await navigator.mediaDevices.getUserMedia({ audio: true }); stream.current = st;
+      const type = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"].find((t) => MediaRecorder.isTypeSupported(t)) || "";
+      const r = new MediaRecorder(st, { ...(type ? { mimeType: type } : {}), audioBitsPerSecond: 24000 }); chunks.current = [];
+      r.ondataavailable = (e) => e.data.size && chunks.current.push(e.data);
+      r.onstop = async () => {
+        clearInterval(timer.current); st.getTracks().forEach((t) => t.stop()); setRec(null);
+        const blob = new Blob(chunks.current, { type: r.mimeType || "audio/webm" }), dur = Math.max(1, Math.round((Date.now() - r._t0) / 1000));
+        if (blob.size < 500) return setErr("Nothing was recorded — check your microphone.");
+        setBusy("Saving…");
+        try { const v = await voiceSave(blob); onSave([{ ...v, ts: Date.now(), dur }, ...list]); } catch (e) { setErr(e.message); } finally { setBusy(""); }
+      };
+      r._t0 = Date.now(); r.start(1000); setRec(r); setSec(0);
+      timer.current = setInterval(() => setSec((x) => x + 1), 1000);
+    } catch { setErr("Microphone permission was blocked. Allow it from the 🔒 icon in the address bar, then try again."); }
+  };
+  const play = async (v) => { if (urls[v.id]) return; try { const u = await voiceUrl(v); setUrls((m) => ({ ...m, [v.id]: u })); } catch (e) { setErr(e.message); } };
+  const del = (v) => { if (!window.confirm("Delete this recording?")) return; voiceDelete(v); onSave(list.filter((x) => x.id !== v.id)); };
+  const mmss = (n) => Math.floor(n / 60) + ":" + String(n % 60).padStart(2, "0");
+  return (
+    <div className="pl-ov" onClick={() => { stop(); onClose(); }}><div className="pl-md vn-md" onClick={(e) => e.stopPropagation()}>
+      <div className="pl-mh"><b>Voice notes · {nameOf(lead)}</b><button className="pl-x" onClick={() => { stop(); onClose(); }} aria-label="Close">✕</button></div>
+      <div className="pl-mb">
+        <div className={"vn-rec" + (rec ? " on" : "")}>
+          <button className="vn-big" onClick={rec ? stop : start} disabled={!!busy} aria-label={rec ? "Stop recording" : "Start recording"}>{rec ? <i className="vn-sq" /> : <Icon n="mic" s={26} />}</button>
+          <div><b>{rec ? "Recording… " + mmss(sec) : busy || "Tap to record a note"}</b><small>{rec ? "Tap again to stop and save · max 3 min" : "After a call, say what was discussed and what's next."}</small></div>
+          {rec && <span className="vn-wave">{[...Array(5)].map((_, i) => <i key={i} style={{ animationDelay: i * 0.12 + "s" }} />)}</span>}
+        </div>
+        {err && <p className="red sm">{err}</p>}
+        <div className="vn-list">{list.length ? list.map((v) => (
+          <div key={v.id} className="vn-item"><Icon n="mic" s={15} /><div className="grow"><b>{new Date(v.ts).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</b><small>{mmss(v.dur || 0)}{v.where === "local" ? " · only on this device" : ""}</small></div>
+            {urls[v.id] ? <audio src={urls[v.id]} controls autoPlay /> : <button onClick={() => play(v)}>▶ Play</button>}
+            <button className="red" title="Delete" onClick={() => del(v)}><Icon n="trash" s={14} /></button></div>))
+          : <p className="mut sm">No recordings yet.</p>}</div>
+      </div>
+    </div></div>
+  );
+}
+
 export default function Pipeline({ user, leads, update, forms = [], onOpen, toolbar = null, onBack = null }) {
   const E = user.email;
   const [pipes, setPipes] = useState(() => loadPipes(E));
   const [pid, setPid] = useState(() => localStorage.getItem("lb_pipe_cur") || "default");
   const [q, setQ] = useState(""), [fStage, setFStage] = useState(""), [fPri, setFPri] = useState(""), [fSrc, setFSrc] = useState(""), [sort, setSort] = useState("updated");
   const [mode, setMode] = useState("board"), [masked, setMasked] = useState(true), [drag, setDrag] = useState(null), [over, setOver] = useState("");
-  const [md, setMd] = useState(null), [menu, setMenu] = useState(false);
+  const [md, setMd] = useState(null), [menu, setMenu] = useState(false), [fuLead, setFuLead] = useState(null), [vnLead, setVnLead] = useState(null);
   const putPipes = (l) => { setPipes(l); savePipes(E, l); };
   useEffect(() => { const f = (e) => { const k = e.detail || []; if (k.includes("all") || k.includes("lb_pipes_")) setPipes(loadPipes(E)); }; window.addEventListener("lb-cloud-pull", f); return () => window.removeEventListener("lb-cloud-pull", f); }, [E]);
   const pipe = pipes.find((p) => p.id === pid) || pipes[0];
@@ -45,7 +97,12 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen, tool
     return !!pipe.def && !claimed.has(l.form);
   };
   const stageOf = (l) => { const s = (l.pst || {})[pipe.id] || (pipe.def ? l.status : ""); return pipe.stages.some((x) => x.id === s) ? s : pipe.stages[0].id; };
-  const moveTo = (id, stage) => update(leads.map((l) => (l.id === id ? { ...l, pst: { ...(l.pst || {}), [pipe.id]: stage }, ...(pipe.def && STATUS_IDS.includes(stage) ? { status: stage } : {}), updated: Date.now() } : l)));
+  const moveTo = (id, stage) => {
+    const st = pipe.stages.find((x) => x.id === stage), l0 = leads.find((x) => x.id === id);
+    if (st && /follow/i.test(st.name) && l0 && !l0.fu) setTimeout(() => setFuLead({ ...l0 }), 0);   /* moved to Follow-up → ask when */
+    moveTo0(id, stage);
+  };
+  const moveTo0 = (id, stage) => update(leads.map((l) => (l.id === id ? { ...l, pst: { ...(l.pst || {}), [pipe.id]: stage }, ...(pipe.def && STATUS_IDS.includes(stage) ? { status: stage } : {}), updated: Date.now() } : l)));
   const patchLead = (id, o) => update(leads.map((l) => (l.id === id ? { ...l, ...o, updated: Date.now() } : l)));
   const delLead = (id) => { if (window.confirm("Delete this lead?")) update(leads.filter((l) => l.id !== id)); };
 
@@ -61,7 +118,7 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen, tool
   const savePipe = () => {
     const name = (md.name || "").trim(); if (!name) return;
     if (md.edit) putPipes(pipes.map((p) => (p.id === pipe.id ? { ...p, name, forms: md.forms } : p)));
-    else { const id = "pl" + uid(); putPipes([...pipes, { id, name, forms: md.forms, stages: [{ id: "s" + uid(), name: "New", c: PIPE_COLORS[0] }, { id: "s" + uid(), name: "In progress", c: PIPE_COLORS[1] }, { id: "s" + uid(), name: "Won", c: PIPE_COLORS[5] }, { id: "s" + uid(), name: "Lost", c: PIPE_COLORS[7] }] }]); choose(id); }
+    else { const id = "pl" + uid(); putPipes([...pipes, { id, name, forms: md.forms, stages: [{ id: "s" + uid(), name: "New", c: PIPE_COLORS[0] }, { id: "s" + uid(), name: "In progress", c: PIPE_COLORS[1] }, { id: "s" + uid(), name: "Follow-up", c: PIPE_COLORS[6] }, { id: "s" + uid(), name: "Won", c: PIPE_COLORS[5] }, { id: "s" + uid(), name: "Lost", c: PIPE_COLORS[7] }], fuAdded: true }]); choose(id); }
     setMd(null);
   };
   const delPipe = () => { if (pipe.def) return; if (!window.confirm(`Delete the pipeline "${pipe.name}"? Its leads stay in Leads.`)) return; putPipes(pipes.filter((p) => p.id !== pipe.id)); choose("default"); setMenu(false); };
@@ -102,10 +159,13 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen, tool
       {noteOf(l) && <p className="pl-note">{String(noteOf(l)).slice(0, 70)}</p>}
       <div className="pl-tags">{l.form && <span>{l.form}</span>}{l.payment && <span className={"pay " + l.payment.status}>{l.payment.status === "paid" ? "Paid" : "Payment " + l.payment.status}</span>}</div>
       <div className="pl-ph">{phoneOf(l) && <code>📞 {masked ? mask(phoneOf(l)) : phoneOf(l)}</code>}{mailOf(l) && <code>✉ {masked ? String(mailOf(l)).slice(0, 2) + "•••@" + String(mailOf(l)).split("@")[1] : mailOf(l)}</code>}</div>
+      {l.fu && <button className={"pl-fu " + fuState(l)} onClick={(e) => { e.stopPropagation(); setFuLead(l); }} title="Change follow-up"><Icon n="clock" s={12} />{fuState(l) === "overdue" ? "Overdue · " : ""}{fuLabel(l.fu.at)}</button>}
       <div className="pl-cf">
         <span className="pl-ago">{ago(l.updated || l.ts)}</span>
         <div className="pl-acts" onClick={(e) => e.stopPropagation()}>
           {waLink(phoneOf(l)) && <a className="pl-wa" href={waLink(phoneOf(l))} target="_blank" rel="noopener" title="Chat on WhatsApp"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9s-.5-.1-.7.1-.8.9-.9 1.1-.3.2-.6.1a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.6-2c-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.8.4 3.5 3.5 0 0 0-1.1 2.6 6 6 0 0 0 1.3 3.2 13.6 13.6 0 0 0 5.2 4.6c3.2 1.3 3.2.9 3.8.8a3.2 3.2 0 0 0 2.1-1.5 2.6 2.6 0 0 0 .2-1.5c-.1-.2-.3-.2-.6-.4zM12 21.8a9.8 9.8 0 0 1-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8zM12 0a12 12 0 0 0-10.3 18.1L0 24l6.1-1.6A12 12 0 1 0 12 0z" /></svg></a>}
+          <button className={"pl-ed pl-mic" + ((l.voice || []).length ? " on" : "")} title="Voice notes" onClick={() => setVnLead(l)}><Icon n="mic" s={14} />{(l.voice || []).length ? <em>{l.voice.length}</em> : null}</button>
+          <button className={"pl-ed" + (l.fu ? " on" : "")} title={l.fu ? "Change follow-up" : "Set a follow-up"} onClick={() => setFuLead(l)}><Icon n="clock" s={14} /></button>
           <button className="pl-ed" title="Edit lead" onClick={() => editLead(l)}><Icon n="pen" s={14} /></button>
           <button className="pl-del" title="Delete lead" onClick={() => delLead(l.id)}><Icon n="trash" s={14} /></button>
         </div>
@@ -175,6 +235,8 @@ export default function Pipeline({ user, leads, update, forms = [], onOpen, tool
         </table></div>
       )}
 
+      {vnLead && <VoiceModal lead={leads.find((x) => x.id === vnLead.id) || vnLead} onClose={() => setVnLead(null)} onSave={(voice) => patchLead(vnLead.id, { voice })} />}
+      {fuLead && <FuModal lead={fuLead} onClose={() => setFuLead(null)} onSave={(fu) => { patchLead(fuLead.id, { fu }); setFuLead(null); }} />}
       {md && md.k === "pipe" && <Modal title={md.edit ? "Edit pipeline" : "Create pipeline"} ok={md.edit ? "Save" : "Create"} okOff={!(md.name || "").trim()} onClose={() => setMd(null)} onOk={savePipe}>
         <label className="pl-l">Pipeline name<input autoFocus value={md.name} onChange={(e) => setMd({ ...md, name: e.target.value })} placeholder="e.g. Inbound Sales" onKeyDown={(e) => e.key === "Enter" && savePipe()} /></label>
         <span className="pl-l">Leads from these forms</span>
