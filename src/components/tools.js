@@ -375,6 +375,25 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
  box.querySelector('.lbw-paid').onclick=function(){paid({status:'claimed',mode:pay.mode,ref:box.querySelector('.lbw-utr').value})};
  box.querySelector('.lbw-back').onclick=function(){box.remove();f.style.display=''};
 },true);
+/* ad tracking fields: copy utm_* / gclid / fbclid from the page link (kept for the visit) */
+try{var lbQ=new URLSearchParams(location.search),lbU={};try{lbU=JSON.parse(sessionStorage.getItem('lb_utm')||'{}')}catch(e){}
+ ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid'].forEach(function(k){if(lbQ.get(k))lbU[k]=lbQ.get(k)});try{sessionStorage.setItem('lb_utm',JSON.stringify(lbU))}catch(e){}
+ all('input[data-lb-utm]').forEach(function(i){i.value=lbU[i.getAttribute('data-lb-utm')]||''})}catch(e){}
+/* Smart Insights: page views, CTA clicks and form starts. Live sites send them to your server, Preview sends them to the builder */
+var lbSid='';try{lbSid=sessionStorage.getItem('lb_sid')||Math.random().toString(36).slice(2,10);sessionStorage.setItem('lb_sid',lbSid)}catch(e){}
+var lbEv=function(t,label){label=String(label||'').replace(/\\s+/g,' ').trim().slice(0,60);
+ if(W.LB_PREVIEW){try{parent.postMessage({lb:'ev',t:t,label:label},'*')}catch(e){}return}
+ if(!W.LB_LEAD_URL)return;
+ var b=JSON.stringify({action:'track',site:W.LB_SITE||'',page:cur,t:t,sid:lbSid,label:label,dev:W.innerWidth<768?'mobile':W.innerWidth<1025?'tablet':'desktop',ref:String(d.referrer||'').slice(0,200)});
+ try{if(navigator.sendBeacon&&navigator.sendBeacon(W.LB_LEAD_URL,new Blob([b],{type:'text/plain'})))return}catch(e){}
+ try{fetch(W.LB_LEAD_URL,{method:'POST',body:b,keepalive:true})}catch(e){}};
+W.LB_EV=lbEv;
+if(!W.LB_PREVIEW)lbEv('view');
+W.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href],button,[role=button],[data-href]');if(!a)return;
+ if(a.closest('nav,[data-lb-autonav],footer'))return;
+ if(a.closest('form'))return;
+ lbEv('cta',a.innerText||a.getAttribute('aria-label')||a.getAttribute('href')||'')},true);
+var lbStarted={};d.addEventListener('focusin',function(e){var f=e.target.closest&&e.target.closest('form');if(!f)return;var k=f.getAttribute('data-lb-form')||f.getAttribute('data-lb-formid')||'form';if(lbStarted[k])return;lbStarted[k]=1;lbEv('fstart',k)},true);
 /* visitor city for "leads by city" — looked up once per visit, in the background */
 if(W.LB_LEAD_URL&&!W.LB_PREVIEW){try{var gg=sessionStorage.getItem('lb_geo');if(gg)W.__lbGeo=JSON.parse(gg)}catch(e){}
  if(!W.__lbGeo&&W.fetch)fetch('https://ipapi.co/json/').then(function(r){return r.json()}).then(function(j){if(j&&!j.error&&j.city){W.__lbGeo={city:j.city,region:j.region||'',country:j.country_name||''};try{sessionStorage.setItem('lb_geo',JSON.stringify(W.__lbGeo))}catch(e){}}}).catch(function(){})}
@@ -622,24 +641,30 @@ export const PAGE_TPLS = [
 
 /* ==================== Forms → HTML (used by Forms builder, editor "My forms", share link) ==================== */
 const esc = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+/* style options — every default equals the original look, so older forms don't change */
+export const FORM_STYLE_DEF = { pageBg: "#f4f3fb", cardBg: "#ffffff", text: "#16142b", muted: "#5f5b7d", inputBg: "#ffffff", inputText: "#16142b", inputBorder: "#d9d7e8", inputStyle: "box", labelSize: 14, inputSize: 15, gap: 16, pad: 32, titleSize: 26, align: "left", shadow: true, font: "" };
+export const FORM_FONTS = ["", "Inter", "Poppins", "DM Sans", "Montserrat", "Lora", "Playfair Display"];
 export const formHtml = (form, integ) => {
   const ig = integ || {}, gpay = ig.pay || {}, gwa = ig.wa || {};
-  const s = { title: "", subtitle: "", submit: "Submit", success: "", redirect: "", webhook: "", color: "#4f46e5", radius: 10, style: "card", width: 560, ...(form.settings || {}) };
-  const R = +s.radius || 0, C = s.color || "#4f46e5";
-  const inp = `display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:12px 14px;border:1px solid #d9d7e8;border-radius:${R}px;font:inherit;font-size:15px;background:#fff;color:#16142b`;
-  const lab = "display:block;font-size:14px;font-weight:600;color:#2b2846";
-  const opt = "display:flex;gap:9px;align-items:center;font-size:15px;font-weight:500;color:#2b2846;margin-top:8px;cursor:pointer";
-  const box = (f, inner) => `<div style="flex:1 1 ${f.width === "half" ? "calc(50% - 8px)" : "100%"};min-width:${f.width === "half" ? "200px" : "0"}">${inner}${f.help ? `<div style="font-size:12.5px;color:#77739a;margin-top:5px">${esc(f.help)}</div>` : ""}</div>`;
+  const s = { title: "", subtitle: "", submit: "Submit", success: "", redirect: "", webhook: "", color: "#4f46e5", radius: 10, style: "card", width: 560, ...FORM_STYLE_DEF, ...(form.settings || {}) };
+  const R = +s.radius || 0, C = s.color || "#4f46e5", T = s.text || "#16142b";
+  const line = s.inputStyle === "line", filled = s.inputStyle === "filled";
+  const inp = `display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:${line ? "10px 2px" : "12px 14px"};border:${line ? "0;border-bottom:1.5px solid " + s.inputBorder : filled ? "1px solid transparent" : "1px solid " + s.inputBorder};border-radius:${line ? 0 : R}px;font:inherit;font-size:${+s.inputSize || 15}px;background:${line ? "transparent" : s.inputBg};color:${s.inputText}`;
+  const lab = `display:block;font-size:${+s.labelSize || 14}px;font-weight:600;color:${T}`;
+  const opt = `display:flex;gap:9px;align-items:center;font-size:${+s.inputSize || 15}px;font-weight:500;color:${T};margin-top:8px;cursor:pointer`;
+  const box = (f, inner) => `<div data-lb-fid="${esc(f.id)}" style="flex:1 1 ${f.width === "half" ? `calc(50% - ${(+s.gap || 16) / 2}px)` : "100%"};min-width:${f.width === "half" ? "200px" : "0"}">${inner}${f.help ? `<div style="font-size:12.5px;color:${s.muted};margin-top:5px">${esc(f.help)}</div>` : ""}</div>`;
   const star = (f) => (f.required ? " *" : "");
   const one = (f) => {
     const n = esc(f.name || f.id), ph = f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : "", rq = f.required ? " required" : "";
     switch (f.type) {
-      case "heading": return box(f, `<div style="font-weight:700;font-size:17px;color:#16142b;padding-top:6px">${esc(f.label)}</div>`);
+      case "heading": return box(f, `<div style="font-weight:700;font-size:17px;color:${T};padding-top:6px">${esc(f.label)}</div>`);
       case "textarea": return box(f, `<label style="${lab}">${esc(f.label)}${star(f)}<textarea name="${n}" rows="4"${ph}${rq} style="${inp}"></textarea></label>`);
       case "select": return box(f, `<label style="${lab}">${esc(f.label)}${star(f)}<select name="${n}"${rq} style="${inp}"><option value="">${esc(f.placeholder || "Choose…")}</option>${(f.options || []).map((o) => `<option>${esc(o)}</option>`).join("")}</select></label>`);
       case "radio": return box(f, `<div role="radiogroup"><span style="${lab}">${esc(f.label)}${star(f)}</span>${(f.options || []).map((o, i) => `<label style="${opt}"><input type="radio" name="${n}" value="${esc(o)}"${f.required && i === 0 ? " required" : ""} style="width:18px;height:18px;accent-color:${C}">${esc(o)}</label>`).join("")}</div>`);
       case "checkboxes": return box(f, `<div><span style="${lab}">${esc(f.label)}</span>${(f.options || []).map((o) => `<label style="${opt}"><input type="checkbox" name="${n}" value="${esc(o)}" style="width:18px;height:18px;accent-color:${C}">${esc(o)}</label>`).join("")}</div>`);
       case "consent": return box(f, `<label style="${opt};margin-top:0"><input type="checkbox" name="${n}"${rq} style="width:18px;height:18px;accent-color:${C}">${esc(f.label)}</label>`);
+      /* ad tracking: hidden fields filled from the page link (?utm_source=…) so every lead shows where it came from */
+      case "utm": return `<div data-lb-fid="${esc(f.id)}" data-lb-utmbox style="flex:1 1 100%;height:0;overflow:hidden">${["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid"].map((k) => `<input type="hidden" name="${k}" data-lb-utm="${k}">`).join("")}</div>`;
       default: return box(f, `<label style="${lab}">${esc(f.label)}${star(f)}<input type="${f.type}" name="${n}"${ph}${rq} style="${inp}"></label>`);
     }
   };
@@ -653,19 +678,25 @@ export const formHtml = (form, integ) => {
   const mailCfg = em.enabled && mailOk && (em.auto !== false || em.notify) ? { p: ge.provider, s: ge.serviceId, t: ge.templateId, k: ge.publicKey, hook: ge.webhook, from: ge.fromName || form.name, reply: ge.ownerEmail || "",
     auto: em.auto !== false, subj: em.subject || "Thanks for registering, {{name}}!", body: em.body || "Hi {{name}},\n\nThank you! We received your details and will contact you soon.\n\nTeam " + (ge.fromName || form.name),
     owner: em.notify ? em.ownerEmail || ge.ownerEmail || "" : "", osubj: em.ownerSubject || "" } : null;
-  const bt = { full: true, align: "center", size: "md", bg: "", fg: "#ffffff", note: true, extra: false, extraText: "Chat on WhatsApp", extraUrl: "", ...(s.btn || {}) };
+  const bt = { full: true, align: "center", size: "md", bg: "", fg: "#ffffff", note: true, extra: false, extraText: "Chat on WhatsApp", extraUrl: "", grad: "", ...(s.btn || {}) };
   const pad = { sm: "10px 18px", md: "15px 22px", lg: "19px 28px" }[bt.size] || "15px 22px", fs = { sm: 14, md: 16, lg: 18 }[bt.size] || 16;
   const price = `₹${amt.toLocaleString("en-IN")}`, btnText = !payOn ? s.submit || "Submit" : !s.submit || s.submit === "Submit" ? `Register for ${price}` : s.submit.includes("₹") ? s.submit : `${s.submit} · ${price}`;
-  const card = s.style === "card" ? `background:#fff;border:1px solid #ecebf5;border-radius:${R + 8}px;padding:32px;box-shadow:0 18px 50px -24px rgba(30,20,90,.25);` : "";
-  return `<div data-lb-formbox="${esc(form.id)}" data-lb-name="Form: ${esc(form.name)}" style="max-width:${+s.width || 560}px;margin:0 auto;box-sizing:border-box;${card}">`
-    + (s.title ? `<h3 style="margin:0 0 6px;font-size:26px;color:#16142b;letter-spacing:-.01em">${esc(s.title)}</h3>` : "")
-    + (s.subtitle ? `<p style="margin:0 0 20px;color:#5f5b7d;line-height:1.6">${esc(s.subtitle)}</p>` : s.title ? `<div style="height:14px"></div>` : "")
-    + `<form data-lb-form="${esc(form.name)}" data-lb-form-id="${esc(form.id)}" data-lb-success="${esc(s.success)}"${s.redirect ? ` data-lb-redirect="${esc(s.redirect)}"` : ""}${s.webhook ? ` data-lb-webhook="${esc(s.webhook)}"` : ""}${mailCfg ? ` data-lb-mail="${esc(JSON.stringify(mailCfg))}"` : ""}${payCfg ? ` data-lb-pay="${esc(JSON.stringify(payCfg))}"` : ""}${waCfg ? ` data-lb-wa="${esc(JSON.stringify(waCfg))}"` : ""} style="display:flex;flex-wrap:wrap;gap:16px">`
+  const card = s.style === "card" ? `background:${s.cardBg};border:1px solid ${s.cardBg.toLowerCase() === "#ffffff" ? "#ecebf5" : "rgba(127,127,160,.18)"};border-radius:${R + 8}px;padding:${+s.pad || 32}px;${s.shadow ? "box-shadow:0 18px 50px -24px rgba(30,20,90,.25);" : ""}` : "";
+  const ff = s.font && FORM_FONTS.includes(s.font) ? s.font : "";
+  const btnBg = bt.grad ? `linear-gradient(135deg,${bt.bg || C},${bt.grad})` : bt.bg || C;
+  const ta = s.align === "center" ? "text-align:center;" : "";
+  return `<div data-lb-formbox="${esc(form.id)}" data-lb-name="Form: ${esc(form.name)}" style="max-width:${+s.width || 560}px;margin:0 auto;box-sizing:border-box;${ff ? `font-family:'${ff}',system-ui,sans-serif;` : ""}${card}">`
+    + (ff ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(ff)}:wght@400;500;600;700&display=swap">` : "")
+    + (s.title || s.subtitle ? `<div data-lb-fid="__title" style="${ta}">` : "")
+    + (s.title ? `<h3 style="margin:0 0 6px;font-size:${+s.titleSize || 26}px;color:${T};letter-spacing:-.01em">${esc(s.title)}</h3>` : "")
+    + (s.subtitle ? `<p style="margin:0 0 20px;color:${s.muted};line-height:1.6">${esc(s.subtitle)}</p>` : s.title ? `<div style="height:14px"></div>` : "")
+    + (s.title || s.subtitle ? `</div>` : "")
+    + `<form data-lb-form="${esc(form.name)}" data-lb-form-id="${esc(form.id)}" data-lb-success="${esc(s.success)}"${s.redirect ? ` data-lb-redirect="${esc(s.redirect)}"` : ""}${s.webhook ? ` data-lb-webhook="${esc(s.webhook)}"` : ""}${mailCfg ? ` data-lb-mail="${esc(JSON.stringify(mailCfg))}"` : ""}${payCfg ? ` data-lb-pay="${esc(JSON.stringify(payCfg))}"` : ""}${waCfg ? ` data-lb-wa="${esc(JSON.stringify(waCfg))}"` : ""} style="display:flex;flex-wrap:wrap;gap:${+s.gap || 16}px">`
     + (form.fields || []).map(one).join("")
-    + `<div style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:10px;justify-content:${bt.align === "left" ? "flex-start" : bt.align === "right" ? "flex-end" : "center"}"><button type="submit" style="${bt.full ? "flex:1 1 100%;" : ""}padding:${pad};border:0;border-radius:${R}px;background:${bt.bg || C};color:${bt.fg || "#fff"};font:inherit;font-size:${fs}px;font-weight:700;cursor:pointer">${esc(btnText)}</button>${bt.extra && bt.extraUrl ? `<a href="${esc(bt.extraUrl)}" target="_blank" rel="noopener" style="${bt.full ? "flex:1 1 100%;box-sizing:border-box;" : ""}display:inline-block;text-align:center;padding:${pad};border-radius:${R}px;border:1.5px solid ${bt.bg || C};color:${bt.bg || C};text-decoration:none;font-size:${fs}px;font-weight:700">${esc(bt.extraText || "Learn more")}</a>` : ""}${payOn && bt.note ? `<div style="flex:1 1 100%;text-align:center;font-size:12.5px;color:#77739a;margin-top:-2px">🔒 Secure payment via ${payCfg.mode === "razorpay" ? "Razorpay" : payCfg.mode === "upi" ? "UPI (GPay, PhonePe, Paytm)" : "payment link"}</div>` : ""}</div></form></div>`;
+    + `<div data-lb-fid="__submit" style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:10px;justify-content:${bt.align === "left" ? "flex-start" : bt.align === "right" ? "flex-end" : "center"}"><button type="submit" style="${bt.full ? "flex:1 1 100%;" : ""}padding:${pad};border:0;border-radius:${R}px;background:${btnBg};color:${bt.fg || "#fff"};font:inherit;font-size:${fs}px;font-weight:700;cursor:pointer">${esc(btnText)}</button>${bt.extra && bt.extraUrl ? `<a href="${esc(bt.extraUrl)}" target="_blank" rel="noopener" style="${bt.full ? "flex:1 1 100%;box-sizing:border-box;" : ""}display:inline-block;text-align:center;padding:${pad};border-radius:${R}px;border:1.5px solid ${bt.bg || C};color:${bt.bg || C};text-decoration:none;font-size:${fs}px;font-weight:700">${esc(bt.extraText || "Learn more")}</a>` : ""}${payOn && bt.note ? `<div style="flex:1 1 100%;text-align:center;font-size:12.5px;color:${s.muted};margin-top:-2px">🔒 Secure payment via ${payCfg.mode === "razorpay" ? "Razorpay" : payCfg.mode === "upi" ? "UPI (GPay, PhonePe, Paytm)" : "payment link"}</div>` : ""}</div></form></div>`;
 };
 /* a full page that shows just the form (share link) */
-export const formPageHtml = (form, integ) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(form.name)}</title><style>body{margin:0;min-height:100vh;background:#f4f3fb;font-family:Inter,system-ui,sans-serif;color:#16142b;display:flex;align-items:center;justify-content:center;padding:40px 16px;box-sizing:border-box}</style></head><body><div style="width:100%">${formHtml(form, integ)}</div></body></html>`;
+export const formPageHtml = (form, integ) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(form.name)}</title><style>body{margin:0;min-height:100vh;background:${esc((form.settings || {}).pageBg || "#f4f3fb")};font-family:Inter,system-ui,sans-serif;color:#16142b;display:flex;align-items:center;justify-content:center;padding:40px 16px;box-sizing:border-box}</style></head><body><div style="width:100%">${formHtml(form, integ)}</div></body></html>`;
 
 /* ==================== Elementor-style structures (section with columns) ==================== */
 export const STRUCTURES = [

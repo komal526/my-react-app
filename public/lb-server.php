@@ -1,5 +1,5 @@
 <?php
-// LaunchBuilder server v10 — runs on your own hosting (Hostinger etc.), no extra service needed.
+// LaunchBuilder server v11 — runs on your own hosting (Hostinger etc.), no extra service needed.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
 // • Routes your own domains to a published site
@@ -125,7 +125,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 10, 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 11, 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
 
 if ($act === 'lead') {
   // simple flood protection: max 30 submissions per minute per visitor
@@ -174,6 +174,24 @@ if ($act === 'leadpay') {
     $all[$i]['payment'] = array_merge(isset($l['payment']) ? $l['payment'] : array(), array('status' => $st, 'id' => clean_str(isset($p['id']) ? $p['id'] : '', 80), 'ref' => clean_str(isset($p['ref']) ? $p['ref'] : '', 80), 'ts' => round(microtime(true) * 1000)));
   }
   jwrite($DATA . '/leads.json', $all);
+  out(array('ok' => true));
+}
+
+/* Smart Insights — page views, CTA clicks and form starts from your live sites.
+   One small line per event, appended to a file per day (fast, no big rewrites). */
+if ($act === 'track') {
+  $t = isset($d['t']) ? (string)$d['t'] : '';
+  if (!in_array($t, array('view', 'cta', 'fstart'), true)) out(array('ok' => false));
+  $dir = $DATA . '/ev'; if (!is_dir($dir)) @mkdir($dir, 0755, true);
+  $f = $dir . '/' . gmdate('Y-m-d') . '.ndjson';
+  if (file_exists($f) && filesize($f) > 60 * 1024 * 1024) out(array('ok' => true, 'skipped' => true));
+  $dev = isset($d['dev']) && in_array($d['dev'], array('mobile', 'tablet', 'desktop'), true) ? $d['dev'] : 'desktop';
+  $e = array('ts' => round(microtime(true) * 1000), 't' => $t,
+    'site' => preg_replace('/[^a-z0-9-]/', '', clean_str(isset($d['site']) ? $d['site'] : '', 64)),
+    'page' => clean_str(isset($d['page']) ? $d['page'] : '', 120), 'sid' => preg_replace('/[^a-z0-9]/', '', clean_str(isset($d['sid']) ? $d['sid'] : '', 16)),
+    'label' => clean_str(isset($d['label']) ? $d['label'] : '', 60), 'dev' => $dev, 'ref' => clean_str(isset($d['ref']) ? $d['ref'] : '', 200));
+  @file_put_contents($f, json_encode($e, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
+  if (mt_rand(1, 500) === 1) foreach (glob($dir . '/*.ndjson') as $old) if (filemtime($old) < time() - 120 * 86400) @unlink($old);
   out(array('ok' => true));
 }
 
@@ -255,6 +273,94 @@ if ($act === 'deletelead') {
   $all = array_values(array_filter($all, function ($l) use ($lids) { return !in_array($l['lid'], $lids, true); }));
   jwrite($DATA . '/leads.json', $all);
   out(array('ok' => true));
+}
+
+/* Smart Insights — events since a time (the builder merges them into Analytics) */
+if ($act === 'events') {
+  $since = isset($d['since']) ? (float)$d['since'] : 0; $res = array();
+  $from = max($since / 1000, time() - 90 * 86400);
+  for ($day = strtotime(gmdate('Y-m-d', (int)$from)); $day <= time() && count($res) < 30000; $day += 86400) {
+    $f = $DATA . '/ev/' . gmdate('Y-m-d', $day) . '.ndjson'; if (!file_exists($f)) continue;
+    $fh = @fopen($f, 'r'); if (!$fh) continue;
+    while (($line = fgets($fh)) !== false && count($res) < 30000) { $e = json_decode($line, true); if (is_array($e) && $e['ts'] > $since) $res[] = $e; }
+    fclose($fh);
+  }
+  out(array('ok' => true, 'events' => $res, 'now' => round(microtime(true) * 1000)));
+}
+
+/* ---------------- AI Consultant ----------------
+   Your own API key (BYOK) is saved here ENCRYPTED and never sent back to the browser.
+   Without your own key, the platform key in /etc/launchbuilder/ai.json is used (with a daily limit). */
+function ai_secret($DATA) {
+  $f = $DATA . '/secret.key';
+  if (!file_exists($f)) { @file_put_contents($f, base64_encode(random_bytes(32))); @chmod($f, 0600); }
+  return base64_decode((string)@file_get_contents($f));
+}
+function ai_enc($plain, $DATA) { $iv = random_bytes(12); $tag = ''; $c = openssl_encrypt($plain, 'aes-256-gcm', ai_secret($DATA), OPENSSL_RAW_DATA, $iv, $tag); return base64_encode($iv . $tag . $c); }
+function ai_dec($blob, $DATA) { $b = base64_decode((string)$blob); if (strlen($b) < 29) return ''; $p = openssl_decrypt(substr($b, 28), 'aes-256-gcm', ai_secret($DATA), OPENSSL_RAW_DATA, substr($b, 0, 12), substr($b, 12, 16)); return $p === false ? '' : $p; }
+function ai_models() { return array('claude' => 'claude-sonnet-5-5', 'openai' => 'gpt-4o', 'gemini' => 'gemini-flash-latest', 'deepseek' => 'deepseek-chat'); }
+function ai_post($url, $headers, $body) {
+  $ch = curl_init($url);
+  curl_setopt_array($ch, array(CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 170, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_HTTPHEADER => array_merge(array('Content-Type: application/json'), $headers), CURLOPT_POSTFIELDS => json_encode($body)));
+  $r = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch);
+  if ($r === false) fail('Could not reach the AI service: ' . $err);
+  $j = json_decode($r, true);
+  if ($code >= 400) fail('AI service error: ' . (isset($j['error']['message']) ? $j['error']['message'] : ('HTTP ' . $code)));
+  return is_array($j) ? $j : array();
+}
+function ai_run($prov, $key, $model, $system, $msgs, $max) {
+  if ($prov === 'claude') {
+    $j = ai_post('https://api.anthropic.com/v1/messages', array('x-api-key: ' . $key, 'anthropic-version: 2023-06-01'), array('model' => $model, 'max_tokens' => $max, 'system' => $system, 'messages' => $msgs));
+    $t = ''; if (isset($j['content'])) foreach ($j['content'] as $c) if (isset($c['type']) && $c['type'] === 'text') $t .= $c['text']; return $t;
+  }
+  if ($prov === 'gemini') {
+    $cs = array(); foreach ($msgs as $m) $cs[] = array('role' => $m['role'] === 'assistant' ? 'model' : 'user', 'parts' => array(array('text' => $m['content'])));
+    $j = ai_post('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent', array('x-goog-api-key: ' . $key), array('systemInstruction' => array('parts' => array(array('text' => $system))), 'contents' => $cs, 'generationConfig' => array('maxOutputTokens' => $max)));
+    $t = ''; if (isset($j['candidates'][0]['content']['parts'])) foreach ($j['candidates'][0]['content']['parts'] as $p) $t .= isset($p['text']) ? $p['text'] : ''; return $t;
+  }
+  $url = $prov === 'deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+  $j = ai_post($url, array('Authorization: Bearer ' . $key), array('model' => $model, 'max_tokens' => min($max, 8000), 'messages' => array_merge(array(array('role' => 'system', 'content' => $system)), $msgs)));
+  return isset($j['choices'][0]['message']['content']) ? $j['choices'][0]['message']['content'] : '';
+}
+$AIF = $DATA . '/ai-' . substr(hash('sha256', $key), 0, 16) . '.json';
+function ai_platform() { $p = @json_decode((string)@file_get_contents('/etc/launchbuilder/ai.json'), true); return is_array($p) && !empty($p['key']) && !empty($p['provider']) ? $p : null; }
+
+if ($act === 'aistatus') {
+  $mine = jread($AIF, array()); $pl = ai_platform();
+  out(array('ok' => true, 'own' => !empty($mine['enc']) ? array('provider' => $mine['provider'], 'model' => $mine['model'], 'last4' => $mine['last4']) : null, 'platform' => $pl ? array('provider' => $pl['provider'], 'limit' => isset($pl['daily_limit']) ? (int)$pl['daily_limit'] : 40) : null));
+}
+if ($act === 'aikey') {
+  if (!empty($d['remove'])) { @unlink($AIF); out(array('ok' => true, 'own' => null)); }
+  $prov = isset($d['provider']) ? (string)$d['provider'] : ''; $mods = ai_models();
+  if (!isset($mods[$prov])) fail('Choose an AI provider.');
+  $k = trim(isset($d['apikey']) ? (string)$d['apikey'] : ''); if (strlen($k) < 20 || strlen($k) > 300) fail('That API key looks wrong — paste the full key.');
+  $model = preg_replace('/[^A-Za-z0-9._:-]/', '', clean_str(isset($d['model']) ? $d['model'] : '', 80)); if ($model === '') $model = $mods[$prov];
+  if (!empty($d['test'])) { $txt = ai_run($prov, $k, $model, 'Reply with the single word OK.', array(array('role' => 'user', 'content' => 'Test')), 20); if (trim($txt) === '') fail('The key was accepted but the AI returned nothing. Check the model name.'); }
+  jwrite($AIF, array('provider' => $prov, 'model' => $model, 'enc' => ai_enc($k, $DATA), 'last4' => substr($k, -4), 'saved' => time()));
+  @chmod($AIF, 0600);
+  out(array('ok' => true, 'own' => array('provider' => $prov, 'model' => $model, 'last4' => substr($k, -4))));
+}
+if ($act === 'ai') {
+  @set_time_limit(180);
+  $system = clean_str(isset($d['system']) ? $d['system'] : '', 20000);
+  $max = max(200, min(12000, (int)(isset($d['max']) ? $d['max'] : 1500)));
+  $msgs = array(); if (isset($d['messages']) && is_array($d['messages'])) foreach (array_slice($d['messages'], -16) as $m) {
+    if (!is_array($m) || !isset($m['content'])) continue;
+    $msgs[] = array('role' => (isset($m['role']) && $m['role'] === 'assistant') ? 'assistant' : 'user', 'content' => clean_str($m['content'], 60000));
+  }
+  if (!$msgs) fail('Ask a question first.');
+  $mine = jread($AIF, array());
+  if (!empty($mine['enc'])) { $k = ai_dec($mine['enc'], $DATA); if ($k === '') fail('Your saved AI key could not be read — save it again.'); $txt = ai_run($mine['provider'], $k, $mine['model'], $system, $msgs, $max); $src = 'own'; }
+  else {
+    $pl = ai_platform(); if (!$pl) fail('NO_AI_KEY');
+    $lim = isset($pl['daily_limit']) ? (int)$pl['daily_limit'] : 40; $uf = $DATA . '/ai-usage.json'; $use = jread($uf, array()); $uk = substr(hash('sha256', $key), 0, 16) . '-' . gmdate('Y-m-d');
+    foreach ($use as $uk2 => $n) if (substr($uk2, -10) !== gmdate('Y-m-d')) unset($use[$uk2]);
+    if ((isset($use[$uk]) ? $use[$uk] : 0) >= $lim) fail('Daily AI limit reached (' . $lim . ' questions). Add your own API key in AI Consultant → Settings to keep going.');
+    $use[$uk] = (isset($use[$uk]) ? $use[$uk] : 0) + 1; jwrite($uf, $use);
+    $mods = ai_models(); $txt = ai_run($pl['provider'], $pl['key'], !empty($pl['model']) ? $pl['model'] : $mods[$pl['provider']], $system, $msgs, $max); $src = 'platform';
+  }
+  if (trim($txt) === '') fail('The AI returned an empty answer. Try again.');
+  out(array('ok' => true, 'text' => $txt, 'source' => $src));
 }
 
 /* full step-by-step check of one domain — tells the user exactly which step is missing */

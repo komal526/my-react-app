@@ -109,7 +109,7 @@ export const saveForms = (email, list) => { try { localStorage.setItem(FK(email)
 export const FIELD_TYPES = [
   ["text", "Short text"], ["email", "Email"], ["tel", "Phone / WhatsApp"], ["number", "Number"], ["textarea", "Long text"],
   ["select", "Dropdown"], ["radio", "Single choice"], ["checkboxes", "Multiple choice"], ["date", "Date"], ["time", "Time"],
-  ["url", "Website link"], ["consent", "Consent checkbox"], ["heading", "Heading / text"],
+  ["url", "Website link"], ["consent", "Consent checkbox"], ["heading", "Heading / text"], ["utm", "Ad tracking (UTM)"],
 ];
 export const FORM_DEF = { title: "", subtitle: "", submit: "Submit", success: "Thank you! We'll be in touch soon.", redirect: "", webhook: "", color: "#4f46e5", radius: 10, style: "card", width: 560 };
 const f_ = (type, label, o = {}) => ({ id: uid(), type, label, name: o.name || slug(label).replace(/-/g, "_").slice(0, 30), placeholder: "", required: true, width: "full", options: [], help: "", ...o });
@@ -132,7 +132,7 @@ export const FORM_TEMPLATES = [
   { key: "blank", name: "Blank form", note: "Start from scratch", settings: { title: "" }, fields: () => [f_("text", "Name", { name: "name" })] },
 ];
 export const newForm = (tpl) => ({ id: "f" + uid(), name: tpl.key === "blank" ? "Untitled form" : tpl.name, template: tpl.key, fields: tpl.fields(), settings: { ...FORM_DEF, ...tpl.settings }, created: Date.now(), updated: Date.now() });
-export const newField = (type) => f_(type, (FIELD_TYPES.find((t) => t[0] === type) || [, "Field"])[1], { required: type !== "heading" && type !== "checkboxes", options: /select|radio|checkboxes/.test(type) ? ["Option 1", "Option 2"] : [] });
+export const newField = (type) => f_(type, (FIELD_TYPES.find((t) => t[0] === type) || [, "Field"])[1], { required: !/^(heading|checkboxes|utm)$/.test(type), options: /select|radio|checkboxes/.test(type) ? ["Option 1", "Option 2"] : [] });
 export const findForm = (id) => { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("lb_forms_")) { try { const f = JSON.parse(localStorage.getItem(k)).find((x) => x.id === id); if (f) return { form: f, email: k.slice(9) }; } catch { /* skip */ } } } return null; };
 export const formUrl = (id) => `${location.origin}${location.pathname}#/form/${id}`;
 
@@ -319,6 +319,49 @@ export async function syncServerLeads(email, integ, projects = []) {
   localStorage.setItem(SK(email), String(r.now || Date.now()));
   return added;
 }
+/* Smart Insights: views, CTA clicks and form starts from live sites → the same events list Analytics uses */
+const EVS = (email) => "lb_evsync_" + email;
+export const srvFor = (integ) => (serverOn(integ) ? integ.server : { url: defaultServerUrl(), key: accountKey() });
+export async function syncServerEvents(email, integ, projects = []) {
+  const since = +(localStorage.getItem(EVS(email)) || 0);
+  const r = await phpCall(srvFor(integ), { action: "events", since });
+  const list = loadEvents(email), seen = new Set(list.filter((e) => e.live).map((e) => e.ts + "|" + e.sid + "|" + e.t));
+  let added = 0;
+  (r.events || []).forEach((e) => {
+    const k = e.ts + "|" + e.sid + "|" + e.t; if (seen.has(k)) return;
+    /* kept even if no project matches yet — it is linked by site name when you view it */
+    const proj = projects.find((p) => p.host && p.host.slug === e.site);
+    list.push({ ts: e.ts, sid: e.sid, t: e.t, pid: proj ? proj.id : "", site: e.site, page: e.page, dev: e.dev, label: e.label || "", live: 1 }); seen.add(k); added++;
+  });
+  if (added) { try { localStorage.setItem(EK(email), JSON.stringify(list.sort((a, b) => a.ts - b.ts).slice(-8000))); } catch { /* full */ } }
+  localStorage.setItem(EVS(email), String(r.now || Date.now()));
+  return added;
+}
+
+/* AI Consultant — asks the AI through YOUR server. Your API key stays encrypted on the server and never reaches the browser. */
+export async function askAI(integ, system, messages, max = 1500) {
+  try { return (await phpCall(srvFor(integ), { action: "ai", system, messages, max })).text; }
+  catch (e) {
+    if (/NO_AI_KEY/.test(e.message)) throw new Error("NO_AI_KEY");
+    throw e;
+  }
+}
+export const aiStatus = (integ) => phpCall(srvFor(integ), { action: "aistatus" });
+export const aiSaveKey = (integ, provider, apikey, model, test = true) => phpCall(srvFor(integ), { action: "aikey", provider, apikey, model, test });
+export const aiRemoveKey = (integ) => phpCall(srvFor(integ), { action: "aikey", remove: 1 });
+/* turn an AI answer into pages (same format as "Create with AI") */
+export const AI_PAGE_SYS = (multi) => (multi
+  ? `You are a senior web designer. Create a small multi-page website. Output ONLY the pages, each one a complete HTML document (<!DOCTYPE html>…</html>) preceded by a line exactly like: ===PAGE Home|index.html=== . First page must be index.html. 3 to 5 pages. Every page has the same header with a <nav data-lb-autonav> containing links to every page file, and the same footer. ${AI_RULES}`
+  : `You are a senior web designer. Create ONE high-converting landing page. Output ONLY one complete HTML document (<!DOCTYPE html>…</html>), nothing else. ${AI_RULES}`);
+export function parseAiPages(out, multi) {
+  if (!multi) { const h = strip(out), k = h.search(/<!doctype|<html/i); return [{ name: "Home", file: "index.html", html: k > 0 ? h.slice(k) : h }]; }
+  const parts = out.split(/^===PAGE\s+(.+?)\|(.+?)===\s*$/m), pages = [];
+  for (let i = 1; i < parts.length; i += 3) pages.push({ name: parts[i].trim(), file: parts[i + 1].trim().replace(/[^\w.-]/g, "-"), html: strip(parts[i + 2]) });
+  return pages.length ? pages : [{ name: "Home", file: "index.html", html: strip(out) }];
+}
+export const FEATURED_TPL = ["f-astrology-workshop", "f-ai-video-editor-masterclass", "f-landingcraft-webinar", "f-marketian-meta-ads", "f-yoga-workshop"];
+export const longThumb = (t) => (import.meta.env.BASE_URL || "/") + t.thumb.replace("/thumbs/", "/long/");
+
 export const HOSTINGER_NS = ["ns1.dns-parking.com", "ns2.dns-parking.com"];
 
 /* ==================== Lovable / Bolt.new hand-off ==================== */

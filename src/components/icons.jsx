@@ -1,7 +1,16 @@
-// LaunchBuilder v42 — icons.jsx (shared icon set — small, loads with the dashboard)
+// LaunchBuilder v48 — icons.jsx (shared icon set — small, loads with the dashboard)
 /* ==================== icons ==================== */
 // Lightweight stroke icons for the editor UI (no icon library needed)
 export const ICON_PATHS = {
+  cursor: <><path d="M5 3l14 7-6 2-2 6z" /><path d="M13 13l5 5" /></>,
+  funnel: <><path d="M3 4h18l-7 8v6l-4 2v-8z" /></>,
+  whatsapp: <><path d="M3.5 20.5l1.3-4.2A8.5 8.5 0 1 1 8 19.4z" /><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1.3-1.5-2-1-1 .8a5 5 0 0 1-2.6-2.6l.8-1-1-2z" /></>,
+  instagram: <><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><path d="M17.5 6.5h.01" /></>,
+  facebook: <><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8a0 0 0 0 1 0 0z" /></>,
+  youtube: <><rect x="2.5" y="5.5" width="19" height="13" rx="4" /><path d="M10 9.5v5l4.5-2.5z" /></>,
+  linkedin: <><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" /></>,
+  xlogo: <><path d="M4 4l16 16M20 4L4 20" /></>,
+  send: <><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4z" /></>,
   section: <rect x="3" y="5" width="18" height="14" rx="2" />,
   calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2" /></>,
   apps: <><rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><path d="M17.5 14v7M14 17.5h7" /></>,

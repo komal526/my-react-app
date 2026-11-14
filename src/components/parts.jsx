@@ -69,9 +69,9 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
       </div>
       {mini ? <div className="sb3-scroll sb3-rail">
         {/* collapsed: every page as an icon with a small name */}
-        <div className={"sb3-m" + (isOn("pages") ? " on" : "")} onClick={() => go("pages")} title="Dashboard"><Icon n="grid" s={17} /><small>Home</small></div>
-        {GROUPS.map(([g, , , items]) => <div key={g} className="sb3-mgrp">{items.map(([k, ic, nm]) => (
-          <div key={k} className={"sb3-m" + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={nm}><Icon n={ic} s={17} /><small>{MINI[k] || nm}</small>{badges[k] ? <i className="sb3-dotb" /> : null}</div>))}</div>)}
+        <div className={"sb3-m" + (isOn("pages") ? " on" : "")} onClick={() => go("pages")} title="Dashboard"><Icon n="grid" s={19} /><small>Home</small></div>
+        {GROUPS.flatMap(([, , , items]) => items).map(([k, ic, nm]) => (
+          <div key={k} className={"sb3-m" + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={nm}><Icon n={ic} s={19} /><small>{MINI[k] || nm}</small>{badges[k] ? <i className="sb3-dotb" /> : null}</div>))}
       </div> : <div className="sb3-scroll">
         <Item k="pages" ic="grid" nm="Dashboard" />
         {GROUPS.map(([g, gic, label, items]) => {
@@ -310,6 +310,7 @@ export function Preview({ token, file: initFile }) {
         if (e.data.blank) return window.open(previewUrl(token, target) + (h0 ? "" : ""), "_blank");
         setHash(h0); setFile(target); window.history.pushState(null, "", `#/preview/${token}/${target}`);
       }
+      if (e.data.lb === "ev" && info && proj && /^(cta|fstart)$/.test(e.data.t)) addEvent(info.email, { t: e.data.t, pid: proj.id, page: file, label: String(e.data.label || "").slice(0, 60) });
       if (e.data.lb === "lead-pay" && info) { payLead(info.email, e.data.lid, e.data.payment); flash(e.data.payment.status === "paid" ? "✓ Payment received — lead marked Paid" : "✓ Payment claim saved to Leads"); }
       if (e.data.lb === "lead" && proj) { addLead(info.email, { ...e.data.lead, projectId: proj.id, projectName: proj.name, source: "preview" }); addEvent(info.email, { t: "lead", pid: proj.id, page: file, form: e.data.lead.form }); flash("✓ Submission saved to Leads"); }
     };

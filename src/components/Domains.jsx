@@ -283,7 +283,7 @@ function ServerCard({ p, onPatch, onPatchPage, onOpen, integ, onSetup, vps = nul
   );
 }
 
-export const SERVER_VERSION = 10;
+export const SERVER_VERSION = 11;
 /* ---------- automatic subdomains: publish → <name>.<your domain> is live instantly ---------- */
 function AutoSub({ integ, onInteg, projects, info }) {
   const vps = info && info.vps ? info : null;

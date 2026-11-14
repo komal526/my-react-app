@@ -1,8 +1,11 @@
-// LaunchBuilder v42 — MyPages.jsx (Dashboard · Websites · Landing pages)
-import { useEffect, useMemo, useRef, useState } from "react";
+// LaunchBuilder v48 — MyPages.jsx (Dashboard · Websites · Landing pages)
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { Thumb } from "./parts.jsx";
 import { Icon } from "./icons.jsx";
-import { ago, addr, LIMIT } from "../lib.js";
+import { addr, LIMIT, FILE_TEMPLATES, FEATURED_TPL, longThumb } from "../lib.js";
+import { metrics, consult, areaName } from "./insights.js";
+import { BRAND } from "../brand.js";
+const Legal = lazy(() => import("./Legal.jsx"));
 
 const DAY = 864e5;
 /* numbers that count up when the dashboard opens */
@@ -50,7 +53,99 @@ function Donut({ parts }) {
   );
 }
 
-export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates }) {
+/* ---------- Smart Insights: visitors · CTA clicks · form submits · conversion ---------- */
+const Pill = ({ v, pts }) => (v ? <em className={"si-pill" + (v < 0 ? " down" : "")}>{v > 0 ? "↑" : "↓"} {v > 0 ? "+" : ""}{v}{pts ? " pts" : "%"}</em> : <em className="si-pill flat">no change</em>);
+function SmartInsights({ events, leads, onAsk, onAnalytics }) {
+  const [days, setDays] = useState(7);
+  const m = useMemo(() => metrics(events, leads, { days }), [events, leads, days]);
+  const tiles = [["Visitors", m.visitors, "eye", "pink", m.trend.visitors], ["CTA Clicks", m.clicks, "cursor", "orange", m.trend.clicks], ["Form Submits", m.subs, "form", "violet", m.trend.subs]];
+  return (
+    <div className="db-card si">
+      <div className="si-h"><span className="si-spark" aria-hidden="true">✦<i>✦</i><i>✦</i></span><h3>Smart Insights</h3>
+        <label className="si-range"><select value={days} onChange={(e) => setDays(+e.target.value)} aria-label="Period">{[[7, "Last 7 days"], [30, "Last 30 days"], [90, "Last 90 days"]].map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select><Icon n="chevd" s={14} /></label></div>
+      <div className="si-grid">
+        {tiles.map(([l, v, ic, c, t], i) => <button key={l} className="si-t" style={{ "--d": i * 0.06 + "s" }} onClick={onAnalytics}><span className={"si-ic " + c}><Icon n={ic} s={20} /></span><b><CountUp to={v} /></b><span className="si-l">{l}</span><Pill v={t} /></button>)}
+        <button className="si-t si-conv" onClick={onAnalytics}><span className="si-ic funnel"><Icon n="funnel" s={20} /></span><b>{m.conv >= 10 ? Math.round(m.conv) : m.conv.toFixed(1)}%</b><span className="si-l">Conversion</span><Pill v={m.trend.conv} pts /></button>
+      </div>
+      <button className="si-ask" onClick={onAsk}><Icon n="sparkle" s={15} /><span>{m.visitors ? "Ask AI how to improve these numbers" : "Publish a page — numbers appear here as visitors arrive"}</span><b>→</b></button>
+    </div>
+  );
+}
+
+/* ---------- AI Consultant: direct, actionable suggestions from the audit + live numbers ---------- */
+function AiCard({ projects, events, leads, onConsult, onOpen }) {
+  const { res, tips } = useMemo(() => consult(projects, events, leads, { days: 30 }), [projects, events, leads]);
+  const avg = res.length ? Math.round(res.reduce((n, r) => n + r.score, 0) / res.length) : 0;
+  const top = tips.slice(0, 3);
+  return (
+    <div className="db-card ai-card">
+      <div className="ai-h"><span className="ai-av"><Icon n="sparkle" s={18} /></span><div className="grow"><h3>AI Consultant</h3><small>Suggestions from your pages and live numbers</small></div>
+        {res.length > 0 && <div className="ai-score" title="Average page score"><b>{avg}</b><small>/100</small></div>}</div>
+      {!res.length ? <p className="mut ai-empty">Create your first page — I'll check its headline, buttons, form, mobile view, speed and conversions, and tell you exactly what to fix.</p>
+        : !top.length ? <div className="ai-good"><b>Your pages look great 🎉</b><p className="mut">No important problems found. Ask me how to get more visitors or test a new headline.</p></div>
+        : top.map((t, i) => (
+          <div key={i} className={"ai-tip s" + t.sev} style={{ "--d": i * 0.08 + "s" }}>
+            <span className="ai-sev">{t.sev >= 3 ? "High" : t.sev === 2 ? "Medium" : "Low"}</span>
+            <div className="grow"><b>{t.title}</b><p>{t.fix}</p><small><span className="ai-area">{areaName(t.area)}</span>{t.live && <span className="ai-live">● Live data</span>}<span>{t.p.name}</span></small></div>
+            <div className="ai-acts"><button onClick={() => onOpen(t.p.id)} title="Open in the editor"><Icon n="pen" s={14} /> Fix</button><button onClick={() => onConsult({ tab: "ask", pid: t.p.id, ask: `How exactly should I fix this: ${t.title}?` })} title="Ask AI"><Icon n="chat" s={14} /> Ask</button></div>
+          </div>))}
+      <div className="ai-foot">
+        <button className="ai-btn" onClick={() => onConsult({ tab: "ask", ask: "Give me today's top 3 fixes" })}><Icon n="sparkle" s={15} /> Today's AI review</button>
+        <button className="ai-btn y" onClick={() => onConsult({ tab: "plan" })}><Icon n="wand" s={15} /> Plan a page with AI</button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 5 featured landing-page templates: light images, page scrolls on hover ---------- */
+function FeaturedTpl({ onUse, onAll }) {
+  const list = FEATURED_TPL.map((k) => FILE_TEMPLATES.find((t) => t.key === k)).filter(Boolean);
+  const [busy, setBusy] = useState("");
+  return (
+    <div className="db-card ft">
+      <div className="db-ch"><h3>Start with a proven landing page</h3><button className="link" onClick={onAll}>All templates →</button></div>
+      <div className="ft-row">{list.map((t, i) => (
+        <div key={t.key} className="ft-c" style={{ "--d": i * 0.06 + "s" }}>
+          <button className="ft-shot" onMouseEnter={(e) => e.currentTarget.style.setProperty("--fth", e.currentTarget.clientHeight + "px")} onFocus={(e) => e.currentTarget.style.setProperty("--fth", e.currentTarget.clientHeight + "px")} onClick={() => { setBusy(t.key); Promise.resolve(onUse(t)).finally(() => setBusy("")); }} aria-label={"Use " + t.name}>
+            <img src={longThumb(t)} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.src = (import.meta.env.BASE_URL || "/") + t.thumb; e.currentTarget.classList.add("short"); }} />
+            <span className="ft-use">{busy === t.key ? "Opening…" : "Use this template"}</span>
+          </button>
+          <b>{t.name}</b><small>{t.cat}</small>
+        </div>))}</div>
+    </div>
+  );
+}
+
+/* ---------- dashboard footer: your links, contact and legal pages ---------- */
+const SOC = [["instagram", "Instagram"], ["facebook", "Facebook"], ["youtube", "YouTube"], ["linkedin", "LinkedIn"], ["x", "X"]];
+function DashFooter({ onNew, onGo, onTemplates, onLeads, onAnalytics, onConsult }) {
+  const [legal, setLegal] = useState(null), B = BRAND, wa = B.whatsapp ? `https://wa.me/${B.whatsapp}?text=${encodeURIComponent("Hi, I need help with " + B.product)}` : "";
+  const contact = [wa && ["whatsapp", "WhatsApp us", wa, true], B.phone && ["phone", B.phone, "tel:" + B.phone.replace(/\s/g, "")], B.email && ["mail", B.email, "mailto:" + B.email], B.address && ["pin", B.address]].filter(Boolean);
+  const socials = SOC.filter(([k]) => B.social && B.social[k]);
+  return (
+    <footer className="df">
+      <div className="df-top">
+        <div className="df-brand"><div className="df-logo"><span>⬡</span><b>{B.product}</b></div><p>{B.tagline}</p>
+          {wa && <a className="df-wa" href={wa} target="_blank" rel="noreferrer"><Icon n="whatsapp" s={18} /> Chat with us on WhatsApp</a>}
+          {socials.length > 0 && <div className="df-soc">{socials.map(([k, l]) => <a key={k} href={B.social[k]} target="_blank" rel="noreferrer" aria-label={l} title={l}><Icon n={k === "x" ? "xlogo" : k} s={17} /></a>)}</div>}
+        </div>
+        <div className="df-col"><h4>Build</h4><button onClick={() => onNew("landing")}>Create a landing page</button><button onClick={() => onNew("website")}>Create a website</button><button onClick={onTemplates}>Templates</button><button onClick={() => onGo("forms")}>Forms</button><button onClick={() => onGo("calendar")}>Booking calendar</button></div>
+        <div className="df-col"><h4>Grow</h4><button onClick={onLeads}>Leads &amp; CRM</button><button onClick={onAnalytics}>Analytics</button><button onClick={() => onConsult({ tab: "ask" })}>AI Consultant</button><button onClick={() => onGo("domains")}>Connect a domain</button><button onClick={() => onGo("pixels")}>Tracking pixels</button></div>
+        <div className="df-col"><h4>Support</h4>
+          {contact.map(([ic, l, href, ext]) => href ? <a key={l} href={href} target={ext ? "_blank" : undefined} rel="noreferrer"><Icon n={ic} s={15} />{l}</a> : <span key={l}><Icon n={ic} s={15} />{l}</span>)}
+          {B.hours && contact.length > 0 && <span className="df-hrs"><Icon n="clock" s={15} />{B.hours}</span>}
+          <button onClick={() => onGo("integrations")}>Integrations</button><button onClick={() => onGo("settings")}>Account settings</button>
+        </div>
+        <div className="df-col"><h4>Legal</h4>{[["privacy", "Privacy Policy"], ["terms", "Terms of Service"], ["refund", "Refund & Cancellation"], ["cookies", "Cookie Policy"]].map(([k, l]) => <button key={k} onClick={() => setLegal(k)}>{l}</button>)}</div>
+      </div>
+      <div className="df-bot"><span>© {new Date().getFullYear()} {B.company}. All rights reserved.</span><span className="df-made">Made in India 🇮🇳</span>
+        <span className="df-legal">{[["privacy", "Privacy"], ["terms", "Terms"], ["refund", "Refunds"]].map(([k, l]) => <button key={k} onClick={() => setLegal(k)}>{l}</button>)}</span></div>
+      {legal && <Suspense fallback={null}><Legal k={legal} onClose={() => setLegal(null)} onGo={setLegal} /></Suspense>}
+    </footer>
+  );
+}
+
+export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl }) {
   const [filter, setFilter] = useState("All"), [menu, setMenu] = useState(null), [kind, setKind] = useState("all");
   const act = (fn, p) => () => { setMenu(null); fn(p); };
   const nWeb = projects.filter((p) => p.type === "website").length, nLand = projects.length - nWeb;
@@ -65,17 +160,12 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
     const created = (p) => p.created || p.updated || 0;
     const days = [...Array(7)].map((_, i) => { const d = new Date(now - (6 - i) * DAY); d.setHours(0, 0, 0, 0); const a = d.getTime(), b = a + DAY;
       return { label: d.toLocaleDateString("en-IN", { weekday: "short" }), views: views.filter((e) => e.ts >= a && e.ts < b).length, leads: leads.filter((l) => l.ts >= a && l.ts < b).length }; });
-    const byProj = projects.map((p) => ({ p, v: views.filter((e) => e.pid === p.id && now - e.ts < 30 * DAY).length, l: leads.filter((l) => l.projectId === p.id).length })).sort((a, b) => b.v - a.v || b.l - a.l);
-    const activity = [
-      ...projects.map((p) => ({ ts: p.updated || 0, ic: p.status === "published" ? "check" : "pen", c: p.status === "published" ? "v" : "g", t: p.status === "published" ? (p.type === "website" ? "Website published" : "Landing page published") : (p.type === "website" ? "Website updated" : "Landing page updated"), s: p.name, go: () => onOpen(p.id) })),
-      ...leads.slice(0, 20).map((l) => ({ ts: l.ts || 0, ic: "users", c: "o", t: "New lead", s: `${(l.data && (l.data.name || l.data.email)) || "Someone"} · ${l.form || "Form"}`, go: onLeads })),
-    ].sort((a, b) => b.ts - a.ts).slice(0, 4);
     return {
       total: projects.length, tTotal: wk(projects, created), landing: projects.filter((p) => p.type !== "website").length, website: projects.filter((p) => p.type === "website").length,
       leads: leads.length, tLeads: pct(wk(leads, (l) => l.ts), pwk(leads, (l) => l.ts)), views: views.length, tViews: pct(wk(views, (e) => e.ts), pwk(views, (e) => e.ts)),
       wLeads: wk(leads, (l) => l.ts), wViews: wk(views, (e) => e.ts),
       pub: projects.filter((p) => p.status === "published").length, draft: projects.filter((p) => p.status !== "published").length, dom: projects.filter((p) => p.domain).length,
-      days, top: byProj[0], activity,
+      days,
     };
   }, [projects, leads, events]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -127,7 +217,6 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
     </div>
   );
 
-  const top = st.top && st.top.p;
   return (
     <div onClick={() => setMenu(null)}>
       {/* hero — compact navy banner: text · button in the centre · laptop */}
@@ -168,7 +257,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
           </div>))}
       </div>
 
-      {/* progress · chart · top project */}
+      {/* progress · chart · Smart Insights */}
       <div className="db-row3">
         <div className="db-card db-progc"><h3>Project Progress</h3>
           <div className="db-ringwrap"><i className="db-halo" /><Donut parts={[{ v: st.pub, c: "#7c4dff" }, { v: st.draft, c: "#f5b301" }]} /></div>
@@ -181,26 +270,16 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
           </div>
         </div>
         <div className="db-card"><div className="db-ch"><h3>Views &amp; Leads Overview</h3><span className="db-leg"><i className="v" />Views<i className="l" />Leads</span><span className="db-wk">This week</span></div><LineChart days={st.days} /></div>
-        <div className="db-card"><div className="db-ch"><h3>Top Performing Project</h3>{top && <button className="ib2" title="Open" onClick={() => onOpen(top.id)}><Icon n="external" s={15} /></button>}</div>
-          {top ? <><div className="db-topimg" onClick={() => onOpen(top.id)}><Thumb html={top.pages[0].html} /></div><b className="db-topn">{top.name}</b>
-            <div className="db-topst"><div><Icon n="eye" s={20} /><b>{st.top.v.toLocaleString("en-IN")}</b><span>Views</span></div><div><Icon n="users" s={20} /><b>{st.top.l}</b><span>Leads</span></div></div></>
-            : <p className="mut">Publish a project to see which one performs best.</p>}</div>
+        <SmartInsights events={events} leads={leads} onAsk={() => onConsult && onConsult({ tab: "ask", ask: "Why isn't my page performing well?" })} onAnalytics={onAnalytics} />
       </div>
 
-      {/* activity · quick actions */}
+      {/* AI Consultant suggestions · featured templates */}
       <div className="db-row2">
-        <div className="db-card"><div className="db-ch"><h3>Recent Activity</h3><button className="link" onClick={onAnalytics}>View all →</button></div>
-          {st.activity.length ? st.activity.map((a, i) => <div key={i} className="db-act" onClick={a.go}><span className={"db-ai2 c-" + a.c}><Icon n={a.ic} s={16} /></span><div className="grow"><b>{a.t}</b><span>{a.s}</span></div><em>{ago(a.ts)}</em></div>)
-            : <p className="mut">Your latest edits, publishes and leads will show here.</p>}</div>
-        <div className="db-card"><h3>Quick Actions</h3>
-          <div className="db-qa fx-qa">
-            {[["Create Landing Page", "plus", "q1", () => onNew("landing")], ["Create Website", "globe", "q2", () => onNew("website")], ["Browse Templates", "layers", "q3", onTemplates], ["Manage Leads", "users", "q4", onLeads], ["View Reports", "chart", "q5", onAnalytics]].map(([t, ic, c, fn], i) => (
-              <button key={t} className={"fx-q " + c} style={{ "--d": i * 0.07 + "s" }} onClick={fn}>
-                <span className="fx-qorb"><Icon n={ic} s={22} /></span><b>{t}</b><span className="fx-go">→</span><i className="fx-glow" /></button>))}
-          </div></div>
+        <AiCard projects={projects} events={events} leads={leads} onConsult={onConsult} onOpen={onOpen} />
+        <FeaturedTpl onUse={onUseTpl} onAll={onTemplates} />
       </div>
 
-      <div className="db-list">{list}</div>
+      <DashFooter onNew={onNew} onGo={(v) => onViewAll && onViewAll(v)} onTemplates={onTemplates} onLeads={onLeads} onAnalytics={onAnalytics} onConsult={onConsult} />
     </div>
   );
 }
