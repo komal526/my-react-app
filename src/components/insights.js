@@ -121,11 +121,19 @@ export function liveIssues(m) {
   return out;
 }
 
+/* the page check only re-runs when the page actually changed (fast dashboard with many projects) */
+const AUDITS = new Map();
+function cachedAudit(p, html) {
+  const k = p.id + ":" + (html || "").length + ":" + (p.updated || 0), c = AUDITS.get(p.id);
+  if (c && c.k === k) return c.a;
+  const a = auditPage(html, { isWebsite: p.type === "website" }); AUDITS.set(p.id, { k, a }); return a;
+}
+
 /* ---------- 4. everything together, best first ---------- */
 export function consult(projects, events, leads, { days = 7 } = {}) {
   const res = projects.map((p) => {
     const home = (p.pages || [])[0] || { html: "" };
-    const a = auditPage(home.html, { isWebsite: p.type === "website" }), m = metrics(events, leads, { pid: p.id, days });
+    const a = cachedAudit(p, home.html), m = metrics(events, leads, { pid: p.id, days });
     const all = [...liveIssues(m), ...a.issues];
     const pts = AREAS.map(([k]) => { const lost = all.filter((i) => i.area === k).reduce((n, i) => n + [0, 6, 14, 26][i.sev], 0); return [k, Math.max(0, 100 - lost)]; });
     const score = Math.round(pts.reduce((n, [, v]) => n + v, 0) / pts.length);

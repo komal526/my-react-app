@@ -1,7 +1,7 @@
-// LaunchBuilder v48 — Consultant.jsx (AI Consultant: ask about your page · plan & create a page · your own API key)
+// LaunchBuilder v52 — Consultant.jsx (AI Consultant: ask about your page · plan & create a page · your own API key)
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "./icons.jsx";
-import { askAI, aiStatus, aiSaveKey, aiRemoveKey, AI_PROVIDERS, AI_PAGE_SYS, parseAiPages, pg } from "../lib.js";
+import { askAI, browserAi, serverAiReady, aiStatus, aiSaveKey, aiRemoveKey, AI_PROVIDERS, AI_PAGE_SYS, parseAiPages, pg } from "../lib.js";
 import { consult, contextFor, areaName } from "./insights.js";
 
 const ASK_SYS = `You are LaunchBuilder's AI Landing Page Performance Consultant. You get ONE user's real page outline, live analytics and an automatic audit.
@@ -42,8 +42,23 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
   const [msgs, setMsgs] = useState([]), [planMsgs, setPlanMsgs] = useState([]);
   const [q, setQ] = useState(""), [busy, setBusy] = useState(""), [err, setErr] = useState(""), [noKey, setNoKey] = useState(false);
   const [st, setSt] = useState(null), [prov, setProv] = useState("claude"), [key, setKey] = useState(""), [model, setModel] = useState(""), [kmsg, setKmsg] = useState("");
-  const [kind, setKind] = useState("landing");
-  const box = useRef(null);
+  const [kind, setKind] = useState("landing"), [ready, setReady] = useState(null), [listen, setListen] = useState(false), [lang, setLang] = useState("en-IN"), [copied, setCopied] = useState(-1);
+  const box = useRef(null), recog = useRef(null), base = useRef("");
+  /* which AI will answer? (shown in the header) */
+  useEffect(() => { if (!open) return; const b = browserAi(integ); serverAiReady().then((ok) => setReady(ok ? "LaunchBuilder AI" : b ? (AI_PROVIDERS.find((p) => p.id === b.provider) || {}).name : "")); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* 🎤 speak instead of typing (Chrome / Edge): English or Hindi */
+  const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  const toggleMic = () => {
+    if (listen) { recog.current && recog.current.stop(); return; }
+    if (!SR) { setErr("Voice typing works in Chrome and Edge. Please type your question here."); return; }
+    const r = new SR(); r.lang = lang; r.interimResults = true; r.continuous = true; base.current = q ? q.trim() + " " : "";
+    r.onresult = (e) => { let t = ""; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; setQ(base.current + t); };
+    r.onerror = (e) => { setErr(e.error === "not-allowed" ? "Microphone permission was blocked. Allow it from the 🔒 icon in the address bar." : e.error === "no-speech" ? "I didn't hear anything — try again." : "Voice typing stopped (" + e.error + ")."); };
+    r.onend = () => setListen(false);
+    recog.current = r; setErr(""); r.start(); setListen(true);
+  };
+  useEffect(() => () => { try { recog.current && recog.current.stop(); } catch { /* ignore */ } }, []);
+  const copy = (t, i) => { try { navigator.clipboard.writeText(t.replace(/\*\*/g, "")); setCopied(i); setTimeout(() => setCopied(-1), 1500); } catch { /* ignore */ } };
   const data = useMemo(() => consult(projects, events, leads, { days: 30 }), [projects, events, leads]);
   const r = data.res.find((x) => x.p.id === pid) || data.res[0];
   const list = tab === "plan" ? planMsgs : msgs, setList = tab === "plan" ? setPlanMsgs : setMsgs;
@@ -56,6 +71,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
 
   const send = async (text, mode = tab) => {
     const t = (text || "").trim(); if (!t || busy) return;
+    if (listen && recog.current) recog.current.stop();
     setQ(""); setErr("");
     const isPlan = mode === "plan", prev = isPlan ? planMsgs : msgs, setL = isPlan ? setPlanMsgs : setMsgs;
     const next = [...prev, { role: "user", content: t }]; setL(next);
@@ -67,12 +83,12 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
     try {
       const sys = isPlan ? PLAN_SYS : ASK_SYS + "\n\n" + contextFor(r);
       const ans = await askAI(integ, sys, next.map(({ role, content }) => ({ role, content })), isPlan ? 1800 : 1200);
-      setL([...next, { role: "assistant", content: ans }]); setNoKey(false);
+      setL([...next, { role: "assistant", content: ans, via: askAI.via }]); setNoKey(false);
       if (daily) { try { const all = JSON.parse(localStorage.getItem(RK(user.email)) || "{}"); all[r.p.id] = { day: today, text: ans }; localStorage.setItem(RK(user.email), JSON.stringify(all)); } catch { /* ignore */ } }
     } catch (e) {
-      if (e.message === "NO_AI_KEY" || /set up publishing|wasn't found|didn't answer|couldn't reach/i.test(e.message)) {
-        setNoKey(true);
-        setL([...next, { role: "assistant", content: isPlan ? "To plan and build pages with AI I need an AI key. Add your own key in **Settings** (it stays encrypted on your server)." : ruleAnswer(r, t), rules: !isPlan }]);
+      if (e.message === "NO_AI_KEY" || /set up publishing|wasn't found|didn't answer|couldn't reach|failed to fetch|network/i.test(e.message)) {
+        setNoKey(e.message === "NO_AI_KEY" ? "No AI key yet." : "The AI couldn't be reached (" + e.message.slice(0, 90) + ").");
+        setL([...next, { role: "assistant", content: isPlan ? "To plan and build pages with AI I need an AI key. Add your Gemini key in **Integrations → AI**, or in **Settings** here (stays encrypted on your server)." : ruleAnswer(r, t), rules: !isPlan }]);
       } else { setErr(e.message); setL(prev); setQ(t); }
     } finally { setBusy(""); }
   };
@@ -104,8 +120,8 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
     <div className="cn-wrap" onClick={onClose}>
       <aside className="cn" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="AI Consultant">
         <header className="cn-top">
-          <span className="cn-av"><Icon n="sparkle" s={18} /></span>
-          <div className="grow"><b>AI Consultant</b><small>Looks at your real page and numbers</small></div>
+          <span className="cn-av"><svg viewBox="0 0 40 40" width="30" height="30" aria-hidden="true"><rect x="6" y="9" width="28" height="22" rx="9" fill="#0f1238" /><rect x="10" y="14" width="20" height="12" rx="6" fill="#060824" /><circle cx="16" cy="20" r="2.6" fill="#7ef0ff" className="cn-eye" /><circle cx="24" cy="20" r="2.6" fill="#7ef0ff" className="cn-eye" /><line x1="20" y1="9" x2="20" y2="4" stroke="#0f1238" strokeWidth="2" /><circle cx="20" cy="4" r="2.2" fill="#0f1238" /></svg></span>
+          <div className="grow"><b>AI Consultant</b><small className={"cn-stat " + (ready === null ? "" : ready ? "ok" : "off")}><i />{ready === null ? "Checking AI…" : ready ? "Online · " + ready : "Audit mode · add an AI key for full answers"}</small></div>
           <button className="cn-x" onClick={onClose} aria-label="Close">✕</button>
         </header>
         <div className="cn-tabs" role="tablist">{[["ask", "Ask about a page"], ["plan", "Plan a new page"], ["settings", "Settings"]].map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => { setTab(k); setErr(""); }}>{l}</button>)}</div>
@@ -114,6 +130,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
           <h4>Your AI key (optional)</h4>
           <p className="mut">Without a key, LaunchBuilder's own AI answers (with a daily limit) when it's switched on. With your own key you get unlimited answers, billed by your AI company.</p>
           <div className="cn-lock"><Icon n="check" s={14} /> Your key is <b>encrypted on your server</b> and never sent back to the browser.</div>
+          {browserAi(integ) && <div className="cn-saved"><div><b>✓ {(AI_PROVIDERS.find((p) => p.id === browserAi(integ).provider) || {}).name} key found in Integrations → AI</b><small>Used when the server has no key. For the safest setup, save it here instead (encrypted on your server).</small></div></div>}
           {st && st.own ? <div className="cn-saved"><div><b>{(AI_PROVIDERS.find((p) => p.id === st.own.provider) || {}).name}</b><small>{st.own.model} · key ending …{st.own.last4}</small></div>
             <button onClick={async () => { try { await aiRemoveKey(integ); setSt((s) => ({ ...s, own: null })); setKmsg("Key removed."); } catch (e) { setKmsg("✗ " + e.message); } }}>Remove</button></div> : null}
           <label>AI company<select value={prov} onChange={(e) => setProv(e.target.value)}>{AI_PROVIDERS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
@@ -139,18 +156,21 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
             </div>}
             {!list.length && tab === "plan" && <div className="cn-hello"><p>Tell me what you want to build — your business, who it's for and what visitors should do. I'll ask a few questions, suggest ideas, write a plan, and then build the page for you.</p>
               <div className="cn-ex">{["A landing page for my ₹499 astrology workshop on Sunday", "A website for my dental clinic in Mohali", "A webinar sign-up page for an AI course"].map((x) => <button key={x} onClick={() => send(x, "plan")}>{x}</button>)}</div></div>}
-            {list.map((m, i) => <div key={i} className={"cn-msg " + m.role}>{m.role === "assistant" ? <><Md text={m.content} />{m.cached && <small className="cn-note">Today's review · saved so it's free to reopen</small>}{m.rules && <small className="cn-note">From the automatic audit</small>}</> : <p>{m.content}</p>}</div>)}
+            {list.map((m, i) => <div key={i} className={"cn-row " + m.role}>{m.role === "assistant" && <span className="cn-mav"><Icon n="sparkle" s={13} /></span>}<div className={"cn-msg " + m.role}>{m.role === "assistant" ? <><Md text={m.content} />
+              <div className="cn-mf">{m.cached ? <small>Today's review · saved, free to reopen</small> : m.rules ? <small>From the automatic audit</small> : m.via ? <small>{m.via}</small> : <small />}<button className="cn-copy" onClick={() => copy(m.content, i)}>{copied === i ? "✓ Copied" : "Copy"}</button></div></> : <p>{m.content}</p>}</div></div>)}
             {busy && tab !== "settings" && <div className="cn-msg assistant cn-busy"><i /><i /><i /><span>{busy}</span></div>}
-            {noKey && <div className="cn-nokey">For full AI answers, <button className="link" onClick={() => setTab("settings")}>add your AI key</button>.</div>}
+            {noKey && <div className="cn-nokey"><b>{noKey}</b> Add your Gemini key in <b>Integrations → AI</b> or <button className="link" onClick={() => setTab("settings")}>here in Settings</button> to get full AI answers.</div>}
           </div>
 
           {planReady && !busy && <div className="cn-build"><div className="cn-kind">{[["landing", "Landing page"], ["website", "Website"]].map(([k, l]) => <button key={k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}>{l}</button>)}</div>
             <button className="pri" onClick={build}><Icon n="sparkle" s={15} /> Create this page</button></div>}
           {err && <p className="cn-err">{err}</p>}
-          {tab === "ask" && !busy && <div className="cn-chips">{QUESTIONS.map((x) => <button key={x} onClick={() => send(x)}>{x}</button>)}</div>}
-          <form className="cn-in" onSubmit={(e) => { e.preventDefault(); send(q); }}>
-            <textarea rows={1} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(q); } }} placeholder={tab === "plan" ? "Describe your page, or answer the questions…" : "Ask about this page…"} />
-            <button className="pri" disabled={!q.trim() || !!busy} aria-label="Send">➤</button>
+          {tab === "ask" && !busy && <div className="cn-chips">{(list.length ? QUESTIONS.slice(1, 4) : QUESTIONS).map((x) => <button key={x} onClick={() => send(x)}>{x}</button>)}</div>}
+          <form className={"cn-in" + (listen ? " rec" : "")} onSubmit={(e) => { e.preventDefault(); send(q); }}>
+            <button type="button" className={"cn-mic" + (listen ? " on" : "")} onClick={toggleMic} title={listen ? "Stop listening" : "Speak your question"} aria-label={listen ? "Stop listening" : "Speak your question"}><Icon n="mic" s={18} /></button>
+            <div className="cn-field"><textarea rows={1} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(q); } }} placeholder={listen ? "Listening… speak now" : tab === "plan" ? "Describe your page, or answer the questions…" : "Ask about this page…"} />
+              <select value={lang} onChange={(e) => setLang(e.target.value)} title="Voice language" aria-label="Voice language" disabled={listen}><option value="en-IN">EN</option><option value="hi-IN">हिं</option></select></div>
+            <button className="pri cn-send" disabled={!q.trim() || !!busy} aria-label="Send"><Icon n="send" s={17} /></button>
           </form>
         </>}
       </aside>

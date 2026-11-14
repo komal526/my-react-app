@@ -190,8 +190,8 @@ export default function Dashboard({ user, onLogout }) {
   const patchHtml = (id, pid, html) => setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, updated: Date.now(), pages: p.pages.map((x) => (x.id === pid ? { ...x, html } : x)) } : p)));
   const patchPages = (id, fn) => setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, updated: Date.now(), pages: fn(p.pages) } : p)));
   const full = () => projects.length >= LIMIT && (alert(`Free plan allows ${LIMIT} projects. Delete one to add another.`), true);
-  const create = (name, pages, type) => {
-    const p = { id: uid(), name, type, status: "draft", slug: slugify(name), domain: "", pages, updated: Date.now(), versions: [] };
+  const create = (name, pages, type, tpl) => {
+    const p = { id: uid(), name, type, status: "draft", slug: slugify(name), domain: "", pages, updated: Date.now(), created: Date.now(), versions: [], ...(tpl ? { tpl } : {}) };
     setProjects((ps) => [p, ...ps]); setOpenId(p.id); setModal(null); setView("pages");
   };
   const startNew = (kind) => !full() && setModal({ type: "new", kind: kind === "website" ? "website" : "landing" });
@@ -227,7 +227,7 @@ export default function Dashboard({ user, onLogout }) {
 
   const applyTpl = async (t) => {
     if (full()) return;
-    if (t.file) { try { create(t.name, [pg("Home", "index.html", await loadTemplateHtml(t))], t.type); } catch (e) { alert(e.message); } return; }
+    if (t.file) { try { create(t.name, [pg("Home", "index.html", await loadTemplateHtml(t))], t.type, t.key); } catch (e) { alert(e.message); } return; }
     create(t.mine ? t.name + " (copy)" : t.name, t.make(t.name), t.type);
   };
   const evs = useMemo(() => resolveEvents(events, projects), [events, projects]);

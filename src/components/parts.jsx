@@ -24,17 +24,41 @@ export function Modal({ children, onClose }) {
 
 // Small live preview of a page (no scripts run inside it)
 /* images further down a preview only load if they come into view */
-const lazyImgs = (h) => String(h || "").replace(/<img\b(?![^>]*\bloading=)/gi, '<img loading="lazy" decoding="async" ');
-/* project preview: renders only when it scrolls into view and the browser is idle */
-export function Thumb({ html }) {
-  const ref = useRef(null), [on, setOn] = useState(false);
+/* ---------- fast project previews ----------
+   · scripts, web fonts and animations are removed (not needed at thumbnail size)
+   · at most 2 previews load at the same time, top ones first
+   · a template picture (or a light skeleton) shows instantly while the real page draws */
+const TH_CACHE = new Map();
+const THUMB_CSS = "<style>*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}[class*=reveal],[class*=fade],[class*=animate],[data-aos],[data-anim],.in-view,.hidden-up{opacity:1!important;transform:none!important;visibility:visible!important}html,body{overflow:hidden!important}</style>";
+export const thumbHtml = (h) => {
+  h = String(h || ""); const k = h.length + ":" + h.slice(0, 80) + h.slice(-80);
+  if (TH_CACHE.has(k)) return TH_CACHE.get(k);
+  const out = h.replace(/<script\b[\s\S]*?<\/script>/gi, "")
+    .replace(/<link\b[^>]*fonts\.(googleapis|gstatic)\.com[^>]*>/gi, "").replace(/@import\s+url\([^)]*fonts\.googleapis[^)]*\);?/gi, "")
+    .replace(/<link\b[^>]*rel=["']?preconnect[^>]*>/gi, "")
+    .replace(/<img\b(?![^>]*\bloading=)/gi, '<img loading="lazy" decoding="async" ')
+    .replace(/<\/head>/i, THUMB_CSS + "</head>");
+  if (TH_CACHE.size > 60) TH_CACHE.delete(TH_CACHE.keys().next().value);
+  TH_CACHE.set(k, out); return out;
+};
+const TQ = { busy: 0, wait: [] };
+const tqNext = () => { while (TQ.busy < 2 && TQ.wait.length) { TQ.wait.sort((a, b) => a.y() - b.y()); const j = TQ.wait.shift(); TQ.busy++; j.go(); } };
+const tqDone = () => { TQ.busy = Math.max(0, TQ.busy - 1); tqNext(); };
+export function Thumb({ html, img }) {
+  const ref = useRef(null), [on, setOn] = useState(false), done = useRef(false);
   useEffect(() => {
     const el = ref.current; if (!el || on) return;
-    if (!("IntersectionObserver" in window)) { setOn(true); return; }
-    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); (window.requestIdleCallback || ((f) => setTimeout(f, 150)))(() => setOn(true)); } }, { rootMargin: "250px" });
-    io.observe(el); return () => io.disconnect();
+    let job = null;
+    const start = () => { job = { y: () => (ref.current ? ref.current.getBoundingClientRect().top : 1e9), go: () => setOn(true) }; TQ.wait.push(job); tqNext(); };
+    if (!("IntersectionObserver" in window)) { start(); return; }
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); start(); } }, { rootMargin: "300px" });
+    io.observe(el);
+    return () => { io.disconnect(); if (job) { const i = TQ.wait.indexOf(job); if (i >= 0) TQ.wait.splice(i, 1); } };
   }, [on]);
-  return <div className="thumb" ref={ref}><div className="thumb-ph" />{on && <iframe title="preview" srcDoc={lazyImgs(html)} sandbox="" tabIndex={-1} onLoad={(e) => e.currentTarget.classList.add("on")} />}</div>;
+  useEffect(() => () => { if (on && !done.current) tqDone(); }, [on]);
+  const loaded = (e) => { e.currentTarget.classList.add("on"); if (!done.current) { done.current = true; tqDone(); } };
+  const src = useMemo(() => (on ? thumbHtml(html) : ""), [on, html]);
+  return <div className="thumb" ref={ref}>{img ? <img className="thumb-img" src={img} alt="" decoding="async" /> : <div className="thumb-ph" />}{on && <iframe title="preview" srcDoc={src} sandbox="" tabIndex={-1} loading="eager" onLoad={loaded} />}</div>;
 }
 
 

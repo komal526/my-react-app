@@ -220,7 +220,7 @@ export async function callAI(ai, system, prompt, maxTokens = 12000) {
     j = await r.json(); if (!r.ok) throw new Error((j.error && j.error.message) || r.statusText);
     text = (j.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
   } else if (pr.id === "gemini") {
-    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens } }) });
+    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens } }) });
     j = await r.json(); if (!r.ok) throw new Error((j.error && j.error.message) || r.statusText);
     text = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map((p) => p.text || "").join("");
   } else {
@@ -343,13 +343,29 @@ export async function syncServerEvents(email, integ, projects = []) {
 }
 
 /* AI Consultant — asks the AI through YOUR server. Your API key stays encrypted on the server and never reaches the browser. */
+/* the AI key saved in Integrations → AI (this browser) */
+export const browserAi = (integ) => {
+  let ai = integ && integ.ai;
+  if (!ai) { try { const E = JSON.parse(localStorage.getItem("lb_session") || "{}").email; ai = (JSON.parse(localStorage.getItem("lb_integrations_" + E) || "{}") || {}).ai; } catch { /* ignore */ } }
+  if (!ai || !ai.keys) return null;
+  const pr = AI_PROVIDERS.find((p) => p.id === ai.provider && ai.keys[p.id]) || AI_PROVIDERS.find((p) => ai.keys[p.id]);
+  return pr ? { ...ai, provider: pr.id } : null;
+};
+/* order: your server (your encrypted key, or the platform Gemini key) → the key saved in Integrations → AI */
 export async function askAI(integ, system, messages, max = 1500) {
-  try { return (await phpCall(srvFor(integ), { action: "ai", system, messages, max })).text; }
-  catch (e) {
-    if (/NO_AI_KEY/.test(e.message)) throw new Error("NO_AI_KEY");
-    throw e;
+  let srvErr = null;
+  try { const j = await phpCall(srvFor(integ), { action: "ai", system, messages, max }); askAI.via = j.source === "own" ? "your server key" : "LaunchBuilder AI"; return j.text; }
+  catch (e) { srvErr = e; }
+  const ai = browserAi(integ);
+  if (ai) {
+    const talk = messages.length === 1 ? messages[0].content : messages.map((m) => (m.role === "assistant" ? "ASSISTANT: " : "USER: ") + m.content).join("\n\n") + "\n\nASSISTANT:";
+    const t = await callAI(ai, system, talk, max); askAI.via = (AI_PROVIDERS.find((p) => p.id === ai.provider) || {}).name + " · Integrations key"; return t;
   }
+  if (/NO_AI_KEY/.test(srvErr.message)) throw new Error("NO_AI_KEY");
+  throw srvErr;
 }
+askAI.via = "";
+export const aiAvailable = async () => !!browserAi() || (await serverAiReady());
 export const aiStatus = (integ) => phpCall(srvFor(integ), { action: "aistatus" });
 /* is AI available without a browser key? (cached for the session) */
 let _srvAi = null;

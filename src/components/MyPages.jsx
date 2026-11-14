@@ -2,10 +2,12 @@
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { Thumb } from "./parts.jsx";
 import { Icon } from "./icons.jsx";
-import { addr, LIMIT, FILE_TEMPLATES, FEATURED_TPL, longThumb, fuDue, serverAiReady, askAI } from "../lib.js";
+import { addr, LIMIT, FILE_TEMPLATES, FEATURED_TPL, longThumb, fuDue, aiAvailable, askAI, tplUrl } from "../lib.js";
 import { metrics, consult, areaName } from "./insights.js";
 import { BRAND } from "../brand.js";
 const Legal = lazy(() => import("./Legal.jsx"));
+const BASE = import.meta.env.BASE_URL || "/";
+const tplImg = (p) => { const t = FILE_TEMPLATES.find((x) => x.key === p.tpl || x.name === p.name); return t && t.thumb ? BASE + t.thumb : ""; };
 
 const DAY = 864e5;
 /* numbers that count up when the dashboard opens */
@@ -82,22 +84,49 @@ function SmartInsights({ events, leads, onAsk, onAnalytics, onGo }) {
 /* ---------- AI Consultant: a robot that keeps checking your pages and live numbers, and tells you what to fix ---------- */
 function Robot({ mood = "ok" }) {
   return (
-    <svg className={"rb rb-" + mood} viewBox="0 0 140 160" aria-hidden="true">
-      <defs><linearGradient id="rbBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2a2f86" /><stop offset="1" stopColor="#0f1238" /></linearGradient>
-        <radialGradient id="rbGlow"><stop offset="0" stopColor="#f5b301" stopOpacity=".55" /><stop offset="1" stopColor="#f5b301" stopOpacity="0" /></radialGradient></defs>
-      <ellipse cx="70" cy="150" rx="40" ry="6" className="rb-shadow" />
-      <g className="rb-float">
-        <circle cx="70" cy="70" r="62" fill="url(#rbGlow)" className="rb-halo" />
-        <line x1="70" y1="22" x2="70" y2="8" stroke="#c9cbf0" strokeWidth="3" strokeLinecap="round" /><circle cx="70" cy="7" r="5" className="rb-ant" />
-        <rect x="26" y="22" width="88" height="62" rx="22" fill="url(#rbBody)" stroke="#f5b301" strokeWidth="2.5" />
-        <rect x="36" y="33" width="68" height="40" rx="14" fill="#060824" />
-        <g className="rb-eyes"><rect x="47" y="45" width="14" height="16" rx="7" fill="#ffd35c" /><rect x="79" y="45" width="14" height="16" rx="7" fill="#ffd35c" /></g>
-        <path d="M58 66 Q70 72 82 66" stroke="#ffd35c" strokeWidth="2.5" fill="none" strokeLinecap="round" className="rb-mouth" />
-        <rect x="18" y="44" width="9" height="20" rx="4" fill="#f5b301" /><rect x="113" y="44" width="9" height="20" rx="4" fill="#f5b301" />
-        <rect x="40" y="90" width="60" height="44" rx="16" fill="url(#rbBody)" stroke="#f5b301" strokeWidth="2.5" />
-        <circle cx="70" cy="111" r="9" fill="#060824" stroke="#ffd35c" strokeWidth="2" /><path d="M71 104l-5 8h5l-1 6 5-8h-5z" fill="#ffd35c" className="rb-core" />
-        <g className="rb-arm-l"><rect x="22" y="94" width="14" height="30" rx="7" fill="#1d2165" stroke="#f5b301" strokeWidth="2" /></g>
-        <g className="rb-arm-r"><rect x="104" y="94" width="14" height="30" rx="7" fill="#1d2165" stroke="#f5b301" strokeWidth="2" /></g>
+    <svg className={"rb2 rb2-" + mood} viewBox="0 0 230 230" aria-hidden="true">
+      <defs>
+        <linearGradient id="r2W" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".6" stopColor="#eef0fb" /><stop offset="1" stopColor="#cfd4ee" /></linearGradient>
+        <linearGradient id="r2V" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#23285e" /><stop offset="1" stopColor="#070923" /></linearGradient>
+        <linearGradient id="r2P" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#8b7bff" /><stop offset="1" stopColor="#5b3df0" /></linearGradient>
+        <linearGradient id="r2S" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#a78bfa" stopOpacity=".95" /><stop offset="1" stopColor="#6d28d9" stopOpacity=".9" /></linearGradient>
+        <radialGradient id="r2G" cx=".5" cy=".5" r=".5"><stop offset="0" stopColor="#c4b5fd" stopOpacity=".9" /><stop offset=".55" stopColor="#a78bfa" stopOpacity=".35" /><stop offset="1" stopColor="#a78bfa" stopOpacity="0" /></radialGradient>
+        <filter id="r2Glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      {/* glowing platform */}
+      <ellipse cx="112" cy="200" rx="100" ry="26" fill="url(#r2G)" className="r2-pad" />
+      <ellipse cx="112" cy="200" rx="78" ry="16" fill="none" stroke="#c4b5fd" strokeWidth="2.5" className="r2-ring" />
+      <ellipse cx="112" cy="200" rx="58" ry="11" fill="none" stroke="#ede9fe" strokeWidth="1.5" opacity=".8" />
+      {/* floating chart badges */}
+      <g className="r2-b1"><rect x="6" y="84" width="30" height="28" rx="8" fill="url(#r2P)" opacity=".9" /><path d="M14 104v-5M21 104v-9M28 104v-13" stroke="#fff" strokeWidth="3" strokeLinecap="round" /></g>
+      <g className="r2-b2"><rect x="184" y="26" width="34" height="30" rx="9" fill="url(#r2P)" opacity=".85" /><path d="M193 48v-5M201 48v-10M209 48v-15" stroke="#fff" strokeWidth="3" strokeLinecap="round" /></g>
+      <g className="r2-float">
+        {/* body */}
+        <path d="M66 128c0-14 18-22 46-22s46 8 46 22v40c0 14-20 22-46 22s-46-8-46-22z" fill="url(#r2W)" stroke="#d7dbf0" />
+        <ellipse cx="112" cy="140" rx="13" ry="9" fill="#e4e7f7" />
+        {/* left arm + laptop with live chart */}
+        <path d="M70 136c-14 6-22 22-18 38" stroke="url(#r2W)" strokeWidth="15" strokeLinecap="round" fill="none" />
+        <g transform="rotate(-12 118 160)" className="r2-lap">
+          <rect x="82" y="138" width="74" height="48" rx="7" fill="url(#r2S)" stroke="#c4b5fd" strokeWidth="1.5" />
+          <rect x="88" y="144" width="62" height="36" rx="4" fill="#5b21b6" opacity=".45" />
+          <g className="r2-bars"><rect x="96" y="164" width="7" height="12" rx="1.5" fill="#fff" /><rect x="107" y="158" width="7" height="18" rx="1.5" fill="#fff" /><rect x="118" y="152" width="7" height="24" rx="1.5" fill="#fff" /><rect x="129" y="147" width="7" height="29" rx="1.5" fill="#fff" /></g>
+          <rect x="76" y="186" width="86" height="6" rx="3" fill="#ddd6fe" />
+        </g>
+        <circle cx="64" cy="176" r="9" fill="url(#r2W)" stroke="#d7dbf0" />
+        {/* right arm pointing up */}
+        <g className="r2-point">
+          <path d="M154 132c14-4 22-18 24-34" stroke="url(#r2W)" strokeWidth="14" strokeLinecap="round" fill="none" />
+          <circle cx="178" cy="94" r="9" fill="url(#r2W)" stroke="#d7dbf0" />
+          <rect x="175" y="70" width="7" height="20" rx="3.5" fill="url(#r2W)" stroke="#d7dbf0" />
+        </g>
+        {/* head + headphones */}
+        <path d="M58 60a50 50 0 0 1 100 0" stroke="#1f2a6b" strokeWidth="7" fill="none" strokeLinecap="round" />
+        <ellipse cx="108" cy="66" rx="50" ry="44" fill="url(#r2W)" stroke="#d7dbf0" />
+        <rect x="46" y="50" width="20" height="34" rx="10" fill="#26307a" /><rect x="50" y="56" width="10" height="22" rx="5" fill="#4f5fd6" />
+        <rect x="150" y="50" width="20" height="34" rx="10" fill="#26307a" /><rect x="156" y="56" width="10" height="22" rx="5" fill="#4f5fd6" />
+        <rect x="72" y="44" width="72" height="46" rx="23" fill="url(#r2V)" />
+        <path d="M80 52q14-6 28-4" stroke="#fff" strokeOpacity=".18" strokeWidth="4" strokeLinecap="round" fill="none" />
+        <g className="r2-eyes" filter="url(#r2Glow)"><path d="M88 69q7-8 14 0" /><path d="M114 69q7-8 14 0" /><path d="M99 78q9 6 18 0" className="r2-mouth" /></g>
       </g>
     </svg>
   );
@@ -122,7 +151,7 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
     const RK = "lb_aireview_" + (user.email || ""), day = new Date().toDateString();
     try { const c = JSON.parse(localStorage.getItem(RK) || "{}")._dash; if (c && c.day === day) { setDaily(c.text); return; } } catch { /* ignore */ }
     let off = false;
-    serverAiReady().then((ok) => {
+    aiAvailable().then((ok) => {
       if (!ok || off) return;
       const ctx = res.slice(0, 4).map((r) => `${r.p.name}: score ${r.score}, ${r.m.visitors} visitors, ${r.m.clicks} clicks, ${r.m.subs} sign-ups. Issues: ${r.issues.slice(0, 4).map((i) => i.title).join("; ")}`).join("\n");
       askAI({}, "You are a landing page performance consultant. Give the single most valuable action for today in max 30 words, starting with a verb. Use the real numbers. No preamble.", [{ role: "user", content: ctx + (due ? `\nAlso ${due} lead follow-ups are due.` : "") }], 200)
@@ -141,7 +170,9 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
       <div className="ai-body">
         <div className="ai-bot">
           <Robot mood={urgent ? "alert" : top.length ? "ok" : "happy"} />
-          <div className="ai-say">{daily && <small>Today's tip</small>}{say}</div>
+          <div className="ai-say">{daily ? <><b>Today's tip</b><span>{daily}</span></> : <><b>{!res.length ? "Hi, I'm your AI Consultant!" : "Your AI Consultant is here!"}</b>
+            <span>{!res.length ? "Create your first page and I'll start checking it." : top.length ? <>I checked <em>{res.length} page{res.length > 1 ? "s" : ""}</em> and know what to improve{urgent ? <> — <em className="hot">{urgent} urgent</em></> : null}!</> : <>I checked <em>{res.length} page{res.length > 1 ? "s" : ""}</em> — everything looks good!</>}</span>
+            <small>Get AI-powered suggestions to boost your conversions.</small></>}</div>
           {due > 0 && <button className="ai-due" onClick={() => onConsult({ go: "followups" })}><Icon n="clock" s={13} />{due} follow-up{due > 1 ? "s" : ""} due</button>}
         </div>
         <div className="ai-tips">
@@ -156,8 +187,8 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
         </div>
       </div>
       <div className="ai-foot">
-        <button className="ai-btn" onClick={() => onConsult({ tab: "ask", ask: "Give me today's top 3 fixes" })}><Icon n="sparkle" s={15} /> Today's AI review</button>
-        <button className="ai-btn y" onClick={() => onConsult({ tab: "plan" })}><Icon n="wand" s={15} /> Plan a page with AI</button>
+        <button className="ai-btn" onClick={() => onConsult({ tab: "ask", ask: "Give me today's top 3 fixes" })}><Icon n="sparkle" s={16} /><span>Today's AI review</span><Icon n="chev" s={16} /></button>
+        <button className="ai-btn y" onClick={() => onConsult({ tab: "plan" })}><Icon n="wand" s={16} /><span>Plan a page with AI</span><Icon n="chev" s={16} /></button>
       </div>
     </div>
   );
@@ -165,14 +196,17 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
 
 /* ---------- the animated "AI core" that links the consultant to the templates ---------- */
 function AiLink() {
-  const L = ["M0 18 C 40 18, 40 50, 60 50", "M0 38 C 30 38, 36 50, 60 50", "M0 62 C 30 62, 36 50, 60 50", "M0 82 C 40 82, 40 50, 60 50"];
+  /* dotted lines (yellow & violet) run from both cards into the core */
+  const L = [[40, "#f5b301"], [95, "#8b5cf6"], [160, "#f5b301"], [225, "#8b5cf6"], [280, "#f5b301"]];
+  const path = (y) => `M0 ${y} C 56 ${y}, 60 160, 92 160`;
   return (
     <div className="ai-link" aria-hidden="true">
-      <svg viewBox="0 0 120 100" preserveAspectRatio="none">
-        {L.map((d, i) => <g key={i}><path d={d} className="al-base" /><path d={d} className="al-flow" style={{ animationDelay: i * -0.6 + "s" }} /></g>)}
-        {L.map((d, i) => <g key={"r" + i} transform="translate(120 0) scale(-1 1)"><path d={d} className="al-base" /><path d={d} className="al-flow r" style={{ animationDelay: i * -0.45 + "s" }} /></g>)}
+      <svg className="al-lines" viewBox="0 0 220 320" preserveAspectRatio="none">
+        {L.map(([y, c], i) => <path key={i} d={path(y)} stroke={c} className="al-dot" style={{ animationDelay: i * -0.5 + "s" }} />)}
+        {L.map(([y], i) => <path key={"r" + i} d={path(y)} transform="translate(220 0) scale(-1 1)" stroke={i % 2 ? "#f5b301" : "#8b5cf6"} className="al-dot r" style={{ animationDelay: i * -0.4 + "s" }} />)}
       </svg>
-      <div className="al-core"><i className="al-ring" /><i className="al-ring b" /><span className="al-orb"><Icon n="bolt" s={26} /></span></div>
+      <svg className="al-rsvg" viewBox="0 0 160 160"><g className="al-rings"><circle cx="80" cy="80" r="72" className="al-c1" /><circle cx="80" cy="80" r="58" className="al-c2" /><circle cx="80" cy="80" r="46" className="al-c3" /></g></svg>
+      <div className="al-core"><i className="al-ring b" /><span className="al-orb"><Icon n="bolt" s={30} /></span></div>
       <b className="al-lab">AI CORE</b>
     </div>
   );
@@ -185,13 +219,16 @@ function FeaturedTpl({ onUse, onAll }) {
   useEffect(() => { const f = () => row.current && row.current.querySelectorAll(".ft-shot").forEach((b) => b.style.setProperty("--fth", b.clientHeight + "px")); f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
   return (
     <div className="db-card ft">
-      <div className="db-ch"><h3>Start with a proven landing page</h3><button className="link" onClick={onAll}>All templates →</button></div>
+      <div className="db-ch"><h3 className="ft-h"><span className="ft-hi"><Icon n="grid" s={20} /></span>Start with a proven landing page</h3><button className="link" onClick={onAll}>All templates →</button></div>
       <div className="ft-row" ref={row}>{list.map((t, i) => (
         <div key={t.key} className="ft-c" style={{ "--d": i * 0.06 + "s", "--i": i }}>
-          <button className="ft-shot" onMouseEnter={(e) => e.currentTarget.style.setProperty("--fth", e.currentTarget.clientHeight + "px")} onFocus={(e) => e.currentTarget.style.setProperty("--fth", e.currentTarget.clientHeight + "px")} onClick={() => { setBusy(t.key); Promise.resolve(onUse(t)).finally(() => setBusy("")); }} aria-label={"Use " + t.name}>
+          <div className="ft-shot" tabIndex={0} onMouseEnter={(e) => e.currentTarget.style.setProperty("--fth", e.currentTarget.clientHeight + "px")} onFocus={(e) => e.currentTarget.style.setProperty("--fth", e.currentTarget.clientHeight + "px")}>
             <img src={longThumb(t)} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.src = (import.meta.env.BASE_URL || "/") + t.thumb; e.currentTarget.classList.add("short"); }} />
-            <span className="ft-use">{busy === t.key ? "Opening…" : "Use this template"}</span>
-          </button>
+            <div className="ft-acts">
+              <button className="ft-use" onClick={() => { setBusy(t.key); Promise.resolve(onUse(t)).finally(() => setBusy("")); }} aria-label={"Use " + t.name}>{busy === t.key ? "Opening…" : "＋ Use"}</button>
+              <a className="ft-pv" href={tplUrl(t)} target="_blank" rel="noopener" title="Preview in a new tab" aria-label={"Preview " + t.name + " in a new tab"}><Icon n="external" s={15} /></a>
+            </div>
+          </div>
           <b>{t.name}</b><small>{t.cat}</small>
         </div>))}</div>
     </div>
@@ -233,6 +270,14 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
   const typed = mode === "website" || (mode === "all" && kind === "website") ? projects.filter((p) => p.type === "website") : mode === "landing" || (mode === "all" && kind === "landing") ? projects.filter((p) => p.type !== "website") : projects;
   const matching = typed.filter((p) => (filter === "All" || p.status === filter.toLowerCase()) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
   const shown = mode === "dash" && !query ? [...matching].sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 3) : matching;
+  /* draw 12 cards first, the rest as you scroll (keeps the page instant with many projects) */
+  const [limit, setLimit] = useState(12), more = useRef(null);
+  useEffect(() => { setLimit(12); }, [mode, filter, query, kind]);
+  useEffect(() => {
+    const el = more.current; if (!el || limit >= shown.length) return;
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) setLimit((n) => n + 12); }, { rootMargin: "600px" });
+    io.observe(el); return () => io.disconnect();
+  }, [limit, shown.length]);
 
   /* ---------- numbers for the dashboard ---------- */
   const st = useMemo(() => {
@@ -259,9 +304,9 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
         <div className="empty"><b>{typed.length ? "Nothing matches" : mode === "website" ? "No websites yet" : mode === "landing" ? "No landing pages yet" : "Nothing here yet"}</b><p className="mut">Create one from a template, with AI, or import an existing HTML file.</p>
           <button className="pri" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ Create new</button> <button onClick={onImport}>Import HTML</button></div>
       ) : (
-        <div className={mode === "dash" && !query ? "grid pc-grid" : "grid"}>{shown.map((p) => (
+        <div className={mode === "dash" && !query ? "grid pc-grid" : "grid"}>{shown.slice(0, limit).map((p) => (
           <div key={p.id} className="card" onClick={() => onOpen(p.id)} onContextMenu={(e) => { e.preventDefault(); setMenu(p.id); }} title="Click to edit · right-click for more">
-            <Thumb html={p.pages[0].html} />
+            <Thumb html={p.pages[0].html} img={tplImg(p)} />
             <div className="cb">
               <div className="ct"><b>{p.name}</b></div>
               <div className={"pc-st " + (p.status === "published" ? "on" : "")}><i />{p.status === "published" ? "Published" : "Draft"}<span className="mut">· {p.domain || (p.status === "published" ? addr(p) : "not live yet")}</span></div>
@@ -294,6 +339,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
         <button className="pri big" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ New {mode === "website" ? "website" : mode === "landing" ? "landing page" : "project"}</button></div>
       {mode === "all" && <div className="pj-kinds">{[["all", "All projects", projects.length, "layers"], ["website", "Websites", nWeb, "globe"], ["landing", "Landing pages", nLand, "pages"]].map(([k, l, n, ic]) => (
         <button key={k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}><Icon n={ic} s={16} /><b>{l}</b><em>{n}</em></button>))}</div>}
+      {shown.length > limit && <div ref={more} className="pc-more">Loading more projects…</div>}
       {list}
     </div>
   );
