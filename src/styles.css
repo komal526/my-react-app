@@ -3225,3 +3225,104 @@ html.lb-hidden .rb *,html.lb-hidden .al-flow,html.lb-hidden .al-ring{animation-p
 @media (max-width:1500px){.dash .ai-link svg.al-rsvg{width:130px!important;height:130px!important}}
 .dash .ft-acts .ft-use{min-width:0!important;overflow:hidden;text-overflow:ellipsis;font-size:12.5px!important}
 .dash .ft-acts{left:6px;right:6px;bottom:6px}
+
+/* ===================== v53 ===================== */
+/* robot: yellow + navy, clear smooth motion */
+.rb3{width:172px;height:auto;overflow:visible;margin:-8px 0 -12px}
+.r3-float{animation:r3Float 3.2s ease-in-out infinite}
+@keyframes r3Float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.r3-head{transform-box:fill-box;transform-origin:50% 90%;animation:r3Tilt 6s ease-in-out infinite}
+@keyframes r3Tilt{0%,40%,100%{transform:rotate(0)}50%{transform:rotate(-5deg)}62%{transform:rotate(4deg)}74%{transform:rotate(0)}}
+.r3-eyes path{fill:none;stroke:#7ef0ff;stroke-width:4.4;stroke-linecap:round}
+.r3-eyes{transform-box:fill-box;transform-origin:center;animation:r3Blink 4.2s infinite}
+@keyframes r3Blink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}}
+.rb3-alert .r3-eyes path{stroke:#ffb020}
+.r3-core{animation:r3Core 2.4s ease-in-out infinite}
+@keyframes r3Core{0%,100%{fill:#b07d00;filter:drop-shadow(0 0 6px #f5b301)}50%{fill:#1e3a8a;filter:drop-shadow(0 0 7px #3b82f6)}}
+.r3-point{transform-box:view-box;transform-origin:154px 132px;animation:r3Wave 3s ease-in-out infinite}
+@keyframes r3Wave{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}50%{transform:rotate(4deg)}75%{transform:rotate(-8deg)}}
+.r3-bars rect{transform-box:fill-box;transform-origin:bottom;fill:#ffd35c;animation:r3Bar 1.8s ease-in-out infinite}
+.r3-bars rect:nth-child(even){fill:#7ef0ff}
+.r3-bars rect:nth-child(2){animation-delay:.15s}.r3-bars rect:nth-child(3){animation-delay:.3s}.r3-bars rect:nth-child(4){animation-delay:.45s}
+@keyframes r3Bar{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+.r3-orbit{animation:r3Orbit 3s linear infinite}@keyframes r3Orbit{to{stroke-dashoffset:-36}}
+.r3-pad{animation:r3Pad 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}@keyframes r3Pad{50%{opacity:.55;transform:scale(1.06)}}
+.r3-b1{animation:r3Bob 2.8s ease-in-out infinite}.r3-b2{animation:r3Bob 3.2s ease-in-out -1s infinite}
+@keyframes r3Bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.r3-b3{transform-box:fill-box;transform-origin:center;animation:r3Twinkle 1.8s ease-in-out infinite}
+@keyframes r3Twinkle{0%,100%{transform:scale(.6) rotate(0);opacity:.5}50%{transform:scale(1.15) rotate(45deg);opacity:1}}
+.scanning .r3-eyes{animation:r3Look 1.4s ease-in-out}@keyframes r3Look{30%{transform:translateX(-5px)}70%{transform:translateX(5px)}}
+
+/* AI card: shorter */
+.dash .ai-card{padding:16px 18px!important;gap:8px!important}
+.dash .ai-body{grid-template-columns:180px minmax(0,1fr)!important;gap:14px!important}
+.dash .ai-say{padding:10px 12px!important}
+.dash .ai-say b{font-size:13.5px}.dash .ai-say span{font-size:12.5px}.dash .ai-say small{font-size:11px;margin-top:4px}
+.dash .ai-tips{gap:7px}
+.dash .ai-tip{padding:8px 10px!important;align-items:center}
+.dash .ai-tip p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:2px 0 4px!important}
+.dash .ai-acts{gap:4px}
+.dash .ai-btn{padding:10px 14px!important;font-size:13.5px!important}
+@media (max-width:1400px){.dash .ai-body{grid-template-columns:150px minmax(0,1fr)!important}.rb3{width:146px}}
+@media (max-width:640px){.dash .ai-body{grid-template-columns:1fr!important}}
+
+/* AI CORE v3: clean lines + glowing balls flowing in + ripple */
+.dash .ai-link{overflow:visible!important}
+.dash .ai-link svg.al-lines3{position:absolute;inset:0;overflow:visible}
+.al-l{fill:none;stroke-width:2.2;stroke-opacity:.35;stroke-linecap:round}
+.al-end3{opacity:.9}
+.al-core3{position:relative;width:96px;height:96px;display:grid;place-items:center;z-index:2}
+.al-orb3{position:relative;z-index:2;width:66px;height:66px;border-radius:50%;display:grid;place-items:center;color:#ffd35c;background:radial-gradient(circle at 35% 30%,#2b2f86,#0f1238 70%);box-shadow:0 0 0 3px #f5b301,0 0 24px 6px rgba(245,179,1,.45);animation:al3Pulse 2s ease-in-out infinite}
+.al-orb3 svg{filter:drop-shadow(0 0 6px rgba(245,179,1,.95));animation:al3Bolt 2s ease-in-out infinite}
+@keyframes al3Pulse{50%{box-shadow:0 0 0 3px #f5b301,0 0 40px 12px rgba(245,179,1,.6)}}
+@keyframes al3Bolt{50%{transform:scale(1.12)}}
+.al-rng{position:absolute;inset:6px;border-radius:50%;border:3px solid transparent;border-top-color:#f5b301;border-bottom-color:#3b5bdb;animation:alSpin 2.6s linear infinite}
+.al-wave{position:absolute;inset:14px;border-radius:50%;border:2px solid #f5b301;opacity:0;animation:al3Wave 3s ease-out infinite}
+.al-wave.w2{animation-delay:1s;border-color:#8b5cf6}.al-wave.w3{animation-delay:2s}
+@keyframes al3Wave{0%{transform:scale(.8);opacity:.8}100%{transform:scale(1.9);opacity:0}}
+.al-lab3{position:absolute;left:50%;top:calc(50% + 62px);transform:translateX(-50%);background:#fff;border-radius:999px;padding:4px 12px;font-size:12px;letter-spacing:.14em;color:#3b2fb8;font-weight:800;box-shadow:0 6px 16px -8px rgba(91,61,240,.5);white-space:nowrap}
+
+/* templates: shorter cards, nonstop scroll, buttons always visible */
+.dash .ft-shot{height:250px!important;min-height:0!important;flex:none!important;aspect-ratio:auto!important}
+.dash .ft-reel{position:absolute;left:0;right:0;top:0;animation:ftReel 48s linear infinite;animation-delay:calc(var(--i,0) * -9s)}
+.dash .ft-reel img{position:static!important;display:block;width:100%;height:auto;animation:none!important;scale:1!important;transform:none!important}
+@keyframes ftReel{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+.dash .ft-shot:hover .ft-reel{animation-play-state:paused;scale:1.04;transition:scale .4s}
+.dash .ft-acts{opacity:1!important;transform:none!important;left:6px;right:6px;bottom:6px;gap:5px}
+.dash .ft-acts .ft-use,.dash .ft-pv{height:30px;padding:0 4px!important;display:grid;place-items:center;font-size:12px!important;font-weight:800;border-radius:9px!important;white-space:nowrap;text-decoration:none}
+.dash .ft-acts .ft-use{flex:1;background:#f5b301!important;color:#1b1300!important}
+.dash .ft-pv{flex:1;width:auto!important;background:#0f1238!important;color:#ffd35c!important;border:1px solid rgba(245,179,1,.5)}
+.dash .ft-pv:hover{background:#1d2165!important;color:#fff!important}
+.dash .ft-shot::after{opacity:1!important;height:28%!important}
+.dash .ft-shot{border-color:rgba(245,179,1,.35)!important}
+.dash .ft-shot:hover{border-color:#f5b301!important}
+@media (prefers-reduced-motion:reduce){.dash .ft-reel,.rb3 *,.al-wave,.al-rng{animation:none!important}}
+html.lb-hidden .dash .ft-reel,html.lb-hidden .rb3 *{animation-play-state:paused}
+.dash .db-row2{grid-template-columns:minmax(0,1.3fr) 210px minmax(0,1fr)!important}
+@media (max-width:1500px){.dash .db-row2{grid-template-columns:minmax(0,1.3fr) 160px minmax(0,1fr)!important}}
+.dash .ft-acts>.ft-use,.dash .ft-acts>.ft-pv{flex:1 1 0!important;min-width:0!important;width:auto!important;max-width:none!important;position:static!important;opacity:1!important;transform:none!important;margin:0!important}
+.dash .ft-shot{container-type:inline-size;width:100%!important}
+@container (max-width:150px){.dash .ft-acts{flex-direction:column}.dash .ft-acts>.ft-use,.dash .ft-acts>.ft-pv{flex:0 0 27px!important;height:27px!important;font-size:11.5px!important}}
+@media (max-width:1500px){.dash .ft-h{font-size:15px}.dash .ft-hi{width:30px;height:30px}}
+
+/* v54 — compact AI Consultant */
+.dash .ai-card{padding:14px 16px!important;gap:8px!important}
+.dash .ai-body{grid-template-columns:150px minmax(0,1fr)!important;gap:12px!important}
+.rb3{width:136px!important;margin:-6px 0 -10px!important}
+.dash .ai-bot{gap:6px!important}
+.dash .ai-say{padding:8px 10px!important;border-radius:12px!important}
+.dash .ai-say b{font-size:12.5px!important;margin:0!important}
+.dash .ai-say span{font-size:12px!important;line-height:1.35!important}
+.dash .ai-say small{display:none!important}
+.dash .ai-tips{gap:6px!important}
+.dash .ai-tip{position:relative;display:block!important;padding:7px 10px!important}
+.dash .ai-tt{padding-right:118px;flex-wrap:nowrap!important;min-width:0}
+.dash .ai-tt b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:12.5px!important}
+.dash .ai-tip p{-webkit-line-clamp:1!important;font-size:11.5px!important;margin:2px 0 3px!important}
+.dash .ai-tip small{font-size:10.5px!important;gap:6px!important}
+.dash .ai-acts{position:absolute;top:6px;right:8px;flex-direction:row!important;gap:4px!important}
+.dash .ai-acts button{padding:3px 8px!important;font-size:11px!important;height:24px}
+.dash .ai-btn{padding:8px 12px!important;font-size:13px!important}
+.dash .ai-h h3{font-size:16px}.dash .ai-av{width:40px!important;height:40px!important}
+.dash .ai-score{padding:3px 9px!important}.dash .ai-score b{font-size:18px!important}
+@media (max-width:1400px){.dash .ai-body{grid-template-columns:130px minmax(0,1fr)!important}.rb3{width:120px!important}}

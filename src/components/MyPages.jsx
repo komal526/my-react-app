@@ -84,49 +84,55 @@ function SmartInsights({ events, leads, onAsk, onAnalytics, onGo }) {
 /* ---------- AI Consultant: a robot that keeps checking your pages and live numbers, and tells you what to fix ---------- */
 function Robot({ mood = "ok" }) {
   return (
-    <svg className={"rb2 rb2-" + mood} viewBox="0 0 230 230" aria-hidden="true">
+    <svg className={"rb3 rb3-" + mood} viewBox="0 0 230 230" aria-hidden="true">
       <defs>
-        <linearGradient id="r2W" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".6" stopColor="#eef0fb" /><stop offset="1" stopColor="#cfd4ee" /></linearGradient>
-        <linearGradient id="r2V" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#23285e" /><stop offset="1" stopColor="#070923" /></linearGradient>
-        <linearGradient id="r2P" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#8b7bff" /><stop offset="1" stopColor="#5b3df0" /></linearGradient>
-        <linearGradient id="r2S" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#a78bfa" stopOpacity=".95" /><stop offset="1" stopColor="#6d28d9" stopOpacity=".9" /></linearGradient>
-        <radialGradient id="r2G" cx=".5" cy=".5" r=".5"><stop offset="0" stopColor="#c4b5fd" stopOpacity=".9" /><stop offset=".55" stopColor="#a78bfa" stopOpacity=".35" /><stop offset="1" stopColor="#a78bfa" stopOpacity="0" /></radialGradient>
-        <filter id="r2Glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <linearGradient id="r3W" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".65" stopColor="#eef0fb" /><stop offset="1" stopColor="#c9cfec" /></linearGradient>
+        <linearGradient id="r3Y" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffd35c" /><stop offset="1" stopColor="#e19a00" /></linearGradient>
+        <linearGradient id="r3V" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1e2466" /><stop offset="1" stopColor="#070923" /></linearGradient>
+        <linearGradient id="r3S" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#3b82f6" /><stop offset="1" stopColor="#1e3a8a" /></linearGradient>
+        <radialGradient id="r3G" cx=".5" cy=".5" r=".5"><stop offset="0" stopColor="#ffd35c" stopOpacity=".55" /><stop offset=".6" stopColor="#f5b301" stopOpacity=".18" /><stop offset="1" stopColor="#f5b301" stopOpacity="0" /></radialGradient>
+        <filter id="r3Glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
       </defs>
-      {/* glowing platform */}
-      <ellipse cx="112" cy="200" rx="100" ry="26" fill="url(#r2G)" className="r2-pad" />
-      <ellipse cx="112" cy="200" rx="78" ry="16" fill="none" stroke="#c4b5fd" strokeWidth="2.5" className="r2-ring" />
-      <ellipse cx="112" cy="200" rx="58" ry="11" fill="none" stroke="#ede9fe" strokeWidth="1.5" opacity=".8" />
-      {/* floating chart badges */}
-      <g className="r2-b1"><rect x="6" y="84" width="30" height="28" rx="8" fill="url(#r2P)" opacity=".9" /><path d="M14 104v-5M21 104v-9M28 104v-13" stroke="#fff" strokeWidth="3" strokeLinecap="round" /></g>
-      <g className="r2-b2"><rect x="184" y="26" width="34" height="30" rx="9" fill="url(#r2P)" opacity=".85" /><path d="M193 48v-5M201 48v-10M209 48v-15" stroke="#fff" strokeWidth="3" strokeLinecap="round" /></g>
-      <g className="r2-float">
+      {/* platform: soft yellow glow + orbit rings */}
+      <ellipse cx="112" cy="202" rx="96" ry="22" fill="url(#r3G)" className="r3-pad" />
+      <ellipse cx="112" cy="202" rx="84" ry="17" fill="none" stroke="#f5b301" strokeWidth="2.5" strokeDasharray="10 8" className="r3-orbit" />
+      <ellipse cx="112" cy="202" rx="62" ry="12" fill="none" stroke="#1e2466" strokeOpacity=".35" strokeWidth="2" />
+      {/* floating badges */}
+      <g className="r3-b1"><rect x="4" y="96" width="30" height="28" rx="8" fill="#5b3df0" /><path d="M12 116v-5M19 116v-9M26 116v-13" stroke="#ffd35c" strokeWidth="3" strokeLinecap="round" /></g>
+      <g className="r3-b2"><rect x="186" y="22" width="34" height="30" rx="9" fill="#5b3df0" /><path d="M195 44v-5M203 44v-10M211 44v-15" stroke="#ffd35c" strokeWidth="3" strokeLinecap="round" /></g>
+      <g className="r3-b3"><path d="M20 40l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#f5b301" /></g>
+      <g className="r3-float">
         {/* body */}
-        <path d="M66 128c0-14 18-22 46-22s46 8 46 22v40c0 14-20 22-46 22s-46-8-46-22z" fill="url(#r2W)" stroke="#d7dbf0" />
-        <ellipse cx="112" cy="140" rx="13" ry="9" fill="#e4e7f7" />
-        {/* left arm + laptop with live chart */}
-        <path d="M70 136c-14 6-22 22-18 38" stroke="url(#r2W)" strokeWidth="15" strokeLinecap="round" fill="none" />
-        <g transform="rotate(-12 118 160)" className="r2-lap">
-          <rect x="82" y="138" width="74" height="48" rx="7" fill="url(#r2S)" stroke="#c4b5fd" strokeWidth="1.5" />
-          <rect x="88" y="144" width="62" height="36" rx="4" fill="#5b21b6" opacity=".45" />
-          <g className="r2-bars"><rect x="96" y="164" width="7" height="12" rx="1.5" fill="#fff" /><rect x="107" y="158" width="7" height="18" rx="1.5" fill="#fff" /><rect x="118" y="152" width="7" height="24" rx="1.5" fill="#fff" /><rect x="129" y="147" width="7" height="29" rx="1.5" fill="#fff" /></g>
-          <rect x="76" y="186" width="86" height="6" rx="3" fill="#ddd6fe" />
+        <path d="M66 128c0-14 18-22 46-22s46 8 46 22v40c0 14-20 22-46 22s-46-8-46-22z" fill="url(#r3W)" stroke="#d7dbf0" />
+        {/* chest core: pulses dark yellow ↔ dark blue */}
+        <circle cx="112" cy="132" r="12" fill="#0f1238" stroke="url(#r3Y)" strokeWidth="3" />
+        <circle cx="112" cy="132" r="6.5" className="r3-core" />
+        {/* left arm (yellow joint) + laptop */}
+        <path d="M70 136c-14 6-22 22-18 38" stroke="url(#r3W)" strokeWidth="15" strokeLinecap="round" fill="none" />
+        <circle cx="70" cy="134" r="8" fill="url(#r3Y)" />
+        <g transform="rotate(-12 118 160)">
+          <rect x="82" y="140" width="74" height="48" rx="7" fill="url(#r3S)" stroke="#93c5fd" strokeWidth="1.5" />
+          <g className="r3-bars"><rect x="96" y="166" width="7" height="12" rx="1.5" /><rect x="107" y="160" width="7" height="18" rx="1.5" /><rect x="118" y="154" width="7" height="24" rx="1.5" /><rect x="129" y="148" width="7" height="30" rx="1.5" /></g>
+          <rect x="76" y="188" width="86" height="6" rx="3" fill="#f5b301" />
         </g>
-        <circle cx="64" cy="176" r="9" fill="url(#r2W)" stroke="#d7dbf0" />
-        {/* right arm pointing up */}
-        <g className="r2-point">
-          <path d="M154 132c14-4 22-18 24-34" stroke="url(#r2W)" strokeWidth="14" strokeLinecap="round" fill="none" />
-          <circle cx="178" cy="94" r="9" fill="url(#r2W)" stroke="#d7dbf0" />
-          <rect x="175" y="70" width="7" height="20" rx="3.5" fill="url(#r2W)" stroke="#d7dbf0" />
+        <circle cx="62" cy="178" r="9" fill="url(#r3W)" stroke="#d7dbf0" />
+        {/* right arm waving / pointing up */}
+        <g className="r3-point">
+          <path d="M154 132c14-4 22-18 24-34" stroke="url(#r3W)" strokeWidth="14" strokeLinecap="round" fill="none" />
+          <circle cx="154" cy="132" r="8" fill="url(#r3Y)" />
+          <circle cx="178" cy="94" r="9" fill="url(#r3W)" stroke="#d7dbf0" />
+          <rect x="175" y="70" width="7" height="20" rx="3.5" fill="url(#r3W)" stroke="#d7dbf0" />
         </g>
-        {/* head + headphones */}
-        <path d="M58 60a50 50 0 0 1 100 0" stroke="#1f2a6b" strokeWidth="7" fill="none" strokeLinecap="round" />
-        <ellipse cx="108" cy="66" rx="50" ry="44" fill="url(#r2W)" stroke="#d7dbf0" />
-        <rect x="46" y="50" width="20" height="34" rx="10" fill="#26307a" /><rect x="50" y="56" width="10" height="22" rx="5" fill="#4f5fd6" />
-        <rect x="150" y="50" width="20" height="34" rx="10" fill="#26307a" /><rect x="156" y="56" width="10" height="22" rx="5" fill="#4f5fd6" />
-        <rect x="72" y="44" width="72" height="46" rx="23" fill="url(#r2V)" />
-        <path d="M80 52q14-6 28-4" stroke="#fff" strokeOpacity=".18" strokeWidth="4" strokeLinecap="round" fill="none" />
-        <g className="r2-eyes" filter="url(#r2Glow)"><path d="M88 69q7-8 14 0" /><path d="M114 69q7-8 14 0" /><path d="M99 78q9 6 18 0" className="r2-mouth" /></g>
+        {/* head + yellow headphones */}
+        <g className="r3-head">
+          <path d="M58 62a50 50 0 0 1 100 0" stroke="url(#r3Y)" strokeWidth="8" fill="none" strokeLinecap="round" />
+          <ellipse cx="108" cy="66" rx="50" ry="44" fill="url(#r3W)" stroke="#d7dbf0" />
+          <rect x="44" y="48" width="22" height="38" rx="11" fill="url(#r3Y)" /><rect x="49" y="55" width="12" height="24" rx="6" fill="#0f1238" />
+          <rect x="150" y="48" width="22" height="38" rx="11" fill="url(#r3Y)" /><rect x="155" y="55" width="12" height="24" rx="6" fill="#0f1238" />
+          <rect x="72" y="44" width="72" height="46" rx="23" fill="url(#r3V)" stroke="#f5b301" strokeOpacity=".5" strokeWidth="1.5" />
+          <path d="M80 52q14-6 28-4" stroke="#fff" strokeOpacity=".2" strokeWidth="4" strokeLinecap="round" fill="none" />
+          <g className="r3-eyes" filter="url(#r3Glow)"><path d="M88 69q7-8 14 0" /><path d="M114 69q7-8 14 0" /><path d="M99 78q9 6 18 0" /></g>
+        </g>
       </g>
     </svg>
   );
@@ -194,20 +200,35 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
   );
 }
 
-/* ---------- the animated "AI core" that links the consultant to the templates ---------- */
+/* ---------- the animated "AI core": 3 clean lines from each card, glowing balls flow into the core ---------- */
 function AiLink() {
-  /* dotted lines (yellow & violet) run from both cards into the core */
-  const L = [[40, "#f5b301"], [95, "#8b5cf6"], [160, "#f5b301"], [225, "#8b5cf6"], [280, "#f5b301"]];
-  const path = (y) => `M0 ${y} C 56 ${y}, 60 160, 92 160`;
+  const ref = useRef(null), [sz, setSz] = useState({ w: 170, h: 400 });
+  useEffect(() => {
+    const el = ref.current; if (!el || !window.ResizeObserver) return;
+    const ro = new ResizeObserver(() => setSz({ w: Math.max(80, el.clientWidth), h: Math.max(200, el.clientHeight) })); ro.observe(el); return () => ro.disconnect();
+  }, []);
+  const { w, h } = sz, cx = w / 2, cy = h / 2, R = 36, e = cx - R;
+  const ys = [0.2, 0.5, 0.8].map((f) => h * f);
+  const left = ys.map((y) => `M0 ${y} C ${e * 0.55} ${y}, ${e * 0.45} ${cy}, ${e} ${cy}`);
+  const right = ys.map((y) => `M${w} ${y} C ${w - e * 0.55} ${y}, ${w - e * 0.45} ${cy}, ${w - e} ${cy}`);
+  const col = ["#f5b301", "#3b5bdb", "#f5b301"];
   return (
-    <div className="ai-link" aria-hidden="true">
-      <svg className="al-lines" viewBox="0 0 220 320" preserveAspectRatio="none">
-        {L.map(([y, c], i) => <path key={i} d={path(y)} stroke={c} className="al-dot" style={{ animationDelay: i * -0.5 + "s" }} />)}
-        {L.map(([y], i) => <path key={"r" + i} d={path(y)} transform="translate(220 0) scale(-1 1)" stroke={i % 2 ? "#f5b301" : "#8b5cf6"} className="al-dot r" style={{ animationDelay: i * -0.4 + "s" }} />)}
+    <div className="ai-link" ref={ref} aria-hidden="true">
+      <svg className="al-lines3" width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+        <defs><filter id="alGlow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs>
+        {[...left, ...right].map((d, i) => <path key={i} d={d} className="al-l" stroke={col[i % 3]} />)}
+        {[...left, ...right].map((d, i) => (
+          <circle key={"b" + i} r={i % 3 === 1 ? 5 : 6} fill={col[i % 3]} filter="url(#alGlow)">
+            <animateMotion dur={2.6 + (i % 3) * 0.4 + "s"} begin={(i * 0.45) % 2.6 + "s"} repeatCount="indefinite" path={d} keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.15;.8;1" dur={2.6 + (i % 3) * 0.4 + "s"} begin={(i * 0.45) % 2.6 + "s"} repeatCount="indefinite" />
+          </circle>))}
+        {[...left, ...right].map((d, i) => { const m = d.match(/^M([\d.]+) ([\d.]+)/); return <circle key={"e" + i} cx={m[1]} cy={m[2]} r="4" fill={col[i % 3]} className="al-end3" />; })}
       </svg>
-      <svg className="al-rsvg" viewBox="0 0 160 160"><g className="al-rings"><circle cx="80" cy="80" r="72" className="al-c1" /><circle cx="80" cy="80" r="58" className="al-c2" /><circle cx="80" cy="80" r="46" className="al-c3" /></g></svg>
-      <div className="al-core"><i className="al-ring b" /><span className="al-orb"><Icon n="bolt" s={30} /></span></div>
-      <b className="al-lab">AI CORE</b>
+      <div className="al-core3">
+        <i className="al-wave" /><i className="al-wave w2" /><i className="al-wave w3" />
+        <i className="al-rng" /><span className="al-orb3"><Icon n="bolt" s={30} /></span>
+      </div>
+      <b className="al-lab3">AI CORE</b>
     </div>
   );
 }
@@ -216,17 +237,16 @@ function AiLink() {
 function FeaturedTpl({ onUse, onAll }) {
   const list = FEATURED_TPL.map((k) => FILE_TEMPLATES.find((t) => t.key === k)).filter(Boolean).slice(0, 4);
   const [busy, setBusy] = useState(""), row = useRef(null);
-  useEffect(() => { const f = () => row.current && row.current.querySelectorAll(".ft-shot").forEach((b) => b.style.setProperty("--fth", b.clientHeight + "px")); f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
   return (
     <div className="db-card ft">
       <div className="db-ch"><h3 className="ft-h"><span className="ft-hi"><Icon n="grid" s={20} /></span>Start with a proven landing page</h3><button className="link" onClick={onAll}>All templates →</button></div>
       <div className="ft-row" ref={row}>{list.map((t, i) => (
         <div key={t.key} className="ft-c" style={{ "--d": i * 0.06 + "s", "--i": i }}>
-          <div className="ft-shot" tabIndex={0} onMouseEnter={(e) => e.currentTarget.style.setProperty("--fth", e.currentTarget.clientHeight + "px")} onFocus={(e) => e.currentTarget.style.setProperty("--fth", e.currentTarget.clientHeight + "px")}>
-            <img src={longThumb(t)} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.src = (import.meta.env.BASE_URL || "/") + t.thumb; e.currentTarget.classList.add("short"); }} />
+          <div className="ft-shot">
+            <div className="ft-reel"><img src={longThumb(t)} alt="" loading="lazy" decoding="async" /><img src={longThumb(t)} alt="" loading="lazy" decoding="async" /></div>
             <div className="ft-acts">
-              <button className="ft-use" onClick={() => { setBusy(t.key); Promise.resolve(onUse(t)).finally(() => setBusy("")); }} aria-label={"Use " + t.name}>{busy === t.key ? "Opening…" : "＋ Use"}</button>
-              <a className="ft-pv" href={tplUrl(t)} target="_blank" rel="noopener" title="Preview in a new tab" aria-label={"Preview " + t.name + " in a new tab"}><Icon n="external" s={15} /></a>
+              <button className="ft-use" onClick={() => { setBusy(t.key); Promise.resolve(onUse(t)).finally(() => setBusy("")); }} aria-label={"Use " + t.name}>{busy === t.key ? "Opening…" : "Use"}</button>
+              <a className="ft-pv" href={tplUrl(t)} target="_blank" rel="noopener" aria-label={"Preview " + t.name + " in a new tab"}>Preview</a>
             </div>
           </div>
           <b>{t.name}</b><small>{t.cat}</small>
