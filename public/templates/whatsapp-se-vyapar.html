@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark" id="htmlRoot">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Se Vyapar | Master WhatsApp & Meta Ads Automation</title>
+    <!-- Tailwind CSS CDN -->
+    <style data-tailwind="compiled">
+
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+:root, :host {
+--font-sans: Inter, sans-serif;
+--font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+--font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+"Courier New", monospace;
+--color-emerald-400: oklch(76.5% 0.177 163.223);
+--color-emerald-500: oklch(69.6% 0.17 162.48);
+--color-emerald-600: oklch(59.6% 0.145 163.225);
+--color-emerald-950: oklch(26.2% 0.051 172.552);
+--color-gray-200: oklch(92.8% 0.006 264.531);
+--color-white: #fff;
+--spacing: 0.25rem;
+--container-md: 28rem;
+--container-2xl: 42rem;
+--container-3xl: 48rem;
+--container-4xl: 56rem;
+--container-5xl: 64rem;
+--container-6xl: 72rem;
+--container-7xl: 80rem;
+--text-xs: 0.75rem;
+--text-xs--line-height: calc(1 / 0.75);
+--text-sm: 0.875rem;
+--text-sm--line-height: calc(1.25 / 0.875);
+--text-base: 1rem;
+--text-base--line-height: calc(1.5 / 1);
+--text-lg: 1.125rem;
+--text-lg--line-height: calc(1.75 / 1.125);
+--text-xl: 1.25rem;
+--text-xl--line-height: calc(1.75 / 1.25);
+--text-2xl: 1.5rem;
+--text-2xl--line-height: calc(2 / 1.5);
+--text-3xl: 1.875rem;
+--text-3xl--line-height: calc(2.25 / 1.875);
+--text-4xl: 2.25rem;
+--text-4xl--line-height: calc(2.5 / 2.25);
+--text-5xl: 3rem;
+--text-5xl--line-height: 1;
+--text-6xl: 3.75rem;
+--text-6xl--line-height: 1;
+--font-weight-normal: 400;
+--font-weight-medium: 500;
+--font-weight-semibold: 600;
+--font-weight-bold: 700;
+--font-weight-black: 900;
+--tracking-tighter: -0.05em;
+--tracking-tight: -0.025em;
+--tracking-wide: 0.025em;
+--tracking-wider: 0.05em;
+--tracking-widest: 0.1em;
+--leading-relaxed: 1.625;
+--radius-lg: 0.5rem;
+--radius-xl: 0.75rem;
+--radius-2xl: 1rem;
+--radius-3xl: 1.5rem;
+--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+--animate-ping: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+--animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+--animate-bounce: bounce 1s infinite;
+--blur-md: 12px;
+--default-transition-duration: 150ms;
+--default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+--default-font-family: var(--font-sans);
+--default-mono-font-family: var(--font-mono);
+--color-darkbg: #030805;
+--color-bordercolor: #11291d;
+--color-brandgreen: #00e676;
+--color-brandhover: #00c853;
+}
+}
+@layer base {
+*, ::after, ::before, ::backdrop, ::file-selector-button {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+border: 0 solid;
+}
+html, :host {
+line-height: 1.5;
+-webkit-text-size-adjust: 100%;
+tab-size: 4;
+font-family: var(--default-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+font-feature-settings: var(--default-font-feature-settings, normal);
+font-variation-settings: var(--default-font-variation-settings, normal);
+-webkit-tap-highlight-color: transparent;
+}
+hr {
+height: 0;
+color: inherit;
+border-top-width: 1px;
+}
+abbr:where([title]) {
+-webkit-text-decoration: underline dotted;
+text-decoration: underline dotted;
+}
+h1, h2, h3, h4, h5, h6 {
+font-size: inherit;
+font-weight: inherit;
+}
+a {
+color: inherit;
+-webkit-text-decoration: inherit;
+text-decoration: inherit;
+}
+b, strong {
+font-weight: bolder;
+}
+code, kbd, samp, pre {
+font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+font-feature-settings: var(--default-mono-font-feature-settings, normal);
+font-variation-settings: var(--default-mono-font-variation-settings, normal);
+font-size: 1em;
+}
+small {
+font-size: 80%;
+}
+sub, sup {
+font-size: 75%;
+line-height: 0;
+position: relative;
+vertical-align: baseline;
+}
+sub {
+bottom: -0.25em;
+}
+sup {
+top: -0.5em;
+}
+table {
+text-indent: 0;
+border-color: inherit;
+border-collapse: collapse;
+}
+:-moz-focusring:where(:not(iframe)) {
+outline: auto;
+}
+progress {
+vertical-align: baseline;
+}
+summary {
+display: list-item;
+}
+ol, ul, menu {
+list-style: none;
+}
+img, svg, video, canvas, audio, iframe, embed, object {
+display: block;
+vertical-align: middle;
+}
+img, video {
+max-width: 100%;
+height: auto;
+}
+button, input, select, optgroup, textarea, ::file-selector-button {
+font: inherit;
+font-feature-settings: inherit;
+font-variation-settings: inherit;
+letter-spacing: inherit;
+color: inherit;
+border-radius: 0;
+background-color: transparent;
+opacity: 1;
+}
+:where(select:is([multiple], [size])) optgroup {
+font-weight: bolder;
+}
+:where(select:is([multiple], [size])) optgroup option {
+padding-inline-start: 20px;
+}
+::file-selector-button {
+margin-inline-end: 4px;
+}
+::placeholder {
+opacity: 1;
+}
+@supports (not (-webkit-appearance: -apple-pay-button))  or (contain-intrinsic-size: 1px) {
+::placeholder {
+color: currentcolor;
+@supports (color: color-mix(in lab, red, red)) {
+color: color-mix(in oklab, currentcolor 50%, transparent);
+}
+}
+}
+textarea {
+resize: vertical;
+}
+::-webkit-search-decoration {
+-webkit-appearance: none;
+}
+::-webkit-date-and-time-value {
+min-height: 1lh;
+text-align: inherit;
+}
+::-webkit-datetime-edit {
+display: inline-flex;
+}
+::-webkit-datetime-edit-fields-wrapper {
+padding: 0;
+}
+::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field {
+padding-block: 0;
+}
+::-webkit-calendar-picker-indicator {
+line-height: 1;
+}
+:-moz-ui-invalid {
+box-shadow: none;
+}
+button, input:where([type="button"], [type="reset"], [type="submit"]), ::file-selector-button {
+appearance: button;
+}
+::-webkit-inner-spin-button, ::-webkit-outer-spin-button {
+height: auto;
+}
+[hidden]:where(:not([hidden="until-found"])) {
+display: none !important;
+}
+}
+@layer utilities {
+.absolute {
+position: absolute;
+}
+.relative {
+position: relative;
+}
+.sticky {
+position: sticky;
+}
+.-inset-1 {
+inset: calc(var(--spacing) * -1);
+}
+.inset-y-0 {
+inset-block: 0px;
+}
+.-top-4 {
+top: calc(var(--spacing) * -4);
+}
+.top-0 {
+top: 0px;
+}
+.left-0 {
+left: 0px;
+}
+.left-8 {
+left: calc(var(--spacing) * 8);
+}
+.z-10 {
+z-index: 10;
+}
+.z-50 {
+z-index: 50;
+}
+.mx-auto {
+margin-inline: auto;
+}
+.mt-2 {
+margin-top: calc(var(--spacing) * 2);
+}
+.mt-4 {
+margin-top: calc(var(--spacing) * 4);
+}
+.mb-2 {
+margin-bottom: calc(var(--spacing) * 2);
+}
+.mb-3 {
+margin-bottom: calc(var(--spacing) * 3);
+}
+.mb-4 {
+margin-bottom: calc(var(--spacing) * 4);
+}
+.mb-5 {
+margin-bottom: calc(var(--spacing) * 5);
+}
+.mb-6 {
+margin-bottom: calc(var(--spacing) * 6);
+}
+.mb-10 {
+margin-bottom: calc(var(--spacing) * 10);
+}
+.mb-12 {
+margin-bottom: calc(var(--spacing) * 12);
+}
+.mb-16 {
+margin-bottom: calc(var(--spacing) * 16);
+}
+.block {
+display: block;
+}
+.flex {
+display: flex;
+}
+.grid {
+display: grid;
+}
+.hidden {
+display: none;
+}
+.inline-flex {
+display: inline-flex;
+}
+.h-2 {
+height: calc(var(--spacing) * 2);
+}
+.h-4 {
+height: calc(var(--spacing) * 4);
+}
+.h-5 {
+height: calc(var(--spacing) * 5);
+}
+.h-6 {
+height: calc(var(--spacing) * 6);
+}
+.h-8 {
+height: calc(var(--spacing) * 8);
+}
+.h-10 {
+height: calc(var(--spacing) * 10);
+}
+.h-12 {
+height: calc(var(--spacing) * 12);
+}
+.h-16 {
+height: calc(var(--spacing) * 16);
+}
+.h-20 {
+height: calc(var(--spacing) * 20);
+}
+.h-auto {
+height: auto;
+}
+.max-h-\[220px\] {
+max-height: 220px;
+}
+.min-h-\[calc\(100vh-80px\)\] {
+min-height: calc(100vh - 80px);
+}
+.min-h-screen {
+min-height: 100vh;
+}
+.w-2 {
+width: calc(var(--spacing) * 2);
+}
+.w-4 {
+width: calc(var(--spacing) * 4);
+}
+.w-5 {
+width: calc(var(--spacing) * 5);
+}
+.w-6 {
+width: calc(var(--spacing) * 6);
+}
+.w-8 {
+width: calc(var(--spacing) * 8);
+}
+.w-10 {
+width: calc(var(--spacing) * 10);
+}
+.w-12 {
+width: calc(var(--spacing) * 12);
+}
+.w-16 {
+width: calc(var(--spacing) * 16);
+}
+.w-full {
+width: 100%;
+}
+.max-w-2xl {
+max-width: var(--container-2xl);
+}
+.max-w-3xl {
+max-width: var(--container-3xl);
+}
+.max-w-4xl {
+max-width: var(--container-4xl);
+}
+.max-w-5xl {
+max-width: var(--container-5xl);
+}
+.max-w-6xl {
+max-width: var(--container-6xl);
+}
+.max-w-7xl {
+max-width: var(--container-7xl);
+}
+.max-w-md {
+max-width: var(--container-md);
+}
+.transform {
+transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
+}
+.animate-bounce {
+animation: var(--animate-bounce);
+}
+.animate-ping {
+animation: var(--animate-ping);
+}
+.animate-pulse {
+animation: var(--animate-pulse);
+}
+.grid-cols-1 {
+grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.grid-cols-2 {
+grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.flex-col {
+flex-direction: column;
+}
+.flex-wrap {
+flex-wrap: wrap;
+}
+.items-center {
+align-items: center;
+}
+.justify-between {
+justify-content: space-between;
+}
+.justify-center {
+justify-content: center;
+}
+.gap-2 {
+gap: calc(var(--spacing) * 2);
+}
+.gap-3 {
+gap: calc(var(--spacing) * 3);
+}
+.gap-4 {
+gap: calc(var(--spacing) * 4);
+}
+.gap-6 {
+gap: calc(var(--spacing) * 6);
+}
+.gap-8 {
+gap: calc(var(--spacing) * 8);
+}
+:where(.space-y-4 > :not(:last-child)) {
+--tw-space-y-reverse: 0;
+margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));
+margin-block-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)));
+}
+:where(.space-y-5 > :not(:last-child)) {
+--tw-space-y-reverse: 0;
+margin-block-start: calc(calc(var(--spacing) * 5) * var(--tw-space-y-reverse));
+margin-block-end: calc(calc(var(--spacing) * 5) * calc(1 - var(--tw-space-y-reverse)));
+}
+:where(.space-x-2 > :not(:last-child)) {
+--tw-space-x-reverse: 0;
+margin-inline-start: calc(calc(var(--spacing) * 2) * var(--tw-space-x-reverse));
+margin-inline-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-x-reverse)));
+}
+:where(.space-x-3 > :not(:last-child)) {
+--tw-space-x-reverse: 0;
+margin-inline-start: calc(calc(var(--spacing) * 3) * var(--tw-space-x-reverse));
+margin-inline-end: calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-x-reverse)));
+}
+:where(.space-x-4 > :not(:last-child)) {
+--tw-space-x-reverse: 0;
+margin-inline-start: calc(calc(var(--spacing) * 4) * var(--tw-space-x-reverse));
+margin-inline-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-x-reverse)));
+}
+:where(.space-x-6 > :not(:last-child)) {
+--tw-space-x-reverse: 0;
+margin-inline-start: calc(calc(var(--spacing) * 6) * var(--tw-space-x-reverse));
+margin-inline-end: calc(calc(var(--spacing) * 6) * calc(1 - var(--tw-space-x-reverse)));
+}
+.overflow-hidden {
+overflow: hidden;
+}
+.scroll-smooth {
+scroll-behavior: smooth;
+}
+.rounded-2xl {
+border-radius: var(--radius-2xl);
+}
+.rounded-3xl {
+border-radius: var(--radius-3xl);
+}
+.rounded-full {
+border-radius: calc(infinity * 1px);
+}
+.rounded-lg {
+border-radius: var(--radius-lg);
+}
+.rounded-xl {
+border-radius: var(--radius-xl);
+}
+.border {
+border-style: var(--tw-border-style);
+border-width: 1px;
+}
+.border-t {
+border-top-style: var(--tw-border-style);
+border-top-width: 1px;
+}
+.border-b {
+border-bottom-style: var(--tw-border-style);
+border-bottom-width: 1px;
+}
+.border-bordercolor {
+border-color: var(--color-bordercolor);
+}
+.border-brandgreen {
+border-color: var(--color-brandgreen);
+}
+.bg-brandgreen {
+background-color: var(--color-brandgreen);
+}
+.bg-brandgreen\/20 {
+background-color: color-mix(in srgb, #00e676 20%, transparent);
+@supports (color: color-mix(in lab, red, red)) {
+background-color: color-mix(in oklab, var(--color-brandgreen) 20%, transparent);
+}
+}
+.bg-emerald-600 {
+background-color: var(--color-emerald-600);
+}
+.bg-emerald-950\/40 {
+background-color: color-mix(in srgb, oklch(26.2% 0.051 172.552) 40%, transparent);
+@supports (color: color-mix(in lab, red, red)) {
+background-color: color-mix(in oklab, var(--color-emerald-950) 40%, transparent);
+}
+}
+.bg-emerald-950\/60 {
+background-color: color-mix(in srgb, oklch(26.2% 0.051 172.552) 60%, transparent);
+@supports (color: color-mix(in lab, red, red)) {
+background-color: color-mix(in oklab, var(--color-emerald-950) 60%, transparent);
+}
+}
+.bg-gradient-to-r {
+--tw-gradient-position: to right in oklab;
+background-image: linear-gradient(var(--tw-gradient-stops));
+}
+.bg-gradient-to-tr {
+--tw-gradient-position: to top right in oklab;
+background-image: linear-gradient(var(--tw-gradient-stops));
+}
+.from-brandgreen {
+--tw-gradient-from: var(--color-brandgreen);
+--tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+.from-emerald-400 {
+--tw-gradient-from: var(--color-emerald-400);
+--tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+.from-emerald-500 {
+--tw-gradient-from: var(--color-emerald-500);
+--tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+.from-emerald-600 {
+--tw-gradient-from: var(--color-emerald-600);
+--tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+.to-brandgreen {
+--tw-gradient-to: var(--color-brandgreen);
+--tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+.to-emerald-600 {
+--tw-gradient-to: var(--color-emerald-600);
+--tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+.bg-clip-text {
+background-clip: text;
+}
+.object-cover {
+object-fit: cover;
+}
+.p-2 {
+padding: calc(var(--spacing) * 2);
+}
+.p-2\.5 {
+padding: calc(var(--spacing) * 2.5);
+}
+.p-3 {
+padding: calc(var(--spacing) * 3);
+}
+.p-6 {
+padding: calc(var(--spacing) * 6);
+}
+.p-8 {
+padding: calc(var(--spacing) * 8);
+}
+.px-3\.5 {
+padding-inline: calc(var(--spacing) * 3.5);
+}
+.px-4 {
+padding-inline: calc(var(--spacing) * 4);
+}
+.px-5 {
+padding-inline: calc(var(--spacing) * 5);
+}
+.px-6 {
+padding-inline: calc(var(--spacing) * 6);
+}
+.px-8 {
+padding-inline: calc(var(--spacing) * 8);
+}
+.py-1\.5 {
+padding-block: calc(var(--spacing) * 1.5);
+}
+.py-2\.5 {
+padding-block: calc(var(--spacing) * 2.5);
+}
+.py-3 {
+padding-block: calc(var(--spacing) * 3);
+}
+.py-3\.5 {
+padding-block: calc(var(--spacing) * 3.5);
+}
+.py-4 {
+padding-block: calc(var(--spacing) * 4);
+}
+.py-6 {
+padding-block: calc(var(--spacing) * 6);
+}
+.py-8 {
+padding-block: calc(var(--spacing) * 8);
+}
+.py-10 {
+padding-block: calc(var(--spacing) * 10);
+}
+.py-12 {
+padding-block: calc(var(--spacing) * 12);
+}
+.py-16 {
+padding-block: calc(var(--spacing) * 16);
+}
+.pt-4 {
+padding-top: calc(var(--spacing) * 4);
+}
+.pl-4 {
+padding-left: calc(var(--spacing) * 4);
+}
+.pl-12 {
+padding-left: calc(var(--spacing) * 12);
+}
+.text-center {
+text-align: center;
+}
+.font-serif {
+font-family: var(--font-serif);
+}
+.text-2xl {
+font-size: var(--text-2xl);
+line-height: var(--tw-leading, var(--text-2xl--line-height));
+}
+.text-3xl {
+font-size: var(--text-3xl);
+line-height: var(--tw-leading, var(--text-3xl--line-height));
+}
+.text-base {
+font-size: var(--text-base);
+line-height: var(--tw-leading, var(--text-base--line-height));
+}
+.text-lg {
+font-size: var(--text-lg);
+line-height: var(--tw-leading, var(--text-lg--line-height));
+}
+.text-sm {
+font-size: var(--text-sm);
+line-height: var(--tw-leading, var(--text-sm--line-height));
+}
+.text-xl {
+font-size: var(--text-xl);
+line-height: var(--tw-leading, var(--text-xl--line-height));
+}
+.text-xs {
+font-size: var(--text-xs);
+line-height: var(--tw-leading, var(--text-xs--line-height));
+}
+.text-\[10px\] {
+font-size: 10px;
+}
+.leading-\[1\.1\] {
+--tw-leading: 1.1;
+line-height: 1.1;
+}
+.leading-relaxed {
+--tw-leading: var(--leading-relaxed);
+line-height: var(--leading-relaxed);
+}
+.font-black {
+--tw-font-weight: var(--font-weight-black);
+font-weight: var(--font-weight-black);
+}
+.font-bold {
+--tw-font-weight: var(--font-weight-bold);
+font-weight: var(--font-weight-bold);
+}
+.font-medium {
+--tw-font-weight: var(--font-weight-medium);
+font-weight: var(--font-weight-medium);
+}
+.font-normal {
+--tw-font-weight: var(--font-weight-normal);
+font-weight: var(--font-weight-normal);
+}
+.font-semibold {
+--tw-font-weight: var(--font-weight-semibold);
+font-weight: var(--font-weight-semibold);
+}
+.tracking-tight {
+--tw-tracking: var(--tracking-tight);
+letter-spacing: var(--tracking-tight);
+}
+.tracking-tighter {
+--tw-tracking: var(--tracking-tighter);
+letter-spacing: var(--tracking-tighter);
+}
+.tracking-wide {
+--tw-tracking: var(--tracking-wide);
+letter-spacing: var(--tracking-wide);
+}
+.tracking-wider {
+--tw-tracking: var(--tracking-wider);
+letter-spacing: var(--tracking-wider);
+}
+.tracking-widest {
+--tw-tracking: var(--tracking-widest);
+letter-spacing: var(--tracking-widest);
+}
+.text-brandgreen {
+color: var(--color-brandgreen);
+}
+.text-darkbg {
+color: var(--color-darkbg);
+}
+.text-transparent {
+color: transparent;
+}
+.text-white {
+color: var(--color-white);
+}
+.uppercase {
+text-transform: uppercase;
+}
+.antialiased {
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+.opacity-25 {
+opacity: 25%;
+}
+.opacity-50 {
+opacity: 50%;
+}
+.opacity-60 {
+opacity: 60%;
+}
+.opacity-70 {
+opacity: 70%;
+}
+.opacity-75 {
+opacity: 75%;
+}
+.opacity-80 {
+opacity: 80%;
+}
+.shadow-2xl {
+--tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
+box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-lg {
+--tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-sm {
+--tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-xl {
+--tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 8px 10px -6px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.blur-md {
+--tw-blur: blur(var(--blur-md));
+filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+}
+.grayscale {
+--tw-grayscale: grayscale(100%);
+filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+}
+.backdrop-blur-md {
+--tw-backdrop-blur: blur(var(--blur-md));
+-webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+}
+.transition-all {
+transition-property: all;
+transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+transition-duration: var(--tw-duration, var(--default-transition-duration));
+}
+.transition-transform {
+transition-property: transform, translate, scale, rotate;
+transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+transition-duration: var(--tw-duration, var(--default-transition-duration));
+}
+.duration-300 {
+--tw-duration: 300ms;
+transition-duration: 300ms;
+}
+.duration-500 {
+--tw-duration: 500ms;
+transition-duration: 500ms;
+}
+.ease-in-out {
+--tw-ease: var(--ease-in-out);
+transition-timing-function: var(--ease-in-out);
+}
+@media (hover: hover) {
+.group-hover\:scale-110:is(:where(.group):hover *) {
+--tw-scale-x: 110%;
+--tw-scale-y: 110%;
+--tw-scale-z: 110%;
+scale: var(--tw-scale-x) var(--tw-scale-y);
+}
+.group-hover\:rotate-45:is(:where(.group):hover *) {
+rotate: 45deg;
+}
+.group-hover\:bg-brandgreen:is(:where(.group):hover *) {
+background-color: var(--color-brandgreen);
+}
+.group-hover\:text-darkbg:is(:where(.group):hover *) {
+color: var(--color-darkbg);
+}
+}
+.selection\:bg-brandgreen ::selection {
+background-color: var(--color-brandgreen);
+}
+.selection\:bg-brandgreen::selection {
+background-color: var(--color-brandgreen);
+}
+.selection\:text-darkbg ::selection {
+color: var(--color-darkbg);
+}
+.selection\:text-darkbg::selection {
+color: var(--color-darkbg);
+}
+@media (hover: hover) {
+.hover\:scale-105:hover {
+--tw-scale-x: 105%;
+--tw-scale-y: 105%;
+--tw-scale-z: 105%;
+scale: var(--tw-scale-x) var(--tw-scale-y);
+}
+.hover\:scale-\[1\.01\]:hover {
+scale: 1.01;
+}
+.hover\:scale-\[1\.02\]:hover {
+scale: 1.02;
+}
+.hover\:border-brandgreen:hover {
+border-color: var(--color-brandgreen);
+}
+.hover\:border-brandgreen\/60:hover {
+border-color: color-mix(in srgb, #00e676 60%, transparent);
+}
+@supports (color: color-mix(in lab, red, red)) {
+.hover\:border-brandgreen\/60:hover {
+border-color: color-mix(in oklab, var(--color-brandgreen) 60%, transparent);
+}
+}
+.hover\:bg-brandhover:hover {
+background-color: var(--color-brandhover);
+}
+.hover\:bg-emerald-500:hover {
+background-color: var(--color-emerald-500);
+}
+.hover\:underline:hover {
+text-decoration-line: underline;
+}
+.hover\:grayscale-0:hover {
+--tw-grayscale: grayscale(0%);
+filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+}
+}
+.focus\:border-brandgreen:focus {
+border-color: var(--color-brandgreen);
+}
+.focus\:outline-none:focus {
+--tw-outline-style: none;
+outline-style: none;
+}
+@media (width >= 40rem) {
+.sm\:inline {
+display: inline;
+}
+.sm\:max-h-\[250px\] {
+max-height: 250px;
+}
+.sm\:grid-cols-4 {
+grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.sm\:flex-row {
+flex-direction: row;
+}
+.sm\:gap-3 {
+gap: calc(var(--spacing) * 3);
+}
+.sm\:gap-16 {
+gap: calc(var(--spacing) * 16);
+}
+.sm\:p-12 {
+padding: calc(var(--spacing) * 12);
+}
+.sm\:px-6 {
+padding-inline: calc(var(--spacing) * 6);
+}
+.sm\:py-3 {
+padding-block: calc(var(--spacing) * 3);
+}
+.sm\:py-24 {
+padding-block: calc(var(--spacing) * 24);
+}
+.sm\:text-2xl {
+font-size: var(--text-2xl);
+line-height: var(--tw-leading, var(--text-2xl--line-height));
+}
+.sm\:text-4xl {
+font-size: var(--text-4xl);
+line-height: var(--tw-leading, var(--text-4xl--line-height));
+}
+.sm\:text-5xl {
+font-size: var(--text-5xl);
+line-height: var(--tw-leading, var(--text-5xl--line-height));
+}
+.sm\:text-base {
+font-size: var(--text-base);
+line-height: var(--tw-leading, var(--text-base--line-height));
+}
+.sm\:text-lg {
+font-size: var(--text-lg);
+line-height: var(--tw-leading, var(--text-lg--line-height));
+}
+}
+@media (width >= 48rem) {
+.md\:grid-cols-2 {
+grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.md\:grid-cols-3 {
+grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+}
+@media (width >= 64rem) {
+.lg\:grid-cols-3 {
+grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.lg\:px-8 {
+padding-inline: calc(var(--spacing) * 8);
+}
+.lg\:py-10 {
+padding-block: calc(var(--spacing) * 10);
+}
+.lg\:text-6xl {
+font-size: var(--text-6xl);
+line-height: var(--tw-leading, var(--text-6xl--line-height));
+}
+}
+}
+@layer base {
+*,::after,::before {
+border-color: var(--color-gray-200,#e5e7eb);
+}
+button:not(:disabled),[role=button]:not(:disabled) {
+cursor: pointer;
+}
+}
+@property --tw-rotate-x {
+syntax: "*";
+inherits: false;
+}
+@property --tw-rotate-y {
+syntax: "*";
+inherits: false;
+}
+@property --tw-rotate-z {
+syntax: "*";
+inherits: false;
+}
+@property --tw-skew-x {
+syntax: "*";
+inherits: false;
+}
+@property --tw-skew-y {
+syntax: "*";
+inherits: false;
+}
+@property --tw-space-y-reverse {
+syntax: "*";
+inherits: false;
+initial-value: 0;
+}
+@property --tw-space-x-reverse {
+syntax: "*";
+inherits: false;
+initial-value: 0;
+}
+@property --tw-border-style {
+syntax: "*";
+inherits: false;
+initial-value: solid;
+}
+@property --tw-gradient-position {
+syntax: "*";
+inherits: false;
+}
+@property --tw-gradient-from {
+syntax: "<color>";
+inherits: false;
+initial-value: #0000;
+}
+@property --tw-gradient-via {
+syntax: "<color>";
+inherits: false;
+initial-value: #0000;
+}
+@property --tw-gradient-to {
+syntax: "<color>";
+inherits: false;
+initial-value: #0000;
+}
+@property --tw-gradient-stops {
+syntax: "*";
+inherits: false;
+}
+@property --tw-gradient-via-stops {
+syntax: "*";
+inherits: false;
+}
+@property --tw-gradient-from-position {
+syntax: "<length-percentage>";
+inherits: false;
+initial-value: 0%;
+}
+@property --tw-gradient-via-position {
+syntax: "<length-percentage>";
+inherits: false;
+initial-value: 50%;
+}
+@property --tw-gradient-to-position {
+syntax: "<length-percentage>";
+inherits: false;
+initial-value: 100%;
+}
+@property --tw-leading {
+syntax: "*";
+inherits: false;
+}
+@property --tw-font-weight {
+syntax: "*";
+inherits: false;
+}
+@property --tw-tracking {
+syntax: "*";
+inherits: false;
+}
+@property --tw-shadow {
+syntax: "*";
+inherits: false;
+initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+syntax: "*";
+inherits: false;
+}
+@property --tw-shadow-alpha {
+syntax: "<percentage>";
+inherits: false;
+initial-value: 100%;
+}
+@property --tw-inset-shadow {
+syntax: "*";
+inherits: false;
+initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+syntax: "*";
+inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+syntax: "<percentage>";
+inherits: false;
+initial-value: 100%;
+}
+@property --tw-ring-color {
+syntax: "*";
+inherits: false;
+}
+@property --tw-ring-shadow {
+syntax: "*";
+inherits: false;
+initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+syntax: "*";
+inherits: false;
+}
+@property --tw-inset-ring-shadow {
+syntax: "*";
+inherits: false;
+initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+syntax: "*";
+inherits: false;
+}
+@property --tw-ring-offset-width {
+syntax: "<length>";
+inherits: false;
+initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+syntax: "*";
+inherits: false;
+initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+syntax: "*";
+inherits: false;
+initial-value: 0 0 #0000;
+}
+@property --tw-blur {
+syntax: "*";
+inherits: false;
+}
+@property --tw-brightness {
+syntax: "*";
+inherits: false;
+}
+@property --tw-contrast {
+syntax: "*";
+inherits: false;
+}
+@property --tw-grayscale {
+syntax: "*";
+inherits: false;
+}
+@property --tw-hue-rotate {
+syntax: "*";
+inherits: false;
+}
+@property --tw-invert {
+syntax: "*";
+inherits: false;
+}
+@property --tw-opacity {
+syntax: "*";
+inherits: false;
+}
+@property --tw-saturate {
+syntax: "*";
+inherits: false;
+}
+@property --tw-sepia {
+syntax: "*";
+inherits: false;
+}
+@property --tw-drop-shadow {
+syntax: "*";
+inherits: false;
+}
+@property --tw-drop-shadow-color {
+syntax: "*";
+inherits: false;
+}
+@property --tw-drop-shadow-alpha {
+syntax: "<percentage>";
+inherits: false;
+initial-value: 100%;
+}
+@property --tw-drop-shadow-size {
+syntax: "*";
+inherits: false;
+}
+@property --tw-backdrop-blur {
+syntax: "*";
+inherits: false;
+}
+@property --tw-backdrop-brightness {
+syntax: "*";
+inherits: false;
+}
+@property --tw-backdrop-contrast {
+syntax: "*";
+inherits: false;
+}
+@property --tw-backdrop-grayscale {
+syntax: "*";
+inherits: false;
+}
+@property --tw-backdrop-hue-rotate {
+syntax: "*";
+inherits: false;
+}
+@property --tw-backdrop-invert {
+syntax: "*";
+inherits: false;
+}
+@property --tw-backdrop-opacity {
+syntax: "*";
+inherits: false;
+}
+@property --tw-backdrop-saturate {
+syntax: "*";
+inherits: false;
+}
+@property --tw-backdrop-sepia {
+syntax: "*";
+inherits: false;
+}
+@property --tw-duration {
+syntax: "*";
+inherits: false;
+}
+@property --tw-ease {
+syntax: "*";
+inherits: false;
+}
+@property --tw-scale-x {
+syntax: "*";
+inherits: false;
+initial-value: 1;
+}
+@property --tw-scale-y {
+syntax: "*";
+inherits: false;
+initial-value: 1;
+}
+@property --tw-scale-z {
+syntax: "*";
+inherits: false;
+initial-value: 1;
+}
+@keyframes ping {
+75%, 100% {
+transform: scale(2);
+opacity: 0;
+}
+}
+@keyframes pulse {
+50% {
+opacity: 0.5;
+}
+}
+@keyframes bounce {
+0%, 100% {
+transform: translateY(-25%);
+animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+}
+50% {
+transform: none;
+animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+}
+@layer properties {
+@supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+*, ::before, ::after, ::backdrop {
+--tw-rotate-x: initial;
+--tw-rotate-y: initial;
+--tw-rotate-z: initial;
+--tw-skew-x: initial;
+--tw-skew-y: initial;
+--tw-space-y-reverse: 0;
+--tw-space-x-reverse: 0;
+--tw-border-style: solid;
+--tw-gradient-position: initial;
+--tw-gradient-from: #0000;
+--tw-gradient-via: #0000;
+--tw-gradient-to: #0000;
+--tw-gradient-stops: initial;
+--tw-gradient-via-stops: initial;
+--tw-gradient-from-position: 0%;
+--tw-gradient-via-position: 50%;
+--tw-gradient-to-position: 100%;
+--tw-leading: initial;
+--tw-font-weight: initial;
+--tw-tracking: initial;
+--tw-shadow: 0 0 #0000;
+--tw-shadow-color: initial;
+--tw-shadow-alpha: 100%;
+--tw-inset-shadow: 0 0 #0000;
+--tw-inset-shadow-color: initial;
+--tw-inset-shadow-alpha: 100%;
+--tw-ring-color: initial;
+--tw-ring-shadow: 0 0 #0000;
+--tw-inset-ring-color: initial;
+--tw-inset-ring-shadow: 0 0 #0000;
+--tw-ring-inset: initial;
+--tw-ring-offset-width: 0px;
+--tw-ring-offset-color: #fff;
+--tw-ring-offset-shadow: 0 0 #0000;
+--tw-blur: initial;
+--tw-brightness: initial;
+--tw-contrast: initial;
+--tw-grayscale: initial;
+--tw-hue-rotate: initial;
+--tw-invert: initial;
+--tw-opacity: initial;
+--tw-saturate: initial;
+--tw-sepia: initial;
+--tw-drop-shadow: initial;
+--tw-drop-shadow-color: initial;
+--tw-drop-shadow-alpha: 100%;
+--tw-drop-shadow-size: initial;
+--tw-backdrop-blur: initial;
+--tw-backdrop-brightness: initial;
+--tw-backdrop-contrast: initial;
+--tw-backdrop-grayscale: initial;
+--tw-backdrop-hue-rotate: initial;
+--tw-backdrop-invert: initial;
+--tw-backdrop-opacity: initial;
+--tw-backdrop-saturate: initial;
+--tw-backdrop-sepia: initial;
+--tw-duration: initial;
+--tw-ease: initial;
+--tw-scale-x: 1;
+--tw-scale-y: 1;
+--tw-scale-z: 1;
+}
+}
+}
+</style>
+    
+    <!-- Google Fonts & Lucide Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Dark Mode Styles */
+        .dark body {
+            background-color: #030805;
+            color: #ffffff;
+        }
+        .dark .dynamic-bg {
+            background: radial-gradient(circle at 15% 20%, rgba(0, 230, 118, 0.12) 0%, transparent 45%),
+                        radial-gradient(circle at 85% 80%, rgba(0, 200, 83, 0.08) 0%, transparent 45%),
+                        #030805;
+        }
+        .dark .dynamic-card {
+            background-color: #08140e;
+            border-color: #11291d;
+        }
+        .dark .dynamic-header {
+            background-color: rgba(3, 8, 5, 0.85);
+            border-color: #11291d;
+        }
+
+        /* Light Mode Styles */
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .dynamic-bg {
+            background: radial-gradient(circle at 15% 20%, rgba(0, 230, 118, 0.08) 0%, transparent 45%),
+                        radial-gradient(circle at 85% 80%, rgba(0, 200, 83, 0.05) 0%, transparent 45%),
+                        #f8fafc;
+        }
+        .dynamic-card {
+            background-color: #ffffff;
+            border-color: #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+        .dynamic-header {
+            background-color: rgba(248, 250, 252, 0.85);
+            border-color: #e2e8f0;
+        }
+
+        /* Floating Bubbles & Spheres Animation (Matching Reference Style) */
+        .bubble-container {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .floating-bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(0, 230, 118, 0.35), rgba(0, 100, 50, 0.05) 70%);
+            box-shadow: inset 0 0 20px rgba(0, 230, 118, 0.3), 0 0 30px rgba(0, 230, 118, 0.1);
+            animation: floatBubble 12s ease-in-out infinite alternate;
+        }
+
+        .bubble-1 { width: 320px; height: 320px; top: 10%; left: -80px; animation-duration: 14s; }
+        .bubble-2 { width: 180px; height: 180px; top: 60%; right: 5%; animation-duration: 9s; animation-delay: -2s; }
+        .bubble-3 { width: 100px; height: 100px; top: 25%; right: 15%; animation-duration: 7s; animation-delay: -4s; }
+        .bubble-4 { width: 140px; height: 140px; bottom: 15%; left: 10%; animation-duration: 11s; animation-delay: -1s; }
+
+        @keyframes floatBubble {
+            0% { transform: translateY(0px) translateX(0px) scale(1); }
+            50% { transform: translateY(-30px) translateX(20px) scale(1.05); }
+            100% { transform: translateY(25px) translateX(-15px) scale(0.95); }
+        }
+
+        /* Glowing Effects */
+        .glow-green {
+            box-shadow: 0 0 35px rgba(0, 230, 118, 0.25);
+        }
+        .glow-green-sm {
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
+        }
+        .glow-text {
+            text-shadow: 0 0 20px rgba(0, 230, 118, 0.35);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: inherit;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00e676;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="dynamic-bg min-h-screen antialiased selection:bg-brandgreen selection:text-darkbg">
+
+    <!-- Floating Background Bubbles (Reference Style) -->
+    <div class="bubble-container">
+        <div class="floating-bubble bubble-1"></div>
+        <div class="floating-bubble bubble-2"></div>
+        <div class="floating-bubble bubble-3"></div>
+        <div class="floating-bubble bubble-4"></div>
+    </div>
+
+    <!-- Sticky Header with Theme Toggle -->
+    <header class="sticky top-0 z-50 backdrop-blur-md dynamic-header border-b transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-brandgreen flex items-center justify-center glow-green-sm">
+                    <i data-lucide="message-square" class="w-5 h-5 text-darkbg font-bold"></i>
+                </div>
+                <span class="text-xl sm:text-2xl font-black tracking-tight">WhatsApp Se <span class="text-brandgreen">Vyapar</span></span>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <!-- Light/Dark Theme Toggle Button (Right Side) -->
+                <button onclick="toggleTheme()" class="p-2.5 rounded-xl dynamic-card border transition-all hover:border-brandgreen group" aria-label="Toggle Theme">
+                    <i id="themeIcon" data-lucide="sun" class="w-5 h-5 text-brandgreen group-hover:rotate-45 transition-transform duration-300"></i>
+                </button>
+
+                <a href="#register" class="bg-brandgreen hover:bg-brandhover text-darkbg font-bold px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl transition-all duration-300 transform hover:scale-105 glow-green-sm flex items-center space-x-2 text-sm sm:text-base">
+                    <span>Reserve Free Seat</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section (Fits perfectly in single screen & features small banner image) -->
+    <section class="relative min-h-[calc(100vh-80px)] flex flex-col justify-center py-6 lg:py-10 px-4 sm:px-6 lg:px-8 overflow-hidden z-10">
+        <div class="max-w-7xl mx-auto w-full relative">
+            
+            <!-- Top Badges -->
+            <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-3">
+                <div class="inline-flex items-center space-x-2 dynamic-card border px-3.5 py-1.5 rounded-full text-xs font-medium shadow-sm">
+                    <span class="flex h-2 w-2 rounded-full bg-brandgreen animate-ping"></span>
+                    <span class="text-brandgreen font-semibold">100% FREE</span>
+                    <span class="opacity-70">· Limited Seats · Live Training</span>
+                </div>
+                <div class="inline-flex items-center space-x-2 dynamic-card border px-3.5 py-1.5 rounded-full text-xs opacity-80">
+                    <span>🇮🇳 Live in Hindi + English · No Coding Required</span>
+                </div>
+            </div>
+
+            <!-- Heading & Subtitle -->
+            <div class="text-center max-w-4xl mx-auto mb-5">
+                <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] mb-3">
+                    Get 100+ Leads & Sales Every Single <br class="hidden sm:inline">
+                    Day — <span class="text-brandgreen glow-text bg-gradient-to-r from-emerald-400 to-brandgreen bg-clip-text text-transparent">Using WhatsApp Automation</span>
+                </h1>
+                <p class="text-xs sm:text-base opacity-80 max-w-2xl mx-auto font-normal leading-relaxed">
+                    In this 90-minute live webinar, <span class="text-brandgreen font-semibold">Shushant</span> shows you the exact WhatsApp API system Indian businesses use to pull 100+ leads a day, 3x replies, recover 40%+ abandoned carts and close sales on autopilot.
+                </p>
+            </div>
+
+            <!-- SMALL HERO IMAGE BANNER -->
+            <div class="max-w-2xl mx-auto mb-5 relative">
+                <div class="absolute -inset-1 bg-gradient-to-r from-brandgreen to-emerald-600 rounded-2xl blur-md opacity-25 animate-pulse"></div>
+                <div class="relative dynamic-card border rounded-2xl p-2 shadow-xl overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1611746872915-64382b5c76da?auto=format&fit=crop&w=1200&q=80" alt="Meta Ads to WhatsApp Transformation" class="w-full h-auto max-h-[220px] sm:max-h-[250px] object-cover rounded-xl transform transition-transform duration-500 hover:scale-[1.01]">
+                </div>
+            </div>
+
+            <!-- CTA Button -->
+            <div class="text-center mb-6">
+                <a href="#register" class="inline-flex items-center space-x-3 bg-gradient-to-r from-emerald-500 to-brandgreen text-darkbg font-black text-base sm:text-lg px-8 py-3.5 rounded-xl transition-all duration-300 transform hover:scale-105 glow-green shadow-xl">
+                    <span>Reserve My Free Seat →</span>
+                </a>
+            </div>
+
+            <!-- Compact Event Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto">
+                <div class="dynamic-card border p-3 rounded-xl flex items-center space-x-3">
+                    <div class="text-brandgreen bg-emerald-950/40 p-2 rounded-lg"><i data-lucide="calendar" class="w-5 h-5"></i></div>
+                    <div>
+                        <div class="text-[10px] opacity-60 uppercase font-semibold">Date</div>
+                        <div class="text-sm font-bold">Today</div>
+                    </div>
+                </div>
+                <div class="dynamic-card border p-3 rounded-xl flex items-center space-x-3">
+                    <div class="text-brandgreen bg-emerald-950/40 p-2 rounded-lg"><i data-lucide="clock" class="w-5 h-5"></i></div>
+                    <div>
+                        <div class="text-[10px] opacity-60 uppercase font-semibold">Time</div>
+                        <div class="text-sm font-bold">7:00 PM IST</div>
+                    </div>
+                </div>
+                <div class="dynamic-card border p-3 rounded-xl flex items-center space-x-3">
+                    <div class="text-brandgreen bg-emerald-950/40 p-2 rounded-lg"><i data-lucide="users" class="w-5 h-5"></i></div>
+                    <div>
+                        <div class="text-[10px] opacity-60 uppercase font-semibold">Format</div>
+                        <div class="text-sm font-bold">Live + Q&A</div>
+                    </div>
+                </div>
+                <div class="dynamic-card border p-3 rounded-xl flex items-center space-x-3">
+                    <div class="text-brandgreen bg-emerald-950/40 p-2 rounded-lg"><i data-lucide="video" class="w-5 h-5"></i></div>
+                    <div>
+                        <div class="text-[10px] opacity-60 uppercase font-semibold">Platform</div>
+                        <div class="text-sm font-bold">Live on Zoom</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- As Featured In -->
+    <section class="py-10 px-4 text-center border-t border-b dynamic-card relative z-10">
+        <p class="text-xs font-semibold tracking-widest uppercase opacity-60 mb-6">As Featured In</p>
+        <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-8 sm:gap-16 opacity-75 grayscale hover:grayscale-0 transition-all">
+            <span class="text-xl sm:text-2xl font-black tracking-tighter">StartupDaily</span>
+            <span class="text-xl sm:text-2xl font-bold tracking-tight">Growth Weekly</span>
+            <span class="text-xl sm:text-2xl font-serif font-bold">Biz Times</span>
+            <span class="text-xl sm:text-2xl font-bold tracking-wide">Founder Mag</span>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="py-16 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <span class="dynamic-card border text-brandgreen px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">How It Works</span>
+                <h2 class="text-3xl sm:text-4xl font-black mt-4 tracking-tight">From signup to live in 3 simple steps</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="dynamic-card border p-8 rounded-3xl relative group hover:border-brandgreen transition-all">
+                    <div class="absolute -top-4 left-8 bg-brandgreen text-darkbg w-8 h-8 rounded-full font-black flex items-center justify-center text-sm shadow-lg">1</div>
+                    <div class="w-12 h-12 bg-emerald-950/60 border border-bordercolor rounded-xl flex items-center justify-center text-brandgreen mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Reserve your seat</h3>
+                    <p class="opacity-70 text-sm leading-relaxed">Takes 30 seconds. 100% free — limited seats available for entrepreneurs.</p>
+                </div>
+
+                <div class="dynamic-card border p-8 rounded-3xl relative group hover:border-brandgreen transition-all">
+                    <div class="absolute -top-4 left-8 bg-brandgreen text-darkbg w-8 h-8 rounded-full font-black flex items-center justify-center text-sm shadow-lg">2</div>
+                    <div class="w-12 h-12 bg-emerald-950/60 border border-bordercolor rounded-xl flex items-center justify-center text-brandgreen mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="message-circle" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Join WhatsApp community</h3>
+                    <p class="opacity-70 text-sm leading-relaxed">Get instant access to live updates, resource kits and reminders.</p>
+                </div>
+
+                <div class="dynamic-card border p-8 rounded-3xl relative group hover:border-brandgreen transition-all">
+                    <div class="absolute -top-4 left-8 bg-brandgreen text-darkbg w-8 h-8 rounded-full font-black flex items-center justify-center text-sm shadow-lg">3</div>
+                    <div class="w-12 h-12 bg-emerald-950/60 border border-bordercolor rounded-xl flex items-center justify-center text-brandgreen mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="video" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Join the live webinar</h3>
+                    <p class="opacity-70 text-sm leading-relaxed">90 min power training + open live Q&A session directly with Shushant.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="py-16 px-4 sm:px-6 lg:px-8 dynamic-card border-t border-b relative z-10">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="text-brandgreen text-xs font-bold tracking-widest uppercase dynamic-card border px-4 py-1.5 rounded-full">Practical Training</span>
+                <h2 class="text-3xl sm:text-4xl font-black mt-4 tracking-tight">Built for founders, marketers, and agency owners.</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="dynamic-card border p-8 rounded-3xl hover:border-brandgreen/60 transition-all group">
+                    <div class="w-12 h-12 bg-emerald-950/60 border rounded-xl flex items-center justify-center text-brandgreen mb-6 group-hover:bg-brandgreen group-hover:text-darkbg transition-all">
+                        <i data-lucide="bot" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">AI Chatbots that close</h3>
+                    <p class="opacity-70 text-sm leading-relaxed">Build 24/7 sales agents that qualify leads instantly, answer FAQs, and book demos.</p>
+                </div>
+
+                <div class="dynamic-card border p-8 rounded-3xl hover:border-brandgreen/60 transition-all group">
+                    <div class="w-12 h-12 bg-emerald-950/60 border rounded-xl flex items-center justify-center text-brandgreen mb-6 group-hover:bg-brandgreen group-hover:text-darkbg transition-all">
+                        <i data-lucide="zap" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Broadcast to 10,000+</h3>
+                    <p class="opacity-70 text-sm leading-relaxed">Send personalized marketing campaigns safely without risking your phone number.</p>
+                </div>
+
+                <div class="dynamic-card border p-8 rounded-3xl hover:border-brandgreen/60 transition-all group">
+                    <div class="w-12 h-12 bg-emerald-950/60 border rounded-xl flex items-center justify-center text-brandgreen mb-6 group-hover:bg-brandgreen group-hover:text-darkbg transition-all">
+                        <i data-lucide="trending-up" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Recover lost revenue</h3>
+                    <p class="opacity-70 text-sm leading-relaxed">Win back abandoned carts and cold leads automatically with 90%+ open rates.</p>
+                </div>
+
+                <div class="dynamic-card border p-8 rounded-3xl hover:border-brandgreen/60 transition-all group">
+                    <div class="w-12 h-12 bg-emerald-950/60 border rounded-xl flex items-center justify-center text-brandgreen mb-6 group-hover:bg-brandgreen group-hover:text-darkbg transition-all">
+                        <i data-lucide="settings" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">WhatsApp Business API</h3>
+                    <p class="opacity-70 text-sm leading-relaxed">Get verified officially, approve message templates quickly, and go live in a week.</p>
+                </div>
+
+                <div class="dynamic-card border p-8 rounded-3xl hover:border-brandgreen/60 transition-all group">
+                    <div class="w-12 h-12 bg-emerald-950/60 border rounded-xl flex items-center justify-center text-brandgreen mb-6 group-hover:bg-brandgreen group-hover:text-darkbg transition-all">
+                        <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Track conversations</h3>
+                    <p class="opacity-70 text-sm leading-relaxed">Connect WhatsApp smoothly to your CRM and measure ROI down to a single message.</p>
+                </div>
+
+                <div class="dynamic-card border p-8 rounded-3xl hover:border-brandgreen/60 transition-all group">
+                    <div class="w-12 h-12 bg-emerald-950/60 border rounded-xl flex items-center justify-center text-brandgreen mb-6 group-hover:bg-brandgreen group-hover:text-darkbg transition-all">
+                        <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Zero ban blueprint</h3>
+                    <p class="opacity-70 text-sm leading-relaxed">See how top brands 10x'd revenue using official Meta WhatsApp APIs and smart flows.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Registration Section -->
+    <section id="register" class="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-3xl mx-auto relative">
+            <div class="dynamic-card border rounded-3xl p-6 sm:p-12 shadow-2xl relative glow-green-sm">
+                
+                <div class="text-center mb-10">
+                    <span class="dynamic-card border text-brandgreen px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">Secure Your Spot</span>
+                    <h2 class="text-3xl sm:text-4xl font-black mt-4 tracking-tight">Ready to 10x your business?</h2>
+                    <p class="opacity-70 text-sm sm:text-base mt-2">Join thousands of business owners already using WhatsApp API to grow.</p>
+                </div>
+
+                <form id="webinarForm" class="space-y-5" onsubmit="handleRegistration(event)">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Your Full Name</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center opacity-50">
+                                <i data-lucide="user" class="w-5 h-5"></i>
+                            </span>
+                            <input type="text" id="fullName" required placeholder="Enter your full name" class="w-full dynamic-card border rounded-xl px-4 py-3.5 pl-12 placeholder-opacity-50 focus:outline-none focus:border-brandgreen transition-all">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Email Address</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center opacity-50">
+                                <i data-lucide="mail" class="w-5 h-5"></i>
+                            </span>
+                            <input type="email" id="email" required placeholder="name@yourcompany.com" class="w-full dynamic-card border rounded-xl px-4 py-3.5 pl-12 placeholder-opacity-50 focus:outline-none focus:border-brandgreen transition-all">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">WhatsApp Number</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center opacity-50">
+                                <i data-lucide="phone" class="w-5 h-5"></i>
+                            </span>
+                            <input type="tel" id="whatsapp" required placeholder="98765 43210" class="w-full dynamic-card border rounded-xl px-4 py-3.5 pl-12 placeholder-opacity-50 focus:outline-none focus:border-brandgreen transition-all">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-emerald-500 to-brandgreen text-darkbg font-black text-lg py-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] glow-green shadow-xl flex items-center justify-center space-x-2">
+                        <span>Reserve My Free Seat →</span>
+                    </button>
+
+                    <p class="text-center text-xs opacity-60 mt-4">🔒 Zero spam. Unsubscribe anytime with 1 click.</p>
+                </form>
+
+                <div id="successMessage" class="hidden text-center py-12 space-y-4">
+                    <div class="w-16 h-16 bg-brandgreen/20 border border-brandgreen text-brandgreen rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                        <i data-lucide="check" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold">Seat Reserved Successfully! 🎉</h3>
+                    <p class="opacity-80 max-w-md mx-auto text-sm">We have sent your Zoom link and WhatsApp community access details to your email and WhatsApp.</p>
+                    <div class="pt-4">
+                        <a href="https://chat.whatsapp.com" target="_blank" class="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl transition-all">
+                            <i data-lucide="message-circle" class="w-5 h-5"></i>
+                            <span>Join WhatsApp VIP Group</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 px-4 border-t dynamic-card text-center text-xs opacity-70 relative z-10">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-2">
+                <i data-lucide="message-square" class="w-4 h-4 text-brandgreen"></i>
+                <span>© 2026 WhatsApp Se Vyapar. All rights reserved.</span>
+            </div>
+            <div class="flex items-center space-x-6">
+                <a href="#" class="hover:underline">Privacy Policy</a>
+                <a href="#" class="hover:underline">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Theme Toggle Functionality
+        function toggleTheme() {
+            const html = document.getElementById('htmlRoot');
+            const icon = document.getElementById('themeIcon');
+            
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.setAttribute('data-lucide', 'moon');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                icon.setAttribute('data-lucide', 'sun');
+                localStorage.setItem('theme', 'dark');
+            }
+            lucide.createIcons();
+        }
+
+        // Load saved theme preference
+        if (localStorage.getItem('theme') === 'light') {
+            document.getElementById('htmlRoot').classList.remove('dark');
+            document.getElementById('themeIcon').setAttribute('data-lucide', 'moon');
+            lucide.createIcons();
+        }
+
+        // Form handler
+        function handleRegistration(event) {
+            event.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'Reserving your seat...';
+
+            setTimeout(() => {
+                document.getElementById('webinarForm').style.display = 'none';
+                document.getElementById('successMessage').classList.remove('hidden');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

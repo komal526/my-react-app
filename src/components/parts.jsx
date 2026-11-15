@@ -29,20 +29,36 @@ export function Modal({ children, onClose }) {
    · at most 2 previews load at the same time, top ones first
    · a template picture (or a light skeleton) shows instantly while the real page draws */
 const TH_CACHE = new Map();
-const THUMB_CSS = "<style>*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}[class*=reveal],[class*=fade],[class*=animate],[data-aos],[data-anim],.in-view,.hidden-up{opacity:1!important;transform:none!important;visibility:visible!important}html,body{overflow:hidden!important}</style>";
+const THUMB_CSS = "<style>*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}[class*=reveal],[class*=fade],[class*=animate],[class*=stagger]>*,[data-aos],[data-anim],[data-r],.in-view,.hidden-up,.hero-in,.hero h1 .w,.letter,[class*=hero-title],[class*=hero-sub],[class*=hero-eyebrow],[class*=hero-button],[class*=hero-cta],[class*=hero-search],.search,.bento-card,.timeline-item{opacity:1!important;transform:none!important;visibility:visible!important;clip-path:none!important}html,body{overflow:hidden!important}</style>";
+/* a preview only needs the top of the page: keep the first ~2 screens, drop scripts, videos, embeds and most images */
+const trimBody = (h) => {
+  try {
+    const d = new DOMParser().parseFromString(h, "text/html"), body = d.body; if (!body) return h;
+    let root = body; while (root.children.length === 1 && root.firstElementChild.children.length > 1 && !/^(SECTION|HEADER)$/.test(root.firstElementChild.tagName)) root = root.firstElementChild;
+    /* loading screens, progress bars and cursor effects are hidden by the page's own script — remove them */
+    d.querySelectorAll("[id*=loader i],[class*=loader i],[id*=preload i],[class*=preload i],[class*=splash i],#progress,.progress,.cursor-glow,[class*=cursor] ").forEach((n) => n.remove());
+    /* keep the first 4 real content blocks (decorations like canvases don't count) */
+    const deco = (k) => !/^(SECTION|MAIN|HEADER|NAV|DIV|ARTICLE|FOOTER|ASIDE|FORM)$/i.test(k.tagName) || k.getAttribute("aria-hidden") === "true" || /mobile|modal|toast|to-?top|back-?to|scrim|overlay/i.test((k.getAttribute("class") || "") + " " + k.id);
+    const keep = (list, max) => { let n = 0; list.forEach((k) => { if (deco(k)) return; if (++n > max) k.remove(); }); };
+    const main = [...root.children].find((k) => k.tagName === "MAIN");
+    if (main) { let past = false; [...root.children].forEach((k) => { if (k === main) { past = true; return; } if (past && !deco(k)) k.remove(); }); keep([...main.children], 3); }
+    else keep([...root.children], 5);
+    d.querySelectorAll("script,noscript,iframe,video,audio,object,embed").forEach((n) => { if (/^(IFRAME|VIDEO)$/.test(n.tagName)) { const g = d.createElement("div"); g.style.cssText = "background:#1f2340;width:100%;aspect-ratio:16/9;border-radius:12px"; n.replaceWith(g); } else n.remove(); });
+    d.querySelectorAll("img").forEach((im, i) => { if (i > 5) { im.removeAttribute("srcset"); im.src = "data:image/gif;base64,R0lGODlhAQABAAAAACw="; im.style.background = "#d9dce8"; } else { im.loading = "eager"; im.decoding = "async"; } });
+    d.querySelectorAll('link[rel="stylesheet"]').forEach((l) => { if (/fonts\.googleapis|fontawesome|font-awesome|unpkg|aos/i.test(l.href)) l.remove(); });
+    d.querySelectorAll("link[rel=preconnect],link[rel=preload],link[rel=dns-prefetch]").forEach((l) => l.remove());
+    return "<!doctype html>" + d.documentElement.outerHTML;
+  } catch { return h; }
+};
 export const thumbHtml = (h) => {
   h = String(h || ""); const k = h.length + ":" + h.slice(0, 80) + h.slice(-80);
   if (TH_CACHE.has(k)) return TH_CACHE.get(k);
-  const out = h.replace(/<script\b[\s\S]*?<\/script>/gi, "")
-    .replace(/<link\b[^>]*fonts\.(googleapis|gstatic)\.com[^>]*>/gi, "").replace(/@import\s+url\([^)]*fonts\.googleapis[^)]*\);?/gi, "")
-    .replace(/<link\b[^>]*rel=["']?preconnect[^>]*>/gi, "")
-    .replace(/<img\b(?![^>]*\bloading=)/gi, '<img loading="lazy" decoding="async" ')
-    .replace(/<\/head>/i, THUMB_CSS + "</head>");
+  const out = trimBody(h).replace(/@import\s+url\([^)]*fonts\.googleapis[^)]*\);?/gi, "").replace(/<\/head>/i, THUMB_CSS + "</head>");
   if (TH_CACHE.size > 60) TH_CACHE.delete(TH_CACHE.keys().next().value);
   TH_CACHE.set(k, out); return out;
 };
 const TQ = { busy: 0, wait: [] };
-const tqNext = () => { while (TQ.busy < 2 && TQ.wait.length) { TQ.wait.sort((a, b) => a.y() - b.y()); const j = TQ.wait.shift(); TQ.busy++; j.go(); } };
+const tqNext = () => { while (TQ.busy < 3 && TQ.wait.length) { TQ.wait.sort((a, b) => a.y() - b.y()); const j = TQ.wait.shift(); TQ.busy++; j.go(); } };
 const tqDone = () => { TQ.busy = Math.max(0, TQ.busy - 1); tqNext(); };
 export function Thumb({ html, img }) {
   const ref = useRef(null), [on, setOn] = useState(false), done = useRef(false);
@@ -56,9 +72,12 @@ export function Thumb({ html, img }) {
     return () => { io.disconnect(); if (job) { const i = TQ.wait.indexOf(job); if (i >= 0) TQ.wait.splice(i, 1); } };
   }, [on]);
   useEffect(() => () => { if (on && !done.current) tqDone(); }, [on]);
-  const loaded = (e) => { e.currentTarget.classList.add("on"); if (!done.current) { done.current = true; tqDone(); } };
+  const fr = useRef(null);
+  const loaded = () => { if (fr.current) fr.current.classList.add("on"); if (!done.current) { done.current = true; tqDone(); } };
+  /* the preview is drawn long before every photo arrives — show it after a moment instead of waiting for "load" */
+  useEffect(() => { if (!on) return; const t = setTimeout(loaded, 350); return () => clearTimeout(t); }, [on]); // eslint-disable-line react-hooks/exhaustive-deps
   const src = useMemo(() => (on ? thumbHtml(html) : ""), [on, html]);
-  return <div className="thumb" ref={ref}>{img ? <img className="thumb-img" src={img} alt="" decoding="async" /> : <div className="thumb-ph" />}{on && <iframe title="preview" srcDoc={src} sandbox="" tabIndex={-1} loading="eager" onLoad={loaded} />}</div>;
+  return <div className="thumb" ref={ref}>{img ? <img className="thumb-img" src={img} alt="" decoding="async" /> : <div className="thumb-ph" />}{on && <iframe ref={fr} title="preview" srcDoc={src} sandbox="" tabIndex={-1} loading="eager" onLoad={loaded} />}</div>;
 }
 
 

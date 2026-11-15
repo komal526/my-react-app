@@ -1,0 +1,2134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3-Day Live Done-For-You Coaching System | Scale To 7 Figures</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       STRICTLY SCOPED CSS VARIABLES & BASE STYLES
+       ========================================================================== */
+    :root {
+      --dfy-bg-dark: #0a0a0c;
+      --dfy-bg-card: #141418;
+      --dfy-bg-card-hover: #1b1b21;
+      --dfy-bg-light: #f8f9fb;
+      --dfy-gold: #f5b400;
+      --dfy-gold-light: #ffd046;
+      --dfy-gold-dark: #d99b00;
+      --dfy-gold-glow: rgba(245, 180, 0, 0.35);
+      --dfy-text-white: #ffffff;
+      --dfy-text-muted: #a1a1aa;
+      --dfy-text-dark: #111827;
+      --dfy-text-dark-muted: #4b5563;
+      --dfy-border-dark: rgba(255, 255, 255, 0.1);
+      --dfy-border-gold: rgba(245, 180, 0, 0.35);
+      --dfy-green: #10b981;
+      --dfy-red: #ef4444;
+      --dfy-radius-sm: 10px;
+      --dfy-radius-md: 16px;
+      --dfy-radius-lg: 24px;
+      --dfy-transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      background-color: var(--dfy-bg-dark);
+      color: var(--dfy-text-white);
+      overflow-x: hidden;
+    }
+
+    body {
+      line-height: 1.6;
+      overflow-x: hidden;
+      padding-bottom: 76px; /* Space for sticky bottom bar */
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    .dfy-container {
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .dfy-gold-text {
+      color: var(--dfy-gold);
+    }
+
+    /* ==========================================================================
+       SCROLL REVEAL & KEYFRAME ANIMATIONS
+       ========================================================================== */
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(245, 180, 0, 0.35), 0 8px 25px rgba(245, 180, 0, 0.25);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 36px rgba(245, 180, 0, 0.65), 0 12px 32px rgba(245, 180, 0, 0.4);
+        transform: scale(1.018);
+      }
+    }
+
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @keyframes shimmerSweep {
+      0% { transform: translateX(-120%) skewX(-20deg); }
+      100% { transform: translateX(220%) skewX(-20deg); }
+    }
+
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+
+    .dfy-reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .dfy-reveal.dfy-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .dfy-reveal-delay-1 { transition-delay: 0.1s; }
+    .dfy-reveal-delay-2 { transition-delay: 0.2s; }
+    .dfy-reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ==========================================================================
+       REUSABLE BUTTONS & BADGES
+       ========================================================================== */
+    .dfy-pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fffbeb;
+      color: #111827;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 8px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 180, 0, 0.4);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    .dfy-pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--dfy-gold-dark);
+      animation: livePulse 1.6s infinite;
+    }
+
+    .dfy-cta-btn {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      background: linear-gradient(135deg, #ffd24c 0%, #f5b400 50%, #e09f00 100%);
+      color: #0f0f12;
+      border: none;
+      border-radius: 14px;
+      padding: 16px 28px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: var(--dfy-transition);
+      animation: pulseGlow 2.8s infinite ease-in-out;
+      text-align: center;
+    }
+
+    .dfy-cta-btn::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+      animation: shimmerSweep 3.5s infinite;
+      pointer-events: none;
+    }
+
+    .dfy-cta-btn:hover {
+      transform: translateY(-2px) scale(1.01);
+      filter: brightness(1.05);
+    }
+
+    .dfy-cta-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dfy-cta-sub {
+      font-size: 0.82rem;
+      font-weight: 600;
+      opacity: 0.88;
+      margin-top: 2px;
+    }
+
+    /* ==========================================================================
+       SECTION 1: HERO SECTION
+       ========================================================================== */
+    .dfy-hero {
+      position: relative;
+      padding: 44px 0 68px;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(245, 180, 0, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 80% 35%, rgba(245, 180, 0, 0.1) 0%, transparent 45%),
+        linear-gradient(180deg, #12100c 0%, #0a0a0c 100%);
+      border-bottom: 1px solid var(--dfy-border-dark);
+    }
+
+    .dfy-hero-header {
+      text-align: center;
+      max-width: 920px;
+      margin: 0 auto 38px;
+    }
+
+    .dfy-hero-title {
+      font-size: clamp(2rem, 4.4vw, 3.35rem);
+      font-weight: 800;
+      line-height: 1.16;
+      letter-spacing: -0.025em;
+      margin: 22px 0 16px;
+    }
+
+    .dfy-hero-subtitle {
+      font-size: clamp(1rem, 1.5vw, 1.16rem);
+      color: #d4d4d8;
+      max-width: 740px;
+      margin: 0 auto;
+      font-weight: 400;
+    }
+
+    .dfy-hero-grid {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 32px;
+      align-items: start;
+      margin-top: 32px;
+    }
+
+    /* Video / Preview Frame */
+    .dfy-video-card {
+      position: relative;
+      border-radius: var(--dfy-radius-md);
+      overflow: hidden;
+      border: 2px solid rgba(245, 180, 0, 0.45);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 30px rgba(245, 180, 0, 0.15);
+      background: #141418;
+      aspect-ratio: 16 / 10;
+      cursor: pointer;
+    }
+
+    .dfy-video-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+
+    .dfy-video-card:hover img {
+      transform: scale(1.04);
+    }
+
+    .dfy-video-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0.82) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 18px;
+    }
+
+    .dfy-video-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dfy-video-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid var(--dfy-gold);
+      object-fit: cover;
+    }
+
+    .dfy-play-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 72px;
+      height: 50px;
+      background: #ff0000;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 30px rgba(255, 0, 0, 0.55);
+      transition: var(--dfy-transition);
+    }
+
+    .dfy-video-card:hover .dfy-play-btn {
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    .dfy-play-triangle {
+      width: 0;
+      height: 0;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      border-left: 18px solid #ffffff;
+      margin-left: 4px;
+    }
+
+    .dfy-video-caption {
+      text-align: center;
+      font-weight: 800;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+      background: rgba(0, 0, 0, 0.55);
+      padding: 6px 12px;
+      border-radius: 8px;
+      align-self: center;
+    }
+
+    /* Right Hero Details */
+    .dfy-rating-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e4e4e7;
+      margin-bottom: 16px;
+    }
+
+    .dfy-stars {
+      color: var(--dfy-gold);
+      letter-spacing: 2px;
+    }
+
+    .dfy-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .dfy-meta-box {
+      background: rgba(24, 24, 29, 0.9);
+      border: 1px solid var(--dfy-border-dark);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: var(--dfy-transition);
+    }
+
+    .dfy-meta-box:hover {
+      border-color: var(--dfy-border-gold);
+      transform: translateY(-2px);
+    }
+
+    .dfy-meta-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(245, 180, 0, 0.14);
+      color: var(--dfy-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.15rem;
+    }
+
+    .dfy-meta-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .dfy-meta-val {
+      font-size: 0.8rem;
+      color: var(--dfy-text-muted);
+    }
+
+    .dfy-countdown-wrap {
+      margin-top: 18px;
+      text-align: center;
+    }
+
+    .dfy-countdown-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--dfy-text-muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .dfy-countdown-boxes {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .dfy-time-box {
+      background: #141418;
+      border: 1px solid var(--dfy-border-dark);
+      border-radius: 12px;
+      padding: 10px 6px;
+    }
+
+    .dfy-time-num {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--dfy-gold);
+      line-height: 1.2;
+    }
+
+    .dfy-time-unit {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--dfy-text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .dfy-trust-line {
+      margin-top: 14px;
+      font-size: 0.76rem;
+      color: var(--dfy-text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    /* Featured Media Strip */
+    .dfy-media-strip {
+      margin-top: 44px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 24px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    .dfy-media-logo {
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: #1f2937;
+      letter-spacing: -0.02em;
+      opacity: 0.85;
+      transition: opacity 0.25s;
+    }
+
+    .dfy-media-logo:hover {
+      opacity: 1;
+    }
+
+    /* ==========================================================================
+       SECTION 2: TICKET OFFER & PAIN POINTS
+       ========================================================================== */
+    .dfy-ticket-section {
+      padding: 72px 0;
+      background: #0d0d10;
+      border-bottom: 1px solid var(--dfy-border-dark);
+    }
+
+    .dfy-section-header {
+      text-align: center;
+      max-width: 780px;
+      margin: 0 auto 44px;
+    }
+
+    .dfy-section-title {
+      font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .dfy-section-sub {
+      font-size: 1rem;
+      color: var(--dfy-text-muted);
+    }
+
+    .dfy-ticket-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    .dfy-bundle-img-card {
+      border-radius: var(--dfy-radius-md);
+      overflow: hidden;
+      border: 1px solid var(--dfy-border-gold);
+      background: linear-gradient(145deg, #0f172a, #1e293b);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      margin-bottom: 32px;
+      animation: floatSlow 5s infinite ease-in-out;
+    }
+
+    .dfy-bundle-img-card img {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+    }
+
+    .dfy-bundle-banner {
+      padding: 16px 20px;
+      background: linear-gradient(90deg, #111827, #1f2937);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(245, 180, 0, 0.3);
+    }
+
+    .dfy-pain-heading {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-bottom: 18px;
+      line-height: 1.3;
+    }
+
+    .dfy-pain-card {
+      background: #ffffff;
+      color: var(--dfy-text-dark);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      border-top: 4px solid var(--dfy-gold);
+      transition: var(--dfy-transition);
+    }
+
+    .dfy-pain-card:hover {
+      transform: translateX(6px);
+    }
+
+    .dfy-pain-thumb {
+      width: 84px;
+      height: 84px;
+      border-radius: 12px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .dfy-pain-card h4 {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+      color: #111827;
+    }
+
+    .dfy-pain-card p {
+      font-size: 0.86rem;
+      color: #4b5563;
+      line-height: 1.45;
+    }
+
+    /* Checkout & Guarantee Box */
+    .dfy-checkout-card {
+      background: #ffffff;
+      color: var(--dfy-text-dark);
+      border-radius: var(--dfy-radius-md);
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      margin-bottom: 20px;
+    }
+
+    .dfy-checkout-top {
+      background: var(--dfy-gold);
+      color: #111827;
+      font-weight: 800;
+      text-align: center;
+      padding: 12px 16px;
+      font-size: 0.98rem;
+    }
+
+    .dfy-checkout-body {
+      padding: 24px;
+      text-align: center;
+    }
+
+    .dfy-secure-note {
+      font-size: 0.76rem;
+      color: #4b5563;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .dfy-razorpay-box {
+      margin-top: 18px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px;
+      background: #f9fafb;
+    }
+
+    .dfy-payment-badges {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .dfy-pay-pill {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #1f2937;
+    }
+
+    .dfy-guarantee-card {
+      background: #141418;
+      border: 1px solid var(--dfy-border-gold);
+      border-radius: var(--dfy-radius-md);
+      padding: 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .dfy-guarantee-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffd24c, #d97706);
+      color: #111827;
+      font-weight: 900;
+      font-size: 0.75rem;
+      line-height: 1.1;
+      text-transform: uppercase;
+      margin: 16px auto 0;
+      border: 3px dashed #ffffff;
+      box-shadow: 0 8px 20px rgba(245, 180, 0, 0.35);
+    }
+
+    /* ==========================================================================
+       SECTION 3: LIGHT SECTION - THE FOURTH OPTION & TWO-LEVEL MODEL
+       ========================================================================== */
+    .dfy-light-section {
+      background: #ffffff;
+      color: var(--dfy-text-dark);
+      padding: 76px 0;
+    }
+
+    .dfy-fourth-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+      margin-bottom: 76px;
+    }
+
+    .dfy-check-list {
+      list-style: none;
+      margin: 22px 0 26px;
+    }
+
+    .dfy-check-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 0.96rem;
+      color: #374151;
+    }
+
+    .dfy-check-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--dfy-gold);
+      color: #111827;
+      font-weight: 900;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .dfy-value-bar {
+      background: #111827;
+      color: #ffffff;
+      font-weight: 800;
+      text-align: center;
+      padding: 15px 20px;
+      border-radius: 12px;
+      font-size: 1.05rem;
+    }
+
+    .dfy-showcase-dark {
+      background: #141418;
+      color: #ffffff;
+      border-radius: var(--dfy-radius-lg);
+      padding: 20px;
+      box-shadow: 0 24px 55px rgba(17, 24, 39, 0.2);
+    }
+
+    .dfy-showcase-dark img {
+      width: 100%;
+      height: 270px;
+      object-fit: cover;
+      border-radius: 14px;
+      margin-bottom: 18px;
+    }
+
+    .dfy-avatars-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .dfy-avatar-stack {
+      display: flex;
+    }
+
+    .dfy-avatar-stack img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #141418;
+      margin-left: -10px;
+      margin-bottom: 0;
+    }
+
+    .dfy-avatar-stack img:first-child {
+      margin-left: 0;
+    }
+
+    /* Two Level Model */
+    .dfy-levels-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 880px;
+      margin: 0 auto 24px;
+    }
+
+    .dfy-level-card {
+      border-radius: var(--dfy-radius-md);
+      padding: 28px;
+      transition: var(--dfy-transition);
+    }
+
+    .dfy-level-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .dfy-level-1 {
+      background: #141418;
+      color: #ffffff;
+      border: 2px solid var(--dfy-gold);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+    }
+
+    .dfy-level-2 {
+      background: #fffdf7;
+      color: #111827;
+      border: 2px solid #fde68a;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    .dfy-level-tag {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .dfy-level-1 .dfy-level-tag {
+      background: #ffffff;
+      color: #111827;
+    }
+
+    .dfy-level-2 .dfy-level-tag {
+      background: #111827;
+      color: #ffffff;
+    }
+
+    .dfy-level-card h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .dfy-level-footer {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px dashed rgba(245, 180, 0, 0.45);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .dfy-gold-strip {
+      max-width: 880px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #ffd24c, #f5b400);
+      border-radius: 16px;
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      color: #111827;
+      box-shadow: 0 14px 35px rgba(245, 180, 0, 0.3);
+    }
+
+    .dfy-dark-pill-btn {
+      background: #111827;
+      color: #ffffff;
+      font-weight: 800;
+      padding: 12px 28px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      transition: var(--dfy-transition);
+    }
+
+    .dfy-dark-pill-btn:hover {
+      transform: scale(1.04);
+      background: #000000;
+    }
+
+    /* ==========================================================================
+       SECTION 4: BUILT FOR YOU IF... (DARK)
+       ========================================================================== */
+    .dfy-audience-section {
+      background: #0a0a0c;
+      padding: 72px 0;
+    }
+
+    .dfy-audience-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .dfy-audience-card {
+      background: #ffffff;
+      color: #111827;
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: var(--dfy-transition);
+    }
+
+    .dfy-audience-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(245, 180, 0, 0.2);
+    }
+
+    .dfy-aud-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: #fef3c7;
+      color: #d97706;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .dfy-audience-card p {
+      font-size: 0.88rem;
+      font-weight: 600;
+      line-height: 1.45;
+      color: #1f2937;
+    }
+
+    /* ==========================================================================
+       SECTION 5: REAL COACHES, REAL RESULTS (LIGHT)
+       ========================================================================== */
+    .dfy-results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin-bottom: 36px;
+    }
+
+    .dfy-result-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-top: 4px solid var(--dfy-gold);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      transition: var(--dfy-transition);
+    }
+
+    .dfy-result-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .dfy-result-card img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+
+    .dfy-result-name {
+      font-weight: 800;
+      font-size: 1.02rem;
+      margin-bottom: 4px;
+    }
+
+    .dfy-result-stat {
+      font-size: 0.86rem;
+      color: #4b5563;
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       SECTION 6: 3-DAY LIVE BLUEPRINT ROADMAP (DARK)
+       ========================================================================== */
+    .dfy-roadmap-section {
+      background:
+        radial-gradient(circle at 80% 20%, rgba(245, 180, 0, 0.12) 0%, transparent 45%),
+        #0a0a0c;
+      padding: 76px 0;
+    }
+
+    .dfy-roadmap-grid {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    .dfy-sticky-box {
+      position: sticky;
+      top: 24px;
+      background: #141418;
+      border: 1px solid var(--dfy-border-gold);
+      border-radius: var(--dfy-radius-md);
+      padding: 20px;
+    }
+
+    .dfy-sticky-box img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 18px;
+    }
+
+    .dfy-day-card {
+      background: #141418;
+      border: 1px solid var(--dfy-border-gold);
+      border-radius: var(--dfy-radius-md);
+      padding: 28px;
+      margin-bottom: 24px;
+      transition: var(--dfy-transition);
+    }
+
+    .dfy-day-card:hover {
+      border-color: var(--dfy-gold);
+      box-shadow: 0 12px 35px rgba(245, 180, 0, 0.12);
+    }
+
+    .dfy-day-title {
+      text-align: center;
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--dfy-gold);
+      margin-bottom: 16px;
+    }
+
+    .dfy-day-card img {
+      width: 100%;
+      height: 210px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .dfy-day-card h4 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .dfy-day-list {
+      list-style: none;
+    }
+
+    .dfy-day-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 0.92rem;
+      color: #d4d4d8;
+    }
+
+    .dfy-green-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      background: var(--dfy-green);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .dfy-day-outcome {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--dfy-border-dark);
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* ==========================================================================
+       SECTION 7: BONUSES + COMPARISON + MENTOR + FAQ (LIGHT & DARK MIX)
+       ========================================================================== */
+    .dfy-bonus-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin-bottom: 36px;
+    }
+
+    .dfy-bonus-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-top: 4px solid var(--dfy-gold);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      transition: var(--dfy-transition);
+    }
+
+    .dfy-bonus-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .dfy-bonus-card img {
+      width: 100%;
+      height: 175px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+
+    .dfy-bonus-val {
+      display: block;
+      text-align: center;
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: 800;
+      font-size: 0.82rem;
+      padding: 6px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .dfy-compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 920px;
+      margin: 44px auto;
+    }
+
+    .dfy-compare-bad {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    .dfy-compare-good {
+      background: #ecfdf5;
+      border: 2px solid #6ee7b7;
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    .dfy-compare-bad img,
+    .dfy-compare-good img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 18px;
+    }
+
+    /* Mentor Box */
+    .dfy-mentor-box {
+      background: #141418;
+      color: #ffffff;
+      border-radius: var(--dfy-radius-lg);
+      padding: 36px;
+      display: grid;
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 32px;
+      align-items: center;
+      margin: 44px 0;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    .dfy-mentor-photo-wrap {
+      text-align: center;
+    }
+
+    .dfy-mentor-photo {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid var(--dfy-gold);
+      margin: 0 auto 16px;
+      box-shadow: 0 0 30px rgba(245, 180, 0, 0.35);
+    }
+
+    .dfy-mentor-stat {
+      background: #1f1f26;
+      border: 1px solid var(--dfy-border-gold);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .dfy-mission-box {
+      margin-top: 18px;
+      background: rgba(245, 180, 0, 0.08);
+      border: 1px solid var(--dfy-border-gold);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    /* FAQ Accordion */
+    .dfy-faq-list {
+      max-width: 820px;
+      margin: 32px auto 0;
+    }
+
+    .dfy-faq-item {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .dfy-faq-btn {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 18px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #111827;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .dfy-faq-ans {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.35s ease;
+      padding: 0 20px;
+      color: #4b5563;
+      font-size: 0.92rem;
+    }
+
+    .dfy-faq-item.active .dfy-faq-ans {
+      max-height: 220px;
+      padding: 0 20px 18px;
+    }
+
+    .dfy-faq-icon {
+      font-size: 1.25rem;
+      color: var(--dfy-gold-dark);
+      transition: transform 0.3s ease;
+    }
+
+    .dfy-faq-item.active .dfy-faq-icon {
+      transform: rotate(45deg);
+    }
+
+    /* ==========================================================================
+       STICKY FOOTER BAR & REGISTRATION MODAL
+       ========================================================================== */
+    .dfy-sticky-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(12, 12, 15, 0.98);
+      backdrop-filter: blur(14px);
+      border-top: 2px solid var(--dfy-gold);
+      padding: 12px 16px;
+      z-index: 999;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
+    }
+
+    .dfy-sticky-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .dfy-offer-timer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .dfy-red-badge {
+      background: #ef4444;
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .dfy-sticky-btn {
+      background: linear-gradient(135deg, #ffd24c, #f5b400);
+      color: #111827;
+      font-weight: 800;
+      padding: 11px 28px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: var(--dfy-transition);
+    }
+
+    .dfy-sticky-btn:hover {
+      transform: scale(1.04);
+    }
+
+    /* Modal */
+    .dfy-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 2000;
+    }
+
+    .dfy-modal-backdrop.open {
+      display: flex;
+    }
+
+    .dfy-modal {
+      background: #ffffff;
+      color: #111827;
+      width: 100%;
+      max-width: 460px;
+      border-radius: 20px;
+      padding: 28px;
+      position: relative;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6);
+      animation: fadeInScale 0.3s ease;
+    }
+
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .dfy-modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #f3f4f6;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .dfy-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    .dfy-input:focus {
+      outline: none;
+      border-color: var(--dfy-gold-dark);
+    }
+
+    /* ==========================================================================
+       RESPONSIVE BREAKPOINTS
+       ========================================================================== */
+    @media (max-width: 960px) {
+      .dfy-hero-grid,
+      .dfy-ticket-grid,
+      .dfy-fourth-grid,
+      .dfy-roadmap-grid,
+      .dfy-mentor-box {
+        grid-template-columns: 1fr;
+      }
+
+      .dfy-sticky-box {
+        position: static;
+      }
+
+      .dfy-audience-grid,
+      .dfy-results-grid,
+      .dfy-bonus-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .dfy-levels-grid,
+      .dfy-audience-grid,
+      .dfy-results-grid,
+      .dfy-bonus-grid,
+      .dfy-compare-grid {
+        grid-template-columns: 1fr;
+      }
+      .dfy-meta-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .dfy-sticky-brand {
+        display: none;
+      }
+
+      .dfy-cta-title {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       SECTION 1: HERO SECTION
+       ======================================================================== -->
+  <section class="dfy-hero">
+    <div class="dfy-container">
+      <div class="dfy-hero-header dfy-reveal">
+        <div class="dfy-pill-badge">
+          <span class="dfy-pill-dot"></span>
+          <span>India's #1 Done-For-You Coaching System</span>
+        </div>
+        <h1 class="dfy-hero-title">
+          Done-For-You Coaching System, Live-Ready With <span class="dfy-gold-text">Aarav In Just 3 Days.</span>
+        </h1>
+        <p class="dfy-hero-subtitle">
+          Walk in as a coach with inconsistent client flow. Walk out on Day 3 with an automated webinar funnel, AI Lead Qualifiers, and a high-ticket sales engine running inside your business.
+        </p>
+      </div>
+
+      <div class="dfy-hero-grid">
+        <!-- Left: Video Preview Card -->
+        <div class="dfy-video-card dfy-reveal dfy-reveal-delay-1" onclick="openEnrollModal()">
+          <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1000&q=85" alt="Live Coaching Workshop Preview" loading="eager">
+          <div class="dfy-video-overlay">
+            <div class="dfy-video-top">
+              <img class="dfy-video-avatar" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80" alt="Mentor Avatar">
+              <div>
+                <div style="font-weight: 800; font-size: 0.92rem;">Business Scaling Mentor</div>
+                <div style="font-size: 0.78rem; color: #d4d4d8;">Aarav Sharma • Live Build</div>
+              </div>
+            </div>
+            <div class="dfy-play-btn" aria-label="Play Workshop Preview">
+              <div class="dfy-play-triangle"></div>
+            </div>
+            <div class="dfy-video-caption">Watch How We Build Your Entire System Live</div>
+          </div>
+        </div>
+
+        <!-- Right: Schedule, CTA & Countdown -->
+        <div class="dfy-reveal dfy-reveal-delay-2">
+          <div class="dfy-rating-bar">
+            <span class="dfy-stars">★★★★★</span>
+            <span>Rated 4.9/5 by 1,200+ Coaches &amp; Consultants</span>
+          </div>
+
+          <div class="dfy-meta-grid">
+            <div class="dfy-meta-box">
+              <div class="dfy-meta-icon">⏰</div>
+              <div>
+                <div class="dfy-meta-label">Time</div>
+                <div class="dfy-meta-val">07:00 PM IST</div>
+              </div>
+            </div>
+            <div class="dfy-meta-box">
+              <div class="dfy-meta-icon">📅</div>
+              <div>
+                <div class="dfy-meta-label">Date</div>
+                <div class="dfy-meta-val">20th, 21st &amp; 22nd Nov</div>
+              </div>
+            </div>
+            <div class="dfy-meta-box">
+              <div class="dfy-meta-icon">🎙️</div>
+              <div>
+                <div class="dfy-meta-label">Language</div>
+                <div class="dfy-meta-val">Hindi &amp; English</div>
+              </div>
+            </div>
+            <div class="dfy-meta-box">
+              <div class="dfy-meta-icon">💻</div>
+              <div>
+                <div class="dfy-meta-label">Venue</div>
+                <div class="dfy-meta-val">Zoom (Live Online)</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="dfy-cta-btn" onclick="openEnrollModal()">
+            <span class="dfy-cta-title">Enroll Today @ Just ₹99 →</span>
+            <span class="dfy-cta-sub">Claim Bonuses Worth ₹27,000 — Free</span>
+          </button>
+
+          <div class="dfy-countdown-wrap">
+            <div class="dfy-countdown-label">Workshop Starts In</div>
+            <div class="dfy-countdown-boxes">
+              <div class="dfy-time-box">
+                <div class="dfy-time-num" id="cd-days">01</div>
+                <div class="dfy-time-unit">Days</div>
+              </div>
+              <div class="dfy-time-box">
+                <div class="dfy-time-num" id="cd-hours">06</div>
+                <div class="dfy-time-unit">Hours</div>
+              </div>
+              <div class="dfy-time-box">
+                <div class="dfy-time-num" id="cd-mins">56</div>
+                <div class="dfy-time-unit">Minutes</div>
+              </div>
+              <div class="dfy-time-box">
+                <div class="dfy-time-num" id="cd-secs">36</div>
+                <div class="dfy-time-unit">Seconds</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dfy-trust-line">
+            <span>🔒 SSL Encrypted</span>
+            <span>⚡ Razorpay Secured</span>
+            <span>🛡️ 30-Day Refund</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Featured Media Logos -->
+      <div class="dfy-media-strip dfy-reveal">
+        <span class="dfy-media-logo" style="color:#f97316;">dailyhunt</span>
+        <span class="dfy-media-logo" style="font-family: Georgia, serif;">ThePrint</span>
+        <span class="dfy-media-logo" style="background:#dc2626;color:#fff;padding:2px 10px;border-radius:4px;">newsX</span>
+        <span class="dfy-media-logo" style="font-family: Georgia, serif; color:#991b1b;">Business Standard</span>
+        <span class="dfy-media-logo" style="font-weight:900;">amazon</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 2: 3-DAY TICKET & PAIN POINTS
+       ======================================================================== -->
+  <section class="dfy-ticket-section">
+    <div class="dfy-container">
+      <div class="dfy-section-header dfy-reveal">
+        <h2 class="dfy-section-title">
+          Get Your <span class="dfy-gold-text">3-Day Live Build Ticket</span> Worth ₹27,000 — For Just <span class="dfy-gold-text">₹99</span>
+        </h2>
+        <p class="dfy-section-sub">
+          Everything below is implemented LIVE with our team — not pre-recorded videos, not passive theory. You build the complete funnel together, in real time, on the call.
+        </p>
+      </div>
+
+      <div class="dfy-ticket-grid">
+        <!-- Left Column -->
+        <div class="dfy-reveal">
+          <div class="dfy-bundle-img-card">
+            <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=85" alt="7 Figure Scaling Blueprint Suite" loading="lazy">
+            <div class="dfy-bundle-banner">
+              <div>
+                <div style="font-weight: 800; color: var(--dfy-gold);">7-Figure Scaling Blueprint™</div>
+                <div style="font-size: 0.8rem; color: #d4d4d8;">Complete Funnel + AI Agent + High-Ticket Scripts</div>
+              </div>
+              <span style="background: var(--dfy-gold); color: #111; font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;">LIVE BUILD</span>
+            </div>
+          </div>
+
+          <h3 class="dfy-pain-heading">
+            You've Tried Three Things. <span class="dfy-gold-text">None Of Them Worked.</span>
+          </h3>
+
+          <div class="dfy-pain-card">
+            <img class="dfy-pain-thumb" src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80" alt="Online Course Frustration" loading="lazy">
+            <div>
+              <h4>Thing 1: You bought a recorded course.</h4>
+              <p>It gave you a framework, a PDF, and a 40-video library you've watched 30% of. The actual sales system still isn't built.</p>
+            </div>
+          </div>
+
+          <div class="dfy-pain-card">
+            <img class="dfy-pain-thumb" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80" alt="Agency Disappointment" loading="lazy">
+            <div>
+              <h4>Thing 2: You hired an agency.</h4>
+              <p>You paid ₹30,000–₹1,00,000. They built a pretty page that converted nothing, told you to "spend more on ads," and went quiet.</p>
+            </div>
+          </div>
+
+          <div class="dfy-pain-card">
+            <img class="dfy-pain-thumb" src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=400&q=80" alt="DIY Tech Overwhelm" loading="lazy">
+            <div>
+              <h4>Thing 3: You tried to stitch it yourself.</h4>
+              <p>You spent 3 weeks watching tutorials, got one landing page live, got stuck on CRM &amp; WhatsApp automations, and gave up.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Checkout & Guarantee -->
+        <div class="dfy-reveal dfy-reveal-delay-1">
+          <div class="dfy-checkout-card">
+            <div class="dfy-checkout-top">Claim Your Spot — Before Someone Else Takes It</div>
+            <div class="dfy-checkout-body">
+              <div class="dfy-secure-note">128-bit SSL Encrypted • Razorpay Secured • UPI / Cards / RuPay Accepted</div>
+              <button class="dfy-cta-btn" onclick="openEnrollModal()">
+                <span class="dfy-cta-title">Enroll Today @ Just ₹99 →</span>
+                <span class="dfy-cta-sub">Claim Bonuses Worth ₹27,000 — Free</span>
+              </button>
+
+              <div class="dfy-razorpay-box">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #1f2937;">100% Secure Payment By <span style="color:#2563eb;font-weight:900;">Razorpay</span></div>
+                <div class="dfy-payment-badges">
+                  <span class="dfy-pay-pill">VISA</span>
+                  <span class="dfy-pay-pill">UPI</span>
+                  <span class="dfy-pay-pill">RuPay</span>
+                  <span class="dfy-pay-pill">Mastercard</span>
+                  <span class="dfy-pay-pill">NetBanking</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dfy-guarantee-card">
+            <h4 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 10px;">Zero Risk — 30-Day Money-Back Guarantee</h4>
+            <p style="font-size: 0.9rem; color: #d4d4d8;">
+              Attend all 3 days, implement the steps, and if you don't see massive value — we'll refund every rupee within 24 hours. No drama. No questions asked.
+            </p>
+            <div class="dfy-guarantee-badge">100%<br>Money<br>Back</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 3: THE FOURTH OPTION & TWO-LEVEL MODEL (LIGHT)
+       ======================================================================== -->
+  <section class="dfy-light-section">
+    <div class="dfy-container">
+      <div class="dfy-fourth-grid">
+        <div class="dfy-reveal">
+          <div class="dfy-pill-badge" style="margin-bottom: 16px;">✨ The Fourth Option</div>
+          <h2 class="dfy-section-title" style="color: #111827;">
+            Nobody's Offered This To You — <span class="dfy-gold-text">Until Now.</span>
+          </h2>
+          <p style="color: #4b5563; font-size: 1rem;">
+            What if you could build the entire client-acquisition system live, with experts guiding your screen in 3 days — so you understand how it works AND it's live by Day 3?
+          </p>
+
+          <ul class="dfy-check-list">
+            <li><span class="dfy-check-icon">✓</span><span>Build the full system <strong>live on the call</strong> — zero homework left for after the event</span></li>
+            <li><span class="dfy-check-icon">✓</span><span>Walk out Day 3 with an automated webinar, AI Employees &amp; a sales funnel <strong>already running</strong></span></li>
+            <li><span class="dfy-check-icon">✓</span><span>Loved the system? Let our team manage it for you <strong>long-term</strong> — at a fraction of agency fees</span></li>
+            <li><span class="dfy-check-icon">✓</span><span>You already proved it works — so deciding to scale together is <strong>easy, not blind</strong></span></li>
+          </ul>
+
+          <div class="dfy-value-bar">Total System Value: ₹27,000/- (Yours Today For ₹99)</div>
+        </div>
+
+        <div class="dfy-showcase-dark dfy-reveal dfy-reveal-delay-1">
+          <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1000&q=85" alt="High Converting Funnel Dashboard" loading="lazy">
+          <h3 style="font-size: 1.45rem; font-weight: 800; line-height: 1.25;">
+            That Is Exactly What The <span class="dfy-gold-text">1 Crore Coach</span> Live Event Is
+          </h3>
+          <div class="dfy-avatars-row">
+            <div class="dfy-avatar-stack">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Coach 1">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80" alt="Coach 2">
+              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80" alt="Coach 3">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80" alt="Coach 4">
+            </div>
+            <span style="font-size: 0.85rem; font-weight: 700; color: #e4e4e7;">Joined by 10,000+ Coaches &amp; Experts</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-Level Model -->
+      <div class="dfy-section-header dfy-reveal">
+        <div class="dfy-pill-badge" style="margin-bottom: 14px;">🚀 The Two-Level Model</div>
+        <h2 class="dfy-section-title" style="color: #111827;">
+          Test The System First.<br><span class="dfy-gold-text">Partner With Us After.</span>
+        </h2>
+        <p style="color: #4b5563;">This is the opposite of every agency model you've encountered. They ask you to trust them first. We ask you to test us live.</p>
+      </div>
+
+      <div class="dfy-levels-grid">
+        <div class="dfy-level-card dfy-level-1 dfy-reveal">
+          <span class="dfy-level-tag">⚡ Level 1</span>
+          <h3>The 3-Day Live Build <span class="dfy-gold-text">₹99 to attend</span></h3>
+          <ul class="dfy-check-list" style="margin-bottom: 0;">
+            <li style="color:#e4e4e7;"><span class="dfy-check-icon">✓</span><span>Our team builds your complete system live on the call — webinar, AI Lead Qualifier, script &amp; follow-up</span></li>
+            <li style="color:#e4e4e7;"><span class="dfy-check-icon">✓</span><span>Not a demo. Not a generic template. Configured specifically for your offer and niche</span></li>
+            <li style="color:#e4e4e7;"><span class="dfy-check-icon">✓</span><span>Day 3 ends and your system is live. You built it. You own it. You control it.</span></li>
+          </ul>
+          <div class="dfy-level-footer">
+            <span class="dfy-gold-text">Some want full management.</span> That's when Level 2 opens.
+          </div>
+        </div>
+
+        <div class="dfy-level-card dfy-level-2 dfy-reveal dfy-reveal-delay-1">
+          <span class="dfy-level-tag">🤝 Level 2</span>
+          <h3>The DFY Growth Partnership</h3>
+          <ul class="dfy-check-list" style="margin-bottom: 0;">
+            <li><span class="dfy-check-icon" style="background:#111827;color:#fff;">✓</span><span>Full-time execution team managing your funnel, ads, sequences, and booking qualified calls</span></li>
+            <li><span class="dfy-check-icon" style="background:#111827;color:#fff;">✓</span><span>We become the growth backend of your business. You coach. We handle the tech &amp; marketing.</span></li>
+            <li><span class="dfy-check-icon" style="background:#111827;color:#fff;">✓</span><span>You aren't trusting strangers blindly — you've already watched the engine run live.</span></li>
+          </ul>
+          <div class="dfy-level-footer" style="color: #4b5563;">
+            Only available after Day 3. Because proof comes before partnership.
+          </div>
+        </div>
+      </div>
+
+      <div class="dfy-gold-strip dfy-reveal">
+        <div>
+          <div style="font-weight: 800; font-size: 1.05rem;">₹99 is not the price of the event.</div>
+          <div style="font-size: 0.88rem; opacity: 0.9;">It's the price of proof — before you ever commit to anything bigger.</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="font-weight: 800; font-size: 0.9rem;">Start with Level 1 →</span>
+          <button class="dfy-dark-pill-btn" onclick="openEnrollModal()">Register Now</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 4: BUILT FOR YOU IF...
+       ======================================================================== -->
+  <section class="dfy-audience-section">
+    <div class="dfy-container">
+      <div class="dfy-section-header dfy-reveal">
+        <h2 class="dfy-section-title">This 3-Day Event Is Built <span class="dfy-gold-text">For You If...</span></h2>
+      </div>
+
+      <div class="dfy-audience-grid">
+        <div class="dfy-audience-card dfy-reveal">
+          <div class="dfy-aud-icon">📈</div>
+          <p>You're a coach with inconsistent sales, and every "growth hack" you try stops working in 2 weeks.</p>
+        </div>
+        <div class="dfy-audience-card dfy-reveal dfy-reveal-delay-1">
+          <div class="dfy-aud-icon">🎯</div>
+          <p>You've bought courses, hired agencies, run ads, and still don't have a predictable client-booking engine.</p>
+        </div>
+        <div class="dfy-audience-card dfy-reveal dfy-reveal-delay-2">
+          <div class="dfy-aud-icon">💬</div>
+          <p>You feel stuck posting content daily, DMing prospects manually, and seeing zero compounding growth.</p>
+        </div>
+        <div class="dfy-audience-card dfy-reveal">
+          <div class="dfy-aud-icon">⏱️</div>
+          <p>You want a coaching business that qualifies leads while you sleep, instead of one that consumes your life.</p>
+        </div>
+        <div class="dfy-audience-card dfy-reveal dfy-reveal-delay-1">
+          <div class="dfy-aud-icon">🛠️</div>
+          <p>You're tired of gurus telling you <em>what</em> to do without sitting beside you to actually <em>build</em> it.</p>
+        </div>
+        <div class="dfy-audience-card dfy-reveal dfy-reveal-delay-2">
+          <div class="dfy-aud-icon">💎</div>
+          <p>You're ready to stop chasing cold leads and start speaking only with pre-qualified, high-intent buyers.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 5: SIX COACHES. REAL RESULTS. (LIGHT)
+       ======================================================================== -->
+  <section class="dfy-light-section">
+    <div class="dfy-container">
+      <div class="dfy-section-header dfy-reveal">
+        <h2 class="dfy-section-title" style="color: #111827;">Six Coaches. <span class="dfy-gold-text">Real Results.</span></h2>
+        <p style="color: #4b5563;">Over 100+ coaches collected awards on stage for crossing their first crore in revenue. Most started right where you are today.</p>
+      </div>
+
+      <div class="dfy-results-grid">
+        <div class="dfy-result-card dfy-reveal">
+          <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=600&q=80" alt="Kiran - Life Coach" loading="lazy">
+          <div class="dfy-result-name"><span class="dfy-gold-text">Kiran</span> — Life Coach</div>
+          <div class="dfy-result-stat">₹10 Lakh+ generated using automated webinar funnels</div>
+        </div>
+        <div class="dfy-result-card dfy-reveal dfy-reveal-delay-1">
+          <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=600&q=80" alt="Shreyesh - Agency Owner" loading="lazy">
+          <div class="dfy-result-name"><span class="dfy-gold-text">Shreyesh</span> — Agency Owner</div>
+          <div class="dfy-result-stat">₹24 Lakh+ closed in 90 days with high-ticket systems</div>
+        </div>
+        <div class="dfy-result-card dfy-reveal dfy-reveal-delay-2">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80" alt="Sachin - Communication Coach" loading="lazy">
+          <div class="dfy-result-name"><span class="dfy-gold-text">Sachin</span> — Communication Coach</div>
+          <div class="dfy-result-stat">₹50 Lakh+ revenue running this exact AI sales flow</div>
+        </div>
+        <div class="dfy-result-card dfy-reveal">
+          <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=80" alt="Shivani - Wellness Coach" loading="lazy">
+          <div class="dfy-result-name"><span class="dfy-gold-text">Shivani</span> — Wellness Coach</div>
+          <div class="dfy-result-stat">₹5 Lakh+ in her very first month of automated webinars</div>
+        </div>
+        <div class="dfy-result-card dfy-reveal dfy-reveal-delay-1">
+          <img src="https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=600&q=80" alt="Dr. Rani - Mindset Mentor" loading="lazy">
+          <div class="dfy-result-name"><span class="dfy-gold-text">Dr. Rani</span> — Mindset Mentor</div>
+          <div class="dfy-result-stat">Scaled from 1-on-1 calls to consistent 6-figure months</div>
+        </div>
+        <div class="dfy-result-card dfy-reveal dfy-reveal-delay-2">
+          <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80" alt="Shinam - Business Consultant" loading="lazy">
+          <div class="dfy-result-name"><span class="dfy-gold-text">Shinam</span> — Business Consultant</div>
+          <div class="dfy-result-stat">₹40 Lakh+ generated in her first year after the 3-day build</div>
+        </div>
+      </div>
+
+      <div style="max-width: 520px; margin: 0 auto; text-align: center;" class="dfy-reveal">
+        <button class="dfy-cta-btn" onclick="openEnrollModal()">
+          <span class="dfy-cta-title">Enroll Today @ Just ₹99 →</span>
+          <span class="dfy-cta-sub">Claim Bonuses Worth ₹27,000 — Free</span>
+        </button>
+        <div style="font-size: 0.8rem; color: #4b5563; font-weight: 600; margin-top: 10px;">
+          Live on Zoom • Hindi &amp; English • Limited to 67 AI Employee Seats Only
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 6: 3-DAY LIVE BLUEPRINT ROADMAP (DARK)
+       ======================================================================== -->
+  <section class="dfy-roadmap-section">
+    <div class="dfy-container">
+      <div class="dfy-section-header dfy-reveal">
+        <div class="dfy-pill-badge" style="margin-bottom: 14px;">🗺️ 3-Day LIVE Blueprint</div>
+        <h2 class="dfy-section-title">3-Day <span class="dfy-gold-text">LIVE 1 Crore Coach</span> Blueprint Roadmap</h2>
+        <p class="dfy-section-sub">Not theory. Not slides. Not "homework for after the event." The actual system installed inside your business, on the call, in real time.</p>
+      </div>
+
+      <div class="dfy-roadmap-grid">
+        <!-- Sticky Left Card -->
+        <div class="dfy-sticky-box dfy-reveal">
+          <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=85" alt="7 Figure AI Lead System" loading="lazy">
+          <h4 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 8px; text-align: center;">7-Figure AI Lead System™</h4>
+          <p style="font-size: 0.85rem; color: #a1a1aa; text-align: center; margin-bottom: 16px;">Everything configured live with step-by-step screen sharing.</p>
+          <button class="dfy-cta-btn" onclick="openEnrollModal()">
+            <span class="dfy-cta-title">Enroll Today @ Just ₹99 →</span>
+            <span class="dfy-cta-sub">Claim Bonuses Worth ₹27,000 — Free</span>
+          </button>
+        </div>
+
+        <!-- Right Day-by-Day Cards -->
+        <div>
+          <div class="dfy-day-card dfy-reveal">
+            <div class="dfy-day-title">Day 01</div>
+            <img src="https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?auto=format&fit=crop&w=900&q=85" alt="Day 1 Autopilot Webinar" loading="lazy">
+            <h4>Step 1 — Your Autopilot Webinar Goes Live</h4>
+            <ul class="dfy-day-list">
+              <li><span class="dfy-green-check">✓</span><span>A high-converting registration page — live on your domain, not a wireframe</span></li>
+              <li><span class="dfy-green-check">✓</span><span>Automated email &amp; WhatsApp reminder sequences — configured and running by end of Day 1</span></li>
+              <li><span class="dfy-green-check">✓</span><span>Automated playback engine — your presentation runs and converts around the clock</span></li>
+              <li><span class="dfy-green-check">✓</span><span>The DFY Webinar Selling Script — customized word-for-word for your coaching offer</span></li>
+            </ul>
+            <div class="dfy-day-outcome">End of Day 1: Your webinar funnel is live and pitching while you sleep.</div>
+          </div>
+
+          <div class="dfy-day-card dfy-reveal">
+            <div class="dfy-day-title">Day 02</div>
+            <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=900&q=85" alt="Day 2 AI Lead Qualifier" loading="lazy">
+            <h4>Step 2 — Your AI Lead Qualifier Goes In</h4>
+            <ul class="dfy-day-list">
+              <li><span class="dfy-green-check">✓</span><span>AI Employee configured to screen every prospect before they ever reach your calendar</span></li>
+              <li><span class="dfy-green-check">✓</span><span>Smart qualification questions tailored to your niche — filters out freebie seekers automatically</span></li>
+              <li><span class="dfy-green-check">✓</span><span>Calendar automation set to book serious buyers — zero wasted discovery calls</span></li>
+              <li><span class="dfy-green-check">✓</span><span>Instant lead follow-up workflows — every inquiry gets nurtured without manual chasing</span></li>
+            </ul>
+            <div class="dfy-day-outcome">End of Day 2: Your calendar only shows qualified buyers. Tire-kickers never reach you.</div>
+          </div>
+
+          <div class="dfy-day-card dfy-reveal" style="margin-bottom: 0;">
+            <div class="dfy-day-title">Day 03</div>
+            <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=900&q=85" alt="Day 3 High-Ticket Closing" loading="lazy">
+            <h4>Step 3 &amp; 4 — High-Ticket Sales Script + Scale With AI</h4>
+            <ul class="dfy-day-list">
+              <li><span class="dfy-green-check">✓</span><span>The DFY High-Ticket Closing Script — battle-tested across thousands of coaching calls</span></li>
+              <li><span class="dfy-green-check">✓</span><span>One-on-one consultation framework — built to enroll high-ticket clients smoothly</span></li>
+              <li><span class="dfy-green-check">✓</span><span>Lean team &amp; AI Employee blueprint — the exact sequence to scale from lakhs to 7 figures</span></li>
+              <li><span class="dfy-green-check">✓</span><span>90-day scaling roadmap — how top coaches predictably scale to ₹10L–₹1Cr/month</span></li>
+            </ul>
+            <div class="dfy-day-outcome">End of Day 3: You walk out with a complete, running client machine — not another folder of PDFs.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SECTION 7: BONUSES, COMPARISON, MENTOR & FAQ (LIGHT)
+       ======================================================================== -->
+  <section class="dfy-light-section">
+    <div class="dfy-container">
+      <!-- Bonuses -->
+      <div class="dfy-section-header dfy-reveal">
+        <h2 class="dfy-section-title" style="color: #111827;">🎁 <span class="dfy-gold-text">BONUS</span> (Only For Live Attendees)</h2>
+        <p style="color: #4b5563;">Show up live &amp; walk away with these high-value implementation assets — completely free.</p>
+      </div>
+
+      <div class="dfy-bonus-grid">
+        <div class="dfy-bonus-card dfy-reveal">
+          <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&q=80" alt="Bonus 1 Webinar Script" loading="lazy">
+          <span class="dfy-bonus-val">🎁 Value: ₹10,999/-</span>
+          <h4 style="font-weight: 800; margin-bottom: 10px; text-align: center;">Bonus #1: The DFY Webinar Selling Script</h4>
+          <p style="font-size: 0.86rem; color: #4b5563;">The exact word-for-word presentation script used to scale from zero to multi-crore revenue — customized live for your offer on Day 1.</p>
+        </div>
+
+        <div class="dfy-bonus-card dfy-reveal dfy-reveal-delay-1">
+          <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80" alt="Bonus 2 Funnel Setup" loading="lazy">
+          <span class="dfy-bonus-val">🎁 Value: ₹8,999/-</span>
+          <h4 style="font-weight: 800; margin-bottom: 10px; text-align: center;">Bonus #2: DFY Client-Getting Funnel Setup</h4>
+          <p style="font-size: 0.86rem; color: #4b5563;">Complete funnel architecture — registration page, reminder sequences, and booking calendar configured live so prospects show up ready to buy.</p>
+        </div>
+
+        <div class="dfy-bonus-card dfy-reveal dfy-reveal-delay-2">
+          <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=600&q=80" alt="Bonus 3 AI Employee" loading="lazy">
+          <span class="dfy-bonus-val">🎁 Value: ₹7,000/-</span>
+          <h4 style="font-weight: 800; margin-bottom: 10px; text-align: center;">Bonus #3: AI Employee Configuration (First 67 Seats)</h4>
+          <p style="font-size: 0.86rem; color: #4b5563;">Fully automated AI assistant that handles lead qualification, follow-ups, and calendar booking 24/7 inside your coaching business.</p>
+        </div>
+      </div>
+
+      <div style="text-align: center; max-width: 520px; margin: 0 auto 56px;" class="dfy-reveal">
+        <div style="font-size: 1.25rem; font-weight: 800; color: var(--dfy-gold-dark);">Total System Value: ₹27,000/-</div>
+        <div style="font-size: 1rem; font-weight: 700; color: #4b5563; text-decoration: line-through;">Normal Price: ₹5,699/-</div>
+        <div style="font-size: 1.55rem; font-weight: 900; color: #10b981; margin: 4px 0 16px;">Today's Offer: ₹99 Only 🔥</div>
+        <button class="dfy-cta-btn" onclick="openEnrollModal()">
+          <span class="dfy-cta-title">Enroll Today @ Just ₹99 →</span>
+          <span class="dfy-cta-sub">Claim Bonuses Worth ₹27,000 — Free</span>
+        </button>
+      </div>
+
+      <!-- Comparison -->
+      <div class="dfy-section-header dfy-reveal">
+        <h2 class="dfy-section-title" style="color: #111827;">The Evolution of Growth</h2>
+        <p style="color: #4b5563;">Most coaches stay stuck because they chase clients manually — here's what changes when you install the right system.</p>
+      </div>
+
+      <div class="dfy-compare-grid">
+        <div class="dfy-compare-bad dfy-reveal">
+          <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=700&q=80" alt="Stressed Coach Without System" loading="lazy">
+          <h4 style="color: #b91c1c; font-weight: 800; margin-bottom: 12px;">✖ Other Coaching Programs</h4>
+          <ul class="dfy-check-list" style="margin:0;">
+            <li><span style="color:#dc2626;font-weight:900;">✖</span><span>Pay ₹50,000–₹1,50,000 upfront before seeing results</span></li>
+            <li><span style="color:#dc2626;font-weight:900;">✖</span><span>Wait 30–60 days hoping the funnel converts</span></li>
+            <li><span style="color:#dc2626;font-weight:900;">✖</span><span>You don't understand the tech — so you can't fix it</span></li>
+          </ul>
+        </div>
+
+        <div class="dfy-compare-good dfy-reveal dfy-reveal-delay-1">
+          <img src="https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&w=700&q=80" alt="Confident Coach With Automated System" loading="lazy">
+          <h4 style="color: #047857; font-weight: 800; margin-bottom: 12px;">✔ What Our 3-Day Live Build Does Differently</h4>
+          <ul class="dfy-check-list" style="margin:0;">
+            <li><span style="color:#059669;font-weight:900;">✔</span><span>Invest just ₹99 and 3 evenings first</span></li>
+            <li><span style="color:#059669;font-weight:900;">✔</span><span>Build the system yourself live — watch it work in real time</span></li>
+            <li><span style="color:#059669;font-weight:900;">✔</span><span>Own and understand every piece of your client engine</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Meet Your Mentor -->
+      <div class="dfy-mentor-box dfy-reveal">
+        <div class="dfy-mentor-photo-wrap">
+          <img class="dfy-mentor-photo" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=500&q=85" alt="Aarav Sharma Mentor" loading="lazy">
+          <div class="dfy-pill-badge" style="font-size:0.75rem;">🏆 TEDx Speaker • Growth Partner</div>
+          <div class="dfy-mentor-stat">👥 100K+ Entrepreneurs Trained</div>
+          <div class="dfy-mentor-stat">⭐ Rated 4.9/5 Nationwide</div>
+        </div>
+
+        <div>
+          <div style="color: var(--dfy-gold); font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em;">Meet Your Mentor</div>
+          <h3 style="font-size: 2rem; font-weight: 800; margin: 4px 0 14px;">Aarav Sharma</h3>
+          <p style="color: #d4d4d8; font-size: 0.94rem; margin-bottom: 12px;">
+            A few years ago, I was the exhausted coach running endless manual sales calls, buying course after course, and wondering why nothing scaled predictably.
+          </p>
+          <p style="color: #d4d4d8; font-size: 0.94rem;">
+            Everything shifted the night I stopped trying to be a better salesperson and built a system that didn't depend on my manual effort: an automated webinar, AI Employees qualifying leads 24/7, and a repeatable high-ticket enrollment flow. Today, we help coaches install that exact engine live in 3 days.
+          </p>
+          <div class="dfy-mission-box">
+            <div style="color: var(--dfy-gold); font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">— My Mission</div>
+            <div style="font-size: 0.9rem; color: #f4f4f5;">To help 1,00,000 coaches cross 7 figures without tech overwhelm, wasted ad spend, or burnout. We don't preach theory — we build it with you live.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="dfy-section-header dfy-reveal" style="margin-top: 64px; margin-bottom: 24px;">
+        <h2 class="dfy-section-title" style="color: #111827;">Frequently Asked Questions</h2>
+      </div>
+
+      <div class="dfy-faq-list dfy-reveal">
+        <div class="dfy-faq-item active">
+          <button class="dfy-faq-btn" onclick="toggleFaq(this)">
+            <span>1. Is this a live workshop or pre-recorded videos?</span>
+            <span class="dfy-faq-icon">+</span>
+          </button>
+          <div class="dfy-faq-ans">
+            It is 100% LIVE on Zoom over 3 consecutive days at 7:00 PM IST. You will build your registration funnel, AI lead qualifier, and sales scripts alongside our implementation team in real time.
+          </div>
+        </div>
+
+        <div class="dfy-faq-item">
+          <button class="dfy-faq-btn" onclick="toggleFaq(this)">
+            <span>2. I am not tech-savvy. Can I still build this in 3 days?</span>
+            <span class="dfy-faq-icon">+</span>
+          </button>
+          <div class="dfy-faq-ans">
+            Yes! You receive ready-to-import templates, scripts, and live step-by-step guidance. No coding or prior funnel-building experience is required.
+          </div>
+        </div>
+
+        <div class="dfy-faq-item">
+          <button class="dfy-faq-btn" onclick="toggleFaq(this)">
+            <span>3. What if I am just starting my coaching or consulting business?</span>
+            <span class="dfy-faq-icon">+</span>
+          </button>
+          <div class="dfy-faq-ans">
+            Starting with a clean, automated system saves you months of trial and error. Even if you don't have a large audience yet, Day 1 helps you structure an irresistible high-ticket offer and webinar flow.
+          </div>
+        </div>
+
+        <div class="dfy-faq-item">
+          <button class="dfy-faq-btn" onclick="toggleFaq(this)">
+            <span>4. How does the 30-Day Money-Back Guarantee work?</span>
+            <span class="dfy-faq-icon">+</span>
+          </button>
+          <div class="dfy-faq-ans">
+            Attend all 3 live sessions and complete the exercises. If you feel you didn't receive at least 10x the value of your ₹99 ticket, simply email our support desk and we will refund 100% within 24 hours.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       STICKY FOOTER BAR
+       ======================================================================== -->
+  <div class="dfy-sticky-bar">
+    <div class="dfy-sticky-inner">
+      <div class="dfy-offer-timer">
+        <span style="color: var(--dfy-gold);">OFFER ENDS IN</span>
+        <span class="dfy-red-badge" id="sticky-timer">13:07</span>
+      </div>
+      <div class="dfy-sticky-brand" style="font-weight: 800; color: var(--dfy-gold); letter-spacing: 0.04em;">
+        👑 GROWTH PARADISE
+      </div>
+      <button class="dfy-sticky-btn" onclick="openEnrollModal()">Register Now @ ₹99</button>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       ENROLLMENT MODAL
+       ======================================================================== -->
+  <div class="dfy-modal-backdrop" id="enrollModal" onclick="if(event.target===this) closeEnrollModal()">
+    <div class="dfy-modal">
+      <button class="dfy-modal-close" onclick="closeEnrollModal()">✕</button>
+      <div style="text-align: center; margin-bottom: 18px;">
+        <span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:0.75rem;padding:4px 12px;border-radius:999px;">LIMITED TO 67 SEATS</span>
+        <h3 style="font-size: 1.4rem; font-weight: 800; margin-top: 10px;">Reserve Your 3-Day Live Seat</h3>
+        <p style="font-size: 0.86rem; color: #4b5563;">Unlock ₹27,000 worth of bonuses for just ₹99</p>
+      </div>
+      <form onsubmit="handleBooking(event)">
+        <input class="dfy-input" type="text" placeholder="Your Full Name" required>
+        <input class="dfy-input" type="email" placeholder="Your Best Email Address" required>
+        <input class="dfy-input" type="tel" placeholder="WhatsApp Number (+91)" required>
+        <input class="dfy-input" type="text" placeholder="Your Coaching / Consulting Niche" required>
+        <button type="submit" class="dfy-cta-btn" style="animation:none;">
+          <span class="dfy-cta-title">Complete Registration @ ₹99 →</span>
+          <span class="dfy-cta-sub">Instant Zoom Link &amp; Bonus Access</span>
+        </button>
+      </form>
+      <div id="bookingSuccess" style="display:none; text-align:center; padding:16px; background:#ecfdf5; border-radius:12px; color:#065f46; font-weight:700; margin-top:12px;">
+        🎉 Seat Reserved! Redirecting to secure payment gateway...
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       INTERACTIVE JAVASCRIPT (ANIMATIONS, COUNTDOWNS, FAQ & MODAL)
+       ======================================================================== -->
+  <script>
+    // 1. Scroll Reveal Intersection Observer
+    const revealElements = document.querySelectorAll('.dfy-reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('dfy-visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // 2. Hero 4-Box Countdown Timer
+    let totalHeroSeconds = (1 * 86400) + (6 * 3600) + (56 * 60) + 36;
+    function updateHeroCountdown() {
+      if (totalHeroSeconds <= 0) return;
+      totalHeroSeconds--;
+      const d = Math.floor(totalHeroSeconds / 86400);
+      const h = Math.floor((totalHeroSeconds % 86400) / 3600);
+      const m = Math.floor((totalHeroSeconds % 3600) / 60);
+      const s = totalHeroSeconds % 60;
+
+      document.getElementById('cd-days').textContent = String(d).padStart(2, '0');
+      document.getElementById('cd-hours').textContent = String(h).padStart(2, '0');
+      document.getElementById('cd-mins').textContent = String(m).padStart(2, '0');
+      document.getElementById('cd-secs').textContent = String(s).padStart(2, '0');
+    }
+    setInterval(updateHeroCountdown, 1000);
+
+    // 3. Sticky Footer 15-Minute Urgency Timer
+    let stickySeconds = 13 * 60 + 7;
+    function updateStickyTimer() {
+      if (stickySeconds <= 0) stickySeconds = 15 * 60;
+      stickySeconds--;
+      const mins = Math.floor(stickySeconds / 60);
+      const secs = stickySeconds % 60;
+      document.getElementById('sticky-timer').textContent =
+        String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+    setInterval(updateStickyTimer, 1000);
+
+    // 4. FAQ Accordion Toggle
+    function toggleFaq(button) {
+      const item = button.parentElement;
+      const isActive = item.classList.contains('active');
+      document.querySelectorAll('.dfy-faq-item').forEach(el => el.classList.remove('active'));
+      if (!isActive) item.classList.add('active');
+    }
+
+    // 5. Registration Modal Controls
+    function openEnrollModal() {
+      document.getElementById('enrollModal').classList.add('open');
+    }
+
+    function closeEnrollModal() {
+      document.getElementById('enrollModal').classList.remove('open');
+    }
+
+    function handleBooking(e) {
+      e.preventDefault();
+      document.getElementById('bookingSuccess').style.display = 'block';
+      setTimeout(() => {
+        closeEnrollModal();
+        document.getElementById('bookingSuccess').style.display = 'none';
+      }, 2200);
+    }
+  </script>
+</body>
+</html>

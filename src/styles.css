@@ -3326,3 +3326,124 @@ html.lb-hidden .dash .ft-reel,html.lb-hidden .rb3 *{animation-play-state:paused}
 .dash .ai-h h3{font-size:16px}.dash .ai-av{width:40px!important;height:40px!important}
 .dash .ai-score{padding:3px 9px!important}.dash .ai-score b{font-size:18px!important}
 @media (max-width:1400px){.dash .ai-body{grid-template-columns:130px minmax(0,1fr)!important}.rb3{width:120px!important}}
+
+/* ===================== v57 ===================== */
+/* red robot, bigger, walks to the score and back waving "Hi!" */
+.dash .ai-body{grid-template-columns:186px minmax(0,1fr)!important}
+.rb3{width:178px!important;margin:-10px 0 -12px!important}
+.dash .rb-walk{position:relative;z-index:6;will-change:transform;animation:rbWalk 16s ease-in-out infinite}
+@keyframes rbWalk{
+  0%,28%{transform:translate(0,0) scale(1)}
+  34%{transform:translate(calc(var(--dx,0px)*.5),calc(var(--dy,0px)*.5 - 26px)) scale(.7) rotate(6deg)}
+  40%,64%{transform:translate(var(--dx,0px),var(--dy,0px)) scale(.42)}
+  70%{transform:translate(calc(var(--dx,0px)*.5),calc(var(--dy,0px)*.5 - 26px)) scale(.7) rotate(-6deg)}
+  76%,100%{transform:translate(0,0) scale(1)}}
+.dash .rb-hi{position:absolute;left:50%;top:-4px;z-index:3;transform:translate(-50%,-100%);background:#0f1238;color:#ffd35c;font-weight:800;font-size:13px;padding:4px 10px;border-radius:999px;white-space:nowrap;box-shadow:0 8px 16px -8px rgba(15,18,56,.7);opacity:0;animation:rbHi 16s ease-in-out infinite}
+.dash .rb-hi::after{content:"";position:absolute;left:50%;bottom:-5px;margin-left:-5px;border:5px solid transparent;border-bottom:0;border-top-color:#0f1238}
+@keyframes rbHi{0%,4%{opacity:0;transform:translate(-50%,-90%) scale(.6)}8%,24%{opacity:1;transform:translate(-50%,-100%) scale(1)}28%,42%{opacity:0}46%,60%{opacity:1;transform:translate(-50%,-100%) scale(2.1)}64%,100%{opacity:0}}
+.rb3 .r3-point{animation:r3Wave 1.6s ease-in-out infinite}
+.dash .ai-card{overflow:visible!important}
+/* smaller message box */
+.dash .ai-say{padding:6px 9px!important;border-radius:11px!important;position:relative;z-index:1}
+.dash .ai-say b{font-size:11.5px!important}
+.dash .ai-say span{font-size:11px!important;line-height:1.3!important}
+.dash .ai-due{font-size:10.5px!important;padding:3px 9px!important}
+@media (max-width:1400px){.dash .ai-body{grid-template-columns:150px minmax(0,1fr)!important}.rb3{width:148px!important}}
+@media (prefers-reduced-motion:reduce){.dash .rb-walk,.dash .rb-hi{animation:none!important}}
+html.lb-hidden .dash .rb-walk,html.lb-hidden .dash .rb-hi{animation-play-state:paused}
+
+/* AI CORE: dark navy backdrop so the yellow glows */
+.dash .al-core3::before{content:"";position:absolute;inset:-34px;border-radius:50%;background:radial-gradient(circle,#232a7a 0%,#141850 42%,#0f1238 60%,rgba(15,18,56,.55) 70%,rgba(15,18,56,0) 76%);z-index:0}
+.dash .al-wave{border-color:#ffd35c!important;z-index:1}.dash .al-wave.w2{border-color:#f5b301!important}
+.dash .al-rng{z-index:1;border-top-color:#ffd35c!important;border-bottom-color:#5b7bff!important}
+.dash .al-orb3{box-shadow:0 0 0 3px #f5b301,0 0 26px 8px rgba(245,179,1,.55)!important}
+.dash .al-lab3{background:#0f1238!important;color:#ffd35c!important;top:calc(50% + 74px)!important;box-shadow:0 0 0 2px rgba(245,179,1,.5),0 8px 18px -8px rgba(15,18,56,.8)!important}
+.dash .rb-hi{top:auto;bottom:22px;left:auto;right:-14px;transform:none!important;font-size:11.5px;padding:3px 8px}
+.dash .rb-hi::after{display:none}
+@keyframes rbHi{0%,4%{opacity:0}8%,24%{opacity:1}28%,42%{opacity:0}46%,60%{opacity:1;scale:1.9}64%,100%{opacity:0}}
+
+/* ===================== v58 ===================== */
+/* robot: theme colours, clear stop in the header gap, more motion */
+@keyframes rbWalk{
+  0%,26%{transform:translate(0,0) scale(1) rotate(0)}
+  30%{transform:translate(calc(var(--dx,0px)*.2),calc(var(--dy,0px)*.2 - 30px)) scale(.85) rotate(8deg)}
+  34%{transform:translate(calc(var(--dx,0px)*.45),calc(var(--dy,0px)*.45)) scale(.7) rotate(-4deg)}
+  38%{transform:translate(calc(var(--dx,0px)*.75),calc(var(--dy,0px)*.75 - 24px)) scale(.55) rotate(8deg)}
+  42%{transform:translate(var(--dx,0px),var(--dy,0px)) scale(.42) rotate(0)}
+  46%{transform:translate(var(--dx,0px),calc(var(--dy,0px) - 10px)) scale(.42)}
+  50%,60%{transform:translate(var(--dx,0px),var(--dy,0px)) scale(.42)}
+  64%{transform:translate(calc(var(--dx,0px)*.75),calc(var(--dy,0px)*.75 - 24px)) scale(.55) rotate(-8deg)}
+  68%{transform:translate(calc(var(--dx,0px)*.45),calc(var(--dy,0px)*.45)) scale(.7) rotate(4deg)}
+  72%{transform:translate(calc(var(--dx,0px)*.2),calc(var(--dy,0px)*.2 - 30px)) scale(.85) rotate(-8deg)}
+  76%,100%{transform:translate(0,0) scale(1) rotate(0)}}
+.dash .rb-walk{z-index:8}
+.dash .ai-h{min-height:58px;position:relative}
+.dash .ai-h .grow{flex:0 1 auto!important;margin-right:auto}
+.r3-ant{animation:r3AntB 1.4s ease-in-out infinite}@keyframes r3AntB{50%{fill:#fff3c4;filter:drop-shadow(0 0 6px #f5b301)}}
+.r3-tip{animation:r3AntB 1s ease-in-out infinite}
+.rb3 .r3-point{transform-box:view-box;transform-origin:154px 132px;animation:r3Wave2 1.4s ease-in-out infinite}
+@keyframes r3Wave2{0%,100%{transform:rotate(0)}25%{transform:rotate(-16deg)}50%{transform:rotate(6deg)}75%{transform:rotate(-10deg)}}
+.rb3 .r3-head{animation:r3Tilt 4s ease-in-out infinite}
+.dash .rb-walk::after{content:"✦";position:absolute;right:6px;top:10px;color:#f5b301;font-size:16px;animation:rbSpark 2.2s ease-in-out infinite}
+@keyframes rbSpark{0%,100%{opacity:0;transform:translateY(6px) scale(.5)}50%{opacity:1;transform:translateY(-8px) scale(1.1)}}
+
+/* AI CORE: only a very soft shadow, no solid colour */
+.dash .al-core3::before{inset:-40px!important;background:radial-gradient(circle,rgba(15,18,56,.16) 0%,rgba(15,18,56,.09) 40%,rgba(15,18,56,.03) 62%,rgba(15,18,56,0) 72%)!important}
+.dash .al-lab3{background:#fff!important;color:#3b2fb8!important;box-shadow:0 6px 16px -8px rgba(91,61,240,.5)!important}
+
+/* ===================== v59: reference robot, layered + animated ===================== */
+.dash .rb-walk{animation:none!important;transform-origin:50% 60%}
+.dash .rb-walk::after{display:none}
+.dash .ai-body{grid-template-columns:196px minmax(0,1fr)!important}
+.rb4{position:relative;width:196px;aspect-ratio:460/381;margin:-8px 0 -6px}
+.rb4-l{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;user-select:none}
+.rb4-me{position:absolute;inset:0;animation:rb4Float 3.2s ease-in-out infinite}
+@keyframes rb4Float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.rb4-arm{transform-origin:68.2% 56.9%;animation:rb4Wave 1.5s ease-in-out infinite}
+@keyframes rb4Wave{0%,100%{transform:rotate(0)}25%{transform:rotate(-13deg)}55%{transform:rotate(7deg)}80%{transform:rotate(-6deg)}}
+.rb4-blink{position:absolute;left:39.6%;top:27.6%;width:18.6%;height:5.6%;background:#04091f;border-radius:40%;opacity:0;animation:rb4Blink 4.6s infinite}
+.rb4-blink::before,.rb4-blink::after{content:"";position:absolute;top:50%;width:30%;height:2px;background:#7ec4ff;box-shadow:0 0 5px #4aa3ff;border-radius:2px}
+.rb4-blink::before{left:8%}.rb4-blink::after{right:8%}
+@keyframes rb4Blink{0%,91%,97%,100%{opacity:0}93%,95%{opacity:1}}
+.rb4-chest{position:absolute;left:49.3%;top:51%;width:8%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,80,90,.95),rgba(255,40,60,0) 70%);mix-blend-mode:screen;animation:rb4Chest 1.8s ease-in-out infinite}
+@keyframes rb4Chest{50%{transform:scale(1.7);opacity:.35}}
+.rb4-pad{position:absolute;left:18%;right:18%;bottom:4%;height:12%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,40,60,.45),rgba(255,40,60,0) 70%);animation:rb4Pad 2.4s ease-in-out infinite}
+@keyframes rb4Pad{50%{transform:scaleX(1.12);opacity:.55}}
+.rb4-b1{animation:rb4Bob 2.8s ease-in-out infinite}.rb4-b2{animation:rb4Bob 3.3s ease-in-out -1.1s infinite}
+@keyframes rb4Bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.rb4-sp{transform-origin:17.5% 25%;animation:rb4Tw 1.9s ease-in-out infinite}
+@keyframes rb4Tw{0%,100%{transform:scale(.7) rotate(0);opacity:.6}50%{transform:scale(1.15) rotate(30deg);opacity:1}}
+.rb4-hi{transform-origin:74% 27%;opacity:0}
+.rb4-alert .rb4-chest{animation-duration:.8s}
+@media (max-width:1400px){.dash .ai-body{grid-template-columns:160px minmax(0,1fr)!important}.rb4{width:160px}}
+@media (prefers-reduced-motion:reduce){.rb4 *{animation:none!important}.rb4-hi{opacity:1}}
+html.lb-hidden .rb4 *{animation-play-state:paused}
+
+/* AI CORE: soft blue halo like the reference, yellow + blue arcs, thin outer yellow ring */
+.dash .al-core3::before{inset:-46px!important;background:radial-gradient(circle,rgba(70,100,255,.30) 0%,rgba(70,100,255,.16) 40%,rgba(70,100,255,.05) 62%,rgba(70,100,255,0) 72%)!important;filter:blur(2px);animation:alHalo 3s ease-in-out infinite}
+@keyframes alHalo{50%{transform:scale(1.08);opacity:.8}}
+.dash .al-core3::after{content:"";position:absolute;inset:-22px;border-radius:50%;border:1.5px solid rgba(245,179,1,.65);z-index:1}
+.dash .al-rng{inset:2px!important;border-width:4px!important;border-color:transparent!important;border-left-color:#f5b301!important;border-right-color:#1d3fd8!important;animation:alSpin 6s linear infinite!important}
+.dash .al-orb3{background:radial-gradient(circle at 35% 30%,#203a7a,#0f1c48 70%)!important;box-shadow:0 0 0 3px #f5b301,0 0 22px 6px rgba(245,179,1,.5)!important}
+.dash .al-wave{display:none}
+.dash .al-lab3{background:#fff!important;color:#3b2fb8!important}
+
+/* ===================== v60 ===================== */
+/* robot pictures (built in, no extra files) */
+.rb4 .rb4-l{display:block;background-size:100% 100%;background-repeat:no-repeat}
+
+/* Templates page: every card's page scrolls nonstop by default */
+.tg-frame .tg-reel{position:absolute;left:0;right:0;top:0;animation:ftReel 50s linear infinite;animation-delay:calc(var(--i,0) * -7s)}
+.tg-frame .tg-reel img{display:block;width:100%;height:auto}
+.tg-frame .tg-reel.short{animation:none;inset:0}.tg-frame .tg-reel.short img{height:100%;object-fit:cover;object-position:top}.tg-frame .tg-reel.short img+img{display:none}
+.tg-card:hover .tg-reel{animation-duration:20s}
+@media (prefers-reduced-motion:reduce){.tg-frame .tg-reel{animation:none}}
+html.lb-hidden .tg-frame .tg-reel{animation-play-state:paused}
+/* v61 — red LIVE badge with broadcast waves */
+.dash .si-live{gap:5px;background:#e8202a;color:#fff!important;padding:3px 9px 3px 7px;border-radius:7px;font-size:11px!important;letter-spacing:.08em;box-shadow:0 4px 12px -4px rgba(232,32,42,.7)}
+.dash .si-live svg{display:block}
+.dash .si-live svg path{fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round}
+.dash .si-live svg circle{fill:#fff}
+.dash .si-live .w1{animation:liveW 1.6s ease-in-out infinite}
+.dash .si-live .w2{animation:liveW 1.6s ease-in-out .3s infinite}
+@keyframes liveW{0%,100%{opacity:.25}40%{opacity:1}}

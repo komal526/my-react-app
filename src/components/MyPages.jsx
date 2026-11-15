@@ -69,7 +69,7 @@ function SmartInsights({ events, leads, onAsk, onAnalytics, onGo }) {
   return (
     <div className="db-card si">
       <div className="si-h"><span className="si-spark" aria-hidden="true">✦<i>✦</i><i>✦</i></span><h3>Smart Analytics <span>Insights</span></h3>
-        <span className="si-live" title="Updates by itself"><i />Live</span>
+        <span className="si-live" title="Updates by itself"><svg viewBox="0 0 24 16" width="20" height="14" aria-hidden="true"><path className="w2" d="M5 2.5a8 8 0 0 0 0 11M19 2.5a8 8 0 0 1 0 11" /><path className="w1" d="M8 5a4.5 4.5 0 0 0 0 6M16 5a4.5 4.5 0 0 1 0 6" /><circle cx="12" cy="8" r="2.2" /></svg>LIVE</span>
         <label className="si-range"><span>{days === 1 ? "Last 24 hours" : `Last ${days} days`}</span><Icon n="chevd" s={14} /><select value={days} onChange={(e) => setDays(+e.target.value)} aria-label="Period">{[[1, "Last 24 hours"], [7, "Last 7 days"], [30, "Last 30 days"], [90, "Last 90 days"]].map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
         <button className="si-go" onClick={onAnalytics} title="Open Analytics" aria-label="Open Analytics"><Icon n="external" s={15} /></button></div>
       <div className="si-grid">
@@ -82,63 +82,57 @@ function SmartInsights({ events, leads, onAsk, onAnalytics, onGo }) {
 }
 
 /* ---------- AI Consultant: a robot that keeps checking your pages and live numbers, and tells you what to fix ---------- */
+/* AI Consultant robot — your reference image, split into layers so each part moves on its own (pictures live in styles.css) */
 function Robot({ mood = "ok" }) {
+  /* pictures load a moment after the dashboard appears */
+  useEffect(() => { const go = () => import("./robotArt.js").then((m) => m.default()); if ("requestIdleCallback" in window) requestIdleCallback(go, { timeout: 1200 }); else setTimeout(go, 300); }, []);
   return (
-    <svg className={"rb3 rb3-" + mood} viewBox="0 0 230 230" aria-hidden="true">
-      <defs>
-        <linearGradient id="r3W" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset=".65" stopColor="#eef0fb" /><stop offset="1" stopColor="#c9cfec" /></linearGradient>
-        <linearGradient id="r3Y" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffd35c" /><stop offset="1" stopColor="#e19a00" /></linearGradient>
-        <linearGradient id="r3V" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1e2466" /><stop offset="1" stopColor="#070923" /></linearGradient>
-        <linearGradient id="r3S" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#3b82f6" /><stop offset="1" stopColor="#1e3a8a" /></linearGradient>
-        <radialGradient id="r3G" cx=".5" cy=".5" r=".5"><stop offset="0" stopColor="#ffd35c" stopOpacity=".55" /><stop offset=".6" stopColor="#f5b301" stopOpacity=".18" /><stop offset="1" stopColor="#f5b301" stopOpacity="0" /></radialGradient>
-        <filter id="r3Glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-      </defs>
-      {/* platform: soft yellow glow + orbit rings */}
-      <ellipse cx="112" cy="202" rx="96" ry="22" fill="url(#r3G)" className="r3-pad" />
-      <ellipse cx="112" cy="202" rx="84" ry="17" fill="none" stroke="#f5b301" strokeWidth="2.5" strokeDasharray="10 8" className="r3-orbit" />
-      <ellipse cx="112" cy="202" rx="62" ry="12" fill="none" stroke="#1e2466" strokeOpacity=".35" strokeWidth="2" />
-      {/* floating badges */}
-      <g className="r3-b1"><rect x="4" y="96" width="30" height="28" rx="8" fill="#5b3df0" /><path d="M12 116v-5M19 116v-9M26 116v-13" stroke="#ffd35c" strokeWidth="3" strokeLinecap="round" /></g>
-      <g className="r3-b2"><rect x="186" y="22" width="34" height="30" rx="9" fill="#5b3df0" /><path d="M195 44v-5M203 44v-10M211 44v-15" stroke="#ffd35c" strokeWidth="3" strokeLinecap="round" /></g>
-      <g className="r3-b3"><path d="M20 40l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#f5b301" /></g>
-      <g className="r3-float">
-        {/* body */}
-        <path d="M66 128c0-14 18-22 46-22s46 8 46 22v40c0 14-20 22-46 22s-46-8-46-22z" fill="url(#r3W)" stroke="#d7dbf0" />
-        {/* chest core: pulses dark yellow ↔ dark blue */}
-        <circle cx="112" cy="132" r="12" fill="#0f1238" stroke="url(#r3Y)" strokeWidth="3" />
-        <circle cx="112" cy="132" r="6.5" className="r3-core" />
-        {/* left arm (yellow joint) + laptop */}
-        <path d="M70 136c-14 6-22 22-18 38" stroke="url(#r3W)" strokeWidth="15" strokeLinecap="round" fill="none" />
-        <circle cx="70" cy="134" r="8" fill="url(#r3Y)" />
-        <g transform="rotate(-12 118 160)">
-          <rect x="82" y="140" width="74" height="48" rx="7" fill="url(#r3S)" stroke="#93c5fd" strokeWidth="1.5" />
-          <g className="r3-bars"><rect x="96" y="166" width="7" height="12" rx="1.5" /><rect x="107" y="160" width="7" height="18" rx="1.5" /><rect x="118" y="154" width="7" height="24" rx="1.5" /><rect x="129" y="148" width="7" height="30" rx="1.5" /></g>
-          <rect x="76" y="188" width="86" height="6" rx="3" fill="#f5b301" />
-        </g>
-        <circle cx="62" cy="178" r="9" fill="url(#r3W)" stroke="#d7dbf0" />
-        {/* right arm waving / pointing up */}
-        <g className="r3-point">
-          <path d="M154 132c14-4 22-18 24-34" stroke="url(#r3W)" strokeWidth="14" strokeLinecap="round" fill="none" />
-          <circle cx="154" cy="132" r="8" fill="url(#r3Y)" />
-          <circle cx="178" cy="94" r="9" fill="url(#r3W)" stroke="#d7dbf0" />
-          <rect x="175" y="70" width="7" height="20" rx="3.5" fill="url(#r3W)" stroke="#d7dbf0" />
-        </g>
-        {/* head + yellow headphones */}
-        <g className="r3-head">
-          <path d="M58 62a50 50 0 0 1 100 0" stroke="url(#r3Y)" strokeWidth="8" fill="none" strokeLinecap="round" />
-          <ellipse cx="108" cy="66" rx="50" ry="44" fill="url(#r3W)" stroke="#d7dbf0" />
-          <rect x="44" y="48" width="22" height="38" rx="11" fill="url(#r3Y)" /><rect x="49" y="55" width="12" height="24" rx="6" fill="#0f1238" />
-          <rect x="150" y="48" width="22" height="38" rx="11" fill="url(#r3Y)" /><rect x="155" y="55" width="12" height="24" rx="6" fill="#0f1238" />
-          <rect x="72" y="44" width="72" height="46" rx="23" fill="url(#r3V)" stroke="#f5b301" strokeOpacity=".5" strokeWidth="1.5" />
-          <path d="M80 52q14-6 28-4" stroke="#fff" strokeOpacity=".2" strokeWidth="4" strokeLinecap="round" fill="none" />
-          <g className="r3-eyes" filter="url(#r3Glow)"><path d="M88 69q7-8 14 0" /><path d="M114 69q7-8 14 0" /><path d="M99 78q9 6 18 0" /></g>
-        </g>
-      </g>
-    </svg>
+    <div className={"rb4 rb4-" + mood} aria-hidden="true">
+      <i className="rb4-pad" />
+      <i className="rb4-l rb4-b1 rb4-badge1" />
+      <i className="rb4-l rb4-b2 rb4-badge2" />
+      <i className="rb4-l rb4-sp rb4-spark" />
+      <div className="rb4-me">
+        <i className="rb4-l rb4-body" />
+        <i className="rb4-l rb4-arm" />
+        <i className="rb4-chest" /><i className="rb4-blink" />
+      </div>
+      <i className="rb4-l rb4-hi rb4-bubble" />
+    </div>
   );
 }
 const tipKey = (t) => t.p.id + "|" + t.title.replace(/\d+/g, "#");
 function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
+  /* the robot hops along a path to the free space beside the score, says hi, and hops back (Web Animations API) */
+  const walk = useRef(null), card = useRef(null);
+  useEffect(() => {
+    const w = walk.current, c = card.current; if (!w || !c || !w.animate || !window.ResizeObserver) return;
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let anims = [];
+    const build = () => {
+      anims.forEach((x) => x.cancel()); anims = [];
+      const sc = c.querySelector(".ai-score"), h = c.querySelector(".ai-h .grow"); if (!sc || !h) return;
+      const r = w.getBoundingClientRect(), a = sc.getBoundingClientRect();
+      const txt = Math.max(...[...h.children].map((k) => { const rg = document.createRange(); rg.selectNodeContents(k); return rg.getBoundingClientRect().right; }));
+      const S = 0.42, dx = (txt + a.left) / 2 - (r.left + r.width / 2), dy = a.top + a.height / 2 - (r.top + r.height / 2) - 6;
+      const T = (x, y, s, rot) => ({ transform: `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${s.toFixed(3)}) rotate(${rot}deg)` });
+      const f = [{ offset: 0, ...T(0, 0, 1, 0) }, { offset: 0.24, ...T(0, 0, 1, 0) }];
+      const hops = (from, to, o0, o1, back) => { const n = 6; for (let i = 1; i <= n; i++) { const t = i / n, e = t * t * (3 - 2 * t), x = from[0] + (to[0] - from[0]) * e, y = from[1] + (to[1] - from[1]) * e, s = from[2] + (to[2] - from[2]) * e; f.push({ offset: o0 + (o1 - o0) * t, ...T(x, y - (i % 2 ? 26 * s : 0), s, i === n ? 0 : (i % 2 ? (back ? -7 : 7) : (back ? 4 : -4))) }); } };
+      hops([0, 0, 1], [dx, dy, S], 0.24, 0.38, false);
+      f.push({ offset: 0.42, ...T(dx, dy - 12, S, 0) }, { offset: 0.46, ...T(dx, dy, S, 0) }, { offset: 0.6, ...T(dx, dy, S, 0) });
+      hops([dx, dy, S], [0, 0, 1], 0.6, 0.74, true);
+      f.push({ offset: 1, ...T(0, 0, 1, 0) });
+      const D = 17000;
+      anims.push(w.animate(f, { duration: D, iterations: Infinity }));
+      const hi = w.querySelector(".rb4-hi");
+      if (hi) anims.push(hi.animate([{ offset: 0, opacity: 0, transform: "scale(.4)" }, { offset: 0.04, opacity: 1, transform: "scale(1.08)" }, { offset: 0.06, opacity: 1, transform: "scale(1)" }, { offset: 0.2, opacity: 1, transform: "scale(1)" }, { offset: 0.24, opacity: 0, transform: "scale(.4)" },
+        { offset: 0.44, opacity: 0, transform: "scale(.4)" }, { offset: 0.48, opacity: 1, transform: "scale(1.9)" }, { offset: 0.58, opacity: 1, transform: "scale(1.8)" }, { offset: 0.61, opacity: 0, transform: "scale(.4)" }, { offset: 1, opacity: 0, transform: "scale(.4)" }], { duration: D, iterations: Infinity }));
+    };
+    const vis = () => anims.forEach((x) => (document.hidden ? x.pause() : x.play()));
+    const ro = new ResizeObserver(() => build()); ro.observe(c); build();
+    document.addEventListener("visibilitychange", vis);
+    return () => { ro.disconnect(); document.removeEventListener("visibilitychange", vis); anims.forEach((x) => x.cancel()); };
+  }, []);
   const [now, setNow] = useState(Date.now()), [daily, setDaily] = useState(""), [scan, setScan] = useState(false);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(t); }, []);
   const { res, tips } = useMemo(() => consult(projects, events, leads, { days: 30 }), [projects, events, leads, now]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -170,12 +164,12 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
       : !top.length ? `All ${res.length} page${res.length > 1 ? "s" : ""} look good. I'll keep watching your numbers.`
         : `I checked ${res.length} page${res.length > 1 ? "s" : ""} and your live numbers — ${tips.length} thing${tips.length > 1 ? "s" : ""} to improve${urgent ? `, ${urgent} urgent` : ""}.`;
   return (
-    <div className={"db-card ai-card" + (scan ? " scanning" : "")}>
+    <div ref={card} className={"db-card ai-card" + (scan ? " scanning" : "")}>
       <div className="ai-h"><span className="ai-av"><Icon n="sparkle" s={18} /></span><div className="grow"><h3>AI Consultant</h3><small><span className="ai-dot" />Watching your pages live{fresh ? <b className="ai-new">{fresh} new</b> : null}</small></div>
         {res.length > 0 && <div className="ai-score" title="Average page score"><b>{avg}</b><small>/100</small></div>}</div>
       <div className="ai-body">
         <div className="ai-bot">
-          <Robot mood={urgent ? "alert" : top.length ? "ok" : "happy"} />
+          <div className="rb-walk" ref={walk}><Robot mood={urgent ? "alert" : top.length ? "ok" : "happy"} /></div>
           <div className="ai-say">{daily ? <><b>Today's tip</b><span>{daily}</span></> : <><b>{!res.length ? "Hi, I'm your AI Consultant!" : "Your AI Consultant is here!"}</b>
             <span>{!res.length ? "Create your first page and I'll start checking it." : top.length ? <>I checked <em>{res.length} page{res.length > 1 ? "s" : ""}</em> and know what to improve{urgent ? <> — <em className="hot">{urgent} urgent</em></> : null}!</> : <>I checked <em>{res.length} page{res.length > 1 ? "s" : ""}</em> — everything looks good!</>}</span>
             <small>Get AI-powered suggestions to boost your conversions.</small></>}</div>

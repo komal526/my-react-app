@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Celestia Astrology — Horoscopes, Kundli, Tarot &amp; Expert Astrologers</title>
+<meta name="description" content="Celestia Astrology offers daily horoscopes, free Kundli (birth chart) analysis, tarot, numerology, Vastu and private consultations with verified Vedic astrologers — available 24/7.">
+<meta name="keywords" content="astrology, kundli, birth chart, horoscope, tarot reading, numerology, vastu, talk to astrologer, vedic astrology">
+<meta name="theme-color" content="#0B0B1F">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://www.celestiaastrology.com/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Celestia Astrology — Discover What the Stars Hold for You">
+<meta property="og:description" content="Daily horoscopes, free Kundli, tarot and consultations with 200+ verified astrologers.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1200&q=80">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ProfessionalService","name":"Celestia Astrology","description":"Horoscope readings, Kundli analysis, tarot, numerology and consultations with expert astrologers.","url":"https://www.celestiaastrology.com/","telephone":"+91-98200-45678","email":"care@celestiaastrology.com","priceRange":"₹499+","address":{"@type":"PostalAddress","streetAddress":"4th Floor, Orion Towers, Bandra Kurla Complex","addressLocality":"Mumbai","postalCode":"400051","addressCountry":"IN"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","reviewCount":"128000"}}
+</script>
+<style>
+:root{
+  --bg:#0B0B1F; --bg2:#1A1040; --purple:#6C3FC5; --purple-l:#8A63DB; --gold:#E8C468; --gold-d:#C9A443;
+  --star:#F4E9FF; --pink:#D65DB1; --text:#EDEAF6; --muted:#B8B1D3;
+  --glass:rgba(26,16,64,.45); --line:rgba(232,196,104,.22);
+  --radius:18px; --maxw:1200px;
+  --ff-h:"Cinzel",Georgia,serif; --ff-b:"Raleway",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html{background:var(--bg)}
+body{margin:0;font-family:var(--ff-b);color:var(--text);line-height:1.7;font-size:16.5px;background:var(--bg);overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(170deg,var(--bg) 0%,#130c36 40%,var(--bg2) 75%,#140b38 100%)}
+img{max-width:100%;display:block}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{font-family:var(--ff-h);font-weight:600;line-height:1.2;margin:0 0 .5em;letter-spacing:.02em}
+p{margin:0 0 1em}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.skip{position:absolute;left:-999px;top:8px;z-index:200;background:var(--gold);color:#1a1040;padding:.6em 1em;border-radius:8px;font-weight:700}
+.skip:focus{left:8px}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}
+.container{width:min(var(--maxw),100% - 2.5rem);margin-inline:auto}
+section{position:relative;padding:clamp(4.5rem,9vw,7.5rem) 0;z-index:2}
+.eyebrow{display:inline-flex;align-items:center;gap:.6em;font-family:var(--ff-h);font-size:.8rem;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem}
+.eyebrow::before,.eyebrow::after{content:"";width:28px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))}
+.eyebrow::after{transform:scaleX(-1)}
+.sec-head{text-align:center;max-width:720px;margin:0 auto 3.2rem}
+.sec-head h2{font-size:clamp(1.9rem,4vw,2.9rem);background:linear-gradient(180deg,#fff 10%,var(--star) 55%,var(--gold) 120%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sec-head p{color:var(--muted);font-size:1.05rem}
+
+/* ---------- Background layers ---------- */
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#trail{position:fixed;inset:0;width:100%;height:100%;z-index:90;pointer-events:none}
+.float-layer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.moon{position:absolute;right:6vw;top:16vh;width:clamp(90px,11vw,160px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 35% 32%,#fffaf0 0%,#f3e7c4 28%,#cdb98a 60%,#8f7c55 100%);
+  box-shadow:0 0 60px 10px rgba(244,233,255,.18),0 0 140px 40px rgba(232,196,104,.08), inset -18px -14px 30px rgba(40,25,10,.45);opacity:.85}
+.moon::before,.moon::after{content:"";position:absolute;border-radius:50%;background:rgba(120,100,60,.28)}
+.moon::before{width:22%;height:22%;left:52%;top:26%}
+.moon::after{width:14%;height:14%;left:28%;top:58%;box-shadow:38px -6px 0 -2px rgba(120,100,60,.22)}
+.planet{position:absolute;border-radius:50%}
+.planet.p1{left:4vw;top:62vh;width:clamp(46px,5vw,72px);aspect-ratio:1;background:radial-gradient(circle at 30% 30%,#c9a8ff,#6C3FC5 55%,#2a1660);box-shadow:0 0 40px rgba(108,63,197,.5);opacity:.75}
+.planet.p1::after{content:"";position:absolute;left:-40%;right:-40%;top:42%;height:16%;border:2px solid rgba(232,196,104,.55);border-radius:50%;transform:rotate(-18deg)}
+.planet.p2{right:18vw;top:78vh;width:clamp(22px,2.4vw,34px);aspect-ratio:1;background:radial-gradient(circle at 30% 30%,#ffd1ef,#D65DB1 60%,#5b1d4b);box-shadow:0 0 26px rgba(214,93,177,.5);opacity:.7}
+.planet.p3{left:42vw;top:120vh;width:16px;aspect-ratio:1;background:radial-gradient(circle at 30% 30%,#fff3cf,#E8C468 60%,#7a5a14);box-shadow:0 0 18px rgba(232,196,104,.6);opacity:.65}
+.drift{animation:drift 14s ease-in-out infinite alternate}
+.drift.d2{animation-duration:18s;animation-delay:-4s}
+.drift.d3{animation-duration:22s;animation-delay:-9s}
+@keyframes drift{from{translate:0 0}to{translate:14px -22px}}
+
+/* ---------- Buttons ---------- */
+.btn{--b:var(--gold);display:inline-flex;align-items:center;justify-content:center;gap:.55em;padding:.85em 1.6em;border-radius:999px;font-weight:600;letter-spacing:.04em;text-decoration:none;cursor:pointer;border:1px solid transparent;transition:transform .35s var(--ease),box-shadow .35s var(--ease),background .35s,color .35s;white-space:nowrap}
+.btn-gold{background:linear-gradient(135deg,#f6dd96,var(--gold) 45%,var(--gold-d));color:#1c1238;box-shadow:0 6px 24px -6px rgba(232,196,104,.55),inset 0 1px 0 rgba(255,255,255,.5)}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 10px 34px -6px rgba(232,196,104,.8),0 0 0 4px rgba(232,196,104,.12)}
+.btn-ghost{border-color:rgba(232,196,104,.55);color:var(--star);background:rgba(108,63,197,.12);backdrop-filter:blur(6px)}
+.btn-ghost:hover{border-color:var(--gold);box-shadow:0 0 24px rgba(108,63,197,.55),inset 0 0 18px rgba(108,63,197,.35);transform:translateY(-2px)}
+.btn-purple{background:linear-gradient(135deg,var(--purple-l),var(--purple));color:#fff;box-shadow:0 6px 22px -8px rgba(108,63,197,.9)}
+.btn-purple:hover{transform:translateY(-2px);box-shadow:0 10px 30px -6px rgba(108,63,197,1),0 0 18px rgba(214,93,177,.35)}
+.btn svg{width:1.1em;height:1.1em}
+
+/* ---------- Navbar ---------- */
+.nav{position:fixed;inset:0 0 auto;z-index:80;transition:background .4s,box-shadow .4s,padding .4s;padding:1.1rem 0}
+.nav.scrolled{background:rgba(11,11,31,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--line),0 10px 30px -10px rgba(0,0,0,.6);padding:.65rem 0}
+.nav .container{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.logo{white-space:nowrap;display:flex;align-items:center;gap:.6rem;text-decoration:none;font-family:var(--ff-h);font-weight:700;font-size:1.3rem;letter-spacing:.08em;color:var(--star)}
+.logo svg{width:38px;height:38px;filter:drop-shadow(0 0 8px rgba(232,196,104,.55))}
+.logo span b{color:var(--gold);font-weight:700}
+.nav-links{display:flex;align-items:center;gap:1.7rem;list-style:none;margin:0;padding:0}
+.nav-links a{text-decoration:none;font-size:.93rem;font-weight:500;letter-spacing:.05em;color:var(--text);position:relative;padding:.3em 0;transition:color .3s}
+.nav-links a::after{content:"";position:absolute;left:50%;right:50%;bottom:-2px;height:1px;background:var(--gold);transition:left .35s var(--ease),right .35s var(--ease);box-shadow:0 0 8px var(--gold)}
+.nav-links a:hover,.nav-links a.active{color:var(--gold)}
+.nav-links a:hover::after,.nav-links a.active::after{left:0;right:0}
+.nav .btn{padding:.65em 1.25em;font-size:.9rem}
+.burger{display:none;background:none;border:1px solid var(--line);border-radius:10px;width:44px;height:44px;cursor:pointer;position:relative}
+.burger span,.burger span::before,.burger span::after{position:absolute;left:11px;width:20px;height:2px;background:var(--gold);border-radius:2px;transition:transform .3s,opacity .3s;content:""}
+.burger span{top:21px}.burger span::before{top:-7px;left:0}.burger span::after{top:7px;left:0}
+.burger[aria-expanded="true"] span{background:transparent}
+.burger[aria-expanded="true"] span::before{transform:translateY(7px) rotate(45deg)}
+.burger[aria-expanded="true"] span::after{transform:translateY(-7px) rotate(-45deg)}
+
+/* ---------- Hero ---------- */
+.hero{min-height:100svh;display:flex;align-items:center;padding-top:7rem;padding-bottom:4rem;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;
+  background:radial-gradient(ellipse 60% 50% at 75% 45%,rgba(108,63,197,.35),transparent 70%),
+             radial-gradient(ellipse 40% 35% at 85% 70%,rgba(214,93,177,.16),transparent 70%),
+             radial-gradient(ellipse 50% 40% at 15% 30%,rgba(60,40,140,.25),transparent 70%)}
+.hero-bg{position:absolute;inset:0;z-index:-2;opacity:.28;mask-image:linear-gradient(180deg,#000 40%,transparent);-webkit-mask-image:linear-gradient(180deg,#000 40%,transparent)}
+.hero-bg img{width:100%;height:100%;object-fit:cover}
+.hero .container{display:grid;grid-template-columns:1.05fr 1fr;align-items:center;gap:3rem}
+.hero h1{font-size:clamp(2.4rem,5.4vw,4.3rem);font-weight:600;margin-bottom:1.2rem;
+  background:linear-gradient(180deg,#ffffff 0%,var(--star) 50%,#d9c3ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 40px rgba(244,233,255,.08)}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,#f6dd96,var(--gold),#f6dd96);-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 100%;animation:shimmer 6s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+.hero p.lead{font-size:clamp(1.05rem,1.4vw,1.2rem);color:var(--muted);max-width:540px;margin-bottom:2rem}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:2.4rem}
+.trust{display:flex;flex-wrap:wrap;gap:1.6rem;color:var(--muted);font-size:.9rem}
+.trust div{display:flex;align-items:center;gap:.5em}
+.trust svg{width:18px;height:18px;color:var(--gold)}
+.wheel-wrap{position:relative;aspect-ratio:1;width:min(520px,100%);justify-self:center}
+.wheel-wrap::before{content:"";position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle,rgba(232,196,104,.18),rgba(108,63,197,.22) 45%,transparent 70%);filter:blur(10px)}
+#wheel{width:100%;height:100%;animation:spin 120s linear infinite;filter:drop-shadow(0 0 12px rgba(232,196,104,.35))}
+#wheel .inner{animation:spin 80s linear infinite reverse;transform-origin:200px 200px}
+@keyframes spin{to{rotate:360deg}}
+.wheel-core{position:absolute;inset:36%;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 40% 35%,#2a1a63,#120a33);border:1px solid rgba(232,196,104,.5);box-shadow:0 0 50px rgba(232,196,104,.25),inset 0 0 30px rgba(108,63,197,.6)}
+.wheel-core svg{width:55%;height:55%;color:var(--gold);filter:drop-shadow(0 0 10px rgba(232,196,104,.7));animation:pulse 4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.75;transform:scale(.96)}}
+.scroll-cue{position:absolute;bottom:1.6rem;left:50%;translate:-50% 0;color:var(--muted);font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:.5rem}
+.scroll-cue i{width:1px;height:38px;background:linear-gradient(var(--gold),transparent);animation:cue 2.2s ease-in-out infinite}
+@keyframes cue{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ---------- Glass card base ---------- */
+.card{position:relative;background:linear-gradient(160deg,rgba(40,26,92,.55),rgba(17,11,46,.7));border:1px solid rgba(232,196,104,.16);border-radius:var(--radius);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .45s var(--ease),border-color .45s,box-shadow .45s}
+.card:hover{border-color:rgba(232,196,104,.6);box-shadow:0 0 0 1px rgba(232,196,104,.15),0 18px 50px -18px rgba(108,63,197,.9),0 0 34px -8px rgba(232,196,104,.35);transform:translateY(-6px)}
+
+/* ---------- Horoscope flip cards ---------- */
+.date-chip{display:inline-block;margin-top:.4rem;padding:.35em 1em;border:1px solid var(--line);border-radius:999px;font-size:.85rem;color:var(--gold)}
+.zodiac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.3rem}
+.flip{perspective:1100px;height:290px;border:0;background:none;padding:0;cursor:pointer;text-align:center;border-radius:var(--radius)}
+.flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .8s var(--ease)}
+.flip[aria-pressed="true"] .flip-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--radius);padding:1.5rem 1.3rem;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid rgba(232,196,104,.18);transition:border-color .4s,box-shadow .4s}
+.front{background:radial-gradient(circle at 50% 30%,rgba(108,63,197,.4),rgba(17,11,46,.85) 70%)}
+.flip:hover .front,.flip:focus-visible .front{border-color:rgba(232,196,104,.65);box-shadow:0 0 30px -6px rgba(232,196,104,.4),0 0 60px -20px rgba(108,63,197,.9)}
+.front .zi{width:76px;height:76px;padding:16px;border-radius:50%;color:var(--gold);border:1px solid rgba(232,196,104,.45);background:radial-gradient(circle,rgba(232,196,104,.12),transparent 70%);margin-bottom:1rem;box-shadow:0 0 24px rgba(232,196,104,.15);transition:transform .6s var(--ease),box-shadow .4s}
+.flip:hover .zi{transform:rotate(-12deg) scale(1.06);box-shadow:0 0 36px rgba(232,196,104,.4)}
+.front h3{font-size:1.25rem;margin:0 0 .15rem;color:var(--star)}
+.front .range{color:var(--muted);font-size:.88rem}
+.front .el{margin-top:.8rem;font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--pink)}
+.front .hint{position:absolute;bottom:.9rem;font-size:.72rem;color:rgba(184,177,211,.7);letter-spacing:.12em}
+.back{transform:rotateY(180deg);background:linear-gradient(160deg,#2b1a68,#160e3c);border-color:rgba(232,196,104,.55);justify-content:flex-start;text-align:left;align-items:stretch;box-shadow:inset 0 0 40px rgba(108,63,197,.4)}
+.back h3{font-size:1rem;color:var(--gold);display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}
+.back h3 svg{width:22px;height:22px}
+.back p{font-size:.88rem;line-height:1.6;color:var(--text);margin-bottom:.8rem}
+.back .lucky{margin-top:auto;display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);border-top:1px solid var(--line);padding-top:.6rem}
+.back .lucky b{color:var(--star);font-weight:600}
+
+/* ---------- Services ---------- */
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.svc{padding:2rem 1.8rem;display:flex;flex-direction:column;overflow:hidden}
+.svc::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(232,196,104,.7),transparent 40%,transparent 60%,rgba(214,93,177,.5));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .45s}
+.svc:hover::before{opacity:1}
+.svc .ic{width:62px;height:62px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(108,63,197,.55),rgba(108,63,197,.15));border:1px solid rgba(232,196,104,.3);margin-bottom:1.3rem;color:var(--gold);box-shadow:0 0 22px -4px rgba(108,63,197,.8)}
+.svc .ic svg{width:30px;height:30px}
+.svc h3{font-size:1.25rem;color:var(--star)}
+.svc p{color:var(--muted);font-size:.95rem;flex:1}
+.svc .foot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:1rem;margin-top:.5rem}
+.price{font-family:var(--ff-h);color:var(--gold);font-size:1.1rem}
+.price small{display:block;font-family:var(--ff-b);font-size:.7rem;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+.link-arrow{display:inline-flex;align-items:center;gap:.4em;color:var(--star);text-decoration:none;font-weight:600;font-size:.9rem}
+.link-arrow svg{width:16px;height:16px;transition:transform .3s}
+.link-arrow:hover{color:var(--gold)}
+.link-arrow:hover svg{transform:translateX(4px)}
+
+/* ---------- Kundli ---------- */
+.kundli{overflow:hidden}
+.kundli-wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:3rem;align-items:center}
+.kundli-art{position:relative;border-radius:24px;overflow:hidden;aspect-ratio:4/5;border:1px solid var(--line);background:radial-gradient(circle at 50% 40%,#3a2290,#140b3a 70%)}
+.kundli-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.75}
+.kundli-art .chart{position:absolute;inset:12%;color:var(--gold);filter:drop-shadow(0 0 10px rgba(232,196,104,.5))}
+.kundli-art .cap{position:absolute;left:1.4rem;right:1.4rem;bottom:1.4rem;padding:1rem 1.2rem;border-radius:14px;background:rgba(11,11,31,.72);backdrop-filter:blur(8px);border:1px solid var(--line);font-size:.9rem;color:var(--muted)}
+.kundli-art .cap b{color:var(--gold);font-family:var(--ff-h);display:block;font-size:1rem}
+.form-card{padding:clamp(1.6rem,3vw,2.6rem)}
+.form-card:hover{transform:none}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+.field{display:flex;flex-direction:column;gap:.4rem}
+.field.full{grid-column:1/-1}
+.field label{font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.field input,.field select,.field textarea{width:100%;padding:.85em 1em;background:rgba(11,11,31,.6);border:1px solid rgba(184,177,211,.25);border-radius:12px;color:var(--text);transition:border-color .3s,box-shadow .3s;color-scheme:dark}
+.field textarea{min-height:130px;resize:vertical}
+.field input::placeholder,.field textarea::placeholder{color:rgba(184,177,211,.55)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,196,104,.15),0 0 20px rgba(108,63,197,.4)}
+.field .err{font-size:.78rem;color:#ff9ad5;min-height:1em}
+.glow-btn{position:relative;width:100%;margin-top:1.4rem;padding:1.05em;font-size:1.02rem;overflow:hidden;isolation:isolate}
+.glow-btn::after{content:"";position:absolute;inset:-2px;border-radius:inherit;z-index:-1;background:conic-gradient(from var(--a,0deg),var(--gold),var(--pink),var(--purple),var(--gold));filter:blur(10px);opacity:.75;animation:rot 4s linear infinite}
+@property --a{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes rot{to{--a:360deg}}
+.result{display:none;margin-top:1.6rem;padding:1.4rem;border-radius:14px;border:1px solid rgba(232,196,104,.45);background:linear-gradient(160deg,rgba(108,63,197,.3),rgba(11,11,31,.6));animation:fadeIn .7s var(--ease)}
+.result.show{display:block}
+.result h3{font-size:1.1rem;color:var(--gold)}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:1rem 0}
+.result-grid div{background:rgba(11,11,31,.55);border-radius:10px;padding:.7rem;text-align:center;border:1px solid var(--line)}
+.result-grid small{display:block;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.result-grid b{font-family:var(--ff-h);color:var(--star);font-size:1.05rem}
+.result p{font-size:.92rem;color:var(--muted);margin:0}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}}
+
+/* ---------- Astrologers ---------- */
+.astro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.4rem}
+.astro{padding:1.6rem 1.3rem 1.4rem;text-align:center}
+.avatar{position:relative;width:120px;height:120px;margin:0 auto 1.1rem;border-radius:50%;padding:4px;background:conic-gradient(from 200deg,var(--gold),var(--purple),var(--pink),var(--gold))}
+.avatar .ph{width:100%;height:100%;border-radius:50%;overflow:hidden;position:relative;background:radial-gradient(circle at 40% 30%,#3c2595,#160d40);display:grid;place-items:center;border:3px solid var(--bg)}
+.avatar .ph span{font-family:var(--ff-h);font-size:2rem;color:var(--gold);letter-spacing:.05em}
+.avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.avatar .online{position:absolute;bottom:8px;right:10px;width:16px;height:16px;border-radius:50%;background:#4ade80;border:3px solid #160d40;box-shadow:0 0 10px #4ade80}
+.astro h3{font-size:1.08rem;margin-bottom:.2rem;color:var(--star)}
+.astro .exp{color:var(--gold);font-size:.88rem;font-weight:500;margin-bottom:.8rem}
+.astro ul{list-style:none;padding:0;margin:0 0 1rem;font-size:.85rem;color:var(--muted);display:grid;gap:.3rem}
+.astro li{display:flex;align-items:center;justify-content:center;gap:.4rem}
+.astro li svg{width:15px;height:15px;color:var(--purple-l);flex:none}
+.rating{display:inline-flex;align-items:center;gap:.35rem;font-size:.85rem;margin-bottom:1.1rem;padding:.25em .8em;border-radius:999px;background:rgba(232,196,104,.1);border:1px solid var(--line)}
+.rating svg{width:14px;height:14px;color:var(--gold)}
+.rating span{color:var(--muted)}
+.astro .acts{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.astro .btn{padding:.65em .5em;font-size:.86rem}
+
+/* ---------- Stats ---------- */
+.stats{padding:3.5rem 0}
+.stats-band{display:grid;grid-template-columns:repeat(4,1fr);border-radius:24px;border:1px solid var(--line);background:linear-gradient(120deg,rgba(108,63,197,.35),rgba(26,16,64,.6) 50%,rgba(214,93,177,.18));overflow:hidden;position:relative}
+.stats-band::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(232,196,104,.12),transparent 40%);pointer-events:none}
+.stat{padding:2.4rem 1rem;text-align:center;position:relative}
+.stat+.stat::before{content:"";position:absolute;left:0;top:25%;bottom:25%;width:1px;background:linear-gradient(transparent,var(--line),transparent)}
+.stat b{display:block;font-family:var(--ff-h);font-size:clamp(2rem,4vw,3rem);color:var(--gold);text-shadow:0 0 30px rgba(232,196,104,.45);line-height:1.1}
+.stat span{color:var(--muted);font-size:.9rem;letter-spacing:.12em;text-transform:uppercase}
+
+/* ---------- How it works ---------- */
+.steps{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:2rem}
+.constellation{position:absolute;left:0;right:0;top:0;height:120px;width:100%;pointer-events:none;overflow:visible}
+.constellation path{fill:none;stroke:url(#lineGrad);stroke-width:1.6;stroke-dasharray:6 8;filter:drop-shadow(0 0 6px rgba(232,196,104,.8))}
+.constellation .draw{stroke-dasharray:1200;stroke-dashoffset:1200;transition:stroke-dashoffset 2.6s var(--ease)}
+.steps.in .constellation .draw{stroke-dashoffset:0}
+.constellation circle{fill:var(--star);filter:drop-shadow(0 0 4px #fff)}
+.step{text-align:center;padding:0 1rem;position:relative;z-index:1}
+.step .node{width:120px;height:120px;margin:0 auto 1.4rem;border-radius:50%;display:grid;place-items:center;position:relative;background:radial-gradient(circle,#2b1a68,#120a33 70%);border:1px solid rgba(232,196,104,.5);box-shadow:0 0 40px -6px rgba(232,196,104,.45),inset 0 0 30px rgba(108,63,197,.6)}
+.step .node svg{width:44px;height:44px;color:var(--gold)}
+.step .node em{position:absolute;top:-6px;right:-2px;width:34px;height:34px;border-radius:50%;background:var(--gold);color:#1c1238;font-style:normal;font-family:var(--ff-h);font-weight:700;display:grid;place-items:center;box-shadow:0 0 16px rgba(232,196,104,.7)}
+.step h3{font-size:1.25rem;color:var(--star)}
+.step p{color:var(--muted);font-size:.95rem}
+
+/* ---------- Testimonials ---------- */
+.carousel{position:relative;max-width:860px;margin:0 auto}
+.track-wrap{overflow:hidden}
+.track{display:flex;transition:transform .8s var(--ease)}
+.slide{flex:0 0 100%;padding:30px}
+.t-card{padding:clamp(1.8rem,4vw,3rem);text-align:center;border-radius:24px;background:linear-gradient(160deg,rgba(43,26,104,.7),rgba(17,11,46,.85));border:1px solid rgba(232,196,104,.5);box-shadow:0 0 24px -4px rgba(232,196,104,.35),0 0 30px -6px rgba(108,63,197,.9),inset 0 0 40px rgba(108,63,197,.25);animation:borderGlow 5s ease-in-out infinite}
+@keyframes borderGlow{50%{border-color:rgba(214,93,177,.55);box-shadow:0 0 26px -4px rgba(214,93,177,.4),0 0 30px -6px rgba(108,63,197,1),inset 0 0 40px rgba(108,63,197,.3)}}
+.t-card .q{width:44px;height:44px;color:var(--gold);margin:0 auto 1rem;opacity:.8}
+.t-card blockquote{margin:0 0 1.6rem;font-size:clamp(1.02rem,1.6vw,1.2rem);font-weight:300;line-height:1.8;color:var(--star)}
+.t-card .who{display:flex;align-items:center;justify-content:center;gap:.9rem}
+.t-card .ini{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--ff-h);font-weight:700;color:#1c1238;background:linear-gradient(135deg,#f6dd96,var(--gold))}
+.t-card .who div{text-align:left}
+.t-card .who b{display:block;font-family:var(--ff-h);color:var(--star)}
+.t-card .who div span{font-size:.85rem;color:var(--muted)}
+.stars-row{display:flex;gap:2px;justify-content:center;margin-bottom:1rem;color:var(--gold)}
+.stars-row svg{width:18px;height:18px}
+.c-ctrl{display:flex;align-items:center;justify-content:center;gap:1.2rem;margin-top:1.6rem}
+.c-btn{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(108,63,197,.18);cursor:pointer;display:grid;place-items:center;color:var(--gold);transition:box-shadow .3s,border-color .3s}
+.c-btn:hover{border-color:var(--gold);box-shadow:0 0 20px rgba(232,196,104,.35)}
+.c-btn svg{width:20px;height:20px}
+.dots{display:flex;gap:.55rem}
+.dots button{width:10px;height:10px;padding:0;border-radius:999px;border:0;background:rgba(184,177,211,.35);cursor:pointer;transition:width .4s var(--ease),background .4s}
+.dots button[aria-current="true"]{width:28px;background:var(--gold);box-shadow:0 0 10px var(--gold)}
+
+/* ---------- Blog ---------- */
+.blog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.post{overflow:hidden;display:flex;flex-direction:column}
+.post .thumb{aspect-ratio:16/10;position:relative;overflow:hidden}
+.post .thumb .art{position:absolute;inset:0}
+.post .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
+.post:hover .thumb img,.post:hover .thumb .art{transform:scale(1.07)}
+.post .thumb .art{transition:transform 1.2s var(--ease)}
+.post .tag{position:absolute;top:1rem;left:1rem;padding:.3em .9em;border-radius:999px;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;background:rgba(11,11,31,.75);border:1px solid var(--line);color:var(--gold);backdrop-filter:blur(6px)}
+.post .body{padding:1.5rem 1.5rem 1.7rem;display:flex;flex-direction:column;flex:1}
+.post .meta{font-size:.8rem;color:var(--muted);margin-bottom:.6rem}
+.post h3{font-size:1.15rem;line-height:1.4;color:var(--star)}
+.post p{color:var(--muted);font-size:.93rem;flex:1}
+
+/* ---------- FAQ ---------- */
+.faq-list{max-width:860px;margin:0 auto;display:grid;gap:1rem}
+.faq{border-radius:16px;border:1px solid rgba(232,196,104,.18);background:rgba(26,16,64,.45);transition:border-color .35s,box-shadow .35s}
+.faq[open]{border-color:rgba(232,196,104,.55);box-shadow:0 0 30px -12px rgba(232,196,104,.45)}
+.faq summary{list-style:none;cursor:pointer;padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;font-family:var(--ff-h);font-size:1.02rem;color:var(--star)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary i{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);position:relative;transition:transform .4s var(--ease),background .3s}
+.faq summary i::before,.faq summary i::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:1.5px;background:var(--gold);translate:-50% -50%}
+.faq summary i::after{rotate:90deg;transition:rotate .4s var(--ease)}
+.faq[open] summary i{background:rgba(232,196,104,.15)}
+.faq[open] summary i::after{rotate:0deg}
+.faq .ans{padding:0 1.5rem 1.3rem;color:var(--muted);overflow:hidden}
+.faq .ans p{margin:0}
+
+/* ---------- Contact & CTA ---------- */
+.contact-wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:2.5rem}
+.c-info{padding:2.2rem}
+.c-info:hover{transform:none}
+.c-info h3{color:var(--star);font-size:1.4rem}
+.c-info p{color:var(--muted)}
+.c-item{display:flex;gap:1rem;align-items:flex-start;padding:1rem 0;border-top:1px solid var(--line)}
+.c-item svg{width:22px;height:22px;color:var(--gold);flex:none;margin-top:.2rem}
+.c-item b{display:block;font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.c-item a,.c-item span{color:var(--text);text-decoration:none}
+.c-item a:hover{color:var(--gold)}
+.form-status{margin-top:1rem;font-size:.95rem;color:#8ef0b5;min-height:1.4em}
+.cta{padding:2rem 0 6rem}
+.cta-box{position:relative;overflow:hidden;border-radius:28px;padding:clamp(3rem,7vw,5.5rem) 2rem;text-align:center;border:1px solid rgba(232,196,104,.45);
+  background:radial-gradient(ellipse at 50% 120%,rgba(214,93,177,.35),transparent 60%),radial-gradient(ellipse at 50% -20%,rgba(232,196,104,.2),transparent 55%),linear-gradient(135deg,#2a1670,#140b3a);box-shadow:0 0 80px -20px rgba(108,63,197,1)}
+.cta-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.25;mix-blend-mode:screen}
+.cta-box > *{position:relative}
+.cta-box h2{font-size:clamp(2rem,5vw,3.4rem);color:var(--star);text-shadow:0 0 40px rgba(232,196,104,.35)}
+.cta-box p{color:var(--muted);max-width:560px;margin:0 auto 2rem;font-size:1.08rem}
+.cta-box .ring{position:absolute;width:520px;height:520px;border-radius:50%;border:1px dashed rgba(232,196,104,.25);left:50%;top:50%;translate:-50% -50%;animation:spin 90s linear infinite}
+.cta-box .ring.r2{width:760px;height:760px;border-style:solid;border-color:rgba(108,63,197,.35);animation-duration:140s;animation-direction:reverse}
+
+/* ---------- Footer ---------- */
+footer{position:relative;z-index:2;border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(11,11,31,.4),rgba(11,11,31,.95));padding:4.5rem 0 2rem;font-size:.93rem}
+.f-grid{display:grid;grid-template-columns:1.4fr 1fr 1.2fr 1.3fr;gap:2.5rem}
+footer h4{font-size:.95rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem}
+footer p{color:var(--muted)}
+footer ul{list-style:none;padding:0;margin:0;display:grid;gap:.55rem}
+footer a{color:var(--muted);text-decoration:none;transition:color .3s}
+footer a:hover{color:var(--gold)}
+.z-links{grid-template-columns:1fr 1fr;column-gap:1rem}
+.z-links a{display:flex;align-items:center;gap:.45rem}
+.z-links svg{width:15px;height:15px;color:var(--gold)}
+.social{display:flex;gap:.7rem;margin-top:1.4rem}
+.social a{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);color:var(--star);transition:all .35s var(--ease)}
+.social a:hover{color:#1c1238;background:var(--gold);box-shadow:0 0 20px rgba(232,196,104,.6);transform:translateY(-3px)}
+.social svg{width:18px;height:18px}
+.f-bottom{margin-top:3rem;padding-top:1.6rem;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem;color:var(--muted);font-size:.85rem}
+.f-bottom nav{display:flex;gap:1.4rem}
+
+/* ---------- Reveal ---------- */
+.reveal{opacity:0;transform:translateY(34px);transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--i,0) * 90ms)}
+.reveal.in{opacity:1;transform:none}
+
+/* ---------- Toast ---------- */
+.toast{visibility:hidden;opacity:0;position:fixed;left:50%;bottom:1.6rem;translate:-50% 140%;z-index:120;padding:.9rem 1.4rem;border-radius:14px;background:rgba(26,16,64,.95);border:1px solid var(--gold);box-shadow:0 0 30px rgba(232,196,104,.35);transition:translate .5s var(--ease);max-width:calc(100% - 2rem);font-size:.95rem}
+.toast.show{translate:-50% 0;visibility:visible;opacity:1}
+.toast{transition:translate .5s var(--ease),opacity .4s,visibility .5s}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1080px){
+  .nav-links{gap:1.1rem}
+  .astro-grid{grid-template-columns:repeat(2,1fr)}
+  .f-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:960px){
+  .burger{display:block}
+  .nav .nav-cta{display:none}
+  .nav-links{position:fixed;inset:0 0 0 auto;width:min(320px,85vw);flex-direction:column;align-items:flex-start;justify-content:center;gap:1.4rem;padding:2rem 2.4rem;background:rgba(11,11,31,.97);backdrop-filter:blur(16px);border-left:1px solid var(--line);transform:translateX(100%);transition:transform .5s var(--ease);visibility:hidden}
+  .nav-links.open{transform:none;visibility:visible}
+  .nav-links a{font-size:1.15rem;font-family:var(--ff-h)}
+  .nav-links .mob-cta{display:block}
+  .burger{z-index:2}
+  .hero .container{grid-template-columns:1fr;text-align:center}
+  .hero p.lead{margin-inline:auto}
+  .hero-ctas,.trust{justify-content:center}
+  .wheel-wrap{width:min(400px,86vw);order:-1}
+  .svc-grid,.blog-grid{grid-template-columns:1fr 1fr}
+  .kundli-wrap,.contact-wrap{grid-template-columns:1fr}
+  .kundli-art{aspect-ratio:16/10;max-height:420px}
+  .stats-band{grid-template-columns:1fr 1fr}
+  .stat:nth-child(3)::before{display:none}
+  .steps{grid-template-columns:1fr;gap:3rem}
+  .constellation{display:none}
+  .step::after{content:"";position:absolute;left:50%;bottom:-2.5rem;height:2rem;width:1px;background:linear-gradient(var(--gold),transparent);box-shadow:0 0 8px var(--gold)}
+  .step:last-child::after{display:none}
+}
+@media (min-width:961px){.nav-links .mob-cta{display:none}}
+@media (max-width:640px){
+  body{font-size:16px}
+  .svc-grid,.blog-grid,.astro-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .result-grid{grid-template-columns:1fr 1fr}
+  .f-grid{grid-template-columns:1fr}
+  .moon{width:80px;top:12vh;right:-10px;opacity:.6}
+  .planet.p1{opacity:.45}
+  .flip{height:300px}
+  .logo{font-size:1.02rem;gap:.45rem}.logo svg{width:32px;height:32px}
+  .scroll-cue{display:none}
+  .slide{padding:16px 6px}
+  .trust{gap:.6rem 1.2rem}
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+  #wheel,#wheel .inner{animation:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ===== SVG sprite: zodiac & UI icons ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="z-aries" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M12 21V9c0-3.5-2-6-4.5-6S3 5 3 7.5 4.8 11 6.5 11M12 9c0-3.5 2-6 4.5-6S21 5 21 7.5 19.2 11 17.5 11"/></symbol>
+    <symbol id="z-taurus" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="15.5" r="5.5"/><path d="M3.5 3c0 4.5 3.8 7 8.5 7s8.5-2.5 8.5-7"/></g></symbol>
+    <symbol id="z-gemini" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M4.5 3.5c4.5 1.6 10.5 1.6 15 0M4.5 20.5c4.5-1.6 10.5-1.6 15 0M9 4.6v14.8M15 4.6v14.8"/></symbol>
+    <symbol id="z-cancer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="9.5" r="3"/><circle cx="17" cy="14.5" r="3"/><path d="M4 9.5C4.5 6 8 4 12 4c3.3 0 6.3 1.3 8 3.5M20 14.5c-.5 3.5-4 5.5-8 5.5-3.3 0-6.3-1.3-8-3.5"/></g></symbol>
+    <symbol id="z-leo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="15" r="3"/><path d="M10 15V9a5 5 0 0 1 10 0c0 3.5-3.5 5.5-3.5 9a2.5 2.5 0 0 0 4.5 1.5"/></g></symbol>
+    <symbol id="z-virgo" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3 5.5c1.7 0 3 1.2 3 3V19M6 8.5c0-1.8 1.3-3 3-3s3 1.2 3 3V19M12 8.5c0-1.8 1.3-3 3-3s3 1.2 3 3v5.5c0 3.5 1.5 5.5 3.5 6M18 12.5c0 4-1.6 6.6-4.5 8"/></symbol>
+    <symbol id="z-libra" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3 20h18M3 16h5.2a4.5 4.5 0 1 1 7.6 0H21"/></symbol>
+    <symbol id="z-scorpio" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 5.5c1.7 0 3 1.2 3 3V19M6 8.5c0-1.8 1.3-3 3-3s3 1.2 3 3V19M12 8.5c0-1.8 1.3-3 3-3s3 1.2 3 3V18c0 1.4.9 2.2 2.4 2.2H22M19.6 18l2.4 2.2-2.4 2.2"/></symbol>
+    <symbol id="z-sagittarius" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4 20 20 4M11.5 4H20v8.5M6.5 11.5l6 6"/></symbol>
+    <symbol id="z-capricorn" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3 5c1.8 0 3 1.6 3 4v9M6 9c0-3 1.9-5 4.4-5s4.1 2 4.1 5v6.5M14.5 15.5a3 3 0 1 0 6 0 3 3 0 0 0-6 0c0 3.3-2.2 5.4-5.5 5.5"/></symbol>
+    <symbol id="z-aquarius" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="m3 10 3-3 3 3 3-3 3 3 3-3 3 3M3 17l3-3 3 3 3-3 3 3 3-3 3 3"/></symbol>
+    <symbol id="z-pisces" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M5 3c4 4.5 4 13.5 0 18M19 3c-4 4.5-4 13.5 0 18M4 12h16"/></symbol>
+
+    <symbol id="i-star" viewBox="0 0 24 24"><path fill="currentColor" d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7Zm7 11c.3 2.2 1.2 3.1 3.4 3.4-2.2.3-3.1 1.2-3.4 3.4-.3-2.2-1.2-3.1-3.4-3.4 2.2-.3 3.1-1.2 3.4-3.4Z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M4 5h16v11H9l-5 4z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2Z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-lang" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M3 5h10M8 3v2m3 0c-1 5-4 8-7 9m2-6c1 2 3 4 6 5M13 21l4-10 4 10m-6.5-3h5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></g></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path fill="currentColor" d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></symbol>
+  </defs>
+</svg>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+<canvas id="trail" aria-hidden="true"></canvas>
+<div class="float-layer" aria-hidden="true">
+  <div class="px" data-speed="0.12"><div class="moon drift"></div></div>
+  <div class="px" data-speed="0.3"><div class="planet p1 drift d2"></div></div>
+  <div class="px" data-speed="0.2"><div class="planet p2 drift d3"></div></div>
+  <div class="px" data-speed="0.45"><div class="planet p3 drift"></div></div>
+</div>
+
+<!-- ===== 1. NAVBAR ===== -->
+<header class="nav" id="nav">
+  <div class="container">
+    <a href="#home" class="logo" aria-label="Celestia Astrology home">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F8E3A3"/><stop offset="1" stop-color="#C9A443"/></linearGradient></defs>
+        <circle cx="24" cy="24" r="22" fill="none" stroke="url(#lg)" stroke-width="1.2" opacity=".6"/>
+        <path fill="url(#lg)" d="M30 9.5a15 15 0 1 0 8.5 25.6A13 13 0 0 1 30 9.5Z"/>
+        <path fill="#F4E9FF" d="m33 14 1.2 2.6 2.8.4-2 2 .5 2.8-2.5-1.3-2.5 1.3.5-2.8-2-2 2.8-.4z"/>
+        <circle cx="38" cy="26" r="1" fill="#F4E9FF"/><circle cx="29" cy="24" r=".8" fill="#F4E9FF"/>
+      </svg>
+      <span>CELESTIA <b>ASTROLOGY</b></span>
+    </a>
+    <nav aria-label="Primary">
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#home" class="active">Home</a></li>
+        <li><a href="#horoscope">Horoscope</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#astrologers">Astrologers</a></li>
+        <li><a href="#kundli">Kundli</a></li>
+        <li><a href="#blog">Blog</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li class="mob-cta"><a href="#astrologers" class="btn btn-gold" style="font-family:var(--ff-b);font-size:1rem">Talk to Astrologer</a></li>
+      </ul>
+    </nav>
+    <a href="#astrologers" class="btn btn-gold nav-cta"><svg aria-hidden="true"><use href="#i-chat"/></svg>Talk to Astrologer</a>
+    <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span></button>
+  </div>
+</header>
+
+<main id="main">
+<!-- ===== 2. HERO ===== -->
+<section class="hero" id="home" aria-labelledby="hero-title">
+  <div class="hero-bg" aria-hidden="true">
+    <img src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=2000&q=80" alt="" onerror="this.remove()" fetchpriority="high">
+  </div>
+  <div class="container">
+    <div>
+      <span class="eyebrow reveal">Vedic · Western · Tarot</span>
+      <h1 id="hero-title" class="reveal" style="--i:1">Discover What the <em>Stars</em> Hold for You</h1>
+      <p class="lead reveal" style="--i:2">Personal guidance from 200+ verified astrologers, rooted in centuries of Jyotish wisdom. Understand your birth chart, navigate love and career with clarity, and step into each day aligned with the cosmos.</p>
+      <div class="hero-ctas reveal" style="--i:3">
+        <a href="#kundli" class="btn btn-gold"><svg aria-hidden="true"><use href="#i-sparkle"/></svg>Get Your Reading</a>
+        <a href="#horoscope" class="btn btn-ghost">Free Horoscope</a>
+      </div>
+      <div class="trust reveal" style="--i:4">
+        <div><svg aria-hidden="true"><use href="#i-shield"/></svg>100% private &amp; secure</div>
+        <div><svg aria-hidden="true"><use href="#i-star"/></svg>4.8 from 1.2 lakh reviews</div>
+        <div><svg aria-hidden="true"><use href="#i-clock"/></svg>Astrologers online 24/7</div>
+      </div>
+    </div>
+    <div class="wheel-wrap reveal" style="--i:2" aria-hidden="true">
+      <svg id="wheel" viewBox="0 0 400 400"></svg>
+      <div class="wheel-core"><svg><use href="#i-sparkle"/></svg></div>
+    </div>
+  </div>
+  <a href="#horoscope" class="scroll-cue">Scroll<i></i></a>
+</section>
+
+<!-- ===== 3. DAILY HOROSCOPE ===== -->
+<section id="horoscope" aria-labelledby="horo-title">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Daily Horoscope</span>
+      <h2 id="horo-title">Your Sign, Today</h2>
+      <p>Select your zodiac sign to reveal today's planetary guidance, prepared each morning by our panel of senior astrologers.</p>
+      <span class="date-chip" id="todayChip">Today</span>
+    </div>
+    <div class="zodiac-grid" id="zodiacGrid"></div>
+  </div>
+</section>
+
+<!-- ===== 4. SERVICES ===== -->
+<section id="services" aria-labelledby="svc-title">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Our Services</span>
+      <h2 id="svc-title">Guidance for Every Path</h2>
+      <p>Each consultation is personal, confidential and grounded in authentic astrological methods, never generic predictions.</p>
+    </div>
+    <div class="svc-grid">
+      <article class="card svc reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18"/><path d="M3 3l18 18M21 3 3 21M12 3l9 9-9 9-9-9z"/></svg></div>
+        <h3>Birth Chart / Kundli</h3>
+        <p>A complete reading of your Janam Kundli: planetary positions, Dasha periods, doshas and yogas, with clear remedies for the years ahead.</p>
+        <div class="foot"><span class="price"><small>Starting</small>From ₹499</span><a href="#contact" class="link-arrow">Book now <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+      </article>
+      <article class="card svc reveal" style="--i:1">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/><path d="M19 3v3m-1.5-1.5h3"/></svg></div>
+        <h3>Love &amp; Relationship</h3>
+        <p>Kundli matching, Guna Milan and compatibility insights for couples, plus guidance on timing for marriage and healing strained bonds.</p>
+        <div class="foot"><span class="price"><small>Starting</small>From ₹499</span><a href="#contact" class="link-arrow">Book now <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+      </article>
+      <article class="card svc reveal" style="--i:2">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 20h18M5 20V11m5 9V7m5 13v-6m5 6V4"/><path d="m4 8 5-4 5 4 6-5"/></svg></div>
+        <h3>Career &amp; Finance</h3>
+        <p>Identify favourable periods for job changes, business launches and investments using your 10th and 11th house analysis and transits.</p>
+        <div class="foot"><span class="price"><small>Starting</small>From ₹499</span><a href="#contact" class="link-arrow">Book now <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+      </article>
+      <article class="card svc reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="3" width="11" height="16" rx="1.5" transform="rotate(-8 9.5 11)"/><rect x="9" y="5" width="11" height="16" rx="1.5" transform="rotate(8 14.5 13)"/><path d="m14.5 10 .9 1.8 2 .3-1.4 1.4.3 2-1.8-.9-1.8.9.3-2-1.4-1.4 2-.3z"/></svg></div>
+        <h3>Tarot Reading</h3>
+        <p>Intuitive Rider-Waite and Thoth spreads that bring clarity to a question on your mind, from a single-card pull to a full Celtic Cross.</p>
+        <div class="foot"><span class="price"><small>Starting</small>From ₹499</span><a href="#contact" class="link-arrow">Book now <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+      </article>
+      <article class="card svc reveal" style="--i:1">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 8h4.5a2 2 0 0 1 0 4H9v4h6M9 8v4"/></svg></div>
+        <h3>Numerology</h3>
+        <p>Decode your Life Path, Destiny and Soul Urge numbers. Get name corrections and lucky numbers for business, vehicles and dates.</p>
+        <div class="foot"><span class="price"><small>Starting</small>From ₹499</span><a href="#contact" class="link-arrow">Book now <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+      </article>
+      <article class="card svc reveal" style="--i:2">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 11 12 4l9 7M5 10v10h14V10"/><path d="M12 13v7M8.5 16.5h7"/><circle cx="12" cy="10" r="1"/></svg></div>
+        <h3>Vastu Consultation</h3>
+        <p>Harmonise your home or workplace with Vastu Shastra. Floor-plan review, direction analysis and practical remedies without demolition.</p>
+        <div class="foot"><span class="price"><small>Starting</small>From ₹499</span><a href="#contact" class="link-arrow">Book now <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 5. FREE KUNDLI ===== -->
+<section id="kundli" class="kundli" aria-labelledby="k-title">
+  <div class="container kundli-wrap">
+    <div class="kundli-art reveal" aria-hidden="true">
+      <img src="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?auto=format&fit=crop&w=1200&q=80" alt="" loading="lazy" onerror="this.remove()">
+      <svg class="chart" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="10" y="10" width="180" height="180"/><path d="M10 10 190 190M190 10 10 190M100 10 190 100 100 190 10 100Z"/>
+        <g fill="currentColor" stroke="none" font-family="Cinzel" font-size="9" text-anchor="middle" opacity=".9">
+          <text x="100" y="60">Lg ☉</text><text x="55" y="32">♃</text><text x="145" y="32">♀</text><text x="32" y="102">☽</text><text x="168" y="102">♄</text><text x="100" y="148">♂ ☿</text><text x="55" y="176">Ra</text><text x="145" y="176">Ke</text>
+        </g>
+      </svg>
+      <div class="cap"><b>North-Indian Kundli</b>Your free chart covers Lagna, Moon sign, Nakshatra, planetary houses and current Mahadasha.</div>
+    </div>
+    <div>
+      <div class="reveal" style="margin-bottom:1.6rem">
+        <span class="eyebrow">Free Kundli</span>
+        <h2 id="k-title" style="font-size:clamp(1.9rem,4vw,2.7rem)">Generate Your Birth Chart</h2>
+        <p style="color:var(--muted)">Enter your birth details exactly as recorded. Even a few minutes' difference in time can change your ascendant, so check your birth certificate if you can.</p>
+      </div>
+      <form class="card form-card reveal" style="--i:1" id="kundliForm" novalidate>
+        <div class="form-grid">
+          <div class="field full"><label for="kName">Full Name</label><input id="kName" name="name" type="text" autocomplete="name" placeholder="e.g. Priya Sharma" required><span class="err" aria-live="polite"></span></div>
+          <div class="field"><label for="kDob">Date of Birth</label><input id="kDob" name="dob" type="date" required><span class="err" aria-live="polite"></span></div>
+          <div class="field"><label for="kTob">Time of Birth</label><input id="kTob" name="tob" type="time" required><span class="err" aria-live="polite"></span></div>
+          <div class="field full"><label for="kPob">Place of Birth</label><input id="kPob" name="pob" type="text" placeholder="City, State, Country" autocomplete="address-level2" required><span class="err" aria-live="polite"></span></div>
+        </div>
+        <button type="submit" class="btn btn-gold glow-btn"><svg aria-hidden="true"><use href="#i-sparkle"/></svg>Generate Free Kundli</button>
+        <div class="result" id="kResult" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. ASTROLOGERS ===== -->
+<section id="astrologers" aria-labelledby="a-title">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Meet Our Astrologers</span>
+      <h2 id="a-title">Verified Experts, Real Insight</h2>
+      <p>Every Celestia astrologer passes a four-stage assessment of knowledge, accuracy and ethics. Fewer than 1 in 20 applicants are accepted.</p>
+    </div>
+    <div class="astro-grid" id="astroGrid"></div>
+  </div>
+</section>
+
+<!-- ===== 7. STATS ===== -->
+<section class="stats" aria-label="Celestia in numbers">
+  <div class="container">
+    <div class="stats-band reveal">
+      <div class="stat"><b><span class="count" data-to="1" data-suffix="M+">0</span></b><span>Consultations</span></div>
+      <div class="stat"><b><span class="count" data-to="200" data-suffix="+">0</span></b><span>Astrologers</span></div>
+      <div class="stat"><b><span class="count" data-to="4.8" data-dec="1" data-suffix="★">0</span></b><span>Average Rating</span></div>
+      <div class="stat"><b><span class="count" data-to="24" data-suffix="/7">0</span></b><span>Available</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. HOW IT WORKS ===== -->
+<section aria-labelledby="h-title">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">How It Works</span>
+      <h2 id="h-title">Three Steps to Clarity</h2>
+      <p>From sharing your birth details to receiving your personalised remedies, the whole journey takes minutes.</p>
+    </div>
+    <div class="steps" id="steps">
+      <svg class="constellation" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
+        <defs><linearGradient id="lineGrad" x1="0" x2="1"><stop offset="0" stop-color="#E8C468" stop-opacity=".2"/><stop offset=".5" stop-color="#E8C468"/><stop offset="1" stop-color="#D65DB1" stop-opacity=".4"/></linearGradient></defs>
+        <path class="draw" d="M260 60 L360 30 L470 75 L600 60 L720 34 L830 80 L940 60"/>
+        <circle cx="360" cy="30" r="2.5"/><circle cx="470" cy="75" r="2"/><circle cx="720" cy="34" r="2.5"/><circle cx="830" cy="80" r="2"/>
+      </svg>
+      <div class="step reveal">
+        <div class="node"><em>1</em><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>
+        <h3>Share Your Birth Details</h3>
+        <p>Enter your date, time and place of birth. We calculate your chart with Swiss Ephemeris precision and Lahiri ayanamsa.</p>
+      </div>
+      <div class="step reveal" style="--i:1">
+        <div class="node"><em>2</em><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/><path d="m18 6 .8 1.6 1.7.2-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.2z"/></svg></div>
+        <h3>Choose Your Astrologer</h3>
+        <p>Browse by expertise, language and rating. Read verified reviews, then connect instantly by chat, call or video.</p>
+      </div>
+      <div class="step reveal" style="--i:2">
+        <div class="node"><em>3</em><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3c.7 5 3 7.3 8 8-5 .7-7.3 3-8 8-.7-5-3-7.3-8-8 5-.7 7.3-3 8-8Z"/></svg></div>
+        <h3>Receive Your Guidance</h3>
+        <p>Get a clear reading with practical remedies, plus a written summary in your account to revisit whenever you need it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 9. TESTIMONIALS ===== -->
+<section aria-labelledby="t-title">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Testimonials</span>
+      <h2 id="t-title">Words From Our Seekers</h2>
+    </div>
+    <div class="carousel reveal" id="carousel" aria-roledescription="carousel" aria-label="Customer testimonials">
+      <div class="track-wrap"><div class="track" id="track"></div></div>
+      <div class="c-ctrl">
+        <button class="c-btn" id="prev" aria-label="Previous testimonial"><svg style="transform:scaleX(-1)"><use href="#i-arrow"/></svg></button>
+        <div class="dots" id="dots" role="group" aria-label="Choose testimonial"></div>
+        <button class="c-btn" id="next" aria-label="Next testimonial"><svg><use href="#i-arrow"/></svg></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 10. BLOG ===== -->
+<section id="blog" aria-labelledby="b-title">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">From the Journal</span>
+      <h2 id="b-title">Astrology Insights</h2>
+      <p>Thoughtful articles from our astrologers on transits, remedies and the timeless wisdom of the stars.</p>
+    </div>
+    <div class="blog-grid">
+      <article class="card post reveal">
+        <div class="thumb">
+          <div class="art" style="background:radial-gradient(circle at 70% 40%,#f3e7c4 0 9%,rgba(243,231,196,.25) 10%,transparent 22%),radial-gradient(ellipse at 30% 70%,rgba(214,93,177,.45),transparent 55%),linear-gradient(135deg,#2a1670,#0f0a2c)"></div>
+          <img src="https://images.unsplash.com/photo-1532693322450-2cb5c511067d?auto=format&fit=crop&w=900&q=80" alt="Crescent moon against a dark night sky" loading="lazy" onerror="this.remove()">
+          <span class="tag">Transits</span>
+        </div>
+        <div class="body">
+          <div class="meta">12 Nov 2026 · 6 min read</div>
+          <h3>Saturn in Pisces: What the Final Stretch Means for Your Sign</h3>
+          <p>As Shani completes its journey through Meena Rashi, here is how the closing months reshape discipline, karma and long-term goals.</p>
+          <a href="#blog" class="link-arrow">Read article <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+      </article>
+      <article class="card post reveal" style="--i:1">
+        <div class="thumb">
+          <div class="art" style="background:radial-gradient(circle at 50% 60%,rgba(232,196,104,.55),transparent 30%),radial-gradient(ellipse at 20% 20%,rgba(108,63,197,.6),transparent 55%),linear-gradient(160deg,#1f1150,#0b0b1f)"></div>
+          <img src="https://images.unsplash.com/photo-1601065371853-ebdd2f9bc1fd?auto=format&fit=crop&w=900&q=80" alt="Tarot cards spread beside lit candles" loading="lazy" onerror="this.remove()">
+          <span class="tag">Tarot</span>
+        </div>
+        <div class="body">
+          <div class="meta">5 Nov 2026 · 8 min read</div>
+          <h3>The Major Arcana Explained: 22 Cards, One Soul's Journey</h3>
+          <p>From The Fool to The World, discover how the Major Arcana maps the turning points every person passes through.</p>
+          <a href="#blog" class="link-arrow">Read article <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+      </article>
+      <article class="card post reveal" style="--i:2">
+        <div class="thumb">
+          <div class="art" style="background:radial-gradient(ellipse at 60% 50%,rgba(214,93,177,.5),transparent 50%),radial-gradient(ellipse at 30% 40%,rgba(108,63,197,.75),transparent 60%),linear-gradient(135deg,#120a33,#2a1670)"></div>
+          <img src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=900&q=80" alt="Milky Way stretching across a star-filled sky" loading="lazy" onerror="this.remove()">
+          <span class="tag">Vedic Basics</span>
+        </div>
+        <div class="body">
+          <div class="meta">28 Oct 2026 · 5 min read</div>
+          <h3>Nakshatras 101: The 27 Lunar Mansions That Shape You</h3>
+          <p>Your Moon's Nakshatra reveals instinct, temperament and timing. A beginner's guide to finding yours and what it says.</p>
+          <a href="#blog" class="link-arrow">Read article <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 11. FAQ ===== -->
+<section aria-labelledby="f-title">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">FAQ</span>
+      <h2 id="f-title">Questions, Answered</h2>
+    </div>
+    <div class="faq-list" id="faqList">
+      <details class="faq reveal"><summary>How accurate are online astrology consultations?<i aria-hidden="true"></i></summary><div class="ans"><p>Accuracy depends on precise birth data and the astrologer's expertise. Our charts use Swiss Ephemeris calculations, and every astrologer is assessed on real case studies before joining. Most clients find their reading highly relevant, and if you're not satisfied with your first session we'll arrange a second opinion at no cost.</p></div></details>
+      <details class="faq reveal" style="--i:1"><summary>What if I don't know my exact time of birth?<i aria-hidden="true"></i></summary><div class="ans"><p>You can still receive valuable insights from your Moon sign and planetary positions. For a precise ascendant, our astrologers offer Birth Time Rectification, which uses key life events to calculate your likely time of birth.</p></div></details>
+      <details class="faq reveal" style="--i:2"><summary>Is my personal information kept private?<i aria-hidden="true"></i></summary><div class="ans"><p>Yes. Your birth details and conversations are encrypted and never shared with third parties. Astrologers see only the details needed for your reading, and you can delete your data from your account at any time.</p></div></details>
+      <details class="faq reveal" style="--i:3"><summary>How are consultations priced and paid for?<i aria-hidden="true"></i></summary><div class="ans"><p>Services start from ₹499 per session. Chat and call consultations are also available per minute, with rates shown on each astrologer's profile. We accept UPI, cards, net banking and wallets, and your first 5 minutes with any astrologer are free.</p></div></details>
+      <details class="faq reveal" style="--i:4"><summary>Do you suggest gemstones or expensive remedies?<i aria-hidden="true"></i></summary><div class="ans"><p>Our astrologers are trained to recommend simple, affordable remedies first, such as mantras, charity and lifestyle changes. Gemstones are suggested only when clearly indicated in your chart, and there is never any obligation to purchase.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 12. CONTACT + CTA ===== -->
+<section id="contact" aria-labelledby="c-title">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Contact</span>
+      <h2 id="c-title">We're Here to Guide You</h2>
+      <p>Questions about a reading, your account or a corporate consultation? Our care team replies within 2 hours.</p>
+    </div>
+    <div class="contact-wrap">
+      <aside class="card c-info reveal">
+        <h3>Celestia Care</h3>
+        <p>Speak to a real person, any day of the week, in English or Hindi.</p>
+        <div class="c-item"><svg aria-hidden="true"><use href="#i-phone"/></svg><div><b>Phone</b><a href="tel:+919820045678">+91 98200 45678</a></div></div>
+        <div class="c-item"><svg aria-hidden="true"><use href="#i-chat"/></svg><div><b>Email</b><a href="mailto:care@celestiaastrology.com">care@celestiaastrology.com</a></div></div>
+        <div class="c-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b>Studio</b><span>4th Floor, Orion Towers, Bandra Kurla Complex, Mumbai 400051</span></div></div>
+        <div class="c-item"><svg aria-hidden="true"><use href="#i-clock"/></svg><div><b>Hours</b><span>Consultations 24/7 · Care team 8 AM – 11 PM IST</span></div></div>
+      </aside>
+      <form class="card form-card reveal" style="--i:1" id="contactForm" novalidate>
+        <div class="form-grid">
+          <div class="field"><label for="cName">Name</label><input id="cName" type="text" autocomplete="name" placeholder="Your name" required><span class="err" aria-live="polite"></span></div>
+          <div class="field"><label for="cEmail">Email</label><input id="cEmail" type="email" autocomplete="email" placeholder="you@example.com" required><span class="err" aria-live="polite"></span></div>
+          <div class="field"><label for="cPhone">Phone (optional)</label><input id="cPhone" type="tel" autocomplete="tel" placeholder="+91"><span class="err"></span></div>
+          <div class="field"><label for="cTopic">Topic</label>
+            <select id="cTopic"><option>General enquiry</option><option>Kundli &amp; birth chart</option><option>Love &amp; marriage</option><option>Career &amp; finance</option><option>Vastu consultation</option><option>Billing &amp; account</option></select><span class="err"></span></div>
+          <div class="field full"><label for="cMsg">Message</label><textarea id="cMsg" placeholder="How can we help?" required></textarea><span class="err" aria-live="polite"></span></div>
+        </div>
+        <button type="submit" class="btn btn-purple" style="margin-top:1.2rem;width:100%">Send Message <svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+        <div class="form-status" id="cStatus" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="cta" aria-labelledby="cta-title">
+  <div class="container">
+    <div class="cta-box reveal">
+      <img src="https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1800&q=80" alt="" loading="lazy" onerror="this.remove()">
+      <div class="ring" aria-hidden="true"></div><div class="ring r2" aria-hidden="true"></div>
+      <span class="eyebrow">Begin Today</span>
+      <h2 id="cta-title">Your Destiny Awaits</h2>
+      <p>Your first 5 minutes with any astrologer are free. Ask the question that's been on your mind.</p>
+      <div class="hero-ctas" style="justify-content:center;margin:0">
+        <a href="#astrologers" class="btn btn-gold"><svg aria-hidden="true"><use href="#i-chat"/></svg>Talk to Astrologer</a>
+        <a href="#kundli" class="btn btn-ghost">Free Kundli</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ===== 13. FOOTER ===== -->
+<footer>
+  <div class="container">
+    <div class="f-grid">
+      <div>
+        <a href="#home" class="logo" aria-label="Celestia Astrology home" style="margin-bottom:1rem">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="none" stroke="url(#lg)" stroke-width="1.2" opacity=".6"/><path fill="url(#lg)" d="M30 9.5a15 15 0 1 0 8.5 25.6A13 13 0 0 1 30 9.5Z"/><path fill="#F4E9FF" d="m33 14 1.2 2.6 2.8.4-2 2 .5 2.8-2.5-1.3-2.5 1.3.5-2.8-2-2 2.8-.4z"/></svg>
+          <span>CELESTIA <b>ASTROLOGY</b></span>
+        </a>
+        <p>Authentic Vedic astrology, tarot and numerology from India's most trusted astrologers, since 2014.</p>
+        <div class="social">
+          <a href="https://instagram.com" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></a>
+          <a href="https://facebook.com" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v7h4v-7H17l.5-4h-4V8.8c0-.5.3-.8.5-.8Z"/></svg></a>
+          <a href="https://youtube.com" aria-label="YouTube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 8.2a3 3 0 0 0-2.1-2.1C18 5.6 12 5.6 12 5.6s-6 0-7.9.5A3 3 0 0 0 2 8.2 31 31 0 0 0 1.6 12 31 31 0 0 0 2 15.8a3 3 0 0 0 2.1 2.1c1.9.5 7.9.5 7.9.5s6 0 7.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .4-3.8 31 31 0 0 0-.4-3.8ZM10 15V9l5.2 3Z"/></svg></a>
+          <a href="https://x.com" aria-label="X"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.3-8.3L2 3h6.4l4.4 5.8Zm-1.1 16.2h1.7L7.4 4.7H5.6Z"/></svg></a>
+          <a href="https://wa.me/919820045678" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 20l1.2-4A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 2.2 2.3 4.2 4.5 4.5l1-1.2 1.8.8-.4 1.6c-3.5.3-7-3.2-6.7-6.7l1.6-.4.8 1.8z" fill="currentColor" stroke="none"/></svg></a>
+        </div>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="#horoscope">Daily Horoscope</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#astrologers">Our Astrologers</a></li>
+          <li><a href="#kundli">Free Kundli</a></li>
+          <li><a href="#blog">Journal</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Zodiac Signs</h4>
+        <ul class="z-links" id="zLinks"></ul>
+      </div>
+      <div>
+        <h4>Get in Touch</h4>
+        <ul>
+          <li><a href="tel:+919820045678">+91 98200 45678</a></li>
+          <li><a href="mailto:care@celestiaastrology.com">care@celestiaastrology.com</a></li>
+          <li style="color:var(--muted)">Orion Towers, BKC, Mumbai 400051</li>
+        </ul>
+        <h4 style="margin-top:1.6rem">Newsletter</h4>
+        <form id="newsForm" style="display:flex;gap:.5rem" novalidate>
+          <label for="nEmail" class="sr-only">Email address</label>
+          <input id="nEmail" type="email" placeholder="Your email" required style="flex:1;min-width:0;padding:.7em 1em;border-radius:999px;border:1px solid var(--line);background:rgba(11,11,31,.6)">
+          <button class="btn btn-gold" style="padding:.7em 1.1em" aria-label="Subscribe"><svg><use href="#i-arrow"/></svg></button>
+        </form>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <span>© <span id="yr">2026</span> Celestia Astrology Pvt. Ltd. All rights reserved.</span>
+      <nav aria-label="Legal"><a href="#contact">Privacy Policy</a><a href="#contact">Terms of Use</a><a href="#contact">Refund Policy</a></nav>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+"use strict";
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const finePointer = matchMedia("(pointer: fine)").matches;
+const $ = (s, c = document) => c.querySelector(s);
+const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+
+/* ---------- Data ---------- */
+const SIGNS = [
+  {id:"aries",name:"Aries",range:"Mar 21 – Apr 19",el:"Fire",ruler:"Mars",color:"Crimson",num:9,
+   text:"Mars energises your ambitions today. A bold move at work is well-timed, but pause before replying to a heated message. Evening favours a frank, heartfelt conversation."},
+  {id:"taurus",name:"Taurus",range:"Apr 20 – May 20",el:"Earth",ruler:"Venus",color:"Emerald",num:6,
+   text:"Venus brings steadiness to your finances. Review a pending payment or subscription; small savings add up. Someone close appreciates your calm presence more than they say."},
+  {id:"gemini",name:"Gemini",range:"May 21 – Jun 20",el:"Air",ruler:"Mercury",color:"Saffron",num:5,
+   text:"Mercury sharpens your words. It is an excellent day for interviews, pitches and difficult emails. Avoid spreading yourself thin; finish one idea before starting the next."},
+  {id:"cancer",name:"Cancer",range:"Jun 21 – Jul 22",el:"Water",ruler:"Moon",color:"Pearl White",num:2,
+   text:"The Moon highlights home and family. A relative may need your counsel. Trust your intuition on a property or living decision, but sign nothing until you've read the fine print."},
+  {id:"leo",name:"Leo",range:"Jul 23 – Aug 22",el:"Fire",ruler:"Sun",color:"Gold",num:1,
+   text:"The Sun puts you in the spotlight. Recognition for past effort is likely. Share credit generously and you'll gain a loyal ally. Creative work flows best after sunset."},
+  {id:"virgo",name:"Virgo",range:"Aug 23 – Sep 22",el:"Earth",ruler:"Mercury",color:"Olive Green",num:5,
+   text:"Your attention to detail solves a problem others missed. Prioritise rest; your body is asking for a slower rhythm. A health routine started today has lasting benefit."},
+  {id:"libra",name:"Libra",range:"Sep 23 – Oct 22",el:"Air",ruler:"Venus",color:"Rose Pink",num:6,
+   text:"Harmony returns to a partnership. If you've been waiting to resolve a misunderstanding, the stars support gentle honesty now. A social invitation brings a useful connection."},
+  {id:"scorpio",name:"Scorpio",range:"Oct 23 – Nov 21",el:"Water",ruler:"Mars · Ketu",color:"Maroon",num:8,
+   text:"With the Sun in your sign, your magnetism is strong. Use it to negotiate, not to control. Research and investigation yield answers; a hidden fact comes to light."},
+  {id:"sagittarius",name:"Sagittarius",range:"Nov 22 – Dec 21",el:"Fire",ruler:"Jupiter",color:"Royal Blue",num:3,
+   text:"Jupiter expands your horizons. Plans for study or travel gain momentum. Be mindful of overpromising; a measured 'yes' serves you better than an enthusiastic one."},
+  {id:"capricorn",name:"Capricorn",range:"Dec 22 – Jan 19",el:"Earth",ruler:"Saturn",color:"Charcoal",num:8,
+   text:"Saturn rewards persistence. A long-term goal shows its first real result. Senior colleagues notice your reliability. Make time for an old friend this evening."},
+  {id:"aquarius",name:"Aquarius",range:"Jan 20 – Feb 18",el:"Air",ruler:"Saturn · Rahu",color:"Electric Blue",num:4,
+   text:"Innovative ideas arrive quickly; note them down. Group projects benefit from your fresh perspective. Guard your energy around people who drain rather than inspire you."},
+  {id:"pisces",name:"Pisces",range:"Feb 19 – Mar 20",el:"Water",ruler:"Jupiter",color:"Sea Green",num:7,
+   text:"Your intuition is especially clear. Meditation or time near water restores you. A creative or spiritual pursuit offers unexpected recognition. Avoid lending money today."}
+];
+const ASTROS = [
+  {name:"Acharya Vikram Shastri",ini:"VS",exp:"Vedic Astrology · KP System",yrs:22,lang:"Hindi, English, Sanskrit",rate:4.9,rev:"18.4k",img:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&h=400&q=80"},
+  {name:"Dr. Meera Iyer",ini:"MI",exp:"Tarot · Numerology",yrs:14,lang:"English, Tamil, Hindi",rate:4.8,rev:"11.2k",img:"https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&h=400&q=80"},
+  {name:"Pandit Raghav Mishra",ini:"RM",exp:"Vastu · Prashna Kundli",yrs:18,lang:"Hindi, Bhojpuri, English",rate:4.9,rev:"15.7k",img:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&h=400&q=80"},
+  {name:"Ananya Kapoor",ini:"AK",exp:"Love & Relationship · Western",yrs:9,lang:"English, Hindi, Punjabi",rate:4.8,rev:"8.9k",img:"https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=400&h=400&q=80"}
+];
+const TESTI = [
+  {q:"Acharya Vikram ji predicted a job change within four months and suggested I wait until after Jupiter's transit. I received an offer with a 40% hike in exactly that window. His calm, practical guidance has stayed with me.",n:"Rohit Malhotra",p:"Software Architect, Bengaluru"},
+  {q:"I was anxious before my wedding and our families were worried about Mangal dosha. Dr. Meera explained everything clearly, without fear-mongering, and gave simple remedies. We've just celebrated our first anniversary.",n:"Sneha Kulkarni",p:"Pune"},
+  {q:"Pandit Raghav reviewed our shop's floor plan and suggested moving the cash counter and entrance lighting. No demolition, minimal cost, and our footfall has noticeably improved over three months.",n:"Harpreet Singh",p:"Retail Business Owner, Ludhiana"},
+  {q:"What I value most is privacy and honesty. Celestia's astrologers never pushed expensive gemstones on me. The tarot session with Ananya gave me the clarity I needed to finally end a draining relationship.",n:"Aisha Rahman",p:"Designer, Hyderabad"}
+];
+
+/* ---------- Today chip ---------- */
+const today = new Date();
+$("#todayChip").textContent = today.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+$("#yr").textContent = today.getFullYear();
+
+/* ---------- Zodiac cards ---------- */
+const grid = $("#zodiacGrid");
+grid.innerHTML = SIGNS.map((s,i) => `
+  <button class="flip reveal" style="--i:${i%4}" aria-pressed="false" aria-label="${s.name}, ${s.range}. Show today's horoscope">
+    <div class="flip-inner">
+      <div class="face front" aria-hidden="false">
+        <svg class="zi" aria-hidden="true"><use href="#z-${s.id}"/></svg>
+        <h3>${s.name}</h3><span class="range">${s.range}</span>
+        <span class="el">${s.el} · ${s.ruler}</span>
+        <span class="hint">TAP TO REVEAL</span>
+      </div>
+      <div class="face back" aria-hidden="true">
+        <h3><svg aria-hidden="true"><use href="#z-${s.id}"/></svg>${s.name} · Today</h3>
+        <p>${s.text}</p>
+        <div class="lucky"><span>Lucky colour <b>${s.color}</b></span><span>Number <b>${s.num}</b></span></div>
+      </div>
+    </div>
+  </button>`).join("");
+grid.addEventListener("click", e => {
+  const b = e.target.closest(".flip"); if (!b) return;
+  const on = b.getAttribute("aria-pressed") !== "true";
+  b.setAttribute("aria-pressed", on);
+  b.querySelector(".front").setAttribute("aria-hidden", on);
+  b.querySelector(".back").setAttribute("aria-hidden", !on);
+  const s = SIGNS[[...grid.children].indexOf(b)];
+  b.setAttribute("aria-label", on ? `${s.name} horoscope: ${s.text} Lucky colour ${s.color}, number ${s.num}. Press to flip back.` : `${s.name}, ${s.range}. Show today's horoscope`);
+});
+
+/* Footer zodiac links */
+$("#zLinks").innerHTML = SIGNS.map(s => `<li><a href="#horoscope" data-sign="${s.id}"><svg aria-hidden="true"><use href="#z-${s.id}"/></svg>${s.name}</a></li>`).join("");
+$("#zLinks").addEventListener("click", e => {
+  const a = e.target.closest("a"); if (!a) return;
+  const idx = SIGNS.findIndex(s => s.id === a.dataset.sign);
+  setTimeout(() => { const b = grid.children[idx]; if (b && b.getAttribute("aria-pressed") !== "true") b.click(); b && b.focus({preventScroll:true}); }, reduce ? 0 : 700);
+});
+
+/* ---------- Zodiac wheel ---------- */
+(function buildWheel(){
+  const w = $("#wheel"), C = 200, NS = "http://www.w3.org/2000/svg";
+  const gold = "#E8C468";
+  let h = `<defs><radialGradient id="wg"><stop offset=".6" stop-color="#6C3FC5" stop-opacity="0"/><stop offset="1" stop-color="#6C3FC5" stop-opacity=".35"/></radialGradient></defs>
+    <circle cx="200" cy="200" r="194" fill="url(#wg)" stroke="${gold}" stroke-opacity=".7" stroke-width="1.2"/>
+    <circle cx="200" cy="200" r="184" fill="none" stroke="${gold}" stroke-opacity=".35"/>
+    <circle cx="200" cy="200" r="128" fill="none" stroke="${gold}" stroke-opacity=".7"/>
+    <circle cx="200" cy="200" r="122" fill="none" stroke="${gold}" stroke-opacity=".25" stroke-dasharray="2 4"/>`;
+  for (let i=0;i<72;i++){ const a=i*5*Math.PI/180, r1=i%6===0?176:180;
+    h+=`<line x1="${C+Math.cos(a)*r1}" y1="${C+Math.sin(a)*r1}" x2="${C+Math.cos(a)*184}" y2="${C+Math.sin(a)*184}" stroke="${gold}" stroke-opacity=".6" stroke-width="${i%6===0?1.2:.6}"/>`; }
+  for (let i=0;i<12;i++){ const a=(i*30-90)*Math.PI/180;
+    h+=`<line x1="${C+Math.cos(a)*128}" y1="${C+Math.sin(a)*128}" x2="${C+Math.cos(a)*184}" y2="${C+Math.sin(a)*184}" stroke="${gold}" stroke-opacity=".45"/>`;
+    const m=(i*30-75)*Math.PI/180, x=C+Math.cos(m)*155, y=C+Math.sin(m)*155;
+    h+=`<g transform="translate(${x} ${y}) rotate(${i*30+15})"><use href="#z-${SIGNS[i].id}" x="-13" y="-13" width="26" height="26" style="color:${gold}"/></g>`; }
+  // inner rotating star geometry
+  let star="", tri1=[], tri2=[];
+  for (let i=0;i<12;i++){ const a=(i*30-90)*Math.PI/180; star+=`${i?"L":"M"}${C+Math.cos(a)*(i%2?62:118)} ${C+Math.sin(a)*(i%2?62:118)}`; }
+  for (let i=0;i<3;i++){ let a=(i*120-90)*Math.PI/180; tri1.push(`${C+Math.cos(a)*110},${C+Math.sin(a)*110}`); a=(i*120+90)*Math.PI/180; tri2.push(`${C+Math.cos(a)*110},${C+Math.sin(a)*110}`); }
+  h+=`<g class="inner" fill="none" stroke="${gold}">
+      <path d="${star}Z" stroke-opacity=".55"/>
+      <polygon points="${tri1.join(" ")}" stroke-opacity=".35"/><polygon points="${tri2.join(" ")}" stroke-opacity=".35"/>
+      <circle cx="200" cy="200" r="88" stroke-opacity=".3" stroke-dasharray="1 6" stroke-width="2"/>
+      ${[...Array(8)].map((_,i)=>{const a=i*45*Math.PI/180;return `<circle cx="${C+Math.cos(a)*100}" cy="${C+Math.sin(a)*100}" r="2.2" fill="#F4E9FF" stroke="none"/>`}).join("")}
+    </g>`;
+  w.innerHTML = h;
+})();
+
+/* ---------- Astrologers ---------- */
+const starSvg = '<svg aria-hidden="true"><use href="#i-star"/></svg>';
+$("#astroGrid").innerHTML = ASTROS.map((a,i) => `
+  <article class="card astro reveal" style="--i:${i}">
+    <div class="avatar"><div class="ph"><span aria-hidden="true">${a.ini}</span><img src="${a.img}" alt="Portrait of ${a.name}" loading="lazy" onerror="this.remove()"></div><i class="online" title="Online now"></i></div>
+    <h3>${a.name}</h3>
+    <div class="exp">${a.exp}</div>
+    <div class="rating">${starSvg}<b>${a.rate}</b><span>(${a.rev} reviews)</span></div>
+    <ul>
+      <li><svg aria-hidden="true"><use href="#i-clock"/></svg>${a.yrs} years experience</li>
+      <li><svg aria-hidden="true"><use href="#i-lang"/></svg>${a.lang}</li>
+    </ul>
+    <div class="acts">
+      <button class="btn btn-purple" data-act="chat" data-name="${a.name}"><svg aria-hidden="true"><use href="#i-chat"/></svg>Chat</button>
+      <button class="btn btn-ghost" data-act="call" data-name="${a.name}"><svg aria-hidden="true"><use href="#i-phone"/></svg>Call</button>
+    </div>
+  </article>`).join("");
+const toast = $("#toast"); let tt;
+function showToast(msg){ toast.textContent = msg; toast.classList.add("show"); clearTimeout(tt); tt = setTimeout(()=>toast.classList.remove("show"), 3600); }
+$("#astroGrid").addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  showToast(b.dataset.act === "chat" ? `✦ Connecting you to ${b.dataset.name} by chat… first 5 minutes free.` : `✦ Requesting a call-back from ${b.dataset.name}. Expect a call within 2 minutes.`);
+});
+
+/* ---------- Testimonials ---------- */
+const track = $("#track"), dots = $("#dots");
+track.innerHTML = TESTI.map((t,i) => `
+  <div class="slide" role="group" aria-roledescription="slide" aria-label="${i+1} of ${TESTI.length}">
+    <figure class="t-card" style="margin:0">
+      <svg class="q" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 18v-5.5C4 8.4 6 6 10 5l.8 1.6C8.6 7.4 7.6 8.8 7.5 11H10v7zm9 0v-5.5c0-4.1 2-6.5 6-7.5l.8 1.6c-2.2.8-3.2 2.2-3.3 4.4H19v7z"/></svg>
+      <div class="stars-row" aria-label="5 out of 5 stars">${starSvg.repeat(5)}</div>
+      <blockquote>${t.q}</blockquote>
+      <figcaption class="who"><span class="ini" aria-hidden="true">${t.n.split(" ").map(w=>w[0]).join("")}</span><div><b>${t.n}</b><span>${t.p}</span></div></figcaption>
+    </figure>
+  </div>`).join("");
+dots.innerHTML = TESTI.map((_,i)=>`<button aria-label="Show testimonial ${i+1}"></button>`).join("");
+let cur = 0, timer;
+function go(i){
+  cur = (i + TESTI.length) % TESTI.length;
+  track.style.transform = `translateX(${-cur*100}%)`;
+  $$(".slide", track).forEach((s,k)=>{ s.setAttribute("aria-hidden", k!==cur); s.inert = k!==cur; });
+  $$("button", dots).forEach((d,k)=>d.setAttribute("aria-current", k===cur));
+}
+function auto(){ clearInterval(timer); if (!reduce) timer = setInterval(()=>go(cur+1), 6500); }
+$("#prev").onclick = ()=>{go(cur-1);auto()}; $("#next").onclick = ()=>{go(cur+1);auto()};
+dots.addEventListener("click", e => { const b=e.target.closest("button"); if(b){ go([...dots.children].indexOf(b)); auto(); }});
+const car = $("#carousel");
+car.addEventListener("mouseenter", ()=>clearInterval(timer)); car.addEventListener("mouseleave", auto);
+car.addEventListener("focusin", ()=>clearInterval(timer)); car.addEventListener("focusout", auto);
+let tx=0; track.addEventListener("touchstart",e=>tx=e.touches[0].clientX,{passive:true});
+track.addEventListener("touchend",e=>{const d=e.changedTouches[0].clientX-tx; if(Math.abs(d)>45){go(cur+(d<0?1:-1));auto();}});
+go(0); auto();
+
+/* ---------- FAQ: one open at a time ---------- */
+$$("#faqList details").forEach(d => d.addEventListener("toggle", () => { if (d.open) $$("#faqList details").forEach(o => o!==d && (o.open=false)); }));
+
+/* ---------- Forms ---------- */
+function validate(form){
+  let ok = true;
+  $$("[required]", form).forEach(inp => {
+    const err = inp.parentElement.querySelector(".err");
+    let msg = "";
+    if (!inp.value.trim()) msg = "This field is required.";
+    else if (inp.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inp.value)) msg = "Please enter a valid email.";
+    else if (inp.type === "date" && new Date(inp.value) > new Date()) msg = "Date of birth can't be in the future.";
+    if (err) err.textContent = msg;
+    inp.setAttribute("aria-invalid", !!msg);
+    if (msg && ok) { inp.focus(); ok = false; }
+  });
+  return ok;
+}
+const WSIGN = [[1,20,"capricorn"],[2,19,"aquarius"],[3,21,"pisces"],[4,20,"aries"],[5,21,"taurus"],[6,21,"gemini"],[7,23,"cancer"],[8,23,"leo"],[9,23,"virgo"],[10,23,"libra"],[11,22,"scorpio"],[12,22,"sagittarius"]];
+function sunSign(m,d){ // returns sign id (tropical)
+  for (let i=WSIGN.length-1;i>=0;i--) if (m>WSIGN[i][0] || (m===WSIGN[i][0] && d>=WSIGN[i][1])) return WSIGN[i][2];
+  return "capricorn";
+}
+function reduceNum(n){ while(n>9 && n!==11 && n!==22 && n!==33) n = String(n).split("").reduce((a,b)=>a+ +b,0); return n; }
+const NAK = ["Ashwini","Bharani","Krittika","Rohini","Mrigashira","Ardra","Punarvasu","Pushya","Ashlesha","Magha","Purva Phalguni","Uttara Phalguni","Hasta","Chitra","Swati","Vishakha","Anuradha","Jyeshtha","Mula","Purva Ashadha","Uttara Ashadha","Shravana","Dhanishta","Shatabhisha","Purva Bhadrapada","Uttara Bhadrapada","Revati"];
+$("#kundliForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!validate(e.target)) return;
+  const name = $("#kName").value.trim(), dob = $("#kDob").value, tob = $("#kTob").value, pob = $("#kPob").value.trim();
+  const [y,m,d] = dob.split("-").map(Number);
+  const west = SIGNS.find(s=>s.id===sunSign(m,d));
+  // Vedic (sidereal) Sun sign ≈ tropical shifted by Lahiri ayanamsa (~24°)
+  const sid = new Date(Date.UTC(y,m-1,d) - 24*864e5);
+  const vedic = SIGNS.find(s=>s.id===sunSign(sid.getUTCMonth()+1, sid.getUTCDate()));
+  const lp = reduceNum(dob.replace(/-/g,"").split("").reduce((a,b)=>a+ +b,0));
+  const [hh,mm] = tob.split(":").map(Number);
+  const nak = NAK[(Math.floor(Date.UTC(y,m-1,d)/864e5) + hh*2 + Math.floor(mm/30)) % 27];
+  const r = $("#kResult");
+  r.innerHTML = `<h3>✦ Preliminary chart for ${name.replace(/[<>&"]/g,"")}</h3>
+    <div class="result-grid">
+      <div><small>Sun (Western)</small><b>${west.name}</b></div>
+      <div><small>Sun (Vedic)</small><b>${vedic.name}</b></div>
+      <div><small>Life Path</small><b>${lp}</b></div>
+      <div><small>Sample Nakshatra</small><b>${nak}</b></div>
+      <div><small>Element</small><b>${vedic.el}</b></div>
+      <div><small>Ruling Planet</small><b>${vedic.ruler}</b></div>
+    </div>
+    <p>Your complete Kundli for ${pob.replace(/[<>&"]/g,"")} (Lagna, Moon sign, houses and Dasha timeline) is being prepared and will be emailed within minutes. Want it explained? <a href="#astrologers" style="color:var(--gold)">Talk to an astrologer</a>.</p>`;
+  r.classList.add("show");
+  r.scrollIntoView({behavior: reduce ? "auto" : "smooth", block:"nearest"});
+});
+$("#contactForm").addEventListener("submit", e => {
+  e.preventDefault(); const s = $("#cStatus");
+  if (!validate(e.target)) { s.textContent = ""; return; }
+  s.textContent = `Thank you, ${$("#cName").value.trim().split(" ")[0]}. This demo form isn't connected to an inbox yet. Once it's live, our care team will reply within 2 hours.`;
+  e.target.reset();
+});
+$("#newsForm").addEventListener("submit", e => {
+  e.preventDefault(); const i = $("#nEmail");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(i.value)) { showToast("Please enter a valid email address."); i.focus(); return; }
+  showToast("✦ You're on the list. Weekly cosmic forecasts are on their way."); i.value = "";
+});
+
+/* ---------- Nav ---------- */
+const nav = $("#nav"), burger = $("#burger"), links = $("#navLinks");
+function setMenu(open){ burger.setAttribute("aria-expanded", open); burger.setAttribute("aria-label", open?"Close menu":"Open menu"); links.classList.toggle("open", open); document.body.style.overflow = open ? "hidden" : ""; }
+burger.addEventListener("click", ()=>setMenu(burger.getAttribute("aria-expanded")!=="true"));
+links.addEventListener("click", e => { if (e.target.closest("a")) setMenu(false); });
+addEventListener("keydown", e => { if (e.key==="Escape" && links.classList.contains("open")) { setMenu(false); burger.focus(); }});
+const sections = ["home","horoscope","services","astrologers","kundli","blog","contact"].map(id=>document.getElementById(id));
+const navA = $$(".nav-links a[href^='#']:not(.btn)");
+const secIO = new IntersectionObserver(es => es.forEach(en => {
+  if (en.isIntersecting) navA.forEach(a => a.classList.toggle("active", a.getAttribute("href")==="#"+en.target.id));
+}), {rootMargin:"-45% 0px -50% 0px"});
+sections.forEach(s=>s && secIO.observe(s));
+
+/* ---------- Reveal + counters + constellation ---------- */
+const io = new IntersectionObserver(es => es.forEach(en => {
+  if (!en.isIntersecting) return;
+  en.target.classList.add("in"); io.unobserve(en.target);
+}), {threshold:.12, rootMargin:"0px 0px -40px 0px"});
+$$(".reveal").forEach(el => io.observe(el));
+const stepsEl = $("#steps");
+new IntersectionObserver((es,o)=>es.forEach(en=>{ if(en.isIntersecting){ stepsEl.classList.add("in"); o.disconnect(); }}),{threshold:.3}).observe(stepsEl);
+const cIO = new IntersectionObserver(es => es.forEach(en => {
+  if (!en.isIntersecting) return; cIO.unobserve(en.target);
+  const el = en.target, to = +el.dataset.to, dec = +(el.dataset.dec||0), suf = el.dataset.suffix||"";
+  if (reduce) { el.textContent = to.toFixed(dec)+suf; return; }
+  const t0 = performance.now(), dur = 1800;
+  (function tick(t){ const p = Math.min((t-t0)/dur,1), e = 1-Math.pow(1-p,3);
+    el.textContent = (to*e).toFixed(dec)+suf; if (p<1) requestAnimationFrame(tick); })(t0);
+}), {threshold:.6});
+$$(".count").forEach(c => cIO.observe(c));
+
+/* ---------- Scroll: nav state + parallax ---------- */
+const px = $$(".px"); let ticking = false;
+function onScroll(){
+  const y = scrollY;
+  nav.classList.toggle("scrolled", y > 30);
+  if (!reduce) px.forEach(p => p.style.transform = `translate3d(0,${-y*p.dataset.speed}px,0)`);
+  ticking = false;
+}
+addEventListener("scroll", () => { if (!ticking) { requestAnimationFrame(onScroll); ticking = true; }}, {passive:true});
+onScroll();
+
+/* ---------- Starfield ---------- */
+const cv = $("#stars"), ctx = cv.getContext("2d");
+let W, H, DPR, stars = [], shoots = [], nextShoot = 0, running = true;
+function resize(){
+  DPR = Math.min(devicePixelRatio||1, 2); W = innerWidth; H = innerHeight;
+  cv.width = W*DPR; cv.height = H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+  const n = Math.min(Math.round(W*H/3200), 520);
+  stars = Array.from({length:n}, () => ({x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.25+.25,
+    a:Math.random()*.6+.3, s:Math.random()*1.6+.4, p:Math.random()*6.28,
+    c: Math.random()<.12 ? "232,196,104" : Math.random()<.2 ? "214,180,255" : "244,233,255"}));
+  if (reduce) draw(0);
+}
+function draw(t){
+  ctx.clearRect(0,0,W,H);
+  for (const s of stars){
+    const tw = reduce ? s.a : s.a*(.55+.45*Math.sin(t*.001*s.s+s.p));
+    ctx.fillStyle = `rgba(${s.c},${tw})`;
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,6.283); ctx.fill();
+    if (s.r>1.25 && tw>.6){ ctx.fillStyle=`rgba(${s.c},${tw*.15})`; ctx.beginPath(); ctx.arc(s.x,s.y,s.r*3.2,0,6.283); ctx.fill(); }
+  }
+  if (reduce) return;
+  if (t > nextShoot){
+    const ang = (Math.random()*25+20)*Math.PI/180, sp = Math.random()*6+9;
+    shoots.push({x:Math.random()*W*.8+W*.1, y:Math.random()*H*.4, vx:Math.cos(ang)*sp*(Math.random()<.5?-1:1), vy:Math.sin(ang)*sp, life:1, len:Math.random()*80+90});
+    nextShoot = t + 2600 + Math.random()*4500;
+  }
+  for (let i=shoots.length-1;i>=0;i--){
+    const s = shoots[i]; s.x+=s.vx; s.y+=s.vy; s.life-=.014;
+    const m = Math.hypot(s.vx,s.vy), tx = s.x - s.vx/m*s.len, ty = s.y - s.vy/m*s.len;
+    const g = ctx.createLinearGradient(s.x,s.y,tx,ty);
+    g.addColorStop(0,`rgba(255,248,230,${s.life})`); g.addColorStop(.3,`rgba(232,196,104,${s.life*.5})`); g.addColorStop(1,"rgba(232,196,104,0)");
+    ctx.strokeStyle = g; ctx.lineWidth = 1.6; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(tx,ty); ctx.stroke();
+    ctx.fillStyle=`rgba(255,255,255,${s.life})`; ctx.beginPath(); ctx.arc(s.x,s.y,1.5,0,6.283); ctx.fill();
+    if (s.life<=0 || s.x<-200 || s.x>W+200 || s.y>H+200) shoots.splice(i,1);
+  }
+}
+function loop(t){ if (!running) return; draw(t); requestAnimationFrame(loop); }
+let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(resize, 150); });
+resize();
+if (!reduce) requestAnimationFrame(loop);
+document.addEventListener("visibilitychange", () => { if (reduce) return; running = !document.hidden; if (running) requestAnimationFrame(loop); });
+
+/* ---------- Cursor glow trail (desktop only) ---------- */
+if (finePointer && !reduce){
+  const tc = $("#trail"), tctx = tc.getContext("2d"); let pts = [], tW, tH, active = false;
+  function tr(){ const d=Math.min(devicePixelRatio||1,2); tW=innerWidth; tH=innerHeight; tc.width=tW*d; tc.height=tH*d; tctx.setTransform(d,0,0,d,0,0); }
+  tr(); addEventListener("resize", tr);
+  addEventListener("pointermove", e => {
+    pts.push({x:e.clientX, y:e.clientY, life:1, r:Math.random()*2+1.5});
+    if (pts.length>40) pts.shift();
+    if (!active){ active = true; requestAnimationFrame(trail); }
+  }, {passive:true});
+  function trail(){
+    tctx.clearRect(0,0,tW,tH);
+    tctx.globalCompositeOperation = "lighter";
+    for (const p of pts){
+      p.life -= .035;
+      if (p.life<=0) continue;
+      const g = tctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*6);
+      g.addColorStop(0,`rgba(244,233,255,${p.life*.55})`); g.addColorStop(.35,`rgba(232,196,104,${p.life*.25})`); g.addColorStop(1,"rgba(108,63,197,0)");
+      tctx.fillStyle = g; tctx.beginPath(); tctx.arc(p.x,p.y,p.r*6,0,6.283); tctx.fill();
+    }
+    pts = pts.filter(p=>p.life>0);
+    if (pts.length) requestAnimationFrame(trail); else { active = false; tctx.clearRect(0,0,tW,tH); }
+  }
+}
+})();
+</script>
+</body>
+</html>

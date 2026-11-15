@@ -57,8 +57,8 @@ export default function Templates({ onUse, mine = [], onDeleteMine = () => {} })
         <div className="hb-fanwrap" aria-hidden="true"><div className="hx-art hb-fan">
           {[["c1", "#c07a5b", "Yoga"], ["c2", "#0ea5e9", "Hotel"], ["c5", "#7c3aed", "Webinar"], ["c6", "#d4a843", "School"]].map(([k, c, t]) => (
             <div key={k} className={"hx-card " + k} style={{ "--c": c }}><i /><b>{t}</b><span /><span className="s" /><em /></div>))}
-          <div className="hx-lap"><div className="hx-scr"><div className="hx-nav"><i /><i /><i /></div><b>16 ready <br />designs</b><span /><span className="s" /><em>Use template</em><div className="hx-plant" /></div></div>
-          <div className="hx-base" /><div className="hx-ai">16</div>
+          <div className="hx-lap"><div className="hx-scr"><div className="hx-nav"><i /><i /><i /></div><b>{FILE_TEMPLATES.length} ready <br />designs</b><span /><span className="s" /><em>Use template</em><div className="hx-plant" /></div></div>
+          <div className="hx-base" /><div className="hx-ai">{FILE_TEMPLATES.length}</div>
         </div></div>
       </div>
       <div className="tg-filters">
@@ -67,11 +67,11 @@ export default function Templates({ onUse, mine = [], onDeleteMine = () => {} })
       </div>
       {!list.length && (type === "mine" ? <div className="empty"><b>No saved templates yet</b><p className="mut">Open <b>Projects</b>, click <b>⋯</b> on any project and choose <b>Save as template</b>. It appears here for you to reuse.</p></div>
         : <div className="empty"><b>No templates match</b><p className="mut">Try another word or clear the filters.</p></div>)}
-      <div className="tg-grid">{list.map((t) => { const pages = thumbs[t.key] || [{ html: "" }]; return (
+      <div className="tg-grid">{list.map((t, i) => { const pages = thumbs[t.key] || [{ html: "" }]; return (
         <div key={t.key || t.name} className="tg-card" onMouseEnter={(e) => { setLive(t.key); const c = e.currentTarget; requestAnimationFrame(() => glide(c, true)); }} onMouseLeave={(e) => glide(e.currentTarget, false)}>
           <a className="tg-shot" href={t.file ? tplUrl(t) : undefined} target="_blank" rel="noopener" onClick={(e) => { e.preventDefault(); setOpen(t); }}>
             <div className="tg-chrome"><i /><i /><i /><span>{t.file ? (t.type === "website" ? "Website" : "Landing page") : pages.length > 1 ? `${pages.length} pages` : "1 page"}</span></div>
-            <div className="tg-frame">{t.file ? <>{t.thumb && <img className="tg-img" src={tplUrl({ file: t.thumb })} alt="" loading="lazy" decoding="async" />}{live === t.key && <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin" tabIndex={-1} scrolling="no" onLoad={(e) => { const f = e.currentTarget, c = f.closest(".tg-card"); f.classList.add("on"); f.dataset.ready = "1"; if (c && c.matches(":hover")) glide(c, true); }} />}</> : <iframe title={t.name} srcDoc={pages[0].html} sandbox="allow-same-origin" tabIndex={-1} />}</div>
+            <div className="tg-frame">{t.file ? <>{t.thumb && <div className="tg-reel" style={{ "--i": i }}><img src={tplUrl({ file: t.thumb.replace("/thumbs/", "/long/") })} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.parentNode.classList.add("short"); e.currentTarget.src = tplUrl({ file: t.thumb }); }} /><img src={tplUrl({ file: t.thumb.replace("/thumbs/", "/long/") })} alt="" loading="lazy" decoding="async" /></div>}{live === t.key && <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin" tabIndex={-1} scrolling="no" onLoad={(e) => { const f = e.currentTarget, c = f.closest(".tg-card"); f.classList.add("on"); f.dataset.ready = "1"; if (c && c.matches(":hover")) glide(c, true); }} />}</> : <iframe title={t.name} srcDoc={pages[0].html} sandbox="allow-same-origin" tabIndex={-1} />}</div>
             <div className="tg-hover"><button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(t); }}>👁 Preview</button><button className="pri" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUse(t); }}>Use template</button>{t.file && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(tplUrl(t), "_blank", "noopener"); }}>↗ New tab</button>}</div>
           </a>
           <div className="tg-info">

@@ -393,7 +393,7 @@ export function parseAiPages(out, multi) {
   for (let i = 1; i < parts.length; i += 3) pages.push({ name: parts[i].trim(), file: parts[i + 1].trim().replace(/[^\w.-]/g, "-"), html: strip(parts[i + 2]) });
   return pages.length ? pages : [{ name: "Home", file: "index.html", html: strip(out) }];
 }
-export const FEATURED_TPL = ["f-astrology-workshop", "f-ai-video-editor-masterclass", "f-landingcraft-webinar", "f-marketian-meta-ads", "f-yoga-workshop"];
+export const FEATURED_TPL = ["f-scaleflow-ai-masterclass", "f-ai-agent-summit", "f-whatsapp-se-vyapar", "f-business-growth-masterclass"];
 export const longThumb = (t) => (import.meta.env.BASE_URL || "/") + t.thumb.replace("/thumbs/", "/long/");
 
 export const HOSTINGER_NS = ["ns1.dns-parking.com", "ns2.dns-parking.com"];
@@ -543,6 +543,15 @@ export const savePipes = (email, list) => localStorage.setItem(PIPEK(email), JSO
 
 /* ==================== Template library — real pages, loaded only when previewed or used ==================== */
 export const FILE_TEMPLATES = [
+  {"key": "f-celestia-astrology", "file": "templates/celestia-astrology.html", "thumb": "templates/thumbs/celestia-astrology.webp", "name": "Celestia Astrology", "type": "website", "cat": "Astrology & spiritual", "note": "Astrology website — horoscopes, kundli, tarot and expert astrologers", "accent": "#c9a227"},
+  {"key": "f-vitacare-clinic", "file": "templates/vitacare-clinic.html", "thumb": "templates/thumbs/vitacare-clinic.webp", "name": "VitaCare Clinic", "type": "website", "cat": "Health & wellness", "note": "Multi-specialty clinic website with doctors, services and appointments", "accent": "#e11d48"},
+  {"key": "f-prana-flow-yoga", "file": "templates/prana-flow-yoga.html", "thumb": "templates/thumbs/prana-flow-yoga.webp", "name": "Prana Flow Yoga", "type": "website", "cat": "Health & wellness", "note": "Yoga studio website — classes, retreats, schedule and teacher training", "accent": "#c2410c"},
+  {"key": "f-aurum-estates", "file": "templates/aurum-estates.html", "thumb": "templates/thumbs/aurum-estates.webp", "name": "Aurum Estates", "type": "website", "cat": "Real estate", "note": "Luxury real estate website with property search and listings", "accent": "#c9a227"},
+  {"key": "f-business-growth-masterclass", "file": "templates/business-growth-masterclass.html", "thumb": "templates/thumbs/business-growth-masterclass.webp", "name": "Business Growth Masterclass", "type": "landing", "cat": "Courses & webinars", "note": "3-day paid masterclass with agenda, bonuses, trainer and FAQ", "accent": "#ffd700"},
+  {"key": "f-coaching-funnel", "file": "templates/coaching-funnel.html", "thumb": "templates/thumbs/coaching-funnel.webp", "name": "Done-For-You Coaching System", "type": "landing", "cat": "Courses & webinars", "note": "₹99 coaching workshop funnel with video, schedule and offer bar", "accent": "#f5b301"},
+  {"key": "f-scaleflow-ai-masterclass", "file": "templates/scaleflow-ai-masterclass.html", "thumb": "templates/thumbs/scaleflow-ai-masterclass.webp", "name": "ScaleFlow AI Masterclass", "type": "landing", "cat": "Courses & webinars", "note": "₹199 3-day automation masterclass with stats and sticky offer", "accent": "#8b5cf6"},
+  {"key": "f-ai-agent-summit", "file": "templates/ai-agent-summit.html", "thumb": "templates/thumbs/ai-agent-summit.webp", "name": "AI Agent Summit", "type": "landing", "cat": "Courses & webinars", "note": "Free 4-hour live summit with before/after and sticky CTA", "accent": "#0084ff"},
+  {"key": "f-whatsapp-se-vyapar", "file": "templates/whatsapp-se-vyapar.html", "thumb": "templates/thumbs/whatsapp-se-vyapar.webp", "name": "WhatsApp Se Vyapar", "type": "landing", "cat": "Agencies & marketing", "note": "WhatsApp automation webinar with steps, features and sign-up form", "accent": "#00e676"},
   {"key": "f-ai-video-editor-masterclass", "file": "templates/ai-video-editor-masterclass.html", "thumb": "templates/thumbs/ai-video-editor-masterclass.webp", "name": "AI Video Editor Masterclass", "type": "landing", "cat": "Courses & webinars", "note": "Free live masterclass with registration form", "accent": "#d4a843"},
   {"key": "f-astrology-workshop", "file": "templates/astrology-workshop.html", "thumb": "templates/thumbs/astrology-workshop.webp", "name": "Astrology Workshop", "type": "landing", "cat": "Courses & webinars", "note": "Live workshop — understand your birth chart", "accent": "#e3b448"},
   {"key": "f-landingcraft-webinar", "file": "templates/landingcraft-webinar.html", "thumb": "templates/thumbs/landingcraft-webinar.webp", "name": "LandingCraft AI Webinar", "type": "landing", "cat": "Courses & webinars", "note": "Webinar registration with agenda and countdown", "accent": "#7c3aed"},
