@@ -1,5 +1,5 @@
 <?php
-// LaunchBuilder server v12 — runs on your own hosting (Hostinger etc.), no extra service needed.
+// LaunchBuilder server v13 — runs on your own hosting (Hostinger etc.), no extra service needed.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
 // • Routes your own domains to a published site
@@ -38,12 +38,15 @@ function rrmdir($d) {
 /* Hostinger serves sites through a CDN / load balancer, so the address PHP sees is NOT the
    website's DNS address and changes between requests. Never guess it — the user copies it from hPanel. */
 /* VPS mode: no hPanel — customers only add a DNS record */
-function vps_info() { $v = @json_decode((string)@file_get_contents(__DIR__ . '/lb-data/vps.json'), true); return is_array($v) ? array('vps' => true, 'ip' => isset($v['ip']) ? $v['ip'] : '', 'builder' => isset($v['domain']) ? $v['domain'] : '') : array('vps' => false); }
-function server_ips() {
-  /* on a VPS the setup script saves the real public IP in lb-data/vps.json */
-  $v = @json_decode((string)@file_get_contents(__DIR__ . '/lb-data/vps.json'), true);
-  return array('ip' => is_array($v) && !empty($v['ip']) ? $v['ip'] : '', 'ip6' => '');
+function vps_info() {
+  /* LaunchBuilder runs on its own VPS: customers only add DNS records. The setup script saves the public IP in lb-data/vps.json. */
+  $v = @json_decode((string)@file_get_contents(__DIR__ . '/lb-data/vps.json'), true); if (!is_array($v)) $v = array();
+  $ip = !empty($v['ip']) ? $v['ip'] : '';
+  if ($ip === '') { $a = isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : ''; if (filter_var($a, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) $ip = $a; }
+  if ($ip === '') { $h = preg_replace('/:\d+$/', '', isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : ''); $g = $h ? @gethostbyname($h) : ''; if ($g && $g !== $h) $ip = $g; }
+  return array('vps' => true, 'ip' => $ip, 'builder' => !empty($v['domain']) ? $v['domain'] : preg_replace('/:\d+$/', '', isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : ''), 'ssl' => !empty($v['ssl']));
 }
+function server_ips() { $v = vps_info(); return array('ip' => $v['ip'], 'ip6' => ''); }
 /* ---------- "Add website" mode: each domain is its own Hostinger website; we copy the published site into its folder ---------- */
 function domain_folder($domain) {
   $base = dirname(dirname(__DIR__));            // /home/uXXXX/domains
@@ -125,7 +128,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 12, 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 13, 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
 
 if ($act === 'lead') {
   // simple flood protection: max 30 submissions per minute per visitor
@@ -382,6 +385,29 @@ if ($act === 'voiceget' || $act === 'voicedel') {
   if ($id === '' || !file_exists($f)) fail('Recording not found.');
   if ($act === 'voicedel') { @unlink($f); @unlink($VDIR . '/' . $id . '.type'); out(array('ok' => true)); }
   out(array('ok' => true, 'type' => (string)@file_get_contents($VDIR . '/' . $id . '.type') ?: 'audio/webm', 'data' => base64_encode((string)file_get_contents($f))));
+}
+
+/* VPS check, step by step: does the domain point here, is it connected, does it open the site, is https on? */
+if ($act === 'vcheck') {
+  $domain = strtolower(trim(isset($d['domain']) ? (string)$d['domain'] : ''));
+  if (!preg_match('/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/', $domain)) fail('Invalid domain');
+  $bare = preg_replace('/^www\./', '', $domain); $v = vps_info();
+  $ips = @gethostbynamel($domain); $ips = $ips ? array_values(array_unique($ips)) : array();
+  $wips = @gethostbynamel('www.' . $bare); $wips = $wips ? array_values(array_unique($wips)) : array();
+  $map = jread($DATA . '/domains.json', array()); $target = isset($map[$bare]) ? $map[$bare] : '';
+  $slug = $target !== '' ? explode('/', $target)[0] : '';
+  $opens = 0; $ours = false; $https = 0; $herr = '';
+  if (function_exists('curl_init') && $ips) {
+    $c = curl_init('http://' . $domain . '/lb-server.php?action=info'); curl_setopt_array($c, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_USERAGENT => 'LaunchBuilder-check'));
+    $b = curl_exec($c); curl_close($c); $j = json_decode((string)$b, true); $ours = is_array($j) && isset($j['app']) && $j['app'] === 'launchbuilder';
+    $c = curl_init('http://' . $domain . '/'); curl_setopt_array($c, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3, CURLOPT_SSL_VERIFYPEER => false, CURLOPT_USERAGENT => 'LaunchBuilder-check'));
+    curl_exec($c); $opens = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); curl_close($c);
+    $c = curl_init('https://' . $domain . '/'); curl_setopt_array($c, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_NOBODY => true, CURLOPT_TIMEOUT => 8, CURLOPT_USERAGENT => 'LaunchBuilder-check'));
+    curl_exec($c); $https = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); $herr = curl_error($c); curl_close($c);
+  }
+  out(array('ok' => true, 'domain' => $domain, 'server_ip' => $v['ip'], 'dns' => $ips, 'www_dns' => $wips,
+    'points_here' => $v['ip'] !== '' && in_array($v['ip'], $ips, true), 'connected' => $target !== '', 'published' => $slug !== '' && is_dir($SITES . '/' . $slug),
+    'ours' => $ours, 'opens' => $opens, 'https' => $https, 'https_err' => substr($herr, 0, 140)));
 }
 
 /* full step-by-step check of one domain — tells the user exactly which step is missing */
