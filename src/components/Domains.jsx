@@ -1,6 +1,7 @@
 // LaunchBuilder v63 — Domains.jsx (VPS only: customers add 2 DNS records → Connect & check → live)
 import { useState, useEffect } from "react";
-import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS, defaultServerUrl, subUrl } from "../lib.js";
+import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS, defaultServerUrl, subUrl, subList, subClaim, subDelete } from "../lib.js";
+import { BRAND } from "../brand.js";
 
 /* ================= Domains: connect a custom domain (DNS records or nameservers) and verify ================= */
 const copy = (t) => (navigator.clipboard ? navigator.clipboard.writeText(t).catch(() => window.prompt("Copy:", t)) : window.prompt("Copy:", t));
@@ -150,8 +151,9 @@ function VDiag({ r: r0 }) {
   const r = { dns: [], ...r0 };
   const it = [
     [r.dns.length ? "ok" : "bad", "The domain has an A record", r.dns.length ? <>It points to <code>{r.dns.join(", ")}</code>.</> : "Add the A record on @ where you bought the domain."],
-    [r.points_here ? "ok" : r.dns.length ? "bad" : "wait", "It points to your LaunchBuilder server", r.points_here ? null : <>Must be <code>{r.server_ip || "your VPS IP"}</code>. {r.dns.length ? <>It's <code>{r.dns.join(", ")}</code> now — that's another server (often the registrar's parking page). Edit the A record and delete any extra A records on @.</> : null}</>],
-    [r.connected ? "ok" : "wait", "The domain is connected to a website", r.connected ? null : "Press “Connect & check”."],
+    [r.points_here ? "ok" : r.dns.length ? "bad" : "wait", "It points to your server", r.points_here ? null : <>Must be <code>{r.server_ip || "your VPS IP"}</code>. {r.dns.length ? <>It's <code>{r.dns.join(", ")}</code> now — that's another server (often the registrar's parking page). Edit the A record and delete any extra A records on @.</> : null}</>],
+    ...(r.bad_aaaa && r.bad_aaaa.length ? [["bad", "Remove the old IPv6 (AAAA) record", <>The domain also has an <b>AAAA</b> record → <code>{r.bad_aaaa.join(", ")}</code> (another server). Some visitors see that server and https can't be issued. In your DNS records delete every <b>AAAA</b> record on <b>@</b> and <b>www</b>.</>]] : []),
+    [r.mine === false ? "bad" : r.connected ? "ok" : "wait", "The domain is connected to a website", r.mine === false ? "This domain is connected by another account. If it's yours, contact support." : r.connected ? null : "Press “Connect & check”."],
     [r.ours && r.opens >= 200 && r.opens < 400 ? "ok" : r.points_here && r.connected ? "bad" : "wait", "The domain opens your website", r.ours ? (r.opens >= 400 ? <>The server answers but the site gives error {r.opens}. Publish the site again.</> : null) : r.points_here ? "The VPS isn't answering for this domain yet — run the one-time nginx setup (vps/nginx-domains.sh) on the VPS." : "Finish the steps above first."],
     [r.https >= 200 && r.https < 400 ? "ok" : "wait", "Secure https", r.https >= 200 && r.https < 400 ? null : r.ours ? "The free certificate is added automatically within ~5 minutes after the site opens." : "Comes automatically after the steps above."],
   ];
@@ -256,12 +258,12 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
         {isSub ? <tr><td><b>A</b></td><td><C v={subName} /></td><td><C v={vps.ip || "your server IP"} /></td></tr>
           : <><tr><td><b>A</b></td><td><C v="@" /></td><td><C v={vps.ip || "your server IP"} /></td></tr><tr><td><b>CNAME</b></td><td><C v="www" /></td><td><C v={d || "mybrand.com"} /></td></tr></>}
       </tbody></table></div><span className="mut sm">Usually works in 10–30 minutes (sometimes a few hours). https is added automatically.</span></>],
-    ["Press “Connect & check” below", <>LaunchBuilder connects the domain to this {route.page ? "page" : "website"} and checks that it opens.</>],
+    ["Press “Connect & check” below", <>{BRAND.product} connects the domain to this {route.page ? "page" : "website"} and checks that it opens.</>],
   ] : null;
   const VSTATE = {
     live: ["ok", "🎉 Live! " + (obj.domain || "") + " opens this " + (route.page ? "page" : "website") + "."],
     nodns: ["wait", "The domain has no A record yet. Add the records above, wait 10–30 minutes, then press “Check again”."],
-    wrongip: ["bad", "The domain points to " + ((chk && chk.found) || []).join(", ") + " — not to your LaunchBuilder server (" + ((vps && vps.ip) || "server IP") + "). Change the A record on @ to " + ((vps && vps.ip) || "the server IP") + " and delete the old one."],
+    wrongip: ["bad", "The domain points to " + ((chk && chk.found) || []).join(", ") + " — not to your server (" + ((vps && vps.ip) || "server IP") + "). Change the A record on @ to " + ((vps && vps.ip) || "the server IP") + " and delete the old one."],
     notconn: ["warn", "DNS is correct. Press “Connect & check” to connect it to this " + (route.page ? "page" : "website") + "."],
     wait: ["warn", "DNS is correct and the domain is connected, but the server isn't answering for it yet. The one-time nginx setup on the VPS may be missing (see the note at the top)."],
   };
@@ -325,7 +327,51 @@ function ServerCard({ p, onPatch, onPatchPage, onOpen, integ, onSetup, vps = nul
   );
 }
 
-export const SERVER_VERSION = 13;
+export const SERVER_VERSION = 14;
+
+/* ---------- free subdomains: name.crecapo.tech (or name.<white-label domain>) — no DNS for the user, limited per account ---------- */
+function FreeSubs({ projects, me }) {
+  const live = projects.filter((p) => p.host && p.host.slug);
+  const [data, setData] = useState(null), [name, setName] = useState(""), [pid, setPid] = useState(""), [page, setPage] = useState(""), [busy, setBusy] = useState(""), [msg, setMsg] = useState(null);
+  const load = () => subList().then(setData).catch((e) => setData({ error: e.message }));
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!pid && live[0]) setPid(live[0].id); }, [live.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const proj = live.find((p) => p.id === pid), base = (data && data.base) || (me && me.subBase) || "", subs = (data && data.subs) || [], limit = (data && data.limit) || (me && me.subLimit) || 5;
+  const unlimited = limit >= 1000, full = !unlimited && subs.length >= limit;
+  const label = (t) => { const [sl, pg] = String(t).split("/"); const p = live.find((x) => x.host.slug === sl) || projects.find((x) => x.host && x.host.slug === sl); return (p ? p.name : sl) + (pg ? " · " + pg.replace(/\.html$/, "") : ""); };
+  const nm = name.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/^-+/, "").slice(0, 40);
+  const create = async () => {
+    setMsg(null); if (!nm || /-$/.test(nm)) return setMsg(["bad", "Type a name — letters, numbers and dashes."]); if (!proj) return setMsg(["bad", "Publish a website first, then pick it here."]);
+    setBusy("add");
+    try { const r = await subClaim(nm, proj.host.slug, page); setData({ ...(data || {}), subs: r.subs }); setName(""); setMsg(["ok", <>🎉 <b>{r.host}</b> is live. The lock (https) is added automatically within ~2 minutes.</>]); }
+    catch (e) { setMsg(["bad", e.message]); }
+    setBusy("");
+  };
+  const del = async (h) => { if (!window.confirm(`Remove ${h}? The address stops working and the name becomes free for others.`)) return; setBusy(h); try { const r = await subDelete(h); setData({ ...(data || {}), subs: r.subs }); } catch (e) { setMsg(["bad", e.message]); } setBusy(""); };
+  if (data && data.error) return <div className="panel fsub"><div className="fs-h"><div><b>🎁 Free subdomains</b><span className="mut sm">{/Unknown action/i.test(data.error) ? "Needs the new server file — run lb-deploy on the VPS." : data.error}</span></div></div></div>;
+  if (!base) return null;
+  return (
+    <div className="panel fsub">
+      <div className="fs-h"><div><b>🎁 Free subdomains</b><span className="mut sm">Your website at <b>yourname.{base}</b> in one click — no domain to buy, no DNS.</span></div>
+        <span className={"fs-count" + (full ? " full" : "")}>{unlimited ? `${subs.length} used` : `${subs.length} / ${limit} used`}</span></div>
+      {subs.length > 0 && <div className="fs-list">{subs.map((s) => (
+        <div key={s.host} className="fs-row"><a href={"https://" + s.host} target="_blank" rel="noopener"><b>{s.host}</b> ↗</a><span className="mut sm">→ {label(s.target)}</span><div className="grow" />
+          <span className={"badge " + (s.https ? "published" : "draft")}>{s.https ? "🔒 Secure" : "Lock in ~2 min"}</span><Copy v={"https://" + s.host} />
+          <button className="xs red" disabled={busy === s.host} onClick={() => del(s.host)}>Remove</button></div>))}</div>}
+      {!full ? <div className="fs-add">
+        <div className="fs-name"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="yourname" onKeyDown={(e) => e.key === "Enter" && create()} /><span>.{base}</span></div>
+        <select value={pid} onChange={(e) => { setPid(e.target.value); setPage(""); }}>{!live.length && <option value="">Publish a website first</option>}{live.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+        {proj && proj.type === "website" && proj.pages.length > 1 && <select value={page} onChange={(e) => setPage(e.target.value)}><option value="">Whole website</option>{proj.pages.filter((x) => x.file !== "index.html").map((x) => <option key={x.id} value={x.file}>Only: {x.name}</option>)}</select>}
+        <button className="pri" disabled={!!busy || !live.length} onClick={create}>{busy === "add" ? "Creating…" : "Create"}</button>
+      </div> : <p className="mut sm fs-full">You've used all {limit} free subdomains. Remove one to add another — or connect your own domain below (unlimited).</p>}
+      {nm && !full && <p className="mut sm fs-prev">Will open at <b>https://{nm}.{base}</b></p>}
+      {msg && <div className={"cw-st " + msg[0]}>{msg[1]}</div>}
+      {me && me.role === "admin" && <details className="fs-adm"><summary>Admin: one-time DNS for free subdomains</summary>
+        <p className="mut sm">In the DNS of <b>{base}</b> add <b>A</b> · name <C2 v="*" /> · value <C2 v={me.ip || "your VPS IP"} />. Then every free subdomain works without any further step.</p></details>}
+    </div>
+  );
+}
+const C2 = ({ v }) => <><code>{v}</code> <Copy v={v} /></>;
 /* ---------- automatic subdomains: publish → <name>.<your domain> is live instantly ---------- */
 function AutoSub({ integ, onInteg, projects, info }) {
   const vps = info && info.vps ? info : null;
@@ -376,7 +422,7 @@ function AutoSub({ integ, onInteg, projects, info }) {
   );
 }
 
-export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ, onSetup, onPublish, onInteg = () => {} }) {
+export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ, onSetup, onPublish, onInteg = () => {}, me = null }) {
   /* is the lb-server.php on Hostinger as new as this builder? */
   const [srvVer, setSrvVer] = useState(null), [info, setInfo] = useState(null);
   useEffect(() => {
@@ -387,9 +433,10 @@ export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ,
     <>
       {srvVer !== null && srvVer < SERVER_VERSION && <div className="ver-warn"><b>{srvVer === 0 ? "⚠ The LaunchBuilder server file isn't answering." : `⚠ The server has an old file (v${srvVer}) — this builder needs v${SERVER_VERSION}.`}</b>
         <span>Push the latest code to GitHub, then run <code>lb-deploy</code> on the VPS.</span></div>}
-      <div className="top"><div><h1>Domains</h1><p className="mut">Give every website — or a single page — its own domain. Customers only add 2 DNS records; LaunchBuilder does the rest, including free https.</p></div></div>
-      {vps && <div className="mode-note ok"><b>Your LaunchBuilder server:</b> point domains to <code>{vps.ip || "your VPS IP"}</code> <Copy v={vps.ip || ""} /></div>}
-      {serverOn(integ) && <AutoSub integ={integ} onInteg={onInteg} projects={projects} info={vps} />}
+      <div className="top"><div><h1>Domains</h1><p className="mut">Give every website — or a single page — its own domain (as many as you like). Add 2 DNS records; {BRAND.product} does the rest, including free https.</p></div></div>
+      {vps && <div className="mode-note ok"><b>Your server:</b> point domains to <code>{vps.ip || "your VPS IP"}</code> <Copy v={vps.ip || ""} /></div>}
+      <FreeSubs projects={projects} me={me} />
+      {serverOn(integ) && me && me.role === "admin" && (vps.sitesDomain || (integ.server && integ.server.sitesDomain)) && <AutoSub integ={integ} onInteg={onInteg} projects={projects} info={vps} />}
       <div className="stats">
         <div className="stat"><span>Live sites</span><b>{projects.filter((p) => p.netlify || p.host).length}</b></div>
         <div className="stat"><span>Custom domains</span><b>{projects.filter((p) => p.domain).length}</b></div>

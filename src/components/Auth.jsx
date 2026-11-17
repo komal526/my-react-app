@@ -1,5 +1,6 @@
-// LaunchBuilder v24 — Auth.jsx
+// LaunchBuilder v66 — Auth.jsx
 import { useState } from "react";
+import { BRAND } from "../brand.js";
 import { cloudOn, cloudSignup, cloudLogin, cloudUser, startCloud, sha256 } from "../cloud.js";
 
 // With Supabase configured (.env), accounts live on Supabase and work on every device.
@@ -51,7 +52,7 @@ export default function Auth({ onLogin }) {
   return (
     <div className="au">
       <div className="au-side">
-        <div className="au-brand"><span>✎</span>LaunchBuilder</div>
+        <div className="au-brand">{BRAND.logo ? <img className="au-logo" src={BRAND.logo} alt="" /> : <span>✎</span>}{BRAND.product}</div>
         <h2>Build landing pages and websites that look professional — in minutes.</h2>
         <ul><li>Drag and drop editor</li><li>Import your own HTML and keep editing</li><li>Multi-page websites with one menu</li><li>Publish in one click</li></ul>
       </div>

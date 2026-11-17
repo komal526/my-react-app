@@ -1,5 +1,5 @@
 #!/bin/bash
-# LaunchBuilder v63 — nginx-domains.sh
+# LaunchBuilder v66 — nginx-domains.sh  (safe to run again after updates)
 # ONE-TIME setup on the VPS (run as root):  bash /opt/launchbuilder/vps/nginx-domains.sh
 # After this, any customer domain whose A record points to this server opens its LaunchBuilder site,
 # and gets a free https certificate (Let's Encrypt) automatically within ~2 minutes.
@@ -22,11 +22,16 @@ echo "✓ PHP-FPM: $SOCK"
 # 2. this server's public IP → lb-data/vps.json (the builder shows it to customers)
 IP=$(curl -4 -s --max-time 8 https://api.ipify.org || true)
 [ -n "$IP" ] || IP=$(hostname -I | awk '{print $1}')
+IP6=$(curl -6 -s --max-time 6 https://api64.ipify.org 2>/dev/null | grep ':' || true)
 mkdir -p "$WEB/lb-data" "$ACME" "$SSLDIR"
 BUILDER=$(grep -m1 -oP 'server_name\s+\K[^ ;]+' /etc/nginx/sites-enabled/crecapo.tech 2>/dev/null || echo crecapo.tech)
-printf '{"ip":"%s","domain":"%s","ssl":true}\n' "$IP" "$BUILDER" > "$WEB/lb-data/vps.json"
+printf '{"ip":"%s","ip6":"%s","domain":"%s","ssl":true}\n' "$IP" "$IP6" "$BUILDER" > "$WEB/lb-data/vps.json"
 chown -R www-data:www-data "$WEB/lb-data"
-echo "✓ Server IP: $IP   Builder: $BUILDER"
+echo "✓ Server IP: $IP ${IP6:+(IPv6 $IP6) }  Builder: $BUILDER"
+# many domains → nginx needs a bigger name table, otherwise "nginx -t" fails after ~10 domains
+if ! grep -rqs '^\s*server_names_hash_bucket_size' /etc/nginx/nginx.conf /etc/nginx/conf.d/; then
+  printf 'server_names_hash_bucket_size 128;\nserver_names_hash_max_size 8192;\n' > /etc/nginx/conf.d/lb-hash.conf; echo "✓ nginx ready for many domains"
+fi
 
 # 3. catch-all site: every domain that isn't the builder goes to lb-router.php
 cat > "$CONF" <<NGX
@@ -36,7 +41,7 @@ server {
     listen [::]:80 default_server;
     server_name _;
     root $WEB;
-    client_max_body_size 25m;
+    client_max_body_size 64m;
     location ^~ /.well-known/acme-challenge/ { root $ACME; default_type text/plain; }
     location ^~ /lb-data/ { deny all; return 404; }
     location / {
@@ -55,6 +60,15 @@ if ! grep -rqs "acme-challenge" /etc/nginx/sites-enabled/crecapo.tech; then :; f
 nginx -t && systemctl reload nginx
 echo "✓ nginx now sends customer domains to LaunchBuilder"
 
+# 3b. websites under crecapo.tech/sites/… run sandboxed, so a customer's page can never read the builder login of whoever opens it
+BCONF=$(grep -ls "server_name[^;]*$BUILDER" /etc/nginx/sites-enabled/* 2>/dev/null | grep -v lb-domains | head -1 || true)
+if [ -n "$BCONF" ] && ! grep -q "lb-sites-sandbox" "$BCONF"; then
+  REAL=$(readlink -f "$BCONF"); cp "$REAL" "/root/$(basename "$REAL").before-lb66"
+  sed -i "\#^\s*root\s\+$WEB\s*;#a\    location ^~ /sites/ { add_header Content-Security-Policy \"sandbox allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-top-navigation-by-user-activation\" always; add_header Cache-Control \"no-cache\"; try_files \$uri \$uri/ \$uri.html =404; }  # lb-sites-sandbox" "$REAL"
+  if grep -q "lb-sites-sandbox" "$REAL" && nginx -t 2>/dev/null; then systemctl reload nginx; echo "✓ /sites/ pages run sandboxed on $BUILDER"
+  else cp "/root/$(basename "$REAL").before-lb66" "$REAL"; echo "• skipped the /sites/ sandbox (your $BUILDER config has an unusual layout — nothing changed)"; fi
+fi
+
 # 4. automatic https: every 2 minutes, issue certificates for connected domains that point here
 cat > /usr/local/bin/lb-ssl-sync <<'SYNC'
 #!/bin/bash
@@ -63,17 +77,20 @@ STATE=/var/lib/lb-ssl; mkdir -p "$STATE" "$SSLDIR"
 IP=$(php -r '$v=json_decode(@file_get_contents($argv[1]),true); echo $v["ip"]??"";' "$WEB/lb-data/vps.json")
 # connected custom domains + automatic subdomains (name.<sites domain>)
 LIST=$(php -r '
-  $m=json_decode(@file_get_contents($argv[1]."/lb-data/domains.json"),true)?:[]; foreach(array_keys($m) as $d) echo $d,"\n";
+  $m=json_decode(@file_get_contents($argv[1]."/lb-data/domains.json"),true)?:[]; $o=json_decode(@file_get_contents($argv[1]."/lb-data/downers.json"),true)?:[];
+  foreach(array_keys($m) as $d) echo $d, (isset($o[$d]["kind"])&&$o[$d]["kind"]==="sub")?"|sub":"", "\n";
+  $t=json_decode(@file_get_contents($argv[1]."/lb-data/tenants.json"),true)?:[]; foreach($t as $x) if(!empty($x["app_domain"])) echo $x["app_domain"],"\n";
   $c=json_decode(@file_get_contents($argv[1]."/lb-data/config.json"),true)?:[]; $sd=$c["sites_domain"]??"";
-  if($sd) foreach(glob($argv[1]."/sites/*",GLOB_ONLYDIR) as $s) echo basename($s),".",$sd,"\n";' "$WEB")
+  if($sd) foreach(glob($argv[1]."/sites/*",GLOB_ONLYDIR) as $s) echo basename($s),".",$sd,"|sub\n";' "$WEB")
 changed=0
-for D in $LIST; do
+for E in $LIST; do
+  D=${E%%|*}; KIND=${E#*|}; [ "$KIND" = "$E" ] && KIND=""
   [[ "$D" =~ ^[a-z0-9.-]+$ ]] || continue
   [ -f "$SSLDIR/$D.conf" ] && [ -f "/etc/letsencrypt/live/$D/fullchain.pem" ] && continue
   [ -f "$STATE/$D.fail" ] && [ $(( $(date +%s) - $(stat -c %Y "$STATE/$D.fail") )) -lt 3600 ] && continue
   getent ahostsv4 "$D" | awk '{print $1}' | grep -qx "$IP" || continue
   NAMES="-d $D"; SN="$D"
-  if getent ahostsv4 "www.$D" | awk '{print $1}' | grep -qx "$IP"; then NAMES="$NAMES -d www.$D"; SN="$D www.$D"; fi
+  if [ "$KIND" != "sub" ] && getent ahostsv4 "www.$D" | awk '{print $1}' | grep -qx "$IP"; then NAMES="$NAMES -d www.$D"; SN="$D www.$D"; fi
   if certbot certonly --webroot -w "$ACME" $NAMES --cert-name "$D" --non-interactive --agree-tos --register-unsafely-without-email --keep-until-expiring -q; then
     rm -f "$STATE/$D.fail"
     cat > "$SSLDIR/$D.conf" <<CONF
@@ -82,7 +99,7 @@ server {
     server_name $SN;
     ssl_certificate /etc/letsencrypt/live/$D/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/$D/privkey.pem;
-    root $WEB; client_max_body_size 25m;
+    root $WEB; client_max_body_size 64m;
     location ^~ /lb-data/ { deny all; return 404; }
     location / { include fastcgi_params; fastcgi_param SCRIPT_FILENAME $WEB/lb-router.php; fastcgi_param QUERY_STRING lbpath=\$uri&\$args; fastcgi_param HTTPS on; fastcgi_pass unix:$SOCK; }
 }
@@ -92,12 +109,11 @@ server {
     location / { return 301 https://\$host\$request_uri; }
 }
 CONF
-    changed=1; echo "$(date) ✓ https on for $SN"
-  else touch "$STATE/$D.fail"; echo "$(date) ✕ certificate failed for $D (retry in 1 hour)"; fi
+    if nginx -t 2>/dev/null; then changed=1; echo "$(date) ✓ https on for $SN"
+    else mv "$SSLDIR/$D.conf" "$STATE/$D.conf.bad"; touch "$STATE/$D.fail"; echo "$(date) ✕ nginx rejected the config for $D — moved to $STATE/$D.conf.bad, other domains keep working"; fi
+  else touch "$STATE/$D.fail"; echo "$(date) ✕ certificate failed for $D (retry in 1 hour). Common cause: an AAAA (IPv6) record on $D that points to another server — delete it."; fi
 done
-if [ $changed = 1 ]; then
-  if nginx -t 2>/dev/null; then systemctl reload nginx; else echo "nginx test failed — check $SSLDIR"; fi
-fi
+if [ $changed = 1 ]; then systemctl reload nginx; fi
 SYNC
 sed -i "s#__WEB__#$WEB#; s#__SOCK__#$SOCK#" /usr/local/bin/lb-ssl-sync
 chmod +x /usr/local/bin/lb-ssl-sync

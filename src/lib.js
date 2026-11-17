@@ -1,5 +1,6 @@
-// LaunchBuilder v27 — lib.js
+// LaunchBuilder v66 — lib.js
 import { DESIGNS } from "./designs.js";
+import { cloudToken } from "./cloud.js";
 // Helpers, page templates, saving/loading projects, leads and preview links
 
 
@@ -289,7 +290,9 @@ export const accountKey = () => { const e = localStorage.getItem("lb_hostkey_act
 export async function phpCall(srv, body) {
   const url = (srv && srv.url) || defaultServerUrl();
   let r;
-  try { r = await fetch(url, { method: "POST", body: JSON.stringify({ ...body, key: (srv && srv.key) || "" }) }); }
+  /* tok = your login: the server uses it to know which account is calling (each account sees only its own sites, leads and domains) */
+  let tok = null; try { tok = await cloudToken(); } catch { tok = null; }
+  try { r = await fetch(url, { method: "POST", body: JSON.stringify({ ...body, key: (srv && srv.key) || "", ...(tok ? { tok } : {}) }) }); }
   catch { throw new Error("Couldn't reach lb-server.php. Make sure it's uploaded next to your builder (public_html)."); }
   if (r.status === 404) throw new Error("lb-server.php was not found at " + url + ". Upload it to the same folder as the builder.");
   let j; try { j = await r.json(); } catch { throw new Error("The server didn't answer correctly. Does your hosting support PHP? (Hostinger web hosting does.)"); }
@@ -300,9 +303,18 @@ export async function phpCall(srv, body) {
     await phpCall(srv, { action: "setup" });
     return phpCall(srv, { ...body, _healed: true });
   }
-  if (!j.ok) throw new Error(j.error || "Server error");
+  if (!j.ok) { const m = String(j.error || "Server error"), c = (m.match(/^([A-Z_]{4,}): /) || [])[1] || ""; const e = new Error(c ? m.slice(c.length + 2) : m); e.code = c; if (c === "ACCOUNT_PAUSED" || c === "WRONG_WORKSPACE") window.dispatchEvent(new CustomEvent("lb-blocked", { detail: { code: c, msg: e.message } })); throw e; }
   return j;
 }
+
+/* ==================== accounts (v66): my account, free subdomains, admin panel ==================== */
+const acctSrv = () => ({ url: defaultServerUrl(), key: accountKey() });
+let _me = null;
+export const myAccount = (fresh = false) => { if (fresh || !_me) _me = phpCall(acctSrv(), { action: "me" }).catch((e) => { _me = null; throw e; }); return _me; };
+export const subList = () => phpCall(acctSrv(), { action: "subs" });
+export const subClaim = (name, slug, page = "") => phpCall(acctSrv(), { action: "subclaim", name, slug, page }).then((r) => { _me = null; return r; });
+export const subDelete = (host) => phpCall(acctSrv(), { action: "subdel", host }).then((r) => { _me = null; return r; });
+export const admin = (action, o = {}) => phpCall(acctSrv(), { action: "adm_" + action, ...o });
 const bytes64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 export const filesForServer = (files) => files.map((f) => ({ name: f.name, b64: bytes64(typeof f.data === "string" ? new TextEncoder().encode(f.data) : f.data) }));
 /* pull leads collected by live sites into the CRM (merged by lead id) */
@@ -310,7 +322,9 @@ const SK = (email) => "lb_leads_sync_" + email;
 export async function syncServerLeads(email, integ, projects = []) {
   if (!serverOn(integ)) return 0;
   const since = +(localStorage.getItem(SK(email)) || 0);
-  const r = await phpCall(integ.server, { action: "leads", since });
+  /* the ids of your own forms and calendars, so leads from their share links come to you (and nobody else) */
+  const forms = [...loadForms(email).map((f) => f.id), ...loadCal(email).map((e) => e.id)].filter(Boolean);
+  const r = await phpCall(integ.server, { action: "leads", since, forms });
   const list = loadLeads(email), byLid = new Map(list.filter((l) => l.lid).map((l) => [l.lid, l]));
   let added = 0;
   (r.leads || []).forEach((l) => {

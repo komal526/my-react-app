@@ -13,6 +13,7 @@ function CloudStatus() {
   return <div className={"cloud-st " + st}><div><span>{M[0]}</span> {M[1]}</div>{st === "offline" && why && <small>{why}</small>}</div>;
 }
 import { Icon } from "./icons.jsx";
+import { BRAND } from "../brand.js";
 
 /* ==================== Modal, Thumb, Sidebar, NewModal, PublishModal ==================== */
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal
@@ -93,7 +94,8 @@ const GROUPS = [
   ["grow", "share", "Connect & Grow", [["domains", "share", "Domains"], ["integrations", "apps", "Integrations"]]],
   ["reports", "gear", "Reports & Settings", [["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]]],
 ];
-export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open = false, onClose = () => {}, mini = false, onMini = () => {} }) {
+export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open = false, onClose = () => {}, mini = false, onMini = () => {}, role = "" }) {
+  const adminItem = role === "admin" || role === "owner" ? [["admin", "users", role === "owner" ? "My clients" : "Accounts & clients"]] : [];
   const [shut, setShut] = useState(() => { try { return JSON.parse(localStorage.getItem("lb_nav_shut") || "[]"); } catch { return []; } }), [fly, setFly] = useState("");
   const toggle = (g) => { const n = shut.includes(g) ? shut.filter((x) => x !== g) : [...shut, g]; setShut(n); localStorage.setItem("lb_nav_shut", JSON.stringify(n)); };
   const go = (k) => { onView(k); onClose(); };
@@ -106,8 +108,8 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
     <nav className={"sb3" + (open ? " open" : "") + (mini ? " mini" : "")}>
       <button className="nv-x" onClick={onClose} aria-label="Close menu">✕</button>
       <div className="sb3-top">
-        <span className="sb3-logo"><Icon n="logo" s={17} w={2.2} /></span>
-        <div className="sb3-name"><b>LaunchBuilder</b><small>Studio</small></div>
+        <span className={"sb3-logo" + (BRAND.logo ? " img" : "")}>{BRAND.logo ? <img src={BRAND.logo} alt="" /> : <Icon n="logo" s={17} w={2.2} />}</span>
+        <div className="sb3-name"><b>{BRAND.product}</b><small>Studio</small></div>
         <button className="sb3-mini" onClick={onMini} title={mini ? "Expand menu" : "Collapse menu"} aria-label="Toggle menu"><Icon n={mini ? "chev" : "back"} s={15} /></button>
       </div>
       {mini ? <div className="sb3-scroll sb3-rail">
@@ -115,6 +117,7 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
         <div className={"sb3-m" + (isOn("pages") ? " on" : "")} onClick={() => go("pages")} title="Dashboard"><Icon n="grid" s={24} /><small>Home</small></div>
         {GROUPS.flatMap(([, , , items]) => items).filter(([k]) => k !== "followups").map(([k, ic, nm]) => (
           <div key={k} className={"sb3-m" + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={nm}><Icon n={ic} s={24} /><small>{MINI[k] || nm}</small>{badges[k] ? <i className="sb3-dotb" /> : null}</div>))}
+        {adminItem.map(([k, ic, nm]) => <div key={k} className={"sb3-m adm" + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={nm}><Icon n="lock" s={24} /><small>{nm}</small></div>)}
       </div> : <div className="sb3-scroll">
         <Item k="pages" ic="grid" nm="Dashboard" />
         {GROUPS.map(([g, gic, label, items]) => {
@@ -124,6 +127,8 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
             {!closed && <div className={mini ? "" : "sb3-tree"}>{items.map(([k, ic, nm]) => <Item key={k} k={k} ic={ic} nm={nm} sub />)}</div>}
           </div>;
         })}
+        {adminItem.length > 0 && <div className="sb3-grp sb3-adm"><div className="sb3-gh"><Icon n="lock" s={16} /><span>{role === "owner" ? "Workspace" : "Admin"}</span></div>
+          <div className="sb3-tree">{adminItem.map(([k, ic, nm]) => <Item key={k} k={k} ic={ic} nm={nm} sub />)}</div></div>}
       </div>}
       <button className="sb3-up" onClick={() => go("settings")} title={mini ? `Upgrade to Pro · ${count}/${LIMIT} projects` : undefined}>
         <span className="sb3-crown">👑</span><span className="sb3-l"><b>Upgrade to Pro</b><small>{count}/{LIMIT} projects used</small></span></button>
@@ -257,7 +262,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
         {auto === "checking" ? <div className="pub-busy" style={{ border: 0, padding: 10 }}><span className="pub-spin" /><b>Connecting to your hosting…</b></div>
           : auto === "key" ? <>
             <b>Your hosting was connected earlier from another browser</b>
-            <p className="mut">From now on this is automatic — the connection comes from your LaunchBuilder login. Just do this once:</p>
+            <p className="mut">From now on this is automatic — the connection comes from your {BRAND.product} login. Just do this once:</p>
             <div className="pub-fix">
               <div><span className="dm-n">1</span><div><b>Reset the old connection (1 minute)</b>
                 <p className="mut sm">hPanel → <b>Websites</b> → <b>{(serverUrlFrom(rurl) || (integ.server && integ.server.url) || defaultServerUrl()).replace(/^https?:\/\//, "").replace(/\/lb-server\.php$/, "")}</b> → <b>File Manager</b> → open <code>public_html</code> → open <code>lb-data</code> → delete only the file <code>config.json</code>.<br />Your published websites and leads are <b>not</b> touched.</p>
@@ -367,7 +372,7 @@ export function Preview({ token, file: initFile }) {
 
   if (!info || info.expired || !proj) return (
     <div className="pv-dead"><div><Icon n="link" s={34} w={1.4} /><h2>{!info ? "This preview link doesn't exist" : info.expired ? "This preview link has expired" : "This project was deleted"}</h2>
-      <p>Open the project in the editor and click <b>Preview</b> to get a fresh link. Preview links work in the browser where you're signed in to LaunchBuilder.</p>
+      <p>Open the project in the editor and click <b>Preview</b> to get a fresh link. Preview links work in the browser where you're signed in to {BRAND.product}.</p>
       <a href={location.pathname}>Go to dashboard</a></div></div>
   );
   const hrs = Math.max(0, Math.round((info.exp - Date.now()) / 3600e3));

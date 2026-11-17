@@ -1,4 +1,5 @@
 // LaunchBuilder v42 — tools.js
+import { BRAND } from "../brand.js";
 // Editor toolbox: draggable elements, settings, site runtime, video storage, zip export
 
 
@@ -512,7 +513,7 @@ ${F("Your name", "name")}${F("Email address", "email", "email")}${f.phone ? F("W
 }
 /* a full page that shows only the booking calendar (public booking link) */
 const escB = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-export const bookingPageHtml = (ev, integ) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escB(ev.name)}${ev.org ? " — " + escB(ev.org) : ""}</title><meta name="description" content="${escB(ev.desc || "")}"><style>body{margin:0;min-height:100vh;background:#f3f4f8;font-family:Inter,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:32px 16px;box-sizing:border-box}</style></head><body><div style="width:100%;max-width:1100px">${bookingWidget(ev, integ)}<p style="text-align:center;color:#8a8ea3;font-size:12px;margin-top:16px">Powered by LaunchBuilder</p></div></body></html>`;
+export const bookingPageHtml = (ev, integ) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escB(ev.name)}${ev.org ? " — " + escB(ev.org) : ""}</title><meta name="description" content="${escB(ev.desc || "")}"><style>body{margin:0;min-height:100vh;background:#f3f4f8;font-family:Inter,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:32px 16px;box-sizing:border-box}</style></head><body><div style="width:100%;max-width:1100px">${bookingWidget(ev, integ)}<p style="text-align:center;color:#8a8ea3;font-size:12px;margin-top:16px">Powered by ${escB(BRAND.product)}</p></div></body></html>`;
 
 export const LIB = [
   ["Layout", [

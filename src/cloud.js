@@ -1,4 +1,4 @@
-// LaunchBuilder v41 — cloud.js (login · sync · live updates across devices)
+// LaunchBuilder v66 — cloud.js (login · sync · live updates across devices)
 // Supabase login + automatic cloud sync of each user's data (pages, forms, leads, calendars, analytics, integrations).
 // Works with Supabase's standard REST API — no extra npm package needed.
 // Settings come from the .env file:  VITE_SUPABASE_URL  and  VITE_SUPABASE_ANON_KEY
@@ -25,9 +25,9 @@ const H = (token) => ({ apikey: KEY, ...(token ? { Authorization: "Bearer " + to
 const errMsg = (j, fallback) => (j && (j.msg || j.error_description || j.message || j.error)) || fallback;
 const toSession = (j) => ({ access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000, user: j.user });
 
-async function authFetch(path, body) {
+async function authFetch(path, body, query = "") {
   let r;
-  try { r = await tfetch(BASE + "/auth/v1/" + path, { method: "POST", headers: H(), body: JSON.stringify(body) }); }
+  try { r = await tfetch(BASE + "/auth/v1/" + path + query, { method: "POST", headers: H(), body: JSON.stringify(body) }); }
   catch (e) { throw new Error(/timeout/.test(e.message) ? "The login server didn't answer. If your Supabase project is paused, open supabase.com → your project → Restore." : "Can't reach the login server. Check your internet connection."); }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(errMsg(j, "Login failed"));
@@ -41,9 +41,13 @@ async function token() {
   catch { return null; }
 }
 
+/* the current login token — the LaunchBuilder server checks it to know which account is calling */
+export const cloudToken = () => (cloudOn() ? token() : Promise.resolve(null));
+
 /* ---------------- login / signup / logout ---------------- */
 export async function cloudSignup(email, password, name) {
-  const j = await authFetch("signup", { email, password, data: { name } });
+  /* the confirmation email brings people back to the address they signed up on (crecapo.tech or a white-label app) */
+  const j = await authFetch("signup", { email, password, data: { name } }, "?redirect_to=" + encodeURIComponent(location.origin + location.pathname));
   if (j.access_token) { const s = toSession(j); setSession(s); return { user: s.user, session: true }; }
   return { user: j.user || j, session: false };          // email confirmation is switched on
 }

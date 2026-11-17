@@ -1,5 +1,6 @@
 <?php
-// LaunchBuilder server v13 — runs on your own hosting (Hostinger etc.), no extra service needed.
+// LaunchBuilder server v14 — accounts (each login sees only its own sites, leads and domains), admin panel,
+// white-label workspaces and free subdomains (name.crecapo.tech, 5 per account). Needs lb-accounts.php next to it.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
 // • Routes your own domains to a published site
@@ -11,6 +12,7 @@ header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
+require_once __DIR__ . '/lb-accounts.php';
 
 $ROOT  = __DIR__;
 $DATA  = $ROOT . '/lb-data';
@@ -128,7 +130,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 13, 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 14, 'accounts' => (bool)lb_saas(), 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
 
 if ($act === 'lead') {
   // simple flood protection: max 30 submissions per minute per visitor
@@ -207,10 +209,27 @@ if ($act === 'setup') {
   if (!jwrite($DATA . '/config.json', array('key' => $key, 'created' => time())) || !file_exists($DATA . '/config.json')) fail('Could not save settings — in File Manager give the folder lb-data permission 755 (or create it), then try again.');
   out(array('ok' => true, 'base' => $BASE) + server_ips());
 }
-if (empty($cfg['key'])) fail('Server not set up yet — click Connect in Integrations.');
-if (!hash_equals((string)$cfg['key'], $key)) fail('Wrong key for this server.');
+/* ---------------- who is calling? ----------------
+   Every account signs in with its own login (tok = Supabase login token, checked with Supabase).
+   The old server key still works for the owner (websites made before accounts existed). */
+$LEGACY = !empty($cfg['key']) && $key !== '' && hash_equals((string)$cfg['key'], $key);
+$HOSTT = lb_tenant_for_host($DATA, lb_host());
+$TU = lb_token_user(isset($d['tok']) ? (string)$d['tok'] : '', $DATA);
+$ME = null;
+if ($TU) { $ME = lb_register($TU, $DATA, $HOSTT); if (isset($ME['error'])) fail($ME['error']); }
+elseif ($LEGACY) { $s0 = lb_saas(); $ME = array('uid' => 'owner', 'email' => isset($s0['admins'][0]) ? strtolower($s0['admins'][0]) : '', 'name' => 'Owner', 'role' => 'admin', 'tenant' => '', 'disabled' => false, 'sub_limit' => null); }
+if (!$ME) {
+  if ($TU === false) fail('LOGIN_EXPIRED: Your login expired. Log out and log in again.');
+  if (empty($cfg['key'])) fail('Server not set up yet — click Connect in Integrations.');
+  fail('Wrong key for this server.');
+}
+if ($ME['disabled']) fail('ACCOUNT_PAUSED: Your account is paused. Please contact support.');
+if ($ME['tenant'] !== '' && $ME['role'] !== 'admin') { $t0 = lb_tenants($DATA); if (isset($t0[$ME['tenant']]) && isset($t0[$ME['tenant']]['active']) && !$t0[$ME['tenant']]['active']) fail('ACCOUNT_PAUSED: This workspace is paused. Please contact support.'); }
+/* private files (AI key, voice notes) per account; the owner keeps the files made with the old key */
+$KID = $LEGACY ? substr(hash('sha256', $key), 0, 16) : substr(hash('sha256', 'uid:' . $ME['uid']), 0, 16);
+$IS_ADMIN = $ME['role'] === 'admin';
 
-if ($act === 'ping') out(array('ok' => true, 'base' => $BASE, 'php' => PHP_VERSION) + server_ips());
+if ($act === 'ping') out(array('ok' => true, 'base' => $BASE, 'php' => PHP_VERSION, 'uid' => $ME['uid']) + server_ips());
 
 $ALLOWED = array('html', 'htm', 'xml', 'txt', 'css', 'js', 'json', 'mp4', 'webm', 'mov', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'ico', 'woff', 'woff2', 'pdf');
 function valid_slug($s) { return is_string($s) && preg_match('/^[a-z0-9][a-z0-9-]{1,60}$/', $s); }
@@ -218,6 +237,7 @@ function valid_slug($s) { return is_string($s) && preg_match('/^[a-z0-9][a-z0-9-
 if ($act === 'publish') {
   $slug = isset($d['slug']) ? $d['slug'] : '';
   if (!valid_slug($slug)) fail('Use only lowercase letters, numbers and dashes for the link name.');
+  if (!lb_site_mine($slug, $ME, $DATA, $SITES)) fail('TAKEN: The link name "' . $slug . '" is already used by another account. Change the link name and publish again.');
   $files = isset($d['files']) && is_array($d['files']) ? $d['files'] : array();
   if (!$files) fail('No files');
   $tmp = $SITES . '/.tmp-' . $slug . '-' . uniqid();
@@ -245,6 +265,7 @@ if ($act === 'publish') {
   $target = $SITES . '/' . $slug;
   rrmdir($target);
   if (!@rename($tmp, $target)) { rrmdir($tmp); fail('Could not save the site folder.'); }
+  lb_claim_site($slug, $ME, $DATA);
   $deploys = jread($DATA . '/deploys.json', array()); $updated = array();
   foreach ($deploys as $dm => $tg) { $p0 = explode('/', $tg, 2); if ($p0[0] === $slug && deploy_to($dm, $tg, $SITES) === '') $updated[] = $dm; }
   out(array('ok' => true, 'slug' => $slug, 'url' => $BASE . '/sites/' . $slug . '/', 'folder' => 'public_html' . $prefix . '/sites/' . $slug, 'domains' => $updated));
@@ -253,19 +274,24 @@ if ($act === 'publish') {
 if ($act === 'unpublish') {
   $slug = isset($d['slug']) ? $d['slug'] : '';
   if (!valid_slug($slug)) fail('Bad name');
-  rrmdir($SITES . '/' . $slug);
+  if (!lb_site_mine($slug, $ME, $DATA, $SITES)) fail('This website belongs to another account.');
+  rrmdir($SITES . '/' . $slug);   /* the name stays reserved for this account, so nobody else can take its domains */
   out(array('ok' => true));
 }
 
 if ($act === 'sites') {
   $list = array();
-  foreach (scandir($SITES) as $x) if ($x[0] !== '.' && is_dir($SITES . '/' . $x)) $list[] = array('slug' => $x, 'url' => $BASE . '/sites/' . $x . '/', 'updated' => filemtime($SITES . '/' . $x) * 1000);
+  $mine = lb_my_slugs($ME, $DATA, $SITES);
+  foreach (scandir($SITES) as $x) if ($x[0] !== '.' && is_dir($SITES . '/' . $x) && isset($mine[$x])) $list[] = array('slug' => $x, 'url' => $BASE . '/sites/' . $x . '/', 'updated' => filemtime($SITES . '/' . $x) * 1000);
   out(array('ok' => true, 'sites' => $list));
 }
 
 if ($act === 'leads') {
   $since = isset($d['since']) ? (float)$d['since'] : 0;
   $all = jread($DATA . '/leads.json', array());
+  $mine = lb_my_slugs($ME, $DATA, $SITES); $fids = array();
+  if (isset($d['forms']) && is_array($d['forms'])) foreach (array_slice($d['forms'], 0, 2000) as $fi) if (is_string($fi) && $fi !== '') $fids[$fi] = 1;
+  $all = array_filter($all, function ($l) use ($mine, $fids, $IS_ADMIN) { $s = isset($l['site']) ? $l['site'] : ''; return ($s !== '' && isset($mine[$s])) || (isset($l['formId']) && isset($fids[$l['formId']])) || ($s === '' && $IS_ADMIN && !$fids); });
   $res = array(); foreach ($all as $l) if ($l['ts'] > $since || (isset($l['payment']['ts']) && $l['payment']['ts'] > $since)) $res[] = $l;
   out(array('ok' => true, 'leads' => $res, 'now' => round(microtime(true) * 1000)));
 }
@@ -273,19 +299,20 @@ if ($act === 'leads') {
 if ($act === 'deletelead') {
   $lids = isset($d['lids']) && is_array($d['lids']) ? $d['lids'] : array();
   $all = jread($DATA . '/leads.json', array());
-  $all = array_values(array_filter($all, function ($l) use ($lids) { return !in_array($l['lid'], $lids, true); }));
+  $mine = lb_my_slugs($ME, $DATA, $SITES);
+  $all = array_values(array_filter($all, function ($l) use ($lids, $mine, $IS_ADMIN) { $s = isset($l['site']) ? $l['site'] : ''; $ok = isset($mine[$s]) || ($s === '' && $IS_ADMIN) || $s === ''; return !($ok && in_array($l['lid'], $lids, true)); }));
   jwrite($DATA . '/leads.json', $all);
   out(array('ok' => true));
 }
 
 /* Smart Insights — events since a time (the builder merges them into Analytics) */
 if ($act === 'events') {
-  $since = isset($d['since']) ? (float)$d['since'] : 0; $res = array();
+  $since = isset($d['since']) ? (float)$d['since'] : 0; $res = array(); $mine = lb_my_slugs($ME, $DATA, $SITES);
   $from = max($since / 1000, time() - 90 * 86400);
   for ($day = strtotime(gmdate('Y-m-d', (int)$from)); $day <= time() && count($res) < 30000; $day += 86400) {
     $f = $DATA . '/ev/' . gmdate('Y-m-d', $day) . '.ndjson'; if (!file_exists($f)) continue;
     $fh = @fopen($f, 'r'); if (!$fh) continue;
-    while (($line = fgets($fh)) !== false && count($res) < 30000) { $e = json_decode($line, true); if (is_array($e) && $e['ts'] > $since) $res[] = $e; }
+    while (($line = fgets($fh)) !== false && count($res) < 30000) { $e = json_decode($line, true); if (is_array($e) && $e['ts'] > $since && (isset($mine[isset($e['site']) ? $e['site'] : '']) || ($IS_ADMIN && empty($e['site'])))) $res[] = $e; }
     fclose($fh);
   }
   out(array('ok' => true, 'events' => $res, 'now' => round(microtime(true) * 1000)));
@@ -325,7 +352,7 @@ function ai_run($prov, $key, $model, $system, $msgs, $max) {
   $j = ai_post($url, array('Authorization: Bearer ' . $key), array('model' => $model, 'max_tokens' => min($max, 8000), 'messages' => array_merge(array(array('role' => 'system', 'content' => $system)), $msgs)));
   return isset($j['choices'][0]['message']['content']) ? $j['choices'][0]['message']['content'] : '';
 }
-$AIF = $DATA . '/ai-' . substr(hash('sha256', $key), 0, 16) . '.json';
+$AIF = $DATA . '/ai-' . $KID . '.json';
 function ai_platform() { $p = @json_decode((string)@file_get_contents('/etc/launchbuilder/ai.json'), true); return is_array($p) && !empty($p['key']) && !empty($p['provider']) ? $p : null; }
 
 if ($act === 'aistatus') {
@@ -356,7 +383,7 @@ if ($act === 'ai') {
   if (!empty($mine['enc'])) { $k = ai_dec($mine['enc'], $DATA); if ($k === '') fail('Your saved AI key could not be read — save it again.'); $txt = ai_run($mine['provider'], $k, $mine['model'], $system, $msgs, $max); $src = 'own'; }
   else {
     $pl = ai_platform(); if (!$pl) fail('NO_AI_KEY');
-    $lim = isset($pl['daily_limit']) ? (int)$pl['daily_limit'] : 40; $uf = $DATA . '/ai-usage.json'; $use = jread($uf, array()); $uk = substr(hash('sha256', $key), 0, 16) . '-' . gmdate('Y-m-d');
+    $lim = isset($pl['daily_limit']) ? (int)$pl['daily_limit'] : 40; $uf = $DATA . '/ai-usage.json'; $use = jread($uf, array()); $uk = $KID . '-' . gmdate('Y-m-d');
     foreach ($use as $uk2 => $n) if (substr($uk2, -10) !== gmdate('Y-m-d')) unset($use[$uk2]);
     if ((isset($use[$uk]) ? $use[$uk] : 0) >= $lim) fail('Daily AI limit reached (' . $lim . ' questions). Add your own API key in AI Consultant → Settings to keep going.');
     $use[$uk] = (isset($use[$uk]) ? $use[$uk] : 0) + 1; jwrite($uf, $use);
@@ -367,7 +394,7 @@ if ($act === 'ai') {
 }
 
 /* ---------------- voice notes on leads (recorded in the pipeline) ---------------- */
-$VDIR = $DATA . '/voice/' . substr(hash('sha256', $key), 0, 16);
+$VDIR = $DATA . '/voice/' . $KID;
 if ($act === 'voice') {
   $b = base64_decode(isset($d['data']) ? (string)$d['data'] : '', true);
   if ($b === false || strlen($b) < 200) fail('Empty recording.');
@@ -394,11 +421,16 @@ if ($act === 'vcheck') {
   $bare = preg_replace('/^www\./', '', $domain); $v = vps_info();
   $ips = @gethostbynamel($domain); $ips = $ips ? array_values(array_unique($ips)) : array();
   $wips = @gethostbynamel('www.' . $bare); $wips = $wips ? array_values(array_unique($wips)) : array();
+  /* AAAA (IPv6) records that point somewhere else break https and show the old host to some visitors */
+  $v6 = array(); foreach ((array)@dns_get_record($domain, DNS_AAAA) as $rr) if (!empty($rr['ipv6'])) $v6[] = $rr['ipv6'];
+  $vj = jread($DATA . '/vps.json', array()); $my6 = isset($vj['ip6']) ? $vj['ip6'] : '';
+  $bad6 = array(); foreach ($v6 as $x) if ($my6 === '' || inet_pton($x) !== @inet_pton($my6)) $bad6[] = $x;
   $map = jread($DATA . '/domains.json', array()); $target = isset($map[$bare]) ? $map[$bare] : '';
   $slug = $target !== '' ? explode('/', $target)[0] : '';
   $opens = 0; $ours = false; $https = 0; $herr = '';
   if (function_exists('curl_init') && $ips) {
-    $c = curl_init('http://' . $domain . '/lb-server.php?action=info'); curl_setopt_array($c, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_USERAGENT => 'LaunchBuilder-check'));
+    /* follow the http → https redirect that is added once the certificate exists */
+    $c = curl_init('http://' . $domain . '/lb-server.php?action=info'); curl_setopt_array($c, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3, CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => 0, CURLOPT_USERAGENT => 'LaunchBuilder-check'));
     $b = curl_exec($c); curl_close($c); $j = json_decode((string)$b, true); $ours = is_array($j) && isset($j['app']) && $j['app'] === 'launchbuilder';
     $c = curl_init('http://' . $domain . '/'); curl_setopt_array($c, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3, CURLOPT_SSL_VERIFYPEER => false, CURLOPT_USERAGENT => 'LaunchBuilder-check'));
     curl_exec($c); $opens = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); curl_close($c);
@@ -407,7 +439,7 @@ if ($act === 'vcheck') {
   }
   out(array('ok' => true, 'domain' => $domain, 'server_ip' => $v['ip'], 'dns' => $ips, 'www_dns' => $wips,
     'points_here' => $v['ip'] !== '' && in_array($v['ip'], $ips, true), 'connected' => $target !== '', 'published' => $slug !== '' && is_dir($SITES . '/' . $slug),
-    'ours' => $ours, 'opens' => $opens, 'https' => $https, 'https_err' => substr($herr, 0, 140)));
+    'ours' => $ours, 'opens' => $opens, 'https' => $https, 'https_err' => substr($herr, 0, 140), 'aaaa' => $v6, 'bad_aaaa' => $bad6, 'mine' => $target === '' || lb_dom_mine($bare, $ME, $DATA)));
 }
 
 /* full step-by-step check of one domain — tells the user exactly which step is missing */
@@ -435,6 +467,7 @@ if ($act === 'diag') {
 
 /* put a published site into the domain's own Hostinger website folder */
 if ($act === 'deploy') {
+  if (vps_info()) out(array('ok' => true, 'deployed' => false, 'reason' => 'nofolder'));   /* VPS: nginx serves domains directly */
   $domain = strtolower(trim(isset($d['domain']) ? (string)$d['domain'] : ''));
   $slug = isset($d['slug']) ? $d['slug'] : '';
   $page = isset($d['page']) ? preg_replace('/[^A-Za-z0-9._-]/', '', (string)$d['page']) : '';
@@ -466,7 +499,7 @@ if ($act === 'probe') {
     if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) $code = (int)$m[1];
     return array($code, $body === false ? '' : (string)$body);
   };
-  list($c1, $b1) = $get('http://' . $domain . '/lb-server.php?action=info');
+  list($c1, $b1) = $get('http://' . $domain . '/lb-server.php?action=info');  // $get follows redirects
   $res['code'] = $c1;
   $j = json_decode($b1, true);
   $res['ours'] = is_array($j) && isset($j['app']) && $j['app'] === 'launchbuilder';
@@ -476,35 +509,204 @@ if ($act === 'probe') {
   out($res);
 }
 
-/* point your own domain at a published site (needs the domain parked on this hosting) */
+/* connect your own domain (DNS A record → this VPS) to one of YOUR published websites — any number of sites, each with its own domain */
 if ($act === 'domain') {
   $domain = strtolower(trim(isset($d['domain']) ? (string)$d['domain'] : ''));
   $slug = isset($d['slug']) ? $d['slug'] : '';
   $page = isset($d['page']) ? preg_replace('/[^A-Za-z0-9._-]/', '', (string)$d['page']) : '';
   $target = $page !== '' && $page !== 'index.html' ? $slug . '/' . $page : $slug;
-  $map = jread($DATA . '/domains.json', array());
-  foreach ($map as $dm => $sl) if ($sl === $target) unset($map[$dm]);
+  if (!valid_slug($slug)) fail('Publish the site first');
+  if (!lb_site_mine($slug, $ME, $DATA, $SITES)) fail('This website belongs to another account.');
+  $map = jread($DATA . '/domains.json', array()); $dw = lb_downers($DATA);
+  /* this website (or page) had another custom domain → replace it (free subdomains stay) */
+  foreach ($map as $dm => $sl) if ($sl === $target && (!isset($dw[$dm]['kind']) || $dw[$dm]['kind'] !== 'sub') && lb_is_me(isset($dw[$dm]['uid']) ? $dw[$dm]['uid'] : '', $ME)) { unset($map[$dm]); unset($dw[$dm]); }
   if ($domain !== '') {
-    if (!preg_match('/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/', $domain)) fail('Invalid domain');
-    if (!valid_slug($slug)) fail('Publish the site first');
-    $map[preg_replace('/^www\./', '', $domain)] = $target;
+    $bare = preg_replace('/^www\./', '', $domain);
+    if (!lb_valid_domain($bare)) fail('Invalid domain');
+    $pl = lb_platform_host($bare, $DATA);
+    if ($pl === 'app') fail('That is the builder\'s own address — use another domain for your website.');
+    if ($pl === 'sub') fail('Addresses ending in this platform\'s domain are free subdomains — create it under "Free subdomains" on the Domains page.');
+    if (isset($map[$bare]) && !lb_is_me(isset($dw[$bare]['uid']) ? $dw[$bare]['uid'] : '', $ME)) fail('This domain is already connected by another account. If it is yours, contact support.');
+    $map[$bare] = $target; $dw[$bare] = array('uid' => $ME['uid'], 'kind' => 'custom', 'ts' => time());
   }
-  jwrite($DATA . '/domains.json', $map);
-  $e = write_rules($ROOT, $SITES, $prefix, $map, isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '');
-  if ($e !== '') fail($e);
-  out(array('ok' => true, 'domains' => $map));
+  jwrite($DATA . '/domains.json', $map); jwrite($DATA . '/downers.json', $dw);
+  if (!vps_info()) write_rules($ROOT, $SITES, $prefix, $map, isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '');
+  $mineMap = array(); foreach ($map as $dm => $sl) if (lb_is_me(isset($dw[$dm]['uid']) ? $dw[$dm]['uid'] : '', $ME)) $mineMap[$dm] = $sl;
+  out(array('ok' => true, 'domains' => $mineMap));
 }
 
-/* automatic subdomains: every published site opens at <name>.<sites domain> */
+/* old "automatic subdomains for every site" switch — admin only (accounts use Free subdomains instead) */
 if ($act === 'sitesdomain') {
+  if (!$IS_ADMIN) fail('Only the admin can change this.');
   $sub = strtolower(trim(isset($d['domain']) ? (string)$d['domain'] : ''));
   $sub = preg_replace('/^(\*\.|www\.)/', '', $sub);
-  if ($sub !== '' && !preg_match('/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/', $sub)) fail('Type a domain like mysites.in or sites.mybrand.com');
+  if ($sub !== '' && !lb_valid_domain($sub)) fail('Type a domain like mysites.in or sites.mybrand.com');
   $cfg['sites_domain'] = $sub;
   if (!jwrite($DATA . '/config.json', $cfg)) fail('Could not save settings (lb-data folder permissions).');
-  $e = write_rules($ROOT, $SITES, $prefix, jread($DATA . '/domains.json', array()), $sub);
-  if ($e !== '') fail($e);
   out(array('ok' => true, 'sitesDomain' => $sub));
+}
+
+/* ================= my account ================= */
+function lb_my_subs($ME, $DATA) {
+  $map = jread($DATA . '/domains.json', array()); $dw = lb_downers($DATA); $res = array();
+  foreach ($dw as $h => $o) if (isset($o['kind']) && $o['kind'] === 'sub' && isset($map[$h]) && lb_is_me($o['uid'], $ME))
+    $res[] = array('host' => $h, 'target' => $map[$h], 'ts' => isset($o['ts']) ? $o['ts'] : 0, 'https' => file_exists('/etc/nginx/lb-ssl/' . $h . '.conf'));
+  usort($res, function ($a, $b) { return $a['ts'] - $b['ts']; });
+  return $res;
+}
+if ($act === 'me') {
+  $ts = lb_tenants($DATA);
+  out(array('ok' => true, 'uid' => $ME['uid'], 'email' => $ME['email'], 'name' => $ME['name'], 'role' => $ME['role'], 'accounts' => (bool)lb_saas(), 'legacy' => !$TU,
+    'tenant' => $ME['tenant'] !== '' && isset($ts[$ME['tenant']]) ? lb_tenant_public($ME['tenant'], $ts[$ME['tenant']]) : null,
+    'subBase' => lb_sub_base($ME, $DATA), 'subLimit' => lb_sub_limit($ME, $DATA), 'subsUsed' => count(lb_my_subs($ME, $DATA)), 'ip' => vps_info()['ip']));
+}
+
+/* ---------- free subdomains: name.crecapo.tech (or name.<white-label domain>) — 5 per account ---------- */
+if ($act === 'subs') out(array('ok' => true, 'subs' => lb_my_subs($ME, $DATA), 'base' => lb_sub_base($ME, $DATA), 'limit' => lb_sub_limit($ME, $DATA)));
+if ($act === 'subclaim') {
+  $name = strtolower(trim(isset($d['name']) ? (string)$d['name'] : ''));
+  $slug = isset($d['slug']) ? (string)$d['slug'] : '';
+  $page = isset($d['page']) ? preg_replace('/[^A-Za-z0-9._-]/', '', (string)$d['page']) : '';
+  if (!preg_match('/^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$/', $name)) fail('Use 1–40 lowercase letters, numbers or dashes (not at the start or end).');
+  if (lb_reserved($name)) fail('"' . $name . '" is reserved — choose another name.');
+  $base = lb_sub_base($ME, $DATA); if ($base === '') fail('Free subdomains are not set up for this workspace yet.');
+  if (!valid_slug($slug) || !is_dir($SITES . '/' . $slug)) fail('Publish this website first.');
+  if (!lb_site_mine($slug, $ME, $DATA, $SITES)) fail('This website belongs to another account.');
+  $host = $name . '.' . $base;
+  foreach (lb_tenants($DATA) as $t) if (!empty($t['app_domain']) && strtolower($t['app_domain']) === $host) fail('"' . $name . '" is taken — choose another name.');
+  $target = $page !== '' && $page !== 'index.html' ? $slug . '/' . $page : $slug;
+  $map = jread($DATA . '/domains.json', array()); $dw = lb_downers($DATA);
+  if (isset($map[$host])) {
+    if (!(isset($dw[$host]['kind']) && $dw[$host]['kind'] === 'sub' && lb_is_me($dw[$host]['uid'], $ME))) fail('"' . $host . '" is taken — choose another name.');
+  } else {
+    $lim = lb_sub_limit($ME, $DATA); $used = count(lb_my_subs($ME, $DATA));
+    if ($used >= $lim) fail('LIMIT: You can have up to ' . $lim . ' free subdomains. Remove one to add another.');
+    $dw[$host] = array('uid' => $ME['uid'], 'kind' => 'sub', 'ts' => time());
+  }
+  $map[$host] = $target;
+  jwrite($DATA . '/domains.json', $map); jwrite($DATA . '/downers.json', $dw);
+  out(array('ok' => true, 'host' => $host, 'url' => 'https://' . $host . '/', 'subs' => lb_my_subs($ME, $DATA)));
+}
+if ($act === 'subdel') {
+  $host = strtolower(trim(isset($d['host']) ? (string)$d['host'] : ''));
+  $map = jread($DATA . '/domains.json', array()); $dw = lb_downers($DATA);
+  if (!isset($dw[$host]) || $dw[$host]['kind'] !== 'sub' || !lb_is_me($dw[$host]['uid'], $ME)) fail('Subdomain not found.');
+  unset($map[$host]); unset($dw[$host]);
+  jwrite($DATA . '/domains.json', $map); jwrite($DATA . '/downers.json', $dw);
+  out(array('ok' => true, 'subs' => lb_my_subs($ME, $DATA)));
+}
+
+/* ================= admin panel =================
+   admin  = email listed in /etc/launchbuilder/saas.json → sees everything
+   owner  = the owner email of a white-label workspace   → sees only that workspace's accounts */
+if (strpos($act, 'adm_') === 0) {
+  if ($ME['role'] !== 'admin' && $ME['role'] !== 'owner') fail('Admins only.');
+  $OWN_T = $ME['role'] === 'owner' ? $ME['tenant'] : null;   /* null = all workspaces */
+}
+function lb_counts($DATA) {
+  $c = array(); $own = lb_owners($DATA); $dw = lb_downers($DATA);
+  foreach ($own as $sl => $o) { if (!isset($c[$o])) $c[$o] = array('sites' => 0, 'subs' => 0, 'domains' => 0); $c[$o]['sites']++; }
+  foreach ($dw as $h => $o) { $u = $o['uid']; if (!isset($c[$u])) $c[$u] = array('sites' => 0, 'subs' => 0, 'domains' => 0); $c[$u][$o['kind'] === 'sub' ? 'subs' : 'domains']++; }
+  return $c;
+}
+if ($act === 'adm_users') {
+  $users = jread($DATA . '/users.json', array()); $c = lb_counts($DATA); $S = lb_saas();
+  /* with the service key, also list accounts that signed up but never opened the builder since */
+  $sbErr = '';
+  if ($OWN_T === null && !empty($S['service_key'])) {
+    $sk = $S['service_key']; $h = array('apikey: ' . $sk); if (strpos($sk, 'sb_') !== 0) $h[] = 'Authorization: Bearer ' . $sk;
+    list($code, $b) = lb_http(rtrim($S['supabase_url'], '/') . '/auth/v1/admin/users?page=1&per_page=1000', $h, 12);
+    $j = json_decode($b, true);
+    if ($code === 200 && isset($j['users'])) foreach ($j['users'] as $su) {
+      $id = $su['id']; $em = strtolower(isset($su['email']) ? $su['email'] : '');
+      if (!isset($users[$id])) $users[$id] = array('email' => $em, 'name' => isset($su['user_metadata']['name']) ? $su['user_metadata']['name'] : '', 'tenant' => '', 'created' => strtotime($su['created_at']), 'never' => true);
+      if (!empty($su['last_sign_in_at'])) $users[$id]['last_login'] = strtotime($su['last_sign_in_at']);
+      $users[$id]['confirmed'] = !empty($su['email_confirmed_at']) || !empty($su['confirmed_at']);
+    } else $sbErr = 'Supabase admin list failed (HTTP ' . $code . ') — check service_key in saas.json.';
+  }
+  $list = array(); $tn = lb_tenants($DATA); $now = time(); $act7 = 0;
+  foreach ($users as $id => $u) {
+    $t = isset($u['tenant']) ? $u['tenant'] : '';
+    if ($OWN_T !== null && $t !== $OWN_T) continue;
+    $k = isset($c[$id]) ? $c[$id] : array('sites' => 0, 'subs' => 0, 'domains' => 0);
+    $ls = isset($u['last_seen']) ? (int)$u['last_seen'] : 0; if ($ls > $now - 7 * 86400) $act7++;
+    $list[] = array('uid' => $id, 'email' => isset($u['email']) ? $u['email'] : '', 'name' => isset($u['name']) ? $u['name'] : '', 'tenant' => $t, 'tenantName' => $t !== '' && isset($tn[$t]) ? $tn[$t]['name'] : '',
+      'created' => isset($u['created']) ? (int)$u['created'] : 0, 'last_login' => isset($u['last_login']) ? (int)$u['last_login'] : 0, 'last_seen' => $ls, 'seen' => isset($u['seen']) ? (int)$u['seen'] : 0,
+      'ip' => $OWN_T === null && isset($u['ip']) ? $u['ip'] : '', 'dev' => isset($u['dev']) ? $u['dev'] : '', 'disabled' => !empty($u['disabled']), 'never' => !empty($u['never']), 'confirmed' => isset($u['confirmed']) ? $u['confirmed'] : null,
+      'sub_limit' => isset($u['sub_limit']) ? $u['sub_limit'] : null, 'admin' => lb_is_admin_email(isset($u['email']) ? $u['email'] : '')) + $k;
+  }
+  usort($list, function ($a, $b) { return max($b['last_seen'], $b['last_login']) - max($a['last_seen'], $a['last_login']); });
+  $tot = array('users' => count($list), 'active7' => $act7, 'sites' => array_sum(array_column($list, 'sites')), 'subs' => array_sum(array_column($list, 'subs')), 'domains' => array_sum(array_column($list, 'domains')), 'tenants' => $OWN_T === null ? count($tn) : 1);
+  out(array('ok' => true, 'users' => $list, 'totals' => $tot, 'warn' => $sbErr, 'serviceKey' => !empty($S['service_key']), 'role' => $ME['role']));
+}
+if ($act === 'adm_user') {
+  $id = isset($d['uid']) ? (string)$d['uid'] : ''; $f = $DATA . '/users.json'; $users = jread($f, array());
+  if (!isset($users[$id])) fail('This account hasn\'t opened the builder yet — it can be changed after its first login.');
+  if ($OWN_T !== null && (isset($users[$id]['tenant']) ? $users[$id]['tenant'] : '') !== $OWN_T) fail('Not your workspace.');
+  if (lb_is_admin_email(isset($users[$id]['email']) ? $users[$id]['email'] : '')) fail('Admin accounts can\'t be changed here.');
+  if (isset($d['disabled'])) $users[$id]['disabled'] = (bool)$d['disabled'];
+  if (array_key_exists('sub_limit', $d) && $OWN_T === null) { $v = $d['sub_limit']; if ($v === null || $v === '') unset($users[$id]['sub_limit']); else $users[$id]['sub_limit'] = max(0, min(1000, (int)$v)); }
+  if (isset($d['tenant']) && $OWN_T === null) { $tn = lb_tenants($DATA); $tv = (string)$d['tenant']; if ($tv !== '' && !isset($tn[$tv])) fail('Unknown workspace'); $users[$id]['tenant'] = $tv; }
+  lb_w($f, $users);
+  out(array('ok' => true));
+}
+if ($act === 'adm_tenants') {
+  $tn = lb_tenants($DATA); $users = jread($DATA . '/users.json', array()); $res = array();
+  foreach ($tn as $id => $t) {
+    if ($OWN_T !== null && $id !== $OWN_T) continue;
+    $n = 0; foreach ($users as $u) if (isset($u['tenant']) && $u['tenant'] === $id) $n++;
+    $res[] = array_merge(array('id' => $id, 'users' => $n, 'https' => !empty($t['app_domain']) && file_exists('/etc/nginx/lb-ssl/' . $t['app_domain'] . '.conf')), $t);
+  }
+  out(array('ok' => true, 'tenants' => $res, 'ip' => vps_info()['ip'], 'main' => lb_main_domain($DATA)));
+}
+if ($act === 'adm_tenant_save') {
+  $tn = lb_tenants($DATA); $in = isset($d['tenant']) && is_array($d['tenant']) ? $d['tenant'] : array();
+  $id = isset($in['id']) ? preg_replace('/[^a-z0-9-]/', '', strtolower((string)$in['id'])) : '';
+  $isNew = $id === '' || !isset($tn[$id]);
+  if ($OWN_T !== null && ($isNew || $id !== $OWN_T)) fail('Only the admin can add workspaces.');
+  $cur = $isNew ? array('created' => time(), 'active' => true) : $tn[$id];
+  $str = function ($k, $max) use ($in, &$cur) { if (isset($in[$k])) $cur[$k] = trim(clean_str($in[$k], $max)); };
+  $str('product', 60); $str('support_email', 120); $str('whatsapp', 20);
+  if (isset($in['logo'])) { $lg = trim((string)$in['logo']); if ($lg !== '' && !preg_match('#^(https://[^\s"<>]{4,500}|data:image/(png|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+/=]{10,400000})$#', $lg)) fail('Logo: paste an https:// image link (or upload a small PNG).'); $cur['logo'] = $lg; }
+  foreach (array('color', 'color2') as $ck) if (isset($in[$ck])) { $cv = trim((string)$in[$ck]); if ($cv !== '' && !preg_match('/^#[0-9a-fA-F]{6}$/', $cv)) fail('Colors must look like #f5b301'); $cur[$ck] = $cv; }
+  if ($OWN_T === null) {   /* admin-only fields */
+    $str('name', 80); if (empty($cur['name'])) fail('Give the workspace a name.');
+    foreach (array('app_domain', 'sites_domain') as $dk) if (isset($in[$dk])) {
+      $v = strtolower(preg_replace('#^https?://|/.*$#', '', trim((string)$in[$dk]))); $v = preg_replace('/^(\*\.|www\.)/', '', $v);
+      if ($v !== '' && !lb_valid_domain($v)) fail(($dk === 'app_domain' ? 'Builder address' : 'Subdomain domain') . ': type a domain like app.abc.com');
+      if ($v !== '' && $v === lb_main_domain($DATA)) fail('That is your own main domain.');
+      foreach ($tn as $oid => $ot) if ($oid !== $id && $v !== '' && ((isset($ot['app_domain']) && $ot['app_domain'] === $v) || (isset($ot['sites_domain']) && $ot['sites_domain'] === $v))) fail($v . ' is already used by workspace "' . $ot['name'] . '".');
+      $cur[$dk] = $v;
+    }
+    if (empty($cur['app_domain'])) fail('Builder address is needed (for example app.abc.com).');
+    if (isset($in['owner_email'])) $cur['owner_email'] = strtolower(trim(clean_str($in['owner_email'], 120)));
+    foreach (array('max_users', 'sub_limit') as $nk) if (array_key_exists($nk, $in)) $cur[$nk] = $in[$nk] === '' || $in[$nk] === null ? '' : max(0, min(100000, (int)$in[$nk]));
+    if (isset($in['active'])) $cur['active'] = (bool)$in['active'];
+    if (isset($in['note'])) $cur['note'] = clean_str($in['note'], 500);
+    if ($isNew) { $id = preg_replace('/[^a-z0-9-]+/', '-', strtolower($cur['name'])); $id = trim($id, '-') ?: 'ws'; $b0 = $id; $i = 2; while (isset($tn[$id])) $id = $b0 . '-' . $i++; }
+  }
+  $cur['updated'] = time(); $tn[$id] = $cur; lb_w($DATA . '/tenants.json', $tn);
+  out(array('ok' => true, 'id' => $id, 'tenant' => $cur));
+}
+if ($act === 'adm_tenant_del') {
+  if ($OWN_T !== null) fail('Admins only.');
+  $tn = lb_tenants($DATA); $id = isset($d['id']) ? (string)$d['id'] : '';
+  if (!isset($tn[$id])) fail('Workspace not found.');
+  foreach (jread($DATA . '/users.json', array()) as $u) if (isset($u['tenant']) && $u['tenant'] === $id) fail('This workspace still has accounts. Pause it instead (switch "Active" off).');
+  unset($tn[$id]); lb_w($DATA . '/tenants.json', $tn); out(array('ok' => true));
+}
+/* DNS check for a white-label workspace: builder address + wildcard for its subdomains */
+if ($act === 'adm_tenant_check') {
+  $tn = lb_tenants($DATA); $id = isset($d['id']) ? (string)$d['id'] : '';
+  if (!isset($tn[$id]) || ($OWN_T !== null && $id !== $OWN_T)) fail('Workspace not found.');
+  $t = $tn[$id]; $ip = vps_info()['ip'];
+  $res = function ($h) { $a = @gethostbynamel($h); return $a ? array_values(array_unique($a)) : array(); };
+  $app = !empty($t['app_domain']) ? $res($t['app_domain']) : array();
+  $probe = !empty($t['sites_domain']) ? 'lbcheck' . mt_rand(1000, 9999) . '.' . $t['sites_domain'] : '';
+  $wild = $probe ? $res($probe) : array();
+  $opens = 0; if ($app && in_array($ip, $app, true)) { list($opens) = lb_get('http://' . $t['app_domain'] . '/lb-server.php?action=info'); }
+  out(array('ok' => true, 'ip' => $ip, 'app' => $app, 'app_ok' => in_array($ip, $app, true), 'app_opens' => $opens,
+    'app_https' => !empty($t['app_domain']) && file_exists('/etc/nginx/lb-ssl/' . $t['app_domain'] . '.conf'), 'wild' => $wild, 'wild_ok' => $probe !== '' && in_array($ip, $wild, true)));
 }
 
 fail('Unknown action');
