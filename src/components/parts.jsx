@@ -189,7 +189,9 @@ export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI, kind = "l
 }
 
 
-export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains, onInteg }) {
+export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains, onInteg, projects = [] }) {
+  /* link names your OTHER projects already use — publishing with one of them would replace that project's live site */
+  const usedBy = (sl) => projects.find((x) => x.id !== page.id && x.host && x.host.slug === sl);
   const srvOk = serverOn(integ), netOk = !!integ && publishReady(integ);
   const [dest, setDest] = useState(page.host ? "server" : page.netlify ? "netlify" : srvOk ? "server" : netOk ? "netlify" : "");
   /* your own hosting connects by itself the first time (no setup screen) */
@@ -214,7 +216,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
     catch (e) { setErr(e.message); }
   };
   const [busy, setBusy] = useState(""), [err, setErr] = useState(""), [copied, setCopied] = useState(false);
-  const [slug, setSlug] = useState((page.host && page.host.slug) || slugify(page.slug || page.name) || "my-site");
+  const [slug, setSlug] = useState(() => { if (page.host && page.host.slug) return page.host.slug; const b = slugify(page.slug || page.name) || "my-site"; let s = b, i = 2; while (usedBy(s)) s = b + "-" + i++; return s; });
   const [target, setTarget] = useState("new"), [sites, setSites] = useState(null), [siteId, setSiteId] = useState("");
   const own = page.domain && page.domainStatus === "connected" ? "https://" + page.domain : "";
   const liveUrl = dest === "server" ? page.host && (subUrl(integ, page.host.slug) || page.host.url) : page.netlify && page.netlify.url;
@@ -225,6 +227,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
   const run = async (fn) => { setErr(""); try { await fn(); } catch (e) { setErr(e.message); } setBusy(""); };
   const pubServer = () => run(async () => {
     const sl = slugify(slug); if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(sl)) throw new Error("Link name: use 2+ lowercase letters, numbers or dashes.");
+    const other = usedBy(sl); if (other) throw new Error(`The link name “${sl}” is already used by your project “${other.name}”. Choose another link name, otherwise it would replace that website.`);
     setBusy("Building your pages…");
     const files = await buildSite(page.pages, own || `${base}/sites/${sl}`, { leadUrl: (integ.server.url || defaultServerUrl()), site: sl, pixels: pixelsFor(integ, page) });
     const payload = filesForServer(files), size = payload.reduce((n, f) => n + f.b64.length, 0);

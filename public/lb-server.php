@@ -667,7 +667,13 @@ if ($act === 'adm_tenant_save') {
   $cur = $isNew ? array('created' => time(), 'active' => true) : $tn[$id];
   $str = function ($k, $max) use ($in, &$cur) { if (isset($in[$k])) $cur[$k] = trim(clean_str($in[$k], $max)); };
   $str('product', 60); $str('support_email', 120); $str('whatsapp', 20);
-  if (isset($in['logo'])) { $lg = trim((string)$in['logo']); if ($lg !== '' && !preg_match('#^(https://[^\s"<>]{4,500}|data:image/(png|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+/=]{10,400000})$#', $lg)) fail('Logo: paste an https:// image link (or upload a small PNG).'); $cur['logo'] = $lg; }
+  if (isset($in['logo'])) {
+    /* logo = an https:// link, or an uploaded picture (the builder shrinks it to a small PNG first) */
+    $lg = trim((string)$in['logo']); $okL = $lg === '' || (strlen($lg) <= 600 && preg_match('#^https://[^\s"<>]+$#', $lg));
+    if (!$okL && preg_match('#^data:image/(png|jpeg|webp|gif);base64,#', $lg, $mm)) { $raw = base64_decode(substr($lg, strlen($mm[0])), true); $okL = $raw !== false && strlen($raw) > 20 && strlen($raw) <= 400000 && @getimagesizefromstring($raw) !== false; }
+    if (!$okL) fail('Logo: that picture could not be used — try another image, or paste an https:// image link.');
+    $cur['logo'] = $lg;
+  }
   foreach (array('color', 'color2') as $ck) if (isset($in[$ck])) { $cv = trim((string)$in[$ck]); if ($cv !== '' && !preg_match('/^#[0-9a-fA-F]{6}$/', $cv)) fail('Colors must look like #f5b301'); $cur[$ck] = $cv; }
   if ($OWN_T === null) {   /* admin-only fields */
     $str('name', 80); if (empty($cur['name'])) fail('Give the workspace a name.');

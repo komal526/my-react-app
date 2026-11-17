@@ -154,10 +154,21 @@ function TenantForm({ t, owner = false, onDone, onCancel }) {
   const [v, setV] = useState(t), [busy, setBusy] = useState(false), [err, setErr] = useState(""), [ok, setOk] = useState("");
   useEffect(() => { if (!ok && !err) return; const x = setTimeout(() => { setOk(""); setErr(""); }, ok ? 5000 : 9000); return () => clearTimeout(x); }, [ok, err]);
   const set = (k) => (e) => setV({ ...v, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
-  const logoFile = (e) => {
-    const f = e.target.files[0]; if (!f) return;
-    if (f.size > 250 * 1024) return setErr("Logo file is too big — use a PNG/SVG under 250 KB, or paste an https:// link.");
-    const r = new FileReader(); r.onload = () => setV((x) => ({ ...x, logo: r.result })); r.readAsDataURL(f);
+  /* any picture (PNG, JPG, WEBP, GIF, SVG, AVIF, BMP, ICO, any size) → shrunk to a crisp 256 px PNG */
+  const [drag, setDrag] = useState(false);
+  const logoFile = (f) => {
+    if (!f) return; setErr("");
+    if (!/^image\//.test(f.type) && !/\.(png|jpe?g|webp|gif|svg|avif|bmp|ico)$/i.test(f.name)) return setErr("Please choose a picture file (PNG, JPG, SVG, WEBP…).");
+    if (f.size > 15 * 1024 * 1024) return setErr("That picture is bigger than 15 MB — choose a smaller one.");
+    const url = URL.createObjectURL(f), img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth || 256, h = img.naturalHeight || 256, k = Math.min(1, 256 / Math.max(w, h));
+      const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      setV((x) => ({ ...x, logo: c.toDataURL("image/png") }));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); setErr("This picture can't be opened in the browser — try PNG or JPG."); };
+    img.src = url;
   };
   const save = async () => {
     setErr(""); setOk(""); setBusy(true);
@@ -169,7 +180,13 @@ function TenantForm({ t, owner = false, onDone, onCancel }) {
     setBusy(false);
   };
   const F = ({ k, l, ph, hint, type = "text" }) => <label className="wl-f">{l}<input type={type} value={v[k] ?? ""} onChange={set(k)} placeholder={ph} />{hint && <small className="mut">{hint}</small>}</label>;
-  const logo = <div className="wl-f">Logo<div className="wl-logo-in"><input value={v.logo && v.logo.startsWith("data:") ? "(uploaded)" : v.logo || ""} onChange={set("logo")} placeholder="Paste a link, or upload →" /><label className="btn wl-up">Upload<input type="file" hidden accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={logoFile} /></label></div></div>;
+  const logo = <div className="wl-f">Logo
+    <label className={"wl-drop" + (drag ? " on" : "")} onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); logoFile(e.dataTransfer.files[0]); }}>
+      {v.logo ? <img src={v.logo} alt="" /> : <span className="wl-drop-ic">⬆</span>}
+      <span><b>{v.logo ? "Change logo" : "Upload logo"}</b><small>Click or drop any picture</small></span>
+      <input type="file" hidden accept="image/*,.svg,.ico" onChange={(e) => { logoFile(e.target.files[0]); e.target.value = ""; }} />
+    </label>
+    <div className="wl-logo-in"><input value={v.logo && v.logo.startsWith("data:") ? "" : v.logo || ""} onChange={set("logo")} placeholder="…or paste an https:// image link" />{v.logo && <button type="button" onClick={() => setV({ ...v, logo: "" })}>Remove</button>}</div></div>;
   const color = <label className="wl-f">Brand colour<div className="wl-col"><input type="color" value={v.color || "#f5b301"} onChange={set("color")} /><input value={v.color || ""} onChange={set("color")} /></div></label>;
   return (
     <div className="panel wl-form">

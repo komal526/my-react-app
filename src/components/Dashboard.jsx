@@ -242,7 +242,7 @@ export default function Dashboard({ user, onLogout }) {
   openRef.current = openId;
   const pub = modal && modal.type === "publish" && projects.find((p) => p.id === modal.id);
   const goView = (v, tile = "") => { setModal(null); setOpenId(null); setIgTile(tile); setView(v); };
-  const pubModal = pub && <PublishModal page={pub} integ={integ} onInteg={onInteg} onClose={() => setModal(null)} onDone={(o, keep) => { patch(pub.id, o); if (!keep) setModal(null); }} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onDomains={() => goView("domains")} />;
+  const pubModal = pub && <PublishModal page={pub} projects={projects} integ={integ} onInteg={onInteg} onClose={() => setModal(null)} onDone={(o, keep) => { patch(pub.id, o); if (!keep) setModal(null); }} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onDomains={() => goView("domains")} />;
 
   if (open) return (
     <Suspense fallback={<div className="boot"><span className="pub-spin" />Opening the editor…</div>}>

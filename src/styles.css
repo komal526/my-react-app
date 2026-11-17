@@ -3609,3 +3609,10 @@ html.lb-hidden .tg-frame .tg-reel{animation-play-state:paused}
 .dash .dm-disc:hover{background:#fef2f2!important}
 @media (max-width:640px){.dash .pp{flex-basis:100%}}
 .dash .fsub{position:relative;z-index:6;overflow:visible}
+.dash .wl-drop{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1.5px dashed #c9cfdd;border-radius:12px;background:#fafbfe;cursor:pointer;font-weight:500;transition:border-color .15s,background .15s}
+.dash .wl-drop:hover,.dash .wl-drop.on{border-color:var(--lb-y,#f5b301);background:#fffbea}
+.dash .wl-drop img{width:44px;height:44px;object-fit:contain;border-radius:10px;background:#fff;border:1px solid #e6e9f2}
+.dash .wl-drop-ic{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:#0d1324;color:var(--lb-y,#f5b301);font-size:18px}
+.dash .wl-drop>span:not(.wl-drop-ic){display:flex;flex-direction:column}.dash .wl-drop b{font-size:13.5px;color:#0d1324}.dash .wl-drop small{color:#5d6785;font-size:12px}
+.dash .dm-dup{margin:0 0 -6px;padding:12px 14px 16px;border-radius:14px 14px 0 0;background:#fff7d6;border:1px solid rgba(var(--lb-yr,245,179,1),.6);color:#7c4a03;font-size:13px;line-height:1.5}
+.dash .dm-dup .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.dash .dm-dup button{background:#fff;border:1px solid #e6c766;border-radius:9px;padding:6px 12px;font-weight:700;cursor:pointer}

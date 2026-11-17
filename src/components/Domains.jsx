@@ -472,6 +472,8 @@ export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ,
     setTab(st(p)); setTimeout(() => { const el = document.getElementById("dm-" + p.id); if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.add("dm-flash"); setTimeout(() => el.classList.remove("dm-flash"), 1800); } }, 250);
   }, [focus && focus.ts]); // eslint-disable-line react-hooks/exhaustive-deps
   const shown = tab === "all" ? projects : groups[tab];
+  /* two projects publishing to the same link (e.g. made twice from one template) → mark the newer one as the copy */
+  const dupOf = (p) => { if (!p.host || !p.host.slug) return null; const t = projects.filter((x) => x.host && x.host.slug === p.host.slug).sort((a, b) => (a.created || 0) - (b.created || 0) || String(a.id).localeCompare(String(b.id))); return t.length > 1 && t[0].id !== p.id ? t[0] : null; };
   const isAdmin = me && (me.role === "admin" || me.role === "owner");
   return (
     <>
@@ -491,9 +493,12 @@ export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ,
           <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l} <span>{n}</span></button>)}</div>
         {!shown.length ? <div className="empty dm-empty"><b>{tab === "needs" ? "🎉 Every live project has a domain" : tab === "connected" ? "Nothing connected yet" : tab === "draft" ? "Everything is published" : "No projects"}</b>
           <p className="mut">{tab === "needs" ? "Projects that are live only on the temporary link show up here." : tab === "connected" ? "Give a live project a free subdomain above, or connect your own domain under “Need a domain”." : ""}</p></div>
-          : shown.map((p) => <div key={p.id} id={"dm-" + p.id} className={"dm-wrap s-" + st(p)}>
+          : shown.map((p) => { const twin = dupOf(p); return <div key={p.id} id={"dm-" + p.id} className={"dm-wrap s-" + st(p)}>
+            {twin && <div className="dm-dup"><b>⚠ Same live link as “{twin.name}”.</b> These are 2 projects publishing to the same address, so one replaces the other.
+              <div className="row"><button onClick={() => { if (window.confirm(`Make this copy a draft? Its content stays — publish it later with its own link name. "${twin.name}" stays live.`)) onPatch(p.id, { host: null, status: "draft", domain: "", domainStatus: "", domainCheck: null }); }}>Unlink this copy</button>
+                <button onClick={() => onOpen(p.id)}>Open it</button></div></div>}
             <span className={"dm-tag " + st(p)}>{st(p) === "connected" ? "● Connected · " + liveAddr(p, subs).replace(/^https?:\/\//, "").replace(/\/$/, "") : st(p) === "needs" ? "Needs a domain" : "Not published"}</span>
-            {p.host ? <ServerCard p={p} onPatch={onPatch} onPatchPage={onPatchPage} onOpen={onOpen} integ={integ} onSetup={onSetup} vps={vps} subs={subs} /> : p.netlify ? <DomainCard p={p} onPatch={onPatch} onOpen={onOpen} integ={integ} onSetup={onSetup} onPublish={onPublish} /> : <PublishFirst p={p} onPublish={onPublish} />}</div>)}
+            {p.host ? <ServerCard p={p} onPatch={onPatch} onPatchPage={onPatchPage} onOpen={onOpen} integ={integ} onSetup={onSetup} vps={vps} subs={subs} /> : p.netlify ? <DomainCard p={p} onPatch={onPatch} onOpen={onOpen} integ={integ} onSetup={onSetup} onPublish={onPublish} /> : <PublishFirst p={p} onPublish={onPublish} />}</div>; })}
       </>}
       {isAdmin && <Suspense fallback={<div className="lazy-load"><span className="pub-spin" /></div>}><AdminPanel me={me} ip={vps.ip} /></Suspense>}
     </>
