@@ -311,9 +311,26 @@ export async function phpCall(srv, body) {
 const acctSrv = () => ({ url: defaultServerUrl(), key: accountKey() });
 let _me = null;
 export const myAccount = (fresh = false) => { if (fresh || !_me) _me = phpCall(acctSrv(), { action: "me" }).catch((e) => { _me = null; throw e; }); return _me; };
-export const subList = () => phpCall(acctSrv(), { action: "subs" });
-export const subClaim = (name, slug, page = "") => phpCall(acctSrv(), { action: "subclaim", name, slug, page }).then((r) => { _me = null; return r; });
-export const subDelete = (host) => phpCall(acctSrv(), { action: "subdel", host }).then((r) => { _me = null; return r; });
+/* free subdomains are remembered on this device too, so project cards show them instantly */
+const SUBK = "lb_subs_cache";
+export const subsCache = () => { try { return JSON.parse(localStorage.getItem(SUBK) || "[]"); } catch { return []; } };
+const keepSubs = (r) => { try { localStorage.setItem(SUBK, JSON.stringify(r.subs || [])); } catch { /* private mode */ } window.dispatchEvent(new Event("lb-subs")); return r; };
+export const subList = () => phpCall(acctSrv(), { action: "subs" }).then(keepSubs);
+export const subClaim = (name, slug, page = "") => phpCall(acctSrv(), { action: "subclaim", name, slug, page }).then((r) => { _me = null; return keepSubs(r); });
+export const subDelete = (host) => phpCall(acctSrv(), { action: "subdel", host }).then((r) => { _me = null; return keepSubs(r); });
+/* the address a project is really live at: its connected domain → its free subdomain → the publish link */
+const subOf = (p, subs) => { const sl = p.host && p.host.slug; return sl ? subs.find((s) => s.target === sl) || subs.find((s) => String(s.target).split("/")[0] === sl) : null; };
+export const liveAddr = (p, subs = subsCache()) => {
+  if (p.domain && p.domainStatus === "connected") return "https://" + p.domain;
+  const s = subOf(p, subs); if (s) return "https://" + s.host;
+  return (p.host && p.host.url) || (p.netlify && p.netlify.url) || "";
+};
+/* draft = not published · connected = has its own domain or a free subdomain · needs = live but only on the temporary link */
+export const domainState = (p, subs = subsCache()) => {
+  if (!p.host && !p.netlify) return "draft";
+  if ((p.domain && p.domainStatus === "connected") || (p.pages || []).some((x) => x.domain && x.domainStatus === "connected") || subOf(p, subs)) return "connected";
+  return "needs";
+};
 export const admin = (action, o = {}) => phpCall(acctSrv(), { action: "adm_" + action, ...o });
 const bytes64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 export const filesForServer = (files) => files.map((f) => ({ name: f.name, b64: bytes64(typeof f.data === "string" ? new TextEncoder().encode(f.data) : f.data) }));

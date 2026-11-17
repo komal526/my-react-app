@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { Thumb } from "./parts.jsx";
 import { Icon } from "./icons.jsx";
-import { addr, LIMIT, FILE_TEMPLATES, FEATURED_TPL, longThumb, fuDue, aiAvailable, askAI, tplUrl } from "../lib.js";
+import { liveAddr, domainState, subsCache, subList, LIMIT, FILE_TEMPLATES, FEATURED_TPL, longThumb, fuDue, aiAvailable, askAI, tplUrl } from "../lib.js";
 import { metrics, consult, areaName } from "./insights.js";
 import { BRAND } from "../brand.js";
 const Legal = lazy(() => import("./Legal.jsx"));
@@ -277,7 +277,14 @@ function DashFooter({ onNew, onGo, onTemplates, onLeads, onAnalytics, onConsult 
   );
 }
 
-export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl }) {
+export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl, onDomain }) {
+  /* free subdomains (slug → name.crecapo.tech) so each card shows its real live address */
+  const [subs, setSubs] = useState(subsCache);
+  useEffect(() => {
+    const f = () => setSubs(subsCache()); window.addEventListener("lb-subs", f);
+    if (projects.some((p) => p.host)) subList().catch(() => {});
+    return () => window.removeEventListener("lb-subs", f);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [filter, setFilter] = useState("All"), [menu, setMenu] = useState(null), [kind, setKind] = useState("all");
   const act = (fn, p) => () => { setMenu(null); fn(p); };
   const nWeb = projects.filter((p) => p.type === "website").length, nLand = projects.length - nWeb;
@@ -323,10 +330,14 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
             <Thumb html={p.pages[0].html} img={tplImg(p)} />
             <div className="cb">
               <div className="ct"><b>{p.name}</b></div>
-              <div className={"pc-st " + (p.status === "published" ? "on" : "")}><i />{p.status === "published" ? "Published" : "Draft"}<span className="mut">· {p.domain || (p.status === "published" ? addr(p) : "not live yet")}</span></div>
+              {(() => { const live = p.status === "published" ? liveAddr(p, subs) : "", ds = domainState(p, subs);
+                return <div className={"pc-st " + (live ? "on" : "")}><i />{live ? "Live" : "Draft"}
+                  {live ? <a className="pc-live" href={live} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} title="Open the live website">{live.replace(/^https?:\/\//, "").replace(/\/$/, "")} ↗</a> : <span className="mut">· not live yet</span>}
+                  {live && ds === "needs" && onDomain && <span className="pc-need" title="Only on the temporary link — give it a domain">no domain</span>}</div>; })()}
               <div className="db-cardbtns" onClick={(e) => e.stopPropagation()}>
                 <button onClick={() => onOpen(p.id)}><Icon n="pen" s={14} /> Edit</button>
                 {onPreview && <button onClick={act(onPreview, p)}><Icon n="eye" s={14} /> Preview</button>}
+                {onDomain && p.status === "published" && <button className="dom" onClick={act(onDomain, p)} title="Connect a domain or free subdomain">🌐 Domain</button>}
                 <button className="pri" onClick={act(onPublish, p)}>🚀 {p.status === "published" ? "Update" : "Publish"}</button>
               </div>
             </div>
@@ -335,6 +346,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
               <div className="menu" onClick={(e) => e.stopPropagation()}>
                 <div onClick={() => onOpen(p.id)}>Edit</div>{onPreview && <div onClick={act(onPreview, p)}>↗ Open in new tab</div>}<div onClick={act(onRename, p)}>Rename</div><div onClick={act(onDuplicate, p)}>Duplicate</div>{onSaveTpl && <div onClick={act(onSaveTpl, p)}>★ Save as template</div>}
                 <div onClick={act(onPublish, p)}>{p.status === "published" ? "Change address / republish" : "Publish"}</div>
+                {onDomain && p.status === "published" && <div onClick={act(onDomain, p)}>🌐 Connect domain</div>}
                 {p.status === "published" && <div onClick={act(onUnpublish, p)}>Unpublish</div>}
                 <div className="red" onClick={act(onDelete, p)}>Delete</div>
               </div>)}

@@ -1,4 +1,4 @@
-// LaunchBuilder v66 — Admin.jsx
+// LaunchBuilder v67 — Admin.jsx (shown at the bottom of the Domains page, only to the admin / a workspace owner)
 // Admin: every account (who signed up, who logged in, last active, websites, domains, free subdomains), pause/limit accounts,
 // and white-label clients — your software on THEIR domain (app.abc.com) with their name, logo and colours. No code leaves your server.
 // A white-label owner sees the same page as "My clients", limited to their own workspace.
@@ -12,18 +12,24 @@ const Copy = ({ v }) => <button className="xs" onClick={() => copy(v)}>Copy</but
 const C = ({ v }) => <><code>{v}</code> <Copy v={v} /></>;
 const EMPTY = { name: "", product: "", logo: "", color: "#f5b301", color2: "#ffd35c", app_domain: "", sites_domain: "", owner_email: "", max_users: "", sub_limit: 5, support_email: "", whatsapp: "", active: true };
 
-export default function Admin({ me }) {
+export default function Admin({ me, ip = "" }) {
   const owner = me.role === "owner";
   const [tab, setTab] = useState("users");
   return (
-    <div className="adm">
-      <div className="top"><div><h1>{owner ? "My clients" : "Admin"}</h1>
-        <p className="mut">{owner ? "Everyone who uses your workspace — who signed up, when they last logged in, and what they've published." : "Every account on your platform, and the clients who use your software under their own brand."}</p></div></div>
+    <div className="adm adm-embed">
+      <div className="adm-head"><span className="adm-badge">🔒 {owner ? "Workspace owner" : "Admin"}</span>
+        <div><h2>{owner ? "My clients" : "Admin panel"}</h2>
+          <p className="mut">{owner ? "Everyone using your workspace — sign-ups, logins and what they've published. Only you see this." : "Only you see this. Users have every feature — here you control the users, and give your software to other businesses on their own domain."}</p></div></div>
       <div className="adm-tabs">
-        <button className={tab === "users" ? "on" : ""} onClick={() => setTab("users")}>Accounts</button>
-        <button className={tab === "wl" ? "on" : ""} onClick={() => setTab("wl")}>{owner ? "My brand" : "White-label clients"}</button>
+        <button className={tab === "users" ? "on" : ""} onClick={() => setTab("users")}>👥 Accounts</button>
+        <button className={tab === "wl" ? "on" : ""} onClick={() => setTab("wl")}>{owner ? "🎨 My brand" : "🏷 Give software to a client"}</button>
+        {!owner && <button className={tab === "dns" ? "on" : ""} onClick={() => setTab("dns")}>⚙ Free-subdomain DNS</button>}
       </div>
-      {tab === "users" ? <Users me={me} /> : <WhiteLabel me={me} />}
+      {tab === "users" ? <Users me={me} /> : tab === "wl" ? <WhiteLabel me={me} /> : <div className="panel adm-dns">
+        <b>One DNS record makes every free subdomain work</b>
+        <p className="mut">In the DNS of <b>{me.subBase || "your domain"}</b> (Hostinger → Domains → {me.subBase || "your domain"} → DNS records) add:</p>
+        <div className="ltable"><table><thead><tr><th>Type</th><th>Name</th><th>Value</th></tr></thead><tbody><tr><td><b>A</b></td><td><C v="*" /></td><td><C v={ip || me.ip || "your VPS IP"} /></td></tr></tbody></table></div>
+        <p className="mut sm">Already done? Then nothing else is needed — users click “Live” and their subdomain opens within ~2 minutes.</p></div>}
     </div>
   );
 }
@@ -81,74 +87,70 @@ function Users({ me }) {
   );
 }
 
-/* ---------------- white-label clients ---------------- */
+/* ---------------- white-label: your software on a client's own domain ---------------- */
+const msgFor = (t, ip) => {
+  const root = rootDomain(t.app_domain), sub = t.app_domain !== root ? t.app_domain.slice(0, -(root.length + 1)) : "@";
+  return `Hi! Your ${t.product || t.name} builder is ready.\n\nPlease add these 2 records in the DNS of ${root} (where you bought the domain):\n\n1) Type: A   Name: ${sub}   Value: ${ip}\n2) Type: A   Name: *   Value: ${ip}\n\nDelete any old A/AAAA records with the same names. In 10–30 minutes open https://${t.app_domain} and create your account with ${t.owner_email || "your email"}.`;
+};
 function WhiteLabel({ me }) {
   const owner = me.role === "owner";
-  const [d, setD] = useState(null), [err, setErr] = useState(""), [edit, setEdit] = useState(null), [chk, setChk] = useState({}), [busy, setBusy] = useState("");
+  const [d, setD] = useState(null), [err, setErr] = useState(""), [edit, setEdit] = useState(null), [chk, setChk] = useState({}), [busy, setBusy] = useState(""), [copied, setCopied] = useState("");
   const load = () => admin("tenants").then((r) => { setD(r); setErr(""); if (owner && r.tenants[0]) setEdit((e) => e || { ...EMPTY, ...r.tenants[0] }); }).catch((e) => setErr(e.message));
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const check = async (t) => { setChk((c) => ({ ...c, [t.id]: "busy" })); try { const r = await admin("tenant_check", { id: t.id }); setChk((c) => ({ ...c, [t.id]: r })); } catch (e) { setChk((c) => ({ ...c, [t.id]: { error: e.message } })); } };
   const toggle = async (t) => { setBusy(t.id); try { await admin("tenant_save", { tenant: { id: t.id, active: !t.active } }); await load(); } catch (e) { window.alert(e.message); } setBusy(""); };
-  const del = async (t) => { if (!window.confirm(`Delete the workspace "${t.name}"?`)) return; try { await admin("tenant_del", { id: t.id }); await load(); } catch (e) { window.alert(e.message); } };
+  const del = async (t) => { if (!window.confirm(`Delete "${t.name}"?`)) return; try { await admin("tenant_del", { id: t.id }); await load(); } catch (e) { window.alert(e.message); } };
   if (err) return <div className="panel adm-err"><b>Couldn't load</b><p className="mut">{err}</p></div>;
   if (!d) return <div className="lazy-load"><span className="pub-spin" /></div>;
-  if (owner) return edit ? <TenantForm t={edit} owner ip={d.ip} onDone={() => { setEdit(null); load(); }} /> : <p className="mut">No workspace found.</p>;
+  if (owner) return edit ? <TenantForm t={edit} owner onDone={() => load()} /> : <p className="mut">No workspace found.</p>;
   return (
     <>
-      <div className="panel wl-how">
-        <b>How white-label works</b>
-        <ol><li>Your client points <b>their</b> domain to your server with 2 DNS records — nothing to install, no code given.</li>
-          <li>They open the builder at their address (like <b>app.theirbrand.com</b>) with their name, logo and colours.</li>
-          <li>Their customers sign up there, and get free subdomains like <b>shop.theirbrand.com</b>. Custom domains work too.</li>
-          <li>You see and control everything here. Switch a client off any time.</li></ol>
-        <button className="pri" onClick={() => setEdit({ ...EMPTY })}>＋ Add white-label client</button>
-      </div>
-      {edit && <TenantForm t={edit} ip={d.ip} main={d.main} onDone={() => { setEdit(null); load(); }} onCancel={() => setEdit(null)} />}
+      {!edit && <div className="panel wl-how">
+        <b>Give your software to a client — 3 simple steps</b>
+        <div className="wl-steps">
+          <div><span>1</span><b>Add the client</b><small>Their name, logo, colour and the address they want (like app.theirbrand.com).</small></div>
+          <div><span>2</span><b>Send them 1 message</b><small>It has the 2 DNS records they add. No code, nothing to install.</small></div>
+          <div><span>3</span><b>They're live</b><small>Their customers sign up on their address. You can pause them any time.</small></div>
+        </div>
+        <button className="adm-go" onClick={() => setEdit({ ...EMPTY })}>＋ Add a client</button>
+      </div>}
+      {edit && <TenantForm t={edit} onDone={() => { setEdit(null); load(); }} onCancel={() => setEdit(null)} />}
       {d.tenants.map((t) => {
-        const c = chk[t.id], appRoot = t.app_domain ? rootDomain(t.app_domain) : "", appName = t.app_domain && t.app_domain !== appRoot ? t.app_domain.slice(0, -(appRoot.length + 1)) : "@";
-        const subRoot = t.sites_domain ? rootDomain(t.sites_domain) : "", subName = t.sites_domain && t.sites_domain !== subRoot ? "*." + t.sites_domain.slice(0, -(subRoot.length + 1)) : "*";
+        const c = chk[t.id];
         return (
           <div key={t.id} className={"panel wl-card" + (t.active === false ? " off" : "")}>
             <div className="wl-h">
               <span className="wl-logo" style={{ background: t.color || "#f5b301" }}>{t.logo ? <img src={t.logo} alt="" /> : (t.product || t.name || "?")[0].toUpperCase()}</span>
-              <div><b>{t.name}</b><small>{t.product || t.name} · {t.users}{t.max_users ? " / " + t.max_users : ""} accounts · {t.sub_limit === "" || t.sub_limit == null ? 5 : t.sub_limit} free subdomains each</small></div>
+              <div><b>{t.name}</b><small><a href={"https://" + t.app_domain} target="_blank" rel="noopener">{t.app_domain} ↗</a> · {t.users}{t.max_users ? " / " + t.max_users : ""} accounts</small></div>
               <div className="grow" />
-              <span className={"badge " + (t.active === false ? "draft" : "published")}>{t.active === false ? "Paused" : "● Active"}</span>
-              {t.app_domain && <a className="btn" href={"https://" + t.app_domain} target="_blank" rel="noopener">Open ↗</a>}
+              <span className={"fs-st " + (t.active === false ? "wait" : t.https ? "on" : "wait")}>{t.active === false ? "Paused" : t.https ? "● Live" : "Waiting for their DNS"}</span>
               <button onClick={() => setEdit({ ...EMPTY, ...t })}>Edit</button>
               <button disabled={busy === t.id} onClick={() => toggle(t)}>{t.active === false ? "▶ Switch on" : "⏸ Pause"}</button>
               {!t.users && <button className="red" onClick={() => del(t)}>Delete</button>}
             </div>
-            <div className="wl-grid">
-              <div><span className="mut sm">Builder address</span><b>{t.app_domain || "—"}</b></div>
-              <div><span className="mut sm">Their customers' subdomains</span><b>{t.sites_domain ? "name." + t.sites_domain : "—"}</b></div>
-              <div><span className="mut sm">Owner (sees “My clients”)</span><b>{t.owner_email || "—"}</b></div>
-            </div>
-            <details className="wl-dns" open={!t.https}>
-              <summary>Send these steps to your client {t.https ? "· ✓ live" : ""}</summary>
-              <p className="mut sm">In the DNS records of <b>{appRoot || "their domain"}</b>{subRoot && subRoot !== appRoot ? <> and <b>{subRoot}</b></> : null} add:</p>
-              <div className="ltable"><table><thead><tr><th>Type</th><th>Name</th><th>Value</th><th>For</th></tr></thead><tbody>
-                <tr><td><b>A</b></td><td><C v={appName} /></td><td><C v={d.ip || "your VPS IP"} /></td><td>the builder at {t.app_domain}</td></tr>
-                {t.sites_domain && <tr><td><b>A</b></td><td><C v={subName} /></td><td><C v={d.ip || "your VPS IP"} /></td><td>free subdomains name.{t.sites_domain}</td></tr>}
-              </tbody></table></div>
-              <p className="mut sm">Delete any old <b>A</b> or <b>AAAA</b> records with the same names. https is added automatically ~2 minutes after the records work.</p>
-              <p className="mut sm"><b>You (once per client):</b> Supabase → Authentication → URL Configuration → Redirect URLs → add <C v={"https://" + (t.app_domain || "app.theirbrand.com") + "/**"} /> so sign-up emails bring people back to their address.</p>
-              <div className="row"><button onClick={() => check(t)} disabled={c === "busy"}>{c === "busy" ? "Checking…" : "Check DNS"}</button></div>
+            {!t.https && t.active !== false && <div className="wl-send">
+              <b>Send this to {t.name}:</b>
+              <pre>{msgFor(t, d.ip || "your VPS IP")}</pre>
+              <div className="row">
+                <button className="adm-go" onClick={() => { copy(msgFor(t, d.ip)); setCopied(t.id); setTimeout(() => setCopied(""), 1600); }}>{copied === t.id ? "✓ Copied" : "Copy message"}</button>
+                <a className="btn" href={"https://wa.me/?text=" + encodeURIComponent(msgFor(t, d.ip))} target="_blank" rel="noopener">Send on WhatsApp</a>
+                <button onClick={() => check(t)} disabled={c === "busy"}>{c === "busy" ? "Checking…" : "Check their DNS"}</button>
+              </div>
+              <p className="mut sm">You, once: Supabase → Authentication → URL Configuration → Redirect URLs → add <C v={"https://" + t.app_domain + "/**"} /></p>
               {c && c !== "busy" && (c.error ? <div className="cw-st bad">{c.error}</div> : <div className="wl-chk">
-                <div className={c.app_ok ? "ok" : "bad"}>{c.app_ok ? "✓" : "✕"} {t.app_domain} → {c.app.length ? c.app.join(", ") : "no A record yet"}{c.app_ok && !c.app_opens ? " (points here — the server answers within a minute)" : ""}</div>
-                {t.sites_domain && <div className={c.wild_ok ? "ok" : "bad"}>{c.wild_ok ? "✓" : "✕"} *.{t.sites_domain} → {c.wild.length ? c.wild.join(", ") : "no wildcard record yet"}</div>}
-                <div className={c.app_https ? "ok" : "wait"}>{c.app_https ? "✓ https is on" : "… https comes automatically after the records work"}</div>
+                <div className={c.app_ok ? "ok" : "bad"}>{c.app_ok ? "✓" : "✕"} {t.app_domain} → {c.app.length ? c.app.join(", ") : "not added yet"}</div>
+                {t.sites_domain && <div className={c.wild_ok ? "ok" : "bad"}>{c.wild_ok ? "✓" : "✕"} * (subdomains) → {c.wild.length ? c.wild.join(", ") : "not added yet"}</div>}
+                <div className={c.app_https ? "ok" : "wait"}>{c.app_https ? "✓ https is on — they're live" : "… https turns on by itself ~2 minutes after the records work"}</div>
               </div>)}
-            </details>
+            </div>}
           </div>
         );
       })}
-      {!d.tenants.length && !edit && <p className="mut adm-none">No white-label clients yet.</p>}
     </>
   );
 }
 
-function TenantForm({ t, ip, main, owner = false, onDone, onCancel }) {
+function TenantForm({ t, owner = false, onDone, onCancel }) {
   const [v, setV] = useState(t), [busy, setBusy] = useState(false), [err, setErr] = useState(""), [ok, setOk] = useState("");
   const set = (k) => (e) => setV({ ...v, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
   const logoFile = (e) => {
@@ -158,33 +160,39 @@ function TenantForm({ t, ip, main, owner = false, onDone, onCancel }) {
   };
   const save = async () => {
     setErr(""); setOk(""); setBusy(true);
-    try { const r = await admin("tenant_save", { tenant: v }); setV({ ...v, id: r.id }); if (owner) setOk("Saved — reload your builder address to see it."); else onDone(); }
+    const app = String(v.app_domain || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
+    /* simple defaults: software name = client name, their customers' subdomains under their own domain */
+    const send = owner ? v : { ...v, app_domain: app, product: v.product || v.name, sites_domain: v.sites_domain || (app ? rootDomain(app) : "") };
+    try { const r = await admin("tenant_save", { tenant: send }); setV({ ...send, id: r.id }); if (owner) setOk("Saved — reload your builder address to see it."); else onDone(); }
     catch (e) { setErr(e.message); }
     setBusy(false);
   };
   const F = ({ k, l, ph, hint, type = "text" }) => <label className="wl-f">{l}<input type={type} value={v[k] ?? ""} onChange={set(k)} placeholder={ph} />{hint && <small className="mut">{hint}</small>}</label>;
+  const logo = <div className="wl-f">Logo<div className="wl-logo-in"><input value={v.logo && v.logo.startsWith("data:") ? "(uploaded)" : v.logo || ""} onChange={set("logo")} placeholder="Paste a link, or upload →" /><label className="btn wl-up">Upload<input type="file" hidden accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={logoFile} /></label></div></div>;
+  const color = <label className="wl-f">Brand colour<div className="wl-col"><input type="color" value={v.color || "#f5b301"} onChange={set("color")} /><input value={v.color || ""} onChange={set("color")} /></div></label>;
   return (
     <div className="panel wl-form">
-      <div className="wl-fh"><b>{owner ? "Your brand" : v.id ? "Edit " + v.name : "New white-label client"}</b>
-        <div className="wl-prev"><span className="wl-logo" style={{ background: v.color || "#f5b301" }}>{v.logo ? <img src={v.logo} alt="" /> : (v.product || v.name || "A")[0].toUpperCase()}</span><b>{v.product || v.name || "Brand name"}</b><i style={{ background: v.color }} /><i style={{ background: v.color2 }} /></div></div>
+      <div className="wl-fh"><b>{owner ? "Your brand" : v.id ? "Edit " + v.name : "Add a client"}</b>
+        <div className="wl-prev"><span className="wl-logo" style={{ background: v.color || "#f5b301" }}>{v.logo ? <img src={v.logo} alt="" /> : (v.product || v.name || "A")[0].toUpperCase()}</span><b>{v.product || v.name || "Their brand"}</b><i style={{ background: v.color || "#f5b301" }} /></div></div>
       <div className="wl-fg">
-        {!owner && F({ k: "name", l: "Client name", ph: "ABC Digital Agency" })}
-        {F({ k: "product", l: "Software name (shown in the builder)", ph: "ABC Sites", hint: "Replaces your product name everywhere for their users." })}
-        <label className="wl-f">Logo<input value={v.logo && v.logo.startsWith("data:") ? "(uploaded image)" : v.logo || ""} onChange={set("logo")} placeholder="https://… or upload" /><input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={logoFile} /></label>
-        <label className="wl-f">Main colour<div className="wl-col"><input type="color" value={v.color || "#f5b301"} onChange={set("color")} /><input value={v.color || ""} onChange={set("color")} /></div></label>
-        <label className="wl-f">Light colour<div className="wl-col"><input type="color" value={v.color2 || "#ffd35c"} onChange={set("color2")} /><input value={v.color2 || ""} onChange={set("color2")} /></div></label>
-        {!owner && F({ k: "app_domain", l: "Builder address (their domain)", ph: "app.abcagency.com", hint: "Where they and their customers log in." })}
-        {!owner && F({ k: "sites_domain", l: "Domain for their customers' free subdomains", ph: "abcagency.com", hint: "Customers get name.abcagency.com. Leave empty to give none." })}
-        {!owner && F({ k: "owner_email", l: "Owner login email", ph: "owner@abcagency.com", hint: "This login sees “My clients” for this workspace only." })}
-        {!owner && F({ k: "max_users", l: "Max accounts", ph: "Unlimited", type: "number" })}
-        {!owner && F({ k: "sub_limit", l: "Free subdomains per account", ph: "5", type: "number" })}
-        {F({ k: "support_email", l: "Support email (shown to their users)", ph: "support@abcagency.com" })}
-        {F({ k: "whatsapp", l: "Support WhatsApp", ph: "919876543210" })}
-        {!owner && <label className="wl-f wl-chk2"><input type="checkbox" checked={v.active !== false} onChange={set("active")} /> Active (switch off to pause the whole workspace)</label>}
+        {owner ? F({ k: "product", l: "Software name", ph: "ABC Sites" }) : F({ k: "name", l: "Client / brand name", ph: "ABC Sites" })}
+        {!owner && F({ k: "app_domain", l: "Their address for the builder", ph: "app.theirbrand.com", hint: "They log in here. Their customers' free subdomains: name.theirbrand.com" })}
+        {!owner && F({ k: "owner_email", l: "Client's login email", ph: "owner@theirbrand.com", hint: "This login sees its own customers." })}
+        {logo}{color}
       </div>
+      <details className="wl-more"><summary>More options</summary>
+        <div className="wl-fg">
+          {!owner && F({ k: "product", l: "Software name (if different)", ph: v.name || "Same as client name" })}
+          <label className="wl-f">Light colour<div className="wl-col"><input type="color" value={v.color2 || "#ffd35c"} onChange={set("color2")} /><input value={v.color2 || ""} onChange={set("color2")} /></div></label>
+          {!owner && F({ k: "sites_domain", l: "Domain for their customers' subdomains", ph: v.app_domain ? rootDomain(String(v.app_domain).replace(/^https?:\/\//, "")) : "theirbrand.com" })}
+          {!owner && F({ k: "max_users", l: "Max accounts", ph: "Unlimited", type: "number" })}
+          {!owner && F({ k: "sub_limit", l: "Free subdomains per account", ph: "5", type: "number" })}
+          {F({ k: "support_email", l: "Support email", ph: "support@theirbrand.com" })}
+          {F({ k: "whatsapp", l: "Support WhatsApp", ph: "919876543210" })}
+          {!owner && <label className="wl-f wl-chk2"><input type="checkbox" checked={v.active !== false} onChange={set("active")} /> Active</label>}
+        </div></details>
       {err && <div className="cw-st bad">{err}</div>}{ok && <div className="cw-st ok">{ok}</div>}
-      {!owner && !v.id && <p className="mut sm">After saving, send your client the 2 DNS records shown on their card (server IP {ip || "—"}). Your own platform stays on {main || "your main domain"}.</p>}
-      <div className="row"><button className="pri" disabled={busy} onClick={save}>{busy ? "Saving…" : "Save"}</button>{onCancel && <button onClick={onCancel}>Cancel</button>}</div>
+      <div className="row"><button className="adm-go" disabled={busy} onClick={save}>{busy ? "Saving…" : owner ? "Save" : v.id ? "Save" : "Save & get the message for the client"}</button>{onCancel && <button onClick={onCancel}>Cancel</button>}</div>
     </div>
   );
 }

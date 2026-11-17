@@ -95,7 +95,8 @@ const GROUPS = [
   ["reports", "gear", "Reports & Settings", [["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]]],
 ];
 export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open = false, onClose = () => {}, mini = false, onMini = () => {}, role = "" }) {
-  const adminItem = role === "admin" || role === "owner" ? [["admin", "users", role === "owner" ? "My clients" : "Accounts & clients"]] : [];
+  /* the collapsed menu stays short: the main pages only */
+  const HIDE_MINI = ["followups", "analytics", "pixels", "lms"];
   const [shut, setShut] = useState(() => { try { return JSON.parse(localStorage.getItem("lb_nav_shut") || "[]"); } catch { return []; } }), [fly, setFly] = useState("");
   const toggle = (g) => { const n = shut.includes(g) ? shut.filter((x) => x !== g) : [...shut, g]; setShut(n); localStorage.setItem("lb_nav_shut", JSON.stringify(n)); };
   const go = (k) => { onView(k); onClose(); };
@@ -115,9 +116,8 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
       {mini ? <div className="sb3-scroll sb3-rail">
         {/* collapsed: every page as an icon with a small name */}
         <div className={"sb3-m" + (isOn("pages") ? " on" : "")} onClick={() => go("pages")} title="Dashboard"><Icon n="grid" s={24} /><small>Home</small></div>
-        {GROUPS.flatMap(([, , , items]) => items).filter(([k]) => k !== "followups").map(([k, ic, nm]) => (
+        {GROUPS.flatMap(([, , , items]) => items).filter(([k]) => !HIDE_MINI.includes(k)).map(([k, ic, nm]) => (
           <div key={k} className={"sb3-m" + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={nm}><Icon n={ic} s={24} /><small>{MINI[k] || nm}</small>{badges[k] ? <i className="sb3-dotb" /> : null}</div>))}
-        {adminItem.map(([k, ic, nm]) => <div key={k} className={"sb3-m adm" + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={nm}><Icon n="lock" s={24} /><small>{nm}</small></div>)}
       </div> : <div className="sb3-scroll">
         <Item k="pages" ic="grid" nm="Dashboard" />
         {GROUPS.map(([g, gic, label, items]) => {
@@ -127,8 +127,6 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
             {!closed && <div className={mini ? "" : "sb3-tree"}>{items.map(([k, ic, nm]) => <Item key={k} k={k} ic={ic} nm={nm} sub />)}</div>}
           </div>;
         })}
-        {adminItem.length > 0 && <div className="sb3-grp sb3-adm"><div className="sb3-gh"><Icon n="lock" s={16} /><span>{role === "owner" ? "Workspace" : "Admin"}</span></div>
-          <div className="sb3-tree">{adminItem.map(([k, ic, nm]) => <Item key={k} k={k} ic={ic} nm={nm} sub />)}</div></div>}
       </div>}
       <button className="sb3-up" onClick={() => go("settings")} title={mini ? `Upgrade to Pro · ${count}/${LIMIT} projects` : undefined}>
         <span className="sb3-crown">👑</span><span className="sb3-l"><b>Upgrade to Pro</b><small>{count}/{LIMIT} projects used</small></span></button>

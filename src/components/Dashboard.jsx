@@ -17,7 +17,6 @@ const LMS = lazy(() => import("./LMS.jsx"));
 const ImportPage = lazy(() => import("./ImportPage.jsx"));
 const FollowUps = lazy(() => import("./FollowUps.jsx"));
 const Consultant = lazy(() => import("./Consultant.jsx"));
-const Admin = lazy(() => import("./Admin.jsx"));
 import { BRAND } from "../brand.js";
 import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount } from "../lib.js";
 import { formHtml, bookingWidget } from "./tools.js";
@@ -129,7 +128,7 @@ export default function Dashboard({ user, onLogout }) {
   const [ai, setAi] = useState(null);
   const consultOpen = (o = {}) => setAi({ ...o, nonce: Date.now() });
   /* my account on the server: role (admin / workspace owner / user), free-subdomain limit, paused accounts */
-  const [me, setMe] = useState(null), [blocked, setBlocked] = useState(null);
+  const [me, setMe] = useState(null), [blocked, setBlocked] = useState(null), [domFocus, setDomFocus] = useState(null);
   useEffect(() => {
     myAccount().then(setMe).catch((e) => { if (e.code === "ACCOUNT_PAUSED" || e.code === "WRONG_WORKSPACE") setBlocked({ code: e.code, msg: e.message }); });
     const f = (e) => setBlocked(e.detail); window.addEventListener("lb-blocked", f); return () => window.removeEventListener("lb-blocked", f);
@@ -269,12 +268,12 @@ export default function Dashboard({ user, onLogout }) {
         <div className="mbar"><button className="mbar-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
           <div className="mbar-brand">{BRAND.logo ? <img className="mbar-img" src={BRAND.logo} alt="" /> : <span className="mbar-logo">⬡</span>}{BRAND.product}</div>
           {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
-        <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses", admin: me && me.role === "owner" ? "My clients" : "Admin" })[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
+        <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses"})[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={projects} forms={forms} cal={cal} onOpenProject={setOpenId} />
         {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={projects} leads={leads} events={evs} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
-          onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} onConsult={consultOpen} onUseTpl={applyTpl} />}
+          onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} onConsult={consultOpen} onUseTpl={applyTpl} onDomain={(p) => { setDomFocus({ id: p.id, ts: Date.now() }); setView("domains"); }} />}
         {view === "import" && <ImportPage onBack={() => setView("pages")} onFile={importFile} />}
         {view === "templates" && <Templates mine={myTpl} onDeleteMine={(id) => putTpl(myTpl.filter((x) => x.id !== id))} onUse={applyTpl} />}
         {view === "forms" && <Forms forms={forms} onSave={onSaveForms} projects={projects} leads={leads} onAddToPage={addFormToPage} onLeads={() => setView("leads")} integ={integ} onIntegrations={() => setView("integrations")} />}
@@ -283,10 +282,9 @@ export default function Dashboard({ user, onLogout }) {
         {view === "followups" && <FollowUps leads={leads} setLeads={(list) => { setLeads(list); saveLeads(E, list); }} onPipeline={() => { localStorage.setItem("lb_leads_view", "pipeline"); setView("leads"); }} />}
         {view === "leads" && <Leads user={user} projects={projects} forms={forms} leads={leads} setLeads={setLeads} integ={integ} />}
         {view === "analytics" && <Analytics projects={projects} events={evs} leads={leads} onOpenProject={setOpenId} />}
-        {view === "domains" && <Domains projects={projects} onPatch={patch} onPatchPage={patchPage} onInteg={onInteg} onOpen={setOpenId} integ={integ} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onPublish={(p) => setModal({ type: "publish", id: p.id })} me={me} />}
+        {view === "domains" && <Domains projects={projects} onPatch={patch} onPatchPage={patchPage} onInteg={onInteg} onOpen={setOpenId} integ={integ} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onPublish={(p) => setModal({ type: "publish", id: p.id })} me={me} focus={domFocus} />}
         {view === "lms" && <LMS user={user} />}
         {view === "pixels" && <Pixels integ={integ} onChange={onInteg} projects={projects} />}
-        {view === "admin" && me && (me.role === "admin" || me.role === "owner") && <Admin me={me} />}
         {view === "settings" && <Settings user={user} count={projects.length} onDeleteAll={() => setProjects([])} />}
       </Suspense></section>
       {modal && modal.type === "new" && <NewModal mine={myTpl} kind={modal.kind || "landing"} onClose={() => setModal(null)} onCreate={create} onImport={() => { setModal(null); setView("import"); }} ai={integ.ai} onSetupAI={() => { setModal(null); setView("integrations"); }} />}
