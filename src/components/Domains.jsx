@@ -231,7 +231,7 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
   };
   const remove = async () => {
     if (!window.confirm(`Disconnect ${obj.domain}?`)) return;
-    if (serverOn(integ)) { try { await phpCall(srv, { action: "domain", domain: "", ...route }); } catch { /* ignore */ } }
+    if (vps || serverOn(integ)) { try { await phpCall(srv.url ? srv : { url: defaultServerUrl(), key: srv.key }, { action: "domain", domain: "", ...route }); } catch { /* ignore */ } }
     onSave({ domain: "", domainStatus: "", domainCheck: null, domainCopy: false }); setVal("");
   };
   useEffect(() => { if (open && obj.domain) check(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -279,7 +279,9 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
     <div className={"dr" + (open ? " open" : "")}>
       <div className="dr-h" onClick={() => setOpen(!open)}>
         <div className="dr-l"><b>{label}</b><span className="mut sm">{subLabel}</span></div>
-        <div className="dr-d">{obj.domain ? <><code className="dm-own">{obj.domain}</code><span className={"badge " + st[0]}>{obj.domainStatus === "connected" ? "● Live" : "Setting up"}</span></> : <a href={url} target="_blank" rel="noopener" className="mut sm" onClick={(e) => e.stopPropagation()}>{url.replace(/^https?:\/\//, "")} ↗</a>}</div>
+        <div className="dr-d">{obj.domain ? <><a className="dm-link" href={"https://" + obj.domain} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()}>{obj.domain} ↗</a><span className={"badge " + st[0]}>{obj.domainStatus === "connected" ? "● Live" : "Setting up"}</span></>
+          : <a href={url} target="_blank" rel="noopener" className={"sm " + (/\/sites\//.test(url) ? "mut" : "dm-link")} onClick={(e) => e.stopPropagation()}>{url.replace(/^https?:\/\//, "").replace(/\/$/, "")} ↗</a>}</div>
+        {obj.domain && <button className="dm-disc" onClick={(e) => { e.stopPropagation(); remove(); }} title="Disconnect this domain">✕ Disconnect</button>}
         <button className={obj.domain ? "" : "pri"} onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>{open ? "Close" : obj.domain ? "Manage" : "Connect domain"}</button>
       </div>
       {open && <div className="dm-body cw">
@@ -309,15 +311,17 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
   );
 }
 
-function ServerCard({ p, onPatch, onPatchPage, onOpen, integ, onSetup, vps = null }) {
+function ServerCard({ p, onPatch, onPatchPage, onOpen, integ, onSetup, vps = null, subs = [] }) {
+  /* the address it's really live at: its own domain → free subdomain → temporary link */
+  const live = liveAddr(p, subs) || subUrl(integ, p.host.slug) || p.host.url;
   const folder = p.host.folder || `public_html/sites/${p.host.slug}`, base = p.host.url.replace(/\/$/, "");
   const multi = p.type === "website" && p.pages.length > 1;
   return (
     <div className="panel dm">
       <div className="dm-h"><div><b>{p.name}</b><div className="mut sm">● Live on your hosting · {p.pages.length} page{p.pages.length > 1 ? "s" : ""}</div></div><div className="grow" />
-        <a className="btn" href={subUrl(integ, p.host.slug) || p.host.url} target="_blank" rel="noopener">Open site ↗</a></div>
+        <a className="btn" href={live} target="_blank" rel="noopener">Open site ↗</a></div>
       <div className="dr-list">
-        <DomainRow label={multi ? "Whole website" : "This page"} sub={multi ? "Home page + all pages and menus" : p.pages[0].name} url={subUrl(integ, p.host.slug) || p.host.url} folder={folder}
+        <DomainRow label={multi ? "Whole website" : "This page"} sub={multi ? "Home page + all pages and menus" : p.pages[0].name} url={live} folder={folder}
           obj={p} onSave={(o) => onPatch(p.id, o)} route={{ slug: p.host.slug }} integ={integ} onSetup={onSetup} onOpen={() => onOpen(p.id)} vps={vps} />
         {multi && p.pages.filter((x) => x.file !== "index.html").map((pg) => (
           <DomainRow key={pg.id} label={pg.name} sub={"Only this page · " + pg.file} url={`${base}/${pg.file}`} folder={`${folder}/p/${pg.file.replace(/\.html$/, "")}`}
@@ -328,46 +332,71 @@ function ServerCard({ p, onPatch, onPatchPage, onOpen, integ, onSetup, vps = nul
   );
 }
 
-export const SERVER_VERSION = 14;
+export const SERVER_VERSION = 15;
 
 /* ---------- free subdomains: name.crecapo.tech (or name.<white-label domain>) — no DNS for the user, limited per account ---------- */
-function FreeSubs({ projects, me }) {
-  const live = projects.filter((p) => p.host && p.host.slug);
-  const [data, setData] = useState(null), [name, setName] = useState(""), [pid, setPid] = useState(""), [page, setPage] = useState(""), [busy, setBusy] = useState(""), [msg, setMsg] = useState(null);
+/* messages that disappear by themselves (ok after 5 s, errors after 9 s) */
+function useFlash() {
+  const [m, setM] = useState(null);
+  useEffect(() => { if (!m) return; const t = setTimeout(() => setM(null), m[0] === "bad" ? 9000 : 5000); return () => clearTimeout(t); }, [m]);
+  return [m, setM];
+}
+
+/* project picker: every project, with the address it's live at (domain / subdomain / temporary link) */
+function ProjectPick({ projects, subs, value, onChange }) {
+  const [open, setOpen] = useState(false), cur = projects.find((p) => p.id === value);
+  useEffect(() => { if (!open) return; const f = () => setOpen(false); setTimeout(() => window.addEventListener("click", f), 0); return () => window.removeEventListener("click", f); }, [open]);
+  const addr = (p) => { const a = p.host || p.netlify ? liveAddr(p, subs) : ""; return a ? a.replace(/^https?:\/\//, "").replace(/\/$/, "") : ""; };
+  const tag = (p) => { const s = domainState(p, subs); return s === "connected" ? ["on", "Connected"] : s === "needs" ? ["tmp", "Temporary link"] : ["off", "Not published"]; };
+  return (
+    <div className={"pp" + (open ? " open" : "")}>
+      <button type="button" className="pp-btn" onClick={() => setOpen(!open)}>
+        {cur ? <span className="pp-cur"><b>{cur.name}</b><small className={tag(cur)[0]}>{addr(cur) || "Not published yet"}</small></span> : <span className="mut">Choose a project</span>}<span className="pp-chev">▾</span></button>
+      {open && <div className="pp-list">{projects.map((p) => { const t = tag(p), a = addr(p); return (
+        <div key={p.id} className={"pp-it" + (p.id === value ? " on" : "")} onClick={() => { onChange(p.id); setOpen(false); }}>
+          <div><b>{p.name}</b>{a ? <a href={"https://" + a} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()}>{a} ↗</a> : <small className="mut">Publish it first</small>}</div>
+          <span className={"pp-tag " + t[0]}>{t[1]}</span></div>); })}</div>}
+    </div>
+  );
+}
+
+function FreeSubs({ projects, me, onPublish = () => {} }) {
+  const [data, setData] = useState(null), [name, setName] = useState(""), [pid, setPid] = useState(""), [page, setPage] = useState(""), [busy, setBusy] = useState(""), [msg, setMsg] = useFlash();
   const load = () => subList().then(setData).catch((e) => setData({ error: e.message }));
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!pid && live[0]) setPid(live[0].id); }, [live.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!pid && projects[0]) setPid((projects.find((p) => p.host) || projects[0]).id); }, [projects.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const subs = (data && data.subs) || [], pending = subs.some((s) => !s.https);
   /* while a new subdomain is still getting its https lock, check every 20 s so it flips to "Live" by itself */
   useEffect(() => { if (!pending) return; const t = setInterval(load, 20000); return () => clearInterval(t); }, [pending]); // eslint-disable-line react-hooks/exhaustive-deps
-  const proj = live.find((p) => p.id === pid), base = (data && data.base) || (me && me.subBase) || "", limit = (data && data.limit) || (me && me.subLimit) || 5;
-  const unlimited = limit >= 1000, full = !unlimited && subs.length >= limit;
+  const proj = projects.find((p) => p.id === pid), base = (data && data.base) || (me && me.subBase) || "", limit = (data && data.limit) || (me && me.subLimit) || 5;
+  const unlimited = limit >= 1000, full = !unlimited && subs.length >= limit, needPub = proj && !(proj.host && proj.host.slug);
   const label = (t) => { const [sl, pg] = String(t).split("/"); const p = projects.find((x) => x.host && x.host.slug === sl); return (p ? p.name : sl) + (pg ? " · " + pg.replace(/\.html$/, "") : ""); };
   const nm = name.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/^-+/, "").slice(0, 40);
   const create = async () => {
-    setMsg(null); if (!nm || /-$/.test(nm)) return setMsg(["bad", "Type a name — letters, numbers and dashes."]); if (!proj) return setMsg(["bad", "Publish a website first, then pick it here."]);
+    setMsg(null); if (!nm || /-$/.test(nm)) return setMsg(["bad", "Type a name — letters, numbers and dashes."]); if (!proj) return setMsg(["bad", "Choose a project."]);
+    if (needPub) return setMsg(["bad", <>“{proj.name}” isn't published yet — <button className="link" onClick={() => onPublish(proj)}>publish it first</button>, then click Live.</>]);
     setBusy("add");
-    try { const r = await subClaim(nm, proj.host.slug, page); setData({ ...(data || {}), subs: r.subs }); setName(""); setMsg(["ok", <>🎉 <b>{r.host}</b> is created. It goes live in about <b>2 minutes</b> — this list updates by itself.</>]); }
+    try { const r = await subClaim(nm, proj.host.slug, page); setData({ ...(data || {}), subs: r.subs }); setName(""); setMsg(["ok", <>🎉 <b>{r.host}</b> is created — it goes live in about <b>2 minutes</b>.</>]); }
     catch (e) { setMsg(["bad", e.message]); }
     setBusy("");
   };
-  const del = async (h) => { if (!window.confirm(`Remove ${h}? The address stops working and the name becomes free for others.`)) return; setBusy(h); try { const r = await subDelete(h); setData({ ...(data || {}), subs: r.subs }); } catch (e) { setMsg(["bad", e.message]); } setBusy(""); };
+  const del = async (h) => { if (!window.confirm(`Remove ${h}? The address stops working and the name becomes free for others.`)) return; setBusy(h); try { const r = await subDelete(h); setData({ ...(data || {}), subs: r.subs }); setMsg(["ok", <>Removed <b>{h}</b>.</>]); } catch (e) { setMsg(["bad", e.message]); } setBusy(""); };
   if (data && data.error) return <div className="panel fsub"><div className="fs-h"><div><b>🎁 Free subdomains</b><span className="mut sm">{/Unknown action/i.test(data.error) ? "Needs the new server file — run lb-deploy on the VPS." : data.error}</span></div></div></div>;
   if (!base) return null;
   return (
     <div className="panel fsub">
-      <div className="fs-h"><div><b>🎁 Free subdomain</b><span className="mut sm">Put a website live at <b>yourname.{base}</b> in one click — no domain to buy, no DNS.</span></div>
+      <div className="fs-h"><span className="fs-ic">🎁</span><div><b>Free subdomain</b><span className="mut sm">Put a website live at <b className="fs-base">yourname.{base}</b> in one click — no domain to buy, no DNS.</span></div>
         <span className={"fs-count" + (full ? " full" : "")}>{unlimited ? `${subs.length} used` : `${subs.length} / ${limit} used`}</span></div>
       {!full ? <div className="fs-add">
         <div className="fs-name"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="yourname" onKeyDown={(e) => e.key === "Enter" && create()} /><span>.{base}</span></div>
-        <select value={pid} onChange={(e) => { setPid(e.target.value); setPage(""); }}>{!live.length && <option value="">Publish a website first</option>}{live.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-        {proj && proj.type === "website" && proj.pages.length > 1 && <select value={page} onChange={(e) => setPage(e.target.value)}><option value="">Whole website</option>{proj.pages.filter((x) => x.file !== "index.html").map((x) => <option key={x.id} value={x.file}>Only: {x.name}</option>)}</select>}
-        <button className="fs-go" disabled={!!busy || !live.length} onClick={create}>{busy === "add" ? "Creating…" : "🚀 Live"}</button>
+        <ProjectPick projects={projects} subs={subs} value={pid} onChange={(v) => { setPid(v); setPage(""); }} />
+        {proj && proj.host && proj.type === "website" && proj.pages.length > 1 && <select value={page} onChange={(e) => setPage(e.target.value)}><option value="">Whole website</option>{proj.pages.filter((x) => x.file !== "index.html").map((x) => <option key={x.id} value={x.file}>Only: {x.name}</option>)}</select>}
+        <button className="fs-go" disabled={!!busy || !projects.length} onClick={create}>{busy === "add" ? "Creating…" : "🚀 Live"}</button>
       </div> : <p className="mut sm fs-full">You've used all {limit} free subdomains. Remove one to add another — or connect your own domain below (unlimited).</p>}
       {nm && !full && <p className="mut sm fs-prev">Will open at <b>https://{nm}.{base}</b></p>}
-      {msg && <div className={"cw-st " + msg[0]}>{msg[1]}</div>}
+      {msg && <div className={"cw-st fs-toast " + msg[0]}>{msg[1]}<button className="fs-x" onClick={() => setMsg(null)} aria-label="Close">✕</button></div>}
       {subs.length > 0 && <div className="fs-list"><span className="fs-lh">Your subdomains</span>{subs.map((s) => (
-        <div key={s.host} className="fs-row"><a href={"https://" + s.host} target="_blank" rel="noopener"><b>{s.host}</b> ↗</a><span className="mut sm">→ {label(s.target)}</span><div className="grow" />
+        <div key={s.host} className="fs-row"><span className="fs-dot" /><a href={"https://" + s.host} target="_blank" rel="noopener"><b>{s.host}</b> ↗</a><span className="mut sm">→ {label(s.target)}</span><div className="grow" />
           {s.https ? <span className="fs-st on">● Live</span> : <span className="fs-st wait" title="https is being set up — usually 1–2 minutes"><i className="pub-spin" /> Going live · ~2 min</span>}
           <Copy v={"https://" + s.host} />
           <button className="xs red" disabled={busy === s.host} onClick={() => del(s.host)}>Remove</button></div>))}</div>}
@@ -450,7 +479,7 @@ export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ,
         <span>Push the latest code to GitHub, then run <code>lb-deploy</code> on the VPS.</span></div>}
       <div className="top"><div><h1>Domains</h1><p className="mut">Give every website — or a single page — its own domain (as many as you like). Add 2 DNS records; {BRAND.product} does the rest, including free https.</p></div></div>
       {vps && <div className="mode-note ok"><b>Your server:</b> point domains to <code>{vps.ip || "your VPS IP"}</code> <Copy v={vps.ip || ""} /></div>}
-      <FreeSubs projects={projects} me={me} />
+      <FreeSubs projects={projects} me={me} onPublish={onPublish} />
       {serverOn(integ) && me && me.role === "admin" && (vps.sitesDomain || (integ.server && integ.server.sitesDomain)) && <AutoSub integ={integ} onInteg={onInteg} projects={projects} info={vps} />}
       <div className="stats">
         <div className="stat"><span>Live sites</span><b>{projects.filter((p) => p.netlify || p.host).length}</b></div>
@@ -464,7 +493,7 @@ export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ,
           <p className="mut">{tab === "needs" ? "Projects that are live only on the temporary link show up here." : tab === "connected" ? "Give a live project a free subdomain above, or connect your own domain under “Need a domain”." : ""}</p></div>
           : shown.map((p) => <div key={p.id} id={"dm-" + p.id} className={"dm-wrap s-" + st(p)}>
             <span className={"dm-tag " + st(p)}>{st(p) === "connected" ? "● Connected · " + liveAddr(p, subs).replace(/^https?:\/\//, "").replace(/\/$/, "") : st(p) === "needs" ? "Needs a domain" : "Not published"}</span>
-            {p.host ? <ServerCard p={p} onPatch={onPatch} onPatchPage={onPatchPage} onOpen={onOpen} integ={integ} onSetup={onSetup} vps={vps} /> : p.netlify ? <DomainCard p={p} onPatch={onPatch} onOpen={onOpen} integ={integ} onSetup={onSetup} onPublish={onPublish} /> : <PublishFirst p={p} onPublish={onPublish} />}</div>)}
+            {p.host ? <ServerCard p={p} onPatch={onPatch} onPatchPage={onPatchPage} onOpen={onOpen} integ={integ} onSetup={onSetup} vps={vps} subs={subs} /> : p.netlify ? <DomainCard p={p} onPatch={onPatch} onOpen={onOpen} integ={integ} onSetup={onSetup} onPublish={onPublish} /> : <PublishFirst p={p} onPublish={onPublish} />}</div>)}
       </>}
       {isAdmin && <Suspense fallback={<div className="lazy-load"><span className="pub-spin" /></div>}><AdminPanel me={me} ip={vps.ip} /></Suspense>}
     </>

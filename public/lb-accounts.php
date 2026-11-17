@@ -131,9 +131,12 @@ function lb_sub_limit($ME, $DATA) {
 }
 /* addresses that belong to the platform itself (builder, white-label apps, free-subdomain domains) */
 function lb_platform_host($host, $DATA) {
-  $bases = array(); $m = lb_main_domain($DATA); if ($m) $bases[] = $m;
-  foreach (lb_tenants($DATA) as $t) { if (!empty($t['app_domain'])) { if ($host === strtolower($t['app_domain'])) return 'app'; } if (!empty($t['sites_domain'])) $bases[] = strtolower($t['sites_domain']); }
-  foreach ($bases as $b) { if ($host === $b) return 'app'; if (substr($host, -strlen('.' . $b)) === '.' . $b) return 'sub'; }
+  $m = lb_main_domain($DATA);
+  if ($m && $host === $m) return 'app';
+  $bases = $m ? array($m) : array();
+  foreach (lb_tenants($DATA) as $t) { if (!empty($t['app_domain']) && $host === strtolower($t['app_domain'])) return 'app'; if (!empty($t['sites_domain'])) $bases[] = strtolower($t['sites_domain']); }
+  /* name.<base> is a free subdomain; the base itself (abc.com) can still be connected to a website */
+  foreach ($bases as $b) if (substr($host, -strlen('.' . $b)) === '.' . $b) return 'sub';
   return '';
 }
 function lb_reserved($label) { return in_array($label, array('www', 'app', 'admin', 'api', 'mail', 'smtp', 'imap', 'pop', 'webmail', 'ftp', 'cpanel', 'whm', 'ns1', 'ns2', 'ns3', 'mx', 'sites', 'static', 'cdn', 'assets', 'support', 'help', 'login', 'auth', 'billing', 'dashboard', 'builder', 'status', 'dev', 'test', 'staging', 'root', 'server', 'vps', 'email'), true); }

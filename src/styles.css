@@ -2284,7 +2284,7 @@ html,body{zoom:1!important;transform:none!important;margin:0!important;padding:0
 .sb3.mini .sb3-user .av{width:26px;height:26px;font-size:11px}
 
 /* projects: all / websites / landing pages */
-.pj-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 16px}
+.pj-kinds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 16px}
 .dash .pj-kinds button{display:flex!important;align-items:center;gap:10px;padding:12px 14px!important;border-radius:12px!important;border:1.5px solid #e2e6f0!important;background:#fff!important;cursor:pointer;text-align:left;box-shadow:none!important}
 .dash .pj-kinds button svg{color:#d97706}.pj-kinds b{flex:1;font:700 14px Inter,sans-serif;color:#0f1238}
 .pj-kinds em{font-style:normal;font:700 12px Inter,sans-serif;padding:2px 9px;border-radius:999px;background:#eef1fb;color:#0f1238}
@@ -3569,3 +3569,43 @@ html.lb-hidden .tg-frame .tg-reel{animation-play-state:paused}
 .dash .wl-logo-in{display:flex;gap:6px}.dash .wl-logo-in input{flex:1}.dash .wl-up{display:inline-flex;align-items:center;padding:0 12px;border:1px solid #d5dae6;border-radius:9px;cursor:pointer;font-weight:700;background:#fff}
 .dash .adm-dns .ltable{margin:10px 0;overflow-x:auto}
 .dash .dm-wrap button.pri,.dash .dm-wrap .btn.pri{background:#0d1324!important;color:var(--lb-y,#f5b301)!important;box-shadow:0 10px 22px -14px rgba(13,19,36,.8)!important;border:0!important}
+
+/* =====================================================================
+   v68 — free subdomain panel in the light theme, project picker, quick disconnect, auto-hiding messages
+   ===================================================================== */
+.dash .fsub{background:linear-gradient(135deg,#fffdf4 0%,#ffffff 55%,#f6f8ff 100%);color:#0d1324;border:1px solid rgba(var(--lb-yr,245,179,1),.55);border-top:4px solid var(--lb-y,#f5b301);box-shadow:0 16px 36px -28px rgba(13,19,36,.45)}
+.dash .fsub .mut{color:#5d6785}.dash .fsub .fs-h b{color:#0d1324}
+.dash .fsub .fs-h{align-items:center}.dash .fs-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#0d1324;font-size:20px;flex:none;box-shadow:inset 0 -3px 0 var(--lb-y,#f5b301)}
+.dash .fsub .fs-h .mut b.fs-base{color:#1e3a8a;background:rgba(var(--lb-yr,245,179,1),.18);padding:1px 7px;border-radius:6px}
+.dash .fsub .fs-count{background:#0d1324;color:var(--lb-y,#f5b301);border:0}
+.dash .fsub .fs-name{border:1.5px solid #d5dae6;background:#fff}.dash .fsub .fs-name:focus-within{border-color:var(--lb-y,#f5b301);box-shadow:0 0 0 3px rgba(var(--lb-yr,245,179,1),.18)}
+.dash .fsub .fs-name span{background:#0d1324;color:var(--lb-y,#f5b301);border-left:0}
+.dash .fsub .fs-add select{border:1.5px solid #d5dae6}
+.dash .fsub .fs-go{background:#0d1324!important;color:var(--lb-y,#f5b301)!important;box-shadow:0 10px 22px -12px rgba(13,19,36,.7)}
+.dash .fsub .fs-prev b{color:#1e3a8a}
+.dash .fsub .fs-lh{color:#5d6785}
+.dash .fsub .fs-row{background:#fff;border:1px solid #e6e9f2;transition:border-color .15s,box-shadow .15s}.dash .fsub .fs-row:hover{border-color:rgba(var(--lb-yr,245,179,1),.7);box-shadow:0 6px 16px -12px rgba(13,19,36,.4)}
+.dash .fsub .fs-row a{color:#1e3a8a}.dash .fsub .fs-row button{background:#fff;color:#0d1324;border-color:#d5dae6}.dash .fsub .fs-row button.red{color:#b91c1c;border-color:#fecaca}
+.dash .fs-dot{width:8px;height:8px;border-radius:50%;background:var(--lb-y,#f5b301);flex:none}
+.dash .fsub .fs-st.on{background:#ecfdf5;color:#047857}.dash .fsub .fs-st.wait{background:#fff7d6;color:#92400e}
+.dash .fsub .cw-st.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}.dash .fsub .cw-st.bad{background:#fef2f2;border-color:#fecaca;color:#991b1b}.dash .fsub .cw-st b{color:inherit}
+.dash .fs-toast{position:relative;padding-right:36px;animation:fsIn .25s ease}.dash .fs-x{position:absolute;top:50%;right:8px;transform:translateY(-50%);background:none!important;border:0!important;color:inherit;cursor:pointer;font-size:13px;opacity:.6;padding:4px!important}
+@keyframes fsIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+/* project picker */
+.dash .pp{position:relative;flex:1 1 280px;min-width:0}
+.dash .pp-btn{width:100%;display:flex!important;align-items:center;gap:8px;text-align:left;background:#fff!important;border:1.5px solid #d5dae6!important;border-radius:10px!important;padding:6px 12px!important;min-height:42px;cursor:pointer}
+.dash .pp.open .pp-btn{border-color:var(--lb-y,#f5b301)!important}
+.dash .pp-cur{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}.dash .pp-cur b{font-size:14px;color:#0d1324;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash .pp-cur small{font-size:11.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dash .pp-cur small.on{color:#1e3a8a}.dash .pp-cur small.tmp{color:#5d6785}.dash .pp-cur small.off{color:#b45309}
+.dash .pp-chev{color:#5d6785}
+.dash .pp-list{position:absolute;z-index:40;top:calc(100% + 6px);left:0;right:0;max-height:320px;overflow:auto;background:#fff;border:1px solid #e1e5ef;border-radius:12px;box-shadow:0 24px 50px -20px rgba(13,19,36,.45);padding:6px}
+.dash .pp-it{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer}.dash .pp-it:hover{background:#fffbea}.dash .pp-it.on{background:#fff7d6}
+.dash .pp-it>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.dash .pp-it b{font-size:13.5px;color:#0d1324}
+.dash .pp-it a{font-size:12px;font-weight:700;color:#1e3a8a;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dash .pp-it a:hover{text-decoration:underline}
+.dash .pp-tag{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap}.dash .pp-tag.on{background:#ecfdf5;color:#047857}.dash .pp-tag.tmp{background:#f1f3f8;color:#5d6785}.dash .pp-tag.off{background:#fff7d6;color:#92400e}
+/* domain rows: real address in theme blue + quick disconnect */
+.dash .dm-link{color:#1e3a8a!important;font-weight:700;text-decoration:none}.dash .dm-link:hover{text-decoration:underline}
+.dash .dm-disc{background:#fff!important;color:#b91c1c!important;border:1px solid #fecaca!important;border-radius:9px!important;padding:7px 12px!important;font-weight:700!important;cursor:pointer;white-space:nowrap}
+.dash .dm-disc:hover{background:#fef2f2!important}
+@media (max-width:640px){.dash .pp{flex-basis:100%}}
+.dash .fsub{position:relative;z-index:6;overflow:visible}

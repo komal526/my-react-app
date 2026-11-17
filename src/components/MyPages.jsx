@@ -288,7 +288,8 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
   const [filter, setFilter] = useState("All"), [menu, setMenu] = useState(null), [kind, setKind] = useState("all");
   const act = (fn, p) => () => { setMenu(null); fn(p); };
   const nWeb = projects.filter((p) => p.type === "website").length, nLand = projects.length - nWeb;
-  const typed = mode === "website" || (mode === "all" && kind === "website") ? projects.filter((p) => p.type === "website") : mode === "landing" || (mode === "all" && kind === "landing") ? projects.filter((p) => p.type !== "website") : projects;
+  const nDom = projects.filter((p) => domainState(p, subs) === "connected").length;
+  const typed = mode === "all" && kind === "domain" ? projects.filter((p) => domainState(p, subs) === "connected") : mode === "website" || (mode === "all" && kind === "website") ? projects.filter((p) => p.type === "website") : mode === "landing" || (mode === "all" && kind === "landing") ? projects.filter((p) => p.type !== "website") : projects;
   const matching = typed.filter((p) => (filter === "All" || p.status === filter.toLowerCase()) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
   const shown = mode === "dash" && !query ? [...matching].sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 3) : matching;
   /* draw 12 cards first, the rest as you scroll (keeps the page instant with many projects) */
@@ -363,7 +364,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
     <div onClick={() => setMenu(null)}>
       <div className="top"><div><h1>{mode === "website" ? "Websites" : mode === "landing" ? "Landing Pages" : "All projects"}</h1><p className="mut">{mode === "website" ? "Multi-page sites with a shared menu." : mode === "landing" ? "Single pages built to convert — offers, events, sign-ups." : "Every website and landing page you've built."}</p></div>
         <button className="pri big" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ New {mode === "website" ? "website" : mode === "landing" ? "landing page" : "project"}</button></div>
-      {mode === "all" && <div className="pj-kinds">{[["all", "All projects", projects.length, "layers"], ["website", "Websites", nWeb, "globe"], ["landing", "Landing pages", nLand, "pages"]].map(([k, l, n, ic]) => (
+      {mode === "all" && <div className="pj-kinds">{[["all", "All projects", projects.length, "layers"], ["website", "Websites", nWeb, "globe"], ["landing", "Landing pages", nLand, "pages"], ["domain", "With domain", nDom, "link"]].map(([k, l, n, ic]) => (
         <button key={k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}><Icon n={ic} s={16} /><b>{l}</b><em>{n}</em></button>))}</div>}
       {shown.length > limit && <div ref={more} className="pc-more">Loading more projects…</div>}
       {list}

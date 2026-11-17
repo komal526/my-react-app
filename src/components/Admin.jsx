@@ -152,6 +152,7 @@ function WhiteLabel({ me }) {
 
 function TenantForm({ t, owner = false, onDone, onCancel }) {
   const [v, setV] = useState(t), [busy, setBusy] = useState(false), [err, setErr] = useState(""), [ok, setOk] = useState("");
+  useEffect(() => { if (!ok && !err) return; const x = setTimeout(() => { setOk(""); setErr(""); }, ok ? 5000 : 9000); return () => clearTimeout(x); }, [ok, err]);
   const set = (k) => (e) => setV({ ...v, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
   const logoFile = (e) => {
     const f = e.target.files[0]; if (!f) return;
@@ -176,8 +177,8 @@ function TenantForm({ t, owner = false, onDone, onCancel }) {
         <div className="wl-prev"><span className="wl-logo" style={{ background: v.color || "#f5b301" }}>{v.logo ? <img src={v.logo} alt="" /> : (v.product || v.name || "A")[0].toUpperCase()}</span><b>{v.product || v.name || "Their brand"}</b><i style={{ background: v.color || "#f5b301" }} /></div></div>
       <div className="wl-fg">
         {owner ? F({ k: "product", l: "Software name", ph: "ABC Sites" }) : F({ k: "name", l: "Client / brand name", ph: "ABC Sites" })}
-        {!owner && F({ k: "app_domain", l: "Their address for the builder", ph: "app.theirbrand.com", hint: "They log in here. Their customers' free subdomains: name.theirbrand.com" })}
-        {!owner && F({ k: "owner_email", l: "Client's login email", ph: "owner@theirbrand.com", hint: "This login sees its own customers." })}
+        {!owner && F({ k: "app_domain", l: "Their address for the builder", ph: "app.theirbrand.com", hint: "Use a NEW address like app.theirbrand.com — not a domain that already shows a website. Their customers get name.theirbrand.com" })}
+        {!owner && F({ k: "owner_email", l: "Client's login email", ph: "owner@theirbrand.com", hint: "The client's own email (not yours). They sign up with it on their address and see their customers." })}
         {logo}{color}
       </div>
       <details className="wl-more"><summary>More options</summary>

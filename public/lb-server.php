@@ -130,7 +130,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 14, 'accounts' => (bool)lb_saas(), 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 15, 'accounts' => (bool)lb_saas(), 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
 
 if ($act === 'lead') {
   // simple flood protection: max 30 submissions per minute per visitor
@@ -674,12 +674,17 @@ if ($act === 'adm_tenant_save') {
     foreach (array('app_domain', 'sites_domain') as $dk) if (isset($in[$dk])) {
       $v = strtolower(preg_replace('#^https?://|/.*$#', '', trim((string)$in[$dk]))); $v = preg_replace('/^(\*\.|www\.)/', '', $v);
       if ($v !== '' && !lb_valid_domain($v)) fail(($dk === 'app_domain' ? 'Builder address' : 'Subdomain domain') . ': type a domain like app.abc.com');
-      if ($v !== '' && $v === lb_main_domain($DATA)) fail('That is your own main domain.');
+      $mn = lb_main_domain($DATA);
+      if ($v !== '' && $mn !== '' && ($v === $mn || substr($v, -strlen('.' . $mn)) === '.' . $mn)) fail(($dk === 'app_domain' ? 'Builder address' : 'Subdomain domain') . ': use the client\'s own domain (like app.theirbrand.com), not ' . $mn . '.');
       foreach ($tn as $oid => $ot) if ($oid !== $id && $v !== '' && ((isset($ot['app_domain']) && $ot['app_domain'] === $v) || (isset($ot['sites_domain']) && $ot['sites_domain'] === $v))) fail($v . ' is already used by workspace "' . $ot['name'] . '".');
       $cur[$dk] = $v;
     }
     if (empty($cur['app_domain'])) fail('Builder address is needed (for example app.abc.com).');
+    /* the builder address must be a free address: not one that already shows a website */
+    $dm0 = jread($DATA . '/domains.json', array());
+    if (isset($dm0[$cur['app_domain']])) fail($cur['app_domain'] . ' already shows a website. Use a new address for the builder, like app.' . $cur['app_domain'] . ' (add an A record "app" → your server IP).');
     if (isset($in['owner_email'])) $cur['owner_email'] = strtolower(trim(clean_str($in['owner_email'], 120)));
+    if (!empty($cur['owner_email']) && lb_is_admin_email($cur['owner_email'])) fail('That is your admin email. Use the client\'s own email — they create their account with it on their address.');
     foreach (array('max_users', 'sub_limit') as $nk) if (array_key_exists($nk, $in)) $cur[$nk] = $in[$nk] === '' || $in[$nk] === null ? '' : max(0, min(100000, (int)$in[$nk]));
     if (isset($in['active'])) $cur['active'] = (bool)$in['active'];
     if (isset($in['note'])) $cur['note'] = clean_str($in['note'], 500);
