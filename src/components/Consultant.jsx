@@ -1,12 +1,13 @@
 // LaunchBuilder v52 — Consultant.jsx (AI Consultant: ask about your page · plan & create a page · your own API key)
+import { BRAND } from "../brand.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "./icons.jsx";
 import { askAI, browserAi, serverAiReady, aiStatus, aiSaveKey, aiRemoveKey, AI_PROVIDERS, AI_PAGE_SYS, parseAiPages, pg } from "../lib.js";
 import { consult, contextFor, areaName } from "./insights.js";
 
-const ASK_SYS = `You are LaunchBuilder's AI Landing Page Performance Consultant. You get ONE user's real page outline, live analytics and an automatic audit.
+const ASK_SYS = `You are ${BRAND.product}'s AI Landing Page Performance Consultant. You get ONE user's real page outline, live analytics and an automatic audit.
 Rules: base every point on the data given — quote real numbers and real text from their page. Be direct and practical: give at most 5 numbered fixes, most important first, each with the exact new wording or the exact change to make in the builder. No generic marketing theory. If data is too small (under ~20 visitors) say so in one line and focus on the page content. Keep it under 220 words. Reply in the same language the user writes in (Hindi, Hinglish or English).`;
-const PLAN_SYS = `You are LaunchBuilder's AI page planner. You help the user plan a landing page or a website before it is built.
+const PLAN_SYS = `You are ${BRAND.product}'s AI page planner. You help the user plan a landing page or a website before it is built.
 Talk like a helpful consultant: ask at most 2 short questions at a time (business, audience, offer, price/date, main action, sections, style/colours). Suggest ideas and improvements to what they say.
 When you have enough (usually after 2–4 answers), write the final plan with these headings: Page type, Name, Headline, Sub-headline, Main button text, Sections (in order, one line each), Form fields, Colours & style. Then end with a line exactly: PLAN READY
 If the user asks for changes after that, write the full updated plan again and end with PLAN READY. Reply in the same language the user writes in.`;
@@ -45,7 +46,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
   const [kind, setKind] = useState("landing"), [ready, setReady] = useState(null), [listen, setListen] = useState(false), [lang, setLang] = useState("en-IN"), [copied, setCopied] = useState(-1);
   const box = useRef(null), recog = useRef(null), base = useRef("");
   /* which AI will answer? (shown in the header) */
-  useEffect(() => { if (!open) return; const b = browserAi(integ); serverAiReady().then((ok) => setReady(ok ? "LaunchBuilder AI" : b ? (AI_PROVIDERS.find((p) => p.id === b.provider) || {}).name : "")); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!open) return; const b = browserAi(integ); serverAiReady().then((ok) => setReady(ok ? BRAND.product + " AI" : b ? (AI_PROVIDERS.find((p) => p.id === b.provider) || {}).name : "")); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   /* 🎤 speak instead of typing (Chrome / Edge): English or Hindi */
   const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
   const toggleMic = () => {
@@ -93,7 +94,10 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
     } finally { setBusy(""); }
   };
 
-  const planReady = tab === "plan" && planMsgs.length && /PLAN READY\s*$/i.test(planMsgs[planMsgs.length - 1].content || "");
+  const planReady = tab === "plan" && planMsgs.length > 0 && /PLAN READY\s*$/i.test(planMsgs[planMsgs.length - 1].content || "");
+  /* the message box grows with your text (up to 6 lines) and always shows the LAST line you typed or spoke */
+  const taRef = useRef(null);
+  useEffect(() => { const t = taRef.current; if (!t) return; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 150) + "px"; t.scrollTop = t.scrollHeight; }, [q]);
   const build = async () => {
     const plan = planMsgs[planMsgs.length - 1].content.replace(/PLAN READY\s*$/i, "");
     const talk = planMsgs.filter((m) => m.role === "user").map((m) => "- " + m.content).join("\n");
@@ -128,7 +132,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
 
         {tab === "settings" ? <div className="cn-body cn-set">
           <h4>Your AI key (optional)</h4>
-          <p className="mut">Without a key, LaunchBuilder's own AI answers (with a daily limit) when it's switched on. With your own key you get unlimited answers, billed by your AI company.</p>
+          <p className="mut">Without a key, {BRAND.product}'s own AI answers (with a daily limit) when it's switched on. With your own key you get unlimited answers, billed by your AI company.</p>
           <div className="cn-lock"><Icon n="check" s={14} /> Your key is <b>encrypted on your server</b> and never sent back to the browser.</div>
           {browserAi(integ) && <div className="cn-saved"><div><b>✓ {(AI_PROVIDERS.find((p) => p.id === browserAi(integ).provider) || {}).name} key found in Integrations → AI</b><small>Used when the server has no key. For the safest setup, save it here instead (encrypted on your server).</small></div></div>}
           {st && st.own ? <div className="cn-saved"><div><b>{(AI_PROVIDERS.find((p) => p.id === st.own.provider) || {}).name}</b><small>{st.own.model} · key ending …{st.own.last4}</small></div>
@@ -139,8 +143,8 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
           <label>Model (optional)<input value={model} onChange={(e) => setModel(e.target.value)} placeholder={(AI_PROVIDERS.find((p) => p.id === prov) || {}).model} /></label>
           <button className="pri" disabled={key.trim().length < 20 || !!busy} onClick={saveKey}>{busy || (st && st.own ? "Replace key" : "Test & save key")}</button>
           {kmsg && <p className={"cn-kmsg" + (kmsg[0] === "✗" ? " bad" : "")}>{kmsg}</p>}
-          {st && st.platform && <p className="mut">LaunchBuilder AI is on: up to {st.platform.limit} questions a day without your own key.</p>}
-          {st && st.error && <p className="cn-kmsg bad">Your server isn't reachable from here ({st.error}). AI answers need the LaunchBuilder server — on crecapo.tech it's already there.</p>}
+          {st && st.platform && <p className="mut">{BRAND.product} AI is on: up to {st.platform.limit} questions a day without your own key.</p>}
+          {st && st.error && <p className="cn-kmsg bad">Your server isn't reachable from here ({st.error}). AI answers need the server file (lb-server.php).</p>}
         </div> : <>
           {tab === "ask" && <div className="cn-ctx">
             <select value={r ? r.p.id : ""} onChange={(e) => setPid(e.target.value)} aria-label="Page">{data.res.map((x) => <option key={x.p.id} value={x.p.id}>{x.p.name}</option>)}</select>
@@ -168,7 +172,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
           {tab === "ask" && !busy && <div className="cn-chips">{(list.length ? QUESTIONS.slice(1, 4) : QUESTIONS).map((x) => <button key={x} onClick={() => send(x)}>{x}</button>)}</div>}
           <form className={"cn-in" + (listen ? " rec" : "")} onSubmit={(e) => { e.preventDefault(); send(q); }}>
             <button type="button" className={"cn-mic" + (listen ? " on" : "")} onClick={toggleMic} title={listen ? "Stop listening" : "Speak your question"} aria-label={listen ? "Stop listening" : "Speak your question"}><Icon n="mic" s={18} /></button>
-            <div className="cn-field"><textarea rows={1} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(q); } }} placeholder={listen ? "Listening… speak now" : tab === "plan" ? "Describe your page, or answer the questions…" : "Ask about this page…"} />
+            <div className="cn-field"><textarea ref={taRef} rows={1} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(q); } }} placeholder={listen ? "Listening… speak now" : tab === "plan" ? "Describe your page, or answer the questions…" : "Ask about this page…"} />
               <select value={lang} onChange={(e) => setLang(e.target.value)} title="Voice language" aria-label="Voice language" disabled={listen}><option value="en-IN">EN</option><option value="hi-IN">हिं</option></select></div>
             <button className="pri cn-send" disabled={!q.trim() || !!busy} aria-label="Send"><Icon n="send" s={17} /></button>
           </form>

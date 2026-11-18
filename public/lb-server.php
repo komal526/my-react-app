@@ -333,27 +333,43 @@ function ai_secret($DATA) {
 function ai_enc($plain, $DATA) { $iv = random_bytes(12); $tag = ''; $c = openssl_encrypt($plain, 'aes-256-gcm', ai_secret($DATA), OPENSSL_RAW_DATA, $iv, $tag); return base64_encode($iv . $tag . $c); }
 function ai_dec($blob, $DATA) { $b = base64_decode((string)$blob); if (strlen($b) < 29) return ''; $p = openssl_decrypt(substr($b, 28), 'aes-256-gcm', ai_secret($DATA), OPENSSL_RAW_DATA, substr($b, 0, 12), substr($b, 12, 16)); return $p === false ? '' : $p; }
 function ai_models() { return array('claude' => 'claude-sonnet-5-5', 'openai' => 'gpt-4o', 'gemini' => 'gemini-flash-latest', 'deepseek' => 'deepseek-chat'); }
-function ai_post($url, $headers, $body) {
+function ai_post_raw($url, $headers, $body) {
   $ch = curl_init($url);
   curl_setopt_array($ch, array(CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 170, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_HTTPHEADER => array_merge(array('Content-Type: application/json'), $headers), CURLOPT_POSTFIELDS => json_encode($body)));
-  $r = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch);
-  if ($r === false) fail('Could not reach the AI service: ' . $err);
-  $j = json_decode($r, true);
-  if ($code >= 400) fail('AI service error: ' . (isset($j['error']['message']) ? $j['error']['message'] : ('HTTP ' . $code)));
-  return is_array($j) ? $j : array();
+  $r = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch);
+  if ($r === false) return array(0, array(), 'Could not reach the AI service: ' . $err);
+  $j = json_decode($r, true); if (!is_array($j)) $j = array();
+  return array($code, $j, $code >= 400 ? (isset($j['error']['message']) ? $j['error']['message'] : ('HTTP ' . $code)) : '');
 }
+/* "busy" answers (high demand, rate limit, overloaded) → wait a moment and retry, then try the next model in the list */
+function ai_busy($code, $msg) { return in_array($code, array(0, 429, 500, 502, 503, 504, 529), true) || preg_match('/high demand|overloaded|unavailable|try again later|resource.?exhausted|rate.?limit/i', $msg); }
+function ai_post_models($models, $build) {
+  $last = ''; $models = array_values(array_unique(array_filter($models)));
+  foreach ($models as $mi => $m) {
+    for ($try = 0; $try < 2; $try++) {
+      list($url, $headers, $body) = $build($m);
+      list($code, $j, $err) = ai_post_raw($url, $headers, $body);
+      if ($err === '') return $j;
+      $last = $err;
+      if (!ai_busy($code, $err)) { if ($code === 404 && $mi < count($models) - 1) break; fail('AI service error: ' . $err); }
+      if ($try === 0) usleep(1500000);
+    }
+  }
+  fail('The AI is very busy right now (' . $last . '). Please try again in a minute.');
+}
+function ai_post($url, $headers, $body) { list($code, $j, $err) = ai_post_raw($url, $headers, $body); if ($err !== '') fail('AI service error: ' . $err); return $j; }
 function ai_run($prov, $key, $model, $system, $msgs, $max) {
   if ($prov === 'claude') {
-    $j = ai_post('https://api.anthropic.com/v1/messages', array('x-api-key: ' . $key, 'anthropic-version: 2023-06-01'), array('model' => $model, 'max_tokens' => $max, 'system' => $system, 'messages' => $msgs));
+    $j = ai_post_models(array($model), function ($m) use ($key, $max, $system, $msgs) { return array('https://api.anthropic.com/v1/messages', array('x-api-key: ' . $key, 'anthropic-version: 2023-06-01'), array('model' => $m, 'max_tokens' => $max, 'system' => $system, 'messages' => $msgs)); });
     $t = ''; if (isset($j['content'])) foreach ($j['content'] as $c) if (isset($c['type']) && $c['type'] === 'text') $t .= $c['text']; return $t;
   }
   if ($prov === 'gemini') {
     $cs = array(); foreach ($msgs as $m) $cs[] = array('role' => $m['role'] === 'assistant' ? 'model' : 'user', 'parts' => array(array('text' => $m['content'])));
-    $j = ai_post('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent', array('x-goog-api-key: ' . $key), array('systemInstruction' => array('parts' => array(array('text' => $system))), 'contents' => $cs, 'generationConfig' => array('maxOutputTokens' => $max)));
+    $j = ai_post_models(array($model, 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite'), function ($m) use ($key, $max, $system, $cs) { return array('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($m) . ':generateContent', array('x-goog-api-key: ' . $key), array('systemInstruction' => array('parts' => array(array('text' => $system))), 'contents' => $cs, 'generationConfig' => array('maxOutputTokens' => $max))); });
     $t = ''; if (isset($j['candidates'][0]['content']['parts'])) foreach ($j['candidates'][0]['content']['parts'] as $p) $t .= isset($p['text']) ? $p['text'] : ''; return $t;
   }
   $url = $prov === 'deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
-  $j = ai_post($url, array('Authorization: Bearer ' . $key), array('model' => $model, 'max_tokens' => min($max, 8000), 'messages' => array_merge(array(array('role' => 'system', 'content' => $system)), $msgs)));
+  $j = ai_post_models($prov === 'openai' ? array($model, 'gpt-4o-mini') : array($model), function ($m) use ($url, $key, $max, $system, $msgs) { return array($url, array('Authorization: Bearer ' . $key), array('model' => $m, 'max_tokens' => min($max, 8000), 'messages' => array_merge(array(array('role' => 'system', 'content' => $system)), $msgs))); });
   return isset($j['choices'][0]['message']['content']) ? $j['choices'][0]['message']['content'] : '';
 }
 $AIF = $DATA . '/ai-' . $KID . '.json';

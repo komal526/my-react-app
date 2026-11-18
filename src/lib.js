@@ -244,7 +244,27 @@ export async function detectAI(raw) {
   throw new Error("This key didn't work" + (last && last.message ? ": " + last.message.slice(0, 140) : "") + ". Check you copied the whole key, and that it isn't deleted.");
 }
 const strip = (t) => { let v = String(t || "").trim(); const m = v.match(/```(?:html)?[^\n]*\n([\s\S]*?)```/i); if (m) v = m[1]; return v.trim(); };
+const BUSY = /high demand|overloaded|unavailable|try again later|resource.?exhausted|rate.?limit|503|529|429|failed to fetch/i;
+/* backup models when the main one is busy (Google often says "high demand" on its newest model) */
+const BACKUP = { gemini: ["gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest", "gemini-2.5-flash-lite"], openai: ["gpt-4o-mini"], claude: [], deepseek: [] };
 export async function callAI(ai, system, prompt, maxTokens = 12000) {
+  const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0];
+  const first = (ai.models || {})[pr.id] || (ai.autoModels || {})[pr.id] || pr.model;
+  const list = [first, ...(BACKUP[pr.id] || [])].filter((m, i, a) => m && a.indexOf(m) === i);
+  let last = null;
+  for (let mi = 0; mi < list.length; mi++) {
+    for (let t = 0; t < 2; t++) {
+      try { const out = await callAI2({ ...ai, models: { ...(ai.models || {}), [pr.id]: list[mi] } }, system, prompt, maxTokens); if (mi > 0) callAI.usedBackup = list[mi]; return out; }
+      catch (e) {
+        last = e;
+        if (!(ai.keys || {})[pr.id] || !BUSY.test(e.message)) throw e;   /* a real error (bad key…) → show it straight away */
+        if (t === 0) await new Promise((r) => setTimeout(r, 1500));       /* busy → wait 1.5 s and retry, then the next model */
+      }
+    }
+  }
+  throw new Error("The AI is very busy right now — I retried and tried backup models. Please wait a minute and send again." + (last ? " (" + String(last.message).slice(0, 80) + ")" : ""));
+}
+async function callAI2(ai, system, prompt, maxTokens) {
   try { return await callAI1(ai, system, prompt, maxTokens); }
   catch (e) {
     /* the saved model was retired → pick the current best one for this key and try once more */
