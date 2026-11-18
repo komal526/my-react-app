@@ -339,6 +339,16 @@ export async function aiWebsite(ai, brief, multi, files = []) {
   if (!pages.length) return [{ name: "Home", file: "index.html", html: strip(out) }];
   return pages;
 }
+/* change ONE part of a page (a section, header, a card…) — keeps its classes so the page's CSS still applies */
+export const aiEditPart = (ai, html, instruction, css = "") => callAI(ai || {},
+  `You are a senior web designer editing ONE part of an existing web page. You get its current HTML and an instruction. Output ONLY the new HTML for that same part — the same outer element type, no <html>/<head>/<body>, no markdown, no explanations. Keep existing class names and ids (the page's CSS uses them) unless the instruction asks for a new design; for new styling use inline style="" attributes. Keep links, form names (data-lb-form) and input name attributes working. Responsive (flex-wrap, max-width). Real, specific copy — no lorem ipsum.`,
+  `INSTRUCTION: ${instruction}\n\nCURRENT HTML:\n${html.slice(0, 60000)}${css ? `\n\nPAGE CSS (for reference only, don't output it):\n${css.slice(0, 12000)}` : ""}`, 10000)
+  .then((raw) => { const t = strip(raw).trim(), i = t.search(/<[a-z]/i); if (i < 0) throw new Error("The AI didn't return HTML — try saying it differently."); return t.slice(i); });
+/* change the WHOLE page — returns a complete HTML document */
+export const aiEditPage = (ai, html, instruction) => callAI(ai || {},
+  `You are a senior web designer improving an existing landing page. You get the full current HTML and an instruction. Apply the instruction and output ONLY the complete updated HTML document (<!DOCTYPE html>…</html>) — nothing else. Keep everything the instruction doesn't mention (texts, images, forms with data-lb-form and input names, links, ids). All CSS stays in <style> in <head>. No JavaScript.`,
+  `INSTRUCTION: ${instruction}\n\nCURRENT PAGE:\n${html.slice(0, 120000)}`, 16000)
+  .then((raw) => { const h = strip(raw), k = h.search(/<!doctype|<html/i); if (k < 0) throw new Error("The AI didn't return a full page — try again."); return h.slice(k); });
 export const aiSection = (ai, brief, files = []) => callAI(ai, `You are a senior web designer. Output ONLY one HTML fragment: a single <section> element with ALL styling as inline style="" attributes (no <style>, no classes, no JavaScript). Responsive: use flex-wrap and max-width containers. Images: https://placehold.co/WIDTHxHEIGHT/e9e7ff/4f46e5?text=Label. Forms: <form data-lb-form="Form name"> with name attributes. Real, specific copy.`, brief, 6000, files).then((raw) => { const t = strip(raw), i = t.search(/<section/i), k = t.toLowerCase().lastIndexOf("</section>"); return i >= 0 && k > i ? t.slice(i, k + 10) : t; });
 
 /* ---- AI: change one selected section/element ---- */

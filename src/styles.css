@@ -3822,3 +3822,16 @@ html.lb-hidden .tg-frame .tg-reel{animation-play-state:paused}
 .ais-ideas button{justify-content:center;min-width:0}
 @media (max-width:760px){.ais-ideas{grid-template-columns:1fr}.ais-box{padding-left:16px!important;padding-top:96px!important}.ais-bot{left:50%!important;top:-110px!important;width:170px!important}.ais-bot .rb4{width:170px!important}}
 .ais-ideas button{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* v80 — editor: AI assistant modes, home + AI Studio buttons */
+.ai-modes{display:flex;gap:4px;background:#eef0fb;border-radius:10px;padding:3px;margin-bottom:8px}
+.ai-modes button{flex:1;border:0;background:none;border-radius:8px;padding:6px 4px;font:inherit;font-size:11.5px;font-weight:700;color:#4b5280;cursor:pointer;white-space:nowrap}
+.ai-modes button.on{background:#0d1324;color:#f5b301}
+.ai-tgt{font-size:12px;margin:0 0 6px;color:#3a4361;line-height:1.4}.ai-tgt b{color:#0d1324}.ai-tgt small{color:#6b7398}.ai-tgt.warn{color:#92400e;background:#fff7d6;padding:6px 8px;border-radius:8px}
+.ai-studio-btn{width:100%;margin-top:6px;background:#0d1324!important;color:#f5b301!important;border:0!important}
+.tb-home{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 12px 0 8px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;font:inherit;font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap}
+.tb-home:hover{background:rgba(255,255,255,.12)}.tb-home i{font-style:normal;color:#f5b301;font-size:18px}.tb-home img{width:20px;height:20px;border-radius:5px;object-fit:contain;background:#fff}
+.tb-ai{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:11px;border:0;background:linear-gradient(135deg,#f5b301,#ffd35c);color:#0d1324;font:inherit;font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap;box-shadow:0 8px 18px -10px rgba(245,179,1,.9)}
+.tb-ai:disabled{opacity:.5}
+@media (max-width:1100px){.tb-home span,.tb-ai span{display:none}}
+.ai-modes button{font-size:11px;padding:6px 2px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ai-studio-btn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px!important}

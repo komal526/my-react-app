@@ -2,9 +2,10 @@
 // The builder: canvas, top bar, left panel (Add / Layers / Pages / Site / Edit)
 import { useState, useRef, useEffect, lazy, Suspense } from "react";
 const AiStudio = lazy(() => import("./AiStudio.jsx"));
-import { uid, slug, uniqFile, addr, previewToken, previewUrl, aiSection, AI_PROVIDERS } from "../lib.js";
+import { uid, slug, uniqFile, addr, previewToken, previewUrl, aiSection, aiEditPart, aiEditPage, browserAi, serverAiReady, AI_PROVIDERS } from "../lib.js";
 import { makeZip, EDITOR_CSS, CONT, WIDTH, cleanNode, nameOf, WIDGET_CSS, finalize, readCfg, LIB, PAGE_TPLS, hydrate, STRUCTURES, structureHtml, formHtml, bookingWidget } from "./tools.js";
 import Inspector, { Icon, QuickBar } from "./Inspector.jsx";
+import { BRAND } from "../brand.js";
 import PagesPanel, { Layers, SiteSettings, writeCfg } from "./PagesPanel.jsx";
 
 const MQ = { tablet: "(max-width:1024px)", mobile: "(max-width:767px)" };
@@ -22,6 +23,7 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
   const [selEl, setSelEl] = useState(null), [selKey, setSelKey] = useState(0), [, setTick] = useState(0), [codeText, setCodeText] = useState("");
   const [box, setBox] = useState({ w: 900, h: 600 }), [q, setQ] = useState(""), [shut, setShut] = useState(() => new Set()), [panel, setPanel] = useState(() => window.innerWidth > 900), [navFloat, setNavFloat] = useState(false);
   const [aiQ, setAiQ] = useState(""), [aiBusy, setAiBusy] = useState(false), [pill, setPill] = useState("all");
+  const aiPick = useRef(false);   /* while "AI → Change selected" is open, clicking the page picks the part to change (the panel stays) */
   const [theme, setTheme] = useState(() => { const t = localStorage.getItem("lb_theme"); return t === "aurora" ? "aurora" : "clean"; });
   const flipTheme = () => { const t = theme === "aurora" ? "clean" : "aurora"; setTheme(t); localStorage.setItem("lb_theme", t); };
   const [toast, setToast] = useState(""), [busy, setBusy] = useState(""), [editing, setEditing] = useState(false), [openLink, setOpenLink] = useState(false);
@@ -67,7 +69,7 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
   const select = (el) => {
     const o = selRef.current; if (o) { o.classList.remove("lb-sel"); o.removeAttribute("draggable"); }
     selRef.current = el;
-    if (el) { el.classList.add("lb-sel"); if (el.tagName !== "BODY" && !el.hasAttribute("data-lb-lock")) el.setAttribute("draggable", "true"); if (!/^(layers|pages|site)$/.test(tabRef.current)) setTab("edit"); }
+    if (el) { el.classList.add("lb-sel"); if (el.tagName !== "BODY" && !el.hasAttribute("data-lb-lock")) el.setAttribute("draggable", "true"); if (!/^(layers|pages|site)$/.test(tabRef.current) && !(aiPick.current && tabRef.current === "add")) setTab("edit"); }
     setSelEl(el); setSelKey((k) => k + 1); setOpenLink(false); requestAnimationFrame(placeTools);
   };
   const ensureId = (el) => { let id = el.getAttribute("data-lb-id"); if (!id) { id = "e" + uid(); el.setAttribute("data-lb-id", id); } return id; };
@@ -367,10 +369,44 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
   const qq = q.trim().toLowerCase();
 
   const [studio, setStudio] = useState(false);
+  /* ---------- AI assistant: add a section · change the selected part · update the whole page ---------- */
+  const [aiMode, setAiMode] = useState("add"), [aiSrv, setAiSrv] = useState(null);
+  const aiCfg = browserAi(integ);
+  useEffect(() => { if (!aiCfg) serverAiReady().then(setAiSrv).catch(() => setAiSrv(false)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const aiReady = aiCfg ? true : aiSrv;
+  const aiName = aiCfg ? (AI_PROVIDERS.find((p) => p.id === aiCfg.provider) || {}).name : aiSrv ? "Server AI" : "";
+  /* what "Change selected" changes: the selected element (the page body is never changed this way) */
+  const aiTarget = () => { const e = selRef.current; return e && D() && e !== D().body && D().body.contains(e) ? e : null; };
+  const runAi = async () => {
+    const q = aiQ.trim(); if (q.length < 4 || aiBusy) return;
+    setAiBusy(true);
+    try {
+      if (aiMode === "add") { const h = await aiSection(aiCfg || {}, q); addEl(h); say("AI section added — edit it like any other section"); }
+      else if (aiMode === "part") {
+        const el = aiTarget(); if (!el) throw new Error("Click the part of the page you want to change first.");
+        const c = el.cloneNode(true); cleanNode(c, true);
+        const css = [...D().querySelectorAll("style:not(#lb-style)")].map((x) => x.textContent).join("\n");
+        const out = await aiEditPart(aiCfg || {}, c.outerHTML, q, css);
+        const t = D().createElement("template"); t.innerHTML = out.trim(); const nodes = [...t.content.children];
+        if (!nodes.length) throw new Error("The AI didn't return HTML — try again.");
+        if (!D().body.contains(el)) throw new Error("That part was removed while AI was working.");
+        el.replaceWith(...nodes); const n = nodes[0];
+        uniqIds(n); if (page.type === "website") fillNav(n, links(pagesRef.current)); hydrate(D()); select(n); commit(true);
+        n.scrollIntoView && n.scrollIntoView({ block: "nearest", behavior: "smooth" }); say("Changed with AI — Ctrl+Z to undo");
+      } else {
+        flush(); const out = await aiEditPage(aiCfg || {}, exportHtml(), q);
+        loadSrc(out); say("Page updated with AI — Ctrl+Z to undo");
+      }
+      setAiQ("");
+    } catch (e) { alert(e.message); }
+    setAiBusy(false);
+  };
+
   return (
     <div className={"app theme-" + theme + (panel ? "" : " collapsed")}>
       <header className="tb">
-        <button className="ib lg" title="Back to dashboard" onClick={() => { flush(); onBack(); }}><Icon n="back" s={18} /></button>
+        <button className="tb-home" title={"Back to " + BRAND.product + " dashboard"} onClick={() => { flush(); onBack(); }}><Icon n="back" s={16} />{BRAND.logo ? <img src={BRAND.logo} alt="" /> : <i>⬡</i>}<span>{BRAND.product}</span></button>
+        <button className="tb-ai" title="Open AI Studio — describe it, add pictures or documents" onClick={() => setStudio(true)} disabled={mode !== "visual"}>✨ <span>AI Studio</span></button>
         <div className="tb-name"><b>{page.name}</b><button className="chip" onClick={() => { setPanel(true); setTab("pages"); }} title="Switch page">{curPage.file}<Icon n="chevd" s={12} /></button></div>
         <div className="grow" />
         <div className="seg dev">{Object.keys(WIDTH).map((k) => <button key={k} className={dev === k ? "on" : ""} title={`${k} ${WIDTH[k]}px`} onClick={() => setDev(k)}><Icon n={k} s={16} /></button>)}<span className="zoom">{WIDTH[dev]}px · {Math.round(sc * 100)}%</span></div>
@@ -405,12 +441,17 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
                   <span className="st-prev">{cols.map((c, i) => <i key={i} style={{ flex: c }} />)}</span><small>{l}</small></button>))}</div>}
             </div>}
             {!qq && pill === "all" && <div className="lg lg-ai">
-              <button className={"lg-h" + (shut.has("AI") ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has("AI") ? n.delete("AI") : n.add("AI"); return n; })}><span>✨ AI section</span><em>{(AI_PROVIDERS.find((p) => p.id === ((integ && integ.ai.provider) || "claude")) || {}).name}</em><Icon n="chevd" s={13} /></button>
-              {!shut.has("AI") && (integ && integ.ai.keys && integ.ai.keys[integ.ai.provider] ? <div className="aibox">
-                <textarea rows={3} value={aiQ} disabled={aiBusy} onChange={(e) => setAiQ(e.target.value)} placeholder="e.g. Pricing section with 3 plans for an AI workshop: ₹21 trial, ₹999 course, ₹4,999 mentorship" />
-                <button className="btn pri sm" disabled={aiBusy || aiQ.trim().length < 8} onClick={async () => { setAiBusy(true); try { const h = await aiSection(integ.ai, aiQ.trim()); addEl(h); setAiQ(""); say("AI section added — edit it like any other section"); } catch (e) { alert(e.message); } setAiBusy(false); }}>{aiBusy ? "Generating…" : "✨ Generate & add"}</button>
-                <p className="hint">Added below the selected element.</p></div>
-                : <p className="hint pad">Connect Claude, ChatGPT, Gemini or DeepSeek in Dashboard → <b>Integrations</b> to generate sections from a prompt.</p>)}
+              <button className={"lg-h" + (shut.has("AI") ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has("AI") ? n.delete("AI") : n.add("AI"); return n; })}><span>✨ AI assistant</span><em>{aiName}</em><Icon n="chevd" s={13} /></button>
+              {!shut.has("AI") && (aiReady ? <div className="aibox">
+                <div className="ai-modes">{[["add", "Add"], ["part", "Change part"], ["page", "Whole page"]].map(([k, l]) => <button key={k} className={aiMode === k ? "on" : ""} disabled={aiBusy} onClick={() => { setAiMode(k); aiPick.current = k === "part"; }}>{l}</button>)}</div>
+                {aiMode === "part" && (aiTarget() ? <p className="ai-tgt">Changing: <b>{nameOf(aiTarget())}</b><small> — click another part of the page to change that instead</small></p> : <p className="ai-tgt warn">Click the part of the page you want to change (a section, heading, card…).</p>)}
+                <textarea rows={3} value={aiQ} disabled={aiBusy} onChange={(e) => setAiQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) runAi(); }}
+                  placeholder={aiMode === "add" ? "e.g. Pricing section with 3 plans: ₹499 basic, ₹999 pro, ₹1,999 premium" : aiMode === "part" ? "e.g. Make this more persuasive, add a WhatsApp button, use a dark blue background" : "e.g. Change the colours to green and white, make all headings shorter and punchier"} />
+                <button className="btn pri sm" disabled={aiBusy || aiQ.trim().length < 4 || (aiMode === "part" && !aiTarget())} onClick={runAi}>{aiBusy ? "✨ Working… (20–60 s)" : aiMode === "add" ? "✨ Generate & add" : aiMode === "part" ? "✨ Change it" : "✨ Update the page"}</button>
+                <p className="hint">{aiMode === "add" ? "Added below the selected element." : aiMode === "part" ? "Only the selected part changes. Ctrl+Z undoes it." : "AI rewrites the whole page with your change. Ctrl+Z undoes it."}</p>
+                <button className="btn sm ai-studio-btn" onClick={() => setStudio(true)}>✨ AI Studio — pictures, docs, mic ↗</button></div>
+                : aiReady === null ? <p className="hint pad">Checking AI…</p>
+                : <p className="hint pad">Connect an AI first: Dashboard → <b>Integrations → AI builders</b> → paste your key (a free Gemini key works).</p>)}
             </div>}
             {!qq && (pill === "all" || pill === "apps") && events.length > 0 && <div className="lg">
               <button className={"lg-h" + (shut.has("My calendars") ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has("My calendars") ? n.delete("My calendars") : n.add("My calendars"); return n; })}><span>My booking calendars</span><em>{events.length}</em><Icon n="chevd" s={13} /></button>
