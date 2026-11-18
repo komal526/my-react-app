@@ -139,7 +139,7 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
 }
 
 const AI_IDEAS = ["AI ad-creation workshop for beginners, ₹21 registration, Hindi + English audience, dark modern style", "Dental clinic in Hamirpur: services, doctors, timings, book appointment form, Google map", "Digital marketing agency: services, case studies, pricing plans, contact form", "Online yoga classes: batches, trainer bio, testimonials, WhatsApp signup"];
-export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI, kind = "landing", mine = [] }) {
+export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI, kind = "landing", mine = [], onStudio = () => {} }) {
   const [type, setType] = useState(kind), [name, setName] = useState(""), [src, setSrc] = useState("scratch");
   const [brief, setBrief] = useState(""), [busy, setBusy] = useState(false), [err, setErr] = useState("");
   const blank = TEMPLATES.find((x) => x.type === type && /^blank/.test(x.key || "")) || TEMPLATES.find((x) => x.type === type);
@@ -169,21 +169,11 @@ export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI, kind = "l
         {[["scratch", "✏️", "Start from scratch", type === "website" ? "A blank website — add pages and sections yourself" : "A blank page — drag in sections and elements"], ["import", "📥", "Import HTML", "Bring in a page you already have (.html file or code)"], ["ai", "✨", "Create with AI", "Describe it in a sentence — AI builds the first draft"]].map(([k, ic, t, d]) => (
           <button key={k} className={"nm-way" + (src === k ? " on" : "")} onClick={() => (k === "import" ? onImport() : setSrc(k))}><span className="nm-wic">{ic}</span><b>{t}</b><small>{d}</small></button>))}
       </div>
-      {src === "scratch" ? <p className="mut sm nm-tip">Want a ready design instead? Pick one in <b>Templates</b>.</p> : <div className="nm-ai">
-        {!hasKey && <div className="nm-warn">Connect an AI first (Claude, ChatGPT, Gemini or DeepSeek) with your own API key. <button className="pri" onClick={onSetupAI}>Open Integrations</button></div>}<>
-          <label>Describe the {type === "website" ? "website" : "page"}<textarea rows={4} value={brief} disabled={busy} onChange={(e) => setBrief(e.target.value)} placeholder="What is it, who is it for, what should visitors do (register, call, buy)? Mention price, city, language, colours, sections you want…" /></label>
-          <div className="nm-ideas">{AI_IDEAS.map((x) => <button key={x} disabled={busy} onClick={() => setBrief(x)}>{x.slice(0, 48)}…</button>)}</div>
-          <div className="nm-hand"><span className="mut sm">Or build it in:</span>
-            <a className="btn" href={lovableUrl(brief || "A modern landing page")} target="_blank" rel="noopener">Lovable ↗</a>
-            <button onClick={() => { navigator.clipboard.writeText(boltText(brief || "A modern landing page")).catch(() => {}); window.open("https://bolt.new", "_blank"); }}>Copy prompt &amp; open Bolt ↗</button>
-            <span className="mut sm">then download its index.html and use <b>Import HTML</b>.</span></div>
-          {hasKey && <p className="mut">Using <b>{prov.name}</b> · {(ai.models || {})[prov.id] || prov.model}. {type === "website" ? "Creates 3–5 linked pages." : "Creates one landing page."} Takes about 20–90 seconds. You can edit everything afterwards.</p>}
-        </>
-        {err && <p className="red">{err}</p>}
-      </div>}
-      <div className="mrow"><div className="grow" /><button onClick={onClose} disabled={busy}>Cancel</button>
+      {src === "scratch" ? <p className="mut sm nm-tip">Want a ready design instead? Pick one in <b>Templates</b>.</p>
+        : <div className="nm-ai nm-ai2"><b>✨ AI Studio opens in a full window</b><span className="mut sm">Describe your {type === "website" ? "website" : "page"} by typing or speaking, add pictures (logo, products) and documents (PDF, Word) about your business — AI builds the first draft.</span></div>}
+      <div className="mrow"><div className="grow" /><button onClick={onClose}>Cancel</button>
         {src === "scratch" ? <button className="pri" onClick={() => { const n = name.trim() || "Untitled"; onCreate(n, blank.make(n), type); }}>Create {type === "website" ? "website" : "page"}</button>
-          : <button className="pri" disabled={busy || !hasKey} onClick={gen}>{busy ? "✨ Generating… please wait" : "✨ Generate"}</button>}</div>
+          : <button className="pri" onClick={() => onStudio({ type, name: name.trim() })}>✨ Open AI Studio →</button>}</div>
     </Modal>
   );
 }

@@ -37,7 +37,7 @@ function ruleAnswer(r, q) {
     "\n\nThis answer comes from the automatic audit. Add an AI key in Settings for a full written review.";
 }
 
-export default function Consultant({ open, onClose, initial = {}, projects, events, leads, integ, user, onCreate }) {
+export default function Consultant({ open, onClose, initial = {}, projects, events, leads, integ, user, onCreate, onStudio }) {
   const [tab, setTab] = useState(initial.tab || "ask");
   const [pid, setPid] = useState(initial.pid || (projects[0] && projects[0].id) || "");
   const [msgs, setMsgs] = useState([]), [planMsgs, setPlanMsgs] = useState([]);
@@ -102,6 +102,8 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
     const plan = planMsgs[planMsgs.length - 1].content.replace(/PLAN READY\s*$/i, "");
     const talk = planMsgs.filter((m) => m.role === "user").map((m) => "- " + m.content).join("\n");
     const name = ((plan.match(/Name\s*[:\-–]\s*\**\s*([^\n*]+)/i) || [])[1] || "AI page").trim().slice(0, 60);
+    /* the plan goes to AI Studio — there you can still add pictures / documents and press Create */
+    if (onStudio) { onStudio({ type: kind, name, prompt: `Build this exactly as planned.\n\nPLAN:\n${plan.trim()}\n\nWhat the client told us:\n${talk}` }); return; }
     setBusy("Building your page — this takes about a minute…"); setErr("");
     try {
       const out = await askAI(integ, AI_PAGE_SYS(kind === "website"), [{ role: "user", content: `Build this exactly as planned.\n\nPLAN:\n${plan}\n\nWhat the client told us:\n${talk}` }], 12000);
@@ -167,7 +169,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
           </div>
 
           {planReady && !busy && <div className="cn-build"><div className="cn-kind">{[["landing", "Landing page"], ["website", "Website"]].map(([k, l]) => <button key={k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}>{l}</button>)}</div>
-            <button className="pri" onClick={build}><Icon n="sparkle" s={15} /> Create this page</button></div>}
+            <button className="pri" onClick={build}><Icon n="sparkle" s={15} /> Open in AI Studio →</button></div>}
           {err && <p className="cn-err">{err}</p>}
           {tab === "ask" && !busy && <div className="cn-chips">{(list.length ? QUESTIONS.slice(1, 4) : QUESTIONS).map((x) => <button key={x} onClick={() => send(x)}>{x}</button>)}</div>}
           <form className={"cn-in" + (listen ? " rec" : "")} onSubmit={(e) => { e.preventDefault(); send(q); }}>

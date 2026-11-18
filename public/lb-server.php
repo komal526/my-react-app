@@ -130,7 +130,32 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 15, 'accounts' => (bool)lb_saas(), 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 16, 'accounts' => (bool)lb_saas(), 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+
+/* ---------- Google Sheets + email alerts (one Apps Script web app per account) ---------- */
+function lb_hook_file($DATA, $uid) { $d = $DATA . '/hooks'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . substr(hash('sha256', 'u:' . $uid), 0, 24) . '.json'; }
+function lb_lead_owner($lead, $DATA) {
+  $own = jread($DATA . '/owners.json', array()); $fo = jread($DATA . '/formowners.json', array()); $u = '';
+  if (!empty($lead['site'])) $u = isset($own[$lead['site']]) ? $own[$lead['site']] : 'owner';   /* a site made before accounts → the admin */
+  if ($u === '' && !empty($lead['formId']) && isset($fo[$lead['formId']])) $u = $fo[$lead['formId']];
+  return $u === 'owner' ? 'admin' : $u;
+}
+function lb_hook_post($url, $payload, $follow) {
+  $c = curl_init($url);
+  curl_setopt_array($c, array(CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => $follow ? 25 : 8, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_FOLLOWLOCATION => $follow, CURLOPT_MAXREDIRS => 4,
+    CURLOPT_HTTPHEADER => array('Content-Type: application/json'), CURLOPT_POSTFIELDS => json_encode($payload)));
+  $b = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); $err = curl_error($c); curl_close($c);
+  return array($code, (string)$b, $err);
+}
+function lb_hook_payload($lead, $h) {
+  return array('lead' => $lead, 'options' => array('notify' => !empty($h['notify']) ? $h['email'] : '', 'autoreply' => !empty($h['autoreply']), 'subject' => isset($h['subject']) ? $h['subject'] : '', 'reply' => isset($h['reply']) ? $h['reply'] : '', 'from' => isset($h['from']) ? $h['from'] : ''));
+}
+function lb_forward_lead($lead, $DATA) {
+  $u = lb_lead_owner($lead, $DATA); if ($u === '') return;
+  $hf = lb_hook_file($DATA, $u); $h = jread($hf, array()); if (empty($h['url'])) return;
+  list($code, $b, $err) = lb_hook_post($h['url'], lb_hook_payload($lead, $h), false);
+  $h['last'] = array('t' => time(), 'code' => $code, 'err' => $err); jwrite($hf, $h);
+}
 
 if ($act === 'lead') {
   // simple flood protection: max 30 submissions per minute per visitor
@@ -157,7 +182,11 @@ if ($act === 'lead') {
   $all[] = $lead;
   if (count($all) > 20000) $all = array_slice($all, -20000);
   jwrite($DATA . '/leads.json', $all);
-  out(array('ok' => true));
+  /* answer the visitor first, then send the lead to the owner's Google Sheet / email (if connected) */
+  header('Content-Type: application/json'); echo json_encode(array('ok' => true));
+  if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+  lb_forward_lead($lead, $DATA);
+  exit;
 }
 
 /* booked times for a calendar event, so the same slot can't be booked twice */
@@ -295,6 +324,7 @@ if ($act === 'leads') {
   $all = jread($DATA . '/leads.json', array());
   $mine = lb_my_slugs($ME, $DATA, $SITES); $fids = array();
   if (isset($d['forms']) && is_array($d['forms'])) foreach (array_slice($d['forms'], 0, 2000) as $fi) if (is_string($fi) && $fi !== '') $fids[$fi] = 1;
+  if (isset($d['forms']) && is_array($d['forms'])) lb_remember_forms($ME, $DATA, $d['forms']);
   $all = array_filter($all, function ($l) use ($mine, $fids, $IS_ADMIN) { $s = isset($l['site']) ? $l['site'] : ''; return ($s !== '' && isset($mine[$s])) || (isset($l['formId']) && isset($fids[$l['formId']])) || ($s === '' && $IS_ADMIN && !$fids); });
   $res = array(); foreach ($all as $l) if ($l['ts'] > $since || (isset($l['payment']['ts']) && $l['payment']['ts'] > $since)) $res[] = $l;
   out(array('ok' => true, 'leads' => $res, 'now' => round(microtime(true) * 1000)));
@@ -343,32 +373,60 @@ function ai_post_raw($url, $headers, $body) {
 }
 /* "busy" answers (high demand, rate limit, overloaded) → wait a moment and retry, then try the next model in the list */
 function ai_busy($code, $msg) { return in_array($code, array(0, 429, 500, 502, 503, 504, 529), true) || preg_match('/high demand|overloaded|unavailable|try again later|resource.?exhausted|rate.?limit/i', $msg); }
-function ai_post_models($models, $build) {
-  $last = ''; $models = array_values(array_unique(array_filter($models)));
-  foreach ($models as $mi => $m) {
+/* the model was switched off by the AI company ("no longer available to new users", "not found", "deprecated") */
+function ai_retired($code, $msg) { return preg_match('/no longer available|deprecated|not found|does not exist|not supported|unknown model|invalid model|no such model|update your code/i', $msg) || $code === 404; }
+/* Gemini: the newest "flash" models this key can use (asked from Google, remembered for a day) */
+function ai_gemini_models($key) {
+  global $DATA; $cf = $DATA . '/ai-gemini-models.json'; $c = jread($cf, array());
+  if (!empty($c['t']) && $c['t'] > time() - 86400 && !empty($c['m'])) return $c['m'];
+  $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200');
+  curl_setopt_array($ch, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_HTTPHEADER => array('x-goog-api-key: ' . $key)));
+  $j = json_decode((string)curl_exec($ch), true); curl_close($ch);
+  $ids = array(); if (isset($j['models'])) foreach ($j['models'] as $m) if (in_array('generateContent', isset($m['supportedGenerationMethods']) ? $m['supportedGenerationMethods'] : array(), true)) $ids[] = preg_replace('#^models/#', '', $m['name']);
+  $ver = function ($x) { return preg_match('/gemini-(\d+(?:\.\d+)?)/', $x, $mm) ? (float)$mm[1] : 0; };
+  $fl = array_values(array_filter($ids, function ($x) { return preg_match('/^gemini-\d+(\.\d+)?-flash$/', $x); })); usort($fl, function ($a, $b) use ($ver) { return $ver($b) < $ver($a) ? -1 : 1; });
+  $lt = array_values(array_filter($ids, function ($x) { return preg_match('/^gemini-(flash|flash-lite)-latest$/', $x); }));
+  $out = array_merge($fl, $lt); if ($out) jwrite($cf, array('t' => time(), 'm' => $out));
+  return $out ? $out : array('gemini-flash-latest', 'gemini-flash-lite-latest');
+}
+function ai_post_models($models, $build, $more = null) {
+  $last = ''; $queue = array_values(array_unique(array_filter($models))); $tried = array(); $moreUsed = false;
+  while ($queue) {
+    $m = array_shift($queue); if (isset($tried[$m])) continue; $tried[$m] = 1;
     for ($try = 0; $try < 2; $try++) {
       list($url, $headers, $body) = $build($m);
       list($code, $j, $err) = ai_post_raw($url, $headers, $body);
       if ($err === '') return $j;
       $last = $err;
-      if (!ai_busy($code, $err)) { if ($code === 404 && $mi < count($models) - 1) break; fail('AI service error: ' . $err); }
-      if ($try === 0) usleep(1500000);
+      if (ai_retired($code, $err)) {   /* switched off → the model they suggest, then the newest ones */
+        if (preg_match_all('#models/([a-z0-9][\w.-]*[a-z0-9])#i', $err, $mm)) { $s = end($mm[1]); if ($s && $s !== $m) array_unshift($queue, $s); }
+        if ($more && !$moreUsed) { $moreUsed = true; $queue = array_merge($queue, $more()); }
+        break;
+      }
+      if (!ai_busy($code, $err)) fail('AI service error: ' . $err);
+      if ($try === 0) { usleep(1500000); continue; }
+      if ($more && !$moreUsed) { $moreUsed = true; $queue = array_merge($queue, $more()); }
     }
   }
-  fail('The AI is very busy right now (' . $last . '). Please try again in a minute.');
+  if (ai_busy(0, $last)) fail('The AI is very busy right now. Please try again in a minute.');
+  fail('AI service error: ' . $last);
 }
 function ai_post($url, $headers, $body) { list($code, $j, $err) = ai_post_raw($url, $headers, $body); if ($err !== '') fail('AI service error: ' . $err); return $j; }
-function ai_run($prov, $key, $model, $system, $msgs, $max) {
+function ai_run($prov, $key, $model, $system, $msgs, $max, $files = array()) {
   if ($prov === 'claude') {
+    if ($files && $msgs) { $li = count($msgs) - 1; $c = array(); foreach ($files as $f) $c[] = $f['kind'] === 'pdf' ? array('type' => 'document', 'source' => array('type' => 'base64', 'media_type' => 'application/pdf', 'data' => $f['b64'])) : array('type' => 'image', 'source' => array('type' => 'base64', 'media_type' => $f['mime'], 'data' => $f['b64'])); $c[] = array('type' => 'text', 'text' => $msgs[$li]['content']); $msgs[$li]['content'] = $c; }
     $j = ai_post_models(array($model), function ($m) use ($key, $max, $system, $msgs) { return array('https://api.anthropic.com/v1/messages', array('x-api-key: ' . $key, 'anthropic-version: 2023-06-01'), array('model' => $m, 'max_tokens' => $max, 'system' => $system, 'messages' => $msgs)); });
     $t = ''; if (isset($j['content'])) foreach ($j['content'] as $c) if (isset($c['type']) && $c['type'] === 'text') $t .= $c['text']; return $t;
   }
   if ($prov === 'gemini') {
     $cs = array(); foreach ($msgs as $m) $cs[] = array('role' => $m['role'] === 'assistant' ? 'model' : 'user', 'parts' => array(array('text' => $m['content'])));
-    $j = ai_post_models(array($model, 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite'), function ($m) use ($key, $max, $system, $cs) { return array('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($m) . ':generateContent', array('x-goog-api-key: ' . $key), array('systemInstruction' => array('parts' => array(array('text' => $system))), 'contents' => $cs, 'generationConfig' => array('maxOutputTokens' => $max))); });
+    if ($files && $cs) { $li = count($cs) - 1; foreach ($files as $f) array_unshift($cs[$li]['parts'], array('inline_data' => array('mime_type' => $f['mime'], 'data' => $f['b64']))); }
+    $j = ai_post_models(array($model), function ($m) use ($key, $max, $system, $cs) { return array('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($m) . ':generateContent', array('x-goog-api-key: ' . $key), array('systemInstruction' => array('parts' => array(array('text' => $system))), 'contents' => $cs, 'generationConfig' => array('maxOutputTokens' => $max))); }, function () use ($key) { return ai_gemini_models($key); });
     $t = ''; if (isset($j['candidates'][0]['content']['parts'])) foreach ($j['candidates'][0]['content']['parts'] as $p) $t .= isset($p['text']) ? $p['text'] : ''; return $t;
   }
   $url = $prov === 'deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+  if ($files && $msgs && $prov === 'openai') { $li = count($msgs) - 1; $c = array(array('type' => 'text', 'text' => $msgs[$li]['content'])); foreach ($files as $f) $c[] = $f['kind'] === 'pdf' ? array('type' => 'file', 'file' => array('filename' => 'document.pdf', 'file_data' => 'data:application/pdf;base64,' . $f['b64'])) : array('type' => 'image_url', 'image_url' => array('url' => 'data:' . $f['mime'] . ';base64,' . $f['b64'])); $msgs[$li]['content'] = $c; }
+  if ($files && $prov === 'deepseek') fail('DeepSeek can\'t read pictures or PDFs — use Gemini, ChatGPT or Claude for this.');
   $j = ai_post_models($prov === 'openai' ? array($model, 'gpt-4o-mini') : array($model), function ($m) use ($url, $key, $max, $system, $msgs) { return array($url, array('Authorization: Bearer ' . $key), array('model' => $m, 'max_tokens' => min($max, 8000), 'messages' => array_merge(array(array('role' => 'system', 'content' => $system)), $msgs))); });
   return isset($j['choices'][0]['message']['content']) ? $j['choices'][0]['message']['content'] : '';
 }
@@ -399,15 +457,22 @@ if ($act === 'ai') {
     $msgs[] = array('role' => (isset($m['role']) && $m['role'] === 'assistant') ? 'assistant' : 'user', 'content' => clean_str($m['content'], 60000));
   }
   if (!$msgs) fail('Ask a question first.');
+  /* pictures / PDFs the user attached in AI Studio (max 6 files, 15 MB in total) */
+  $files = array(); $tot = 0;
+  if (isset($d['files']) && is_array($d['files'])) foreach (array_slice($d['files'], 0, 6) as $f) {
+    if (!is_array($f) || empty($f['b64']) || !preg_match('#^(image/(png|jpeg|webp|gif)|application/pdf)$#', isset($f['mime']) ? $f['mime'] : '')) continue;
+    $b = preg_replace('/[^A-Za-z0-9+\/=]/', '', (string)$f['b64']); $tot += strlen($b); if ($tot > 20000000) fail('The attached files are too big together — keep them under 15 MB.');
+    $files[] = array('kind' => $f['mime'] === 'application/pdf' ? 'pdf' : 'image', 'mime' => $f['mime'], 'b64' => $b);
+  }
   $mine = jread($AIF, array());
-  if (!empty($mine['enc'])) { $k = ai_dec($mine['enc'], $DATA); if ($k === '') fail('Your saved AI key could not be read — save it again.'); $txt = ai_run($mine['provider'], $k, $mine['model'], $system, $msgs, $max); $src = 'own'; }
+  if (!empty($mine['enc'])) { $k = ai_dec($mine['enc'], $DATA); if ($k === '') fail('Your saved AI key could not be read — save it again.'); $txt = ai_run($mine['provider'], $k, $mine['model'], $system, $msgs, $max, $files); $src = 'own'; }
   else {
     $pl = ai_platform(); if (!$pl) fail('NO_AI_KEY');
     $lim = isset($pl['daily_limit']) ? (int)$pl['daily_limit'] : 40; $uf = $DATA . '/ai-usage.json'; $use = jread($uf, array()); $uk = $KID . '-' . gmdate('Y-m-d');
     foreach ($use as $uk2 => $n) if (substr($uk2, -10) !== gmdate('Y-m-d')) unset($use[$uk2]);
     if ((isset($use[$uk]) ? $use[$uk] : 0) >= $lim) fail('Daily AI limit reached (' . $lim . ' questions). Add your own API key in AI Consultant → Settings to keep going.');
     $use[$uk] = (isset($use[$uk]) ? $use[$uk] : 0) + 1; jwrite($uf, $use);
-    $mods = ai_models(); $txt = ai_run($pl['provider'], $pl['key'], !empty($pl['model']) ? $pl['model'] : $mods[$pl['provider']], $system, $msgs, $max); $src = 'platform';
+    $mods = ai_models(); $txt = ai_run($pl['provider'], $pl['key'], !empty($pl['model']) ? $pl['model'] : $mods[$pl['provider']], $system, $msgs, $max, $files); $src = 'platform';
   }
   if (trim($txt) === '') fail('The AI returned an empty answer. Try again.');
   out(array('ok' => true, 'text' => $txt, 'source' => $src));
@@ -614,6 +679,40 @@ if ($act === 'subdel') {
   unset($map[$host]); unset($dw[$host]);
   jwrite($DATA . '/domains.json', $map); jwrite($DATA . '/downers.json', $dw);
   out(array('ok' => true, 'subs' => lb_my_subs($ME, $DATA)));
+}
+
+/* ---------- Google Sheets + email alerts: save / test ---------- */
+function lb_remember_forms($ME, $DATA, $ids) {
+  if (!$ids) return; $f = $DATA . '/formowners.json'; $fo = jread($f, array()); $ch = false;
+  foreach (array_slice($ids, 0, 2000) as $fid) if (is_string($fid) && preg_match('/^[\w-]{3,40}$/', $fid) && !isset($fo[$fid])) { $fo[$fid] = $ME['uid']; $ch = true; }
+  if ($ch) jwrite($f, $fo);
+}
+if ($act === 'hooks') {
+  $hf = lb_hook_file($DATA, $ME['uid']); $h = jread($hf, array());
+  if (!empty($d['get'])) out(array('ok' => true, 'hooks' => $h ? $h : null));
+  $url = trim(isset($d['url']) ? (string)$d['url'] : '');
+  if ($url !== '' && preg_match('#script\.google\.com/.*/edit#', $url)) fail('That is the editor link. Use Deploy → New deployment → Web app, and copy the "Web app URL" (it ends with /exec).');
+  if ($url !== '' && (strlen($url) > 500 || !preg_match('#^https://[^\s"<>]+$#', $url))) fail('Paste the Web app URL from Apps Script (it starts with https://script.google.com/macros/s/… and ends with /exec).');
+  $em = strtolower(trim(isset($d['email']) ? (string)$d['email'] : $ME['email'])); if ($em !== '' && !filter_var($em, FILTER_VALIDATE_EMAIL)) fail('Type a valid email for the alerts.');
+  if ($url === '') { @unlink($hf); if ($IS_ADMIN) @unlink(lb_hook_file($DATA, 'admin')); out(array('ok' => true, 'hooks' => null)); }
+  $h = array('url' => $url, 'email' => $em, 'notify' => !empty($d['notify']), 'autoreply' => !empty($d['autoreply']), 'subject' => clean_str(isset($d['subject']) ? $d['subject'] : '', 150), 'reply' => clean_str(isset($d['reply']) ? $d['reply'] : '', 3000), 'from' => clean_str(isset($d['from']) ? $d['from'] : '', 80), 'saved' => time());
+  jwrite($hf, $h); @chmod($hf, 0600);
+  if ($IS_ADMIN) jwrite(lb_hook_file($DATA, 'admin'), $h);   /* websites made before accounts send their leads here too */
+  if (isset($d['forms']) && is_array($d['forms'])) lb_remember_forms($ME, $DATA, $d['forms']);
+  out(array('ok' => true, 'hooks' => $h));
+}
+if ($act === 'hooktest') {
+  $h = jread(lb_hook_file($DATA, $ME['uid']), array()); if (empty($h['url'])) fail('Save the Web app URL first.');
+  $lead = array('lid' => 'TEST' . time(), 'form' => 'Test form', 'site' => '', 'page' => 'Test from ' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'builder'), 'url' => '', 'ts' => round(microtime(true) * 1000),
+    'data' => array('Name' => 'Test Lead', 'Email' => $h['email'] ? $h['email'] : 'test@example.com', 'Phone' => '9876543210', 'Message' => 'This is a test — your sheet and email alerts work'));
+  list($code, $b, $err) = lb_hook_post($h['url'], lb_hook_payload($lead, $h), true);
+  if ($err !== '') fail('Could not reach the Web app: ' . $err);
+  $j = json_decode($b, true);
+  if (is_array($j) && !empty($j['ok'])) out(array('ok' => true, 'sheet' => isset($j['sheet']) ? $j['sheet'] : '', 'mailed' => !empty($j['mailed'])));
+  if (stripos($b, 'accounts.google.com') !== false || stripos($b, 'ServiceLogin') !== false || $code === 401 || $code === 403) fail('Google asked to sign in — in Apps Script open Deploy → Manage deployments → edit → "Who has access: Anyone", then Deploy again.');
+  if (is_array($j) && !empty($j['error'])) fail('The script answered: ' . $j['error']);
+  if ($code >= 200 && $code < 400 && !preg_match('#script\.google#', $h['url'])) out(array('ok' => true, 'sheet' => '', 'mailed' => false, 'webhook' => true));
+  fail('The Web app answered something unexpected (HTTP ' . $code . '). Paste the whole script again, then Deploy → New deployment → Web app.');
 }
 
 /* ================= admin panel =================

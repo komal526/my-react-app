@@ -17,6 +17,7 @@ const LMS = lazy(() => import("./LMS.jsx"));
 const ImportPage = lazy(() => import("./ImportPage.jsx"));
 const FollowUps = lazy(() => import("./FollowUps.jsx"));
 const Consultant = lazy(() => import("./Consultant.jsx"));
+const AiStudio = lazy(() => import("./AiStudio.jsx"));
 import { BRAND } from "../brand.js";
 import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount } from "../lib.js";
 import { formHtml, bookingWidget } from "./tools.js";
@@ -127,6 +128,7 @@ export default function Dashboard({ user, onLogout }) {
   const [myTpl, setMyTpl] = useState(() => loadMyTpl(E));
   const [ai, setAi] = useState(null);
   const consultOpen = (o = {}) => setAi({ ...o, nonce: Date.now() });
+  const [studio, setStudio] = useState(null);   /* AI Studio window: { type, name, prompt } */
   /* my account on the server: role (admin / workspace owner / user), free-subdomain limit, paused accounts */
   const [me, setMe] = useState(null), [blocked, setBlocked] = useState(null), [domFocus, setDomFocus] = useState(null);
   useEffect(() => {
@@ -287,9 +289,10 @@ export default function Dashboard({ user, onLogout }) {
         {view === "pixels" && <Pixels integ={integ} onChange={onInteg} projects={projects} />}
         {view === "settings" && <Settings user={user} count={projects.length} onDeleteAll={() => setProjects([])} />}
       </Suspense></section>
-      {modal && modal.type === "new" && <NewModal mine={myTpl} kind={modal.kind || "landing"} onClose={() => setModal(null)} onCreate={create} onImport={() => { setModal(null); setView("import"); }} ai={integ.ai} onSetupAI={() => { setModal(null); setView("integrations"); }} />}
+      {modal && modal.type === "new" && <NewModal mine={myTpl} kind={modal.kind || "landing"} onClose={() => setModal(null)} onCreate={create} onImport={() => { setModal(null); setView("import"); }} ai={integ.ai} onSetupAI={() => { setModal(null); setView("integrations"); }} onStudio={(o) => { setModal(null); setStudio(o); }} />}
       {pubModal}
-      {ai && <Suspense fallback={null}><Consultant open={!!ai} initial={ai} onClose={() => setAi(null)} projects={projects} events={evs} leads={leads} integ={integ} user={user} onCreate={(n, pages, t) => { if (!full()) create(n, pages, t); }} /></Suspense>}
+      {ai && <Suspense fallback={null}><Consultant open={!!ai} initial={ai} onClose={() => setAi(null)} projects={projects} events={evs} leads={leads} integ={integ} user={user} onCreate={(n, pages, t) => { if (!full()) create(n, pages, t); }} onStudio={(o) => { setAi(null); setStudio(o); }} /></Suspense>}
+      {studio && <Suspense fallback={null}><AiStudio {...studio} integ={integ} onClose={() => setStudio(null)} onSetupAI={() => { setStudio(null); setView("integrations"); }} onCreate={(n, pages, t) => { setStudio(null); if (!full()) create(n, pages, t); }} /></Suspense>}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 // LaunchBuilder v10 — Integrations.jsx
 import { BRAND } from "../brand.js";
 import { useState } from "react";
+import SheetsCard from "./SheetsCard.jsx";
 import { WA_PROVIDERS, AI_PROVIDERS, callAI, detectAI, listModels, serverCall, serverUrl, phpCall, defaultServerUrl, lovableUrl, boltText } from "../lib.js";
 
 /* ================= Integrations: WhatsApp automation, payments, AI providers ================= */
@@ -131,6 +132,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         const aiOn = AI_PROVIDERS.some((p) => (ai.keys || {})[p.id]), hostOn = !!(serverUrl(integ) && pub.key && pub.ok);
         const APPS = [
           { id: "host", cat: "Hosting & domains", ic: "▲", name: "Netlify", desc: "Publish sites to a live link, link existing Netlify sites, connect domains (DNS or nameservers).", on: hostOn, extra: pub.user },
+          { id: "sheets", cat: "Automation", ic: "▦", name: "Google Sheets & email alerts", desc: "Every new lead goes into your Google Sheet and your inbox — one 3-minute setup.", on: !!(integ.sheets && integ.sheets.url && integ.sheets.ok) },
           { id: "email", cat: "Automation", ic: "✉", name: "Email automation", desc: "Auto-reply to every lead and get new-lead alerts — from your own Gmail.", on: emOk },
           { id: "wa", cat: "Automation", ic: "💬", name: "WhatsApp automation", desc: "Send an automatic WhatsApp message through AiSensy, WATI, Interakt, Pabbly or Make.", on: !!wa.webhook },
           { id: "pay", cat: "Payments", ic: "₹", name: "Razorpay & UPI", desc: "Collect payments before registration — cards, UPI, GPay, PhonePe, Paytm.", on: keyOk || upiOk, extra: pay.razorpayKey && pay.razorpayKey.includes("_test_") ? "Test mode" : "" },
@@ -174,6 +176,9 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         <details className="ig-d"><summary>How payment confirmation works</summary><p className="mut sm"><b>Razorpay:</b> the lead is marked <b>Paid</b> with the payment ID as soon as checkout succeeds. For full security (verifying the payment signature) you'd later add a small server — until then, cross-check payments in your Razorpay dashboard.<br /><b>UPI / payment link:</b> the visitor taps “I have paid” and can enter the UTR; the lead is marked <b>Payment claimed</b> so you can confirm it in your bank app.</p></details>
       </Card>
 
+      <Card id="sheets" sel={sel} onClose={close} ic="▦" t="Google Sheets & email alerts" sub="Every new lead lands in your Google Sheet and your inbox. Optional thank-you email to the person." on={!!(integ.sheets && integ.sheets.url && integ.sheets.ok)}>
+        <SheetsCard value={integ.sheets || {}} userEmail={(() => { try { return JSON.parse(localStorage.getItem("lb_session") || "{}").email || ""; } catch { return ""; } })()} onSave={(o) => onChange({ ...integ, sheets: o })} />
+      </Card>
       <Card id="email" sel={sel} onClose={close} ic="✉" t="Email automation" sub="Send an automatic email to everyone who fills a form, and get notified of new leads." on={emOk}>
         <div className="chips" style={{ margin: "0 0 12px" }}>
           <button className={em.provider === "gmail" ? "on" : ""} onClick={() => set("email", { provider: "gmail" })}>Your Gmail (free, recommended)</button>

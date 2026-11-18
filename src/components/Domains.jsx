@@ -332,7 +332,7 @@ function ServerCard({ p, onPatch, onPatchPage, onOpen, integ, onSetup, vps = nul
   );
 }
 
-export const SERVER_VERSION = 15;
+export const SERVER_VERSION = 16;
 
 /* ---------- free subdomains: name.crecapo.tech (or name.<white-label domain>) — no DNS for the user, limited per account ---------- */
 /* messages that disappear by themselves (ok after 5 s, errors after 9 s) */

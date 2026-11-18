@@ -1,6 +1,7 @@
 // LaunchBuilder v15 — Editor.jsx
 // The builder: canvas, top bar, left panel (Add / Layers / Pages / Site / Edit)
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, lazy, Suspense } from "react";
+const AiStudio = lazy(() => import("./AiStudio.jsx"));
 import { uid, slug, uniqFile, addr, previewToken, previewUrl, aiSection, AI_PROVIDERS } from "../lib.js";
 import { makeZip, EDITOR_CSS, CONT, WIDTH, cleanNode, nameOf, WIDGET_CSS, finalize, readCfg, LIB, PAGE_TPLS, hydrate, STRUCTURES, structureHtml, formHtml, bookingWidget } from "./tools.js";
 import Inspector, { Icon, QuickBar } from "./Inspector.jsx";
@@ -365,6 +366,7 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
   const crumbs = []; if (inDoc) for (let n = selEl; n && n !== doc.documentElement; n = n.parentElement) crumbs.unshift(n);
   const qq = q.trim().toLowerCase();
 
+  const [studio, setStudio] = useState(false);
   return (
     <div className={"app theme-" + theme + (panel ? "" : " collapsed")}>
       <header className="tb">
@@ -446,6 +448,10 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
         </div>}
       </aside>
 
+      {/* "Build with AI" — opens AI Studio for this page: add a section, or rebuild the whole page */}
+      {mode === "visual" && <button className="ed-aifab" onClick={() => setStudio(true)} title="Describe it, add pictures or documents — AI builds it here"><span>✨</span><b>Build with AI</b></button>}
+      {studio && <Suspense fallback={null}><AiStudio mode="editor" integ={integ} onClose={() => setStudio(false)} onSetupAI={() => { setStudio(false); alert("Connect an AI in Dashboard → Integrations → AI builders (paste a free Gemini key)."); }}
+        onApply={({ how, html }) => { setStudio(false); if (how === "page") { if (window.confirm("Replace this page with the AI version? (You can undo with Ctrl+Z or the page history.)")) loadSrc(html); } else { addEl(html); say("AI section added — edit it like any other section"); } }} /></Suspense>}
       <main ref={wrap} className="stage">
         {mode === "code" ? (
           <div className="codeview">

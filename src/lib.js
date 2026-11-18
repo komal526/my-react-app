@@ -245,55 +245,82 @@ export async function detectAI(raw) {
 }
 const strip = (t) => { let v = String(t || "").trim(); const m = v.match(/```(?:html)?[^\n]*\n([\s\S]*?)```/i); if (m) v = m[1]; return v.trim(); };
 const BUSY = /high demand|overloaded|unavailable|try again later|resource.?exhausted|rate.?limit|503|529|429|failed to fetch/i;
-/* backup models when the main one is busy (Google often says "high demand" on its newest model) */
-const BACKUP = { gemini: ["gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest", "gemini-2.5-flash-lite"], openai: ["gpt-4o-mini"], claude: [], deepseek: [] };
-export async function callAI(ai, system, prompt, maxTokens = 12000) {
-  const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0];
-  const first = (ai.models || {})[pr.id] || (ai.autoModels || {})[pr.id] || pr.model;
-  const list = [first, ...(BACKUP[pr.id] || [])].filter((m, i, a) => m && a.indexOf(m) === i);
-  let last = null;
-  for (let mi = 0; mi < list.length; mi++) {
+/* the model was switched off by the AI company ("no longer available to new users", "not found", "deprecated") */
+const RETIRED = /no longer available|deprecated|not found|does not exist|not supported|unknown model|invalid model|no such model|update your code/i;
+/* a model the AI company itself recommends in its error, e.g. "...use models/gemini-3.8-flash..." */
+const suggested = (msg, cur) => { const all = [...String(msg).matchAll(/models\/([a-z0-9][\w.-]*[a-z0-9])/gi)].map((m) => m[1]).filter((m) => m !== cur); return all[all.length - 1] || ""; };
+const FIXK = (p) => "lb_ai_model_fix_" + p;   /* remembers a working model on this device after a fix */
+/* backup models, newest first, read from the AI company's own model list (cached for this visit) */
+const altCache = {};
+async function altModels(provider, key) {
+  if (altCache[provider]) return altCache[provider];
+  let out = [];
+  try {
+    if (provider === "gemini") {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } }), j = await r.json();
+      const ids = (j.models || []).filter((m) => (m.supportedGenerationMethods || []).includes("generateContent")).map((m) => String(m.name).replace(/^models\//, ""));
+      const ver = (x) => parseFloat((x.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
+      out = [...ids.filter((x) => /^gemini-\d+(\.\d+)?-flash$/.test(x)).sort((a, b) => ver(b) - ver(a)), ...ids.filter((x) => /^gemini-(flash|flash-lite)-latest$/.test(x)), ...ids.filter((x) => /^gemini-\d+(\.\d+)?-flash-lite$/.test(x)).sort((a, b) => ver(b) - ver(a))];
+    } else if (provider === "openai") out = ["gpt-4o-mini"];
+  } catch { out = provider === "gemini" ? ["gemini-flash-latest", "gemini-flash-lite-latest"] : []; }
+  altCache[provider] = out; return out;
+}
+/* callAI(ai, system, prompt, maxTokens, files)
+   files = [{ kind: "image" | "pdf", mime, b64, name }] — pictures / PDFs the user attached (text from documents goes into the prompt) */
+export async function callAI(ai, system, prompt, maxTokens = 12000, files = []) {
+  const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0], key = (ai.keys || {})[pr.id];
+  let fixed = ""; try { fixed = localStorage.getItem(FIXK(pr.id)) || ""; } catch { /* private mode */ }
+  const mine = (ai.models || {})[pr.id];
+  const first = mine || fixed || (ai.autoModels || {})[pr.id] || pr.model;
+  if (!key) return callAI1(ai, system, prompt, maxTokens, files);   /* no key in this browser → your server does all of this itself */
+  const tried = new Set(), queue = [first];
+  let last = null, busyWait = true;
+  while (queue.length) {
+    const m = queue.shift(); if (!m || tried.has(m)) continue; tried.add(m);
     for (let t = 0; t < 2; t++) {
-      try { const out = await callAI2({ ...ai, models: { ...(ai.models || {}), [pr.id]: list[mi] } }, system, prompt, maxTokens); if (mi > 0) callAI.usedBackup = list[mi]; return out; }
-      catch (e) {
+      try {
+        const out = await callAI1({ ...ai, models: { ...(ai.models || {}), [pr.id]: m } }, system, prompt, maxTokens, files);
+        if (m !== first) { callAI.usedBackup = m; if (!mine) try { localStorage.setItem(FIXK(pr.id), m); } catch { /* ignore */ } }
+        return out;
+      } catch (e) {
         last = e;
-        if (!(ai.keys || {})[pr.id] || !BUSY.test(e.message)) throw e;   /* a real error (bad key…) → show it straight away */
-        if (t === 0) await new Promise((r) => setTimeout(r, 1500));       /* busy → wait 1.5 s and retry, then the next model */
+        if (RETIRED.test(e.message)) {   /* switched off → the model they suggest, then the newest ones they list */
+          const sug = suggested(e.message, m); if (sug) queue.unshift(sug);
+          (await altModels(pr.id, key)).forEach((x) => queue.push(x)); break;
+        }
+        if (!BUSY.test(e.message)) throw e;                      /* a real error (bad key…) → show it straight away */
+        if (t === 0 && busyWait) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+        (await altModels(pr.id, key)).forEach((x) => queue.push(x)); busyWait = false; break;
       }
     }
   }
-  throw new Error("The AI is very busy right now — I retried and tried backup models. Please wait a minute and send again." + (last ? " (" + String(last.message).slice(0, 80) + ")" : ""));
+  if (last && BUSY.test(last.message)) throw new Error("The AI is very busy right now — I retried and tried backup models. Please wait a minute and send again.");
+  throw last || new Error("The AI didn't answer.");
 }
-async function callAI2(ai, system, prompt, maxTokens) {
-  try { return await callAI1(ai, system, prompt, maxTokens); }
-  catch (e) {
-    /* the saved model was retired → pick the current best one for this key and try once more */
-    const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0], key = (ai.keys || {})[pr.id];
-    if (!key || !/not found|does not exist|not supported|unknown model|invalid model|no such model/i.test(e.message)) throw e;
-    const model = await listModels(pr.id, key).catch(() => ""); if (!model) throw e;
-    callAI.newModel = { provider: pr.id, model };
-    return callAI1({ ...ai, models: { ...(ai.models || {}), [pr.id]: model } }, system, prompt, maxTokens);
-  }
-}
-async function callAI1(ai, system, prompt, maxTokens) {
+async function callAI1(ai, system, prompt, maxTokens, files = []) {
   const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0], key = (ai.keys || {})[pr.id], model = (ai.models || {})[pr.id] || (ai.autoModels || {})[pr.id] || pr.model;  /* your model → the automatic best model → a safe default */
+  const imgs = files.filter((f) => f.kind === "image"), pdfs = files.filter((f) => f.kind === "pdf");
   if (!key) {
     /* no key in this browser → ask through your server (your encrypted key, or the platform Gemini key) */
-    try { return (await phpCall({ url: defaultServerUrl(), key: accountKey() }, { action: "ai", system, messages: [{ role: "user", content: prompt }], max: Math.min(maxTokens, 12000) })).text; }
+    try { return (await phpCall({ url: defaultServerUrl(), key: accountKey() }, { action: "ai", system, messages: [{ role: "user", content: prompt }], max: Math.min(maxTokens, 12000), files: files.map((f) => ({ kind: f.kind, mime: f.mime, b64: f.b64 })) })).text; }
     catch (e) { if (/NO_AI_KEY/.test(e.message)) throw new Error(`Add an AI key in Integrations → AI (or AI Consultant → Settings) first.`); throw e; }
   }
   let r, j, text = "";
   if (pr.id === "claude") {
-    r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: prompt }] }) });
+    const content = [...imgs.map((f) => ({ type: "image", source: { type: "base64", media_type: f.mime, data: f.b64 } })), ...pdfs.map((f) => ({ type: "document", source: { type: "base64", media_type: "application/pdf", data: f.b64 } })), { type: "text", text: prompt }];
+    r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: "user", content: files.length ? content : prompt }] }) });
     j = await r.json(); if (!r.ok) throw new Error((j.error && j.error.message) || r.statusText);
     text = (j.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
   } else if (pr.id === "gemini") {
-    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens } }) });
+    const parts = [...files.map((f) => ({ inline_data: { mime_type: f.mime, data: f.b64 } })), { text: prompt }];
+    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts }], generationConfig: { maxOutputTokens: maxTokens } }) });
     j = await r.json(); if (!r.ok) throw new Error((j.error && j.error.message) || r.statusText);
     text = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map((p) => p.text || "").join("");
   } else {
+    if (pr.id === "deepseek" && files.length) throw new Error("DeepSeek can't read pictures or PDFs. Remove them, or use Gemini, ChatGPT or Claude for this.");
     const url = pr.id === "deepseek" ? "https://api.deepseek.com/chat/completions" : "https://api.openai.com/v1/chat/completions";
-    r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key }, body: JSON.stringify({ model, messages: [{ role: "system", content: system }, { role: "user", content: prompt }], max_tokens: Math.min(maxTokens, 8000) }) });
+    const content = files.length ? [{ type: "text", text: prompt }, ...imgs.map((f) => ({ type: "image_url", image_url: { url: `data:${f.mime};base64,${f.b64}` } })), ...pdfs.map((f) => ({ type: "file", file: { filename: f.name || "document.pdf", file_data: `data:application/pdf;base64,${f.b64}` } }))] : prompt;
+    r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key }, body: JSON.stringify({ model, messages: [{ role: "system", content: system }, { role: "user", content }], max_tokens: Math.min(maxTokens, 8000) }) });
     j = await r.json(); if (!r.ok) throw new Error((j.error && j.error.message) || r.statusText);
     text = (((j.choices || [])[0] || {}).message || {}).content || "";
   }
@@ -301,18 +328,18 @@ async function callAI1(ai, system, prompt, maxTokens) {
   return text;
 }
 const AI_RULES = `Rules: plain HTML + CSS only, all CSS inside one <style> in <head>, no JavaScript, no external CSS frameworks. Fully responsive (mobile first, use flex/grid and a @media (max-width:767px) block). Use Google Fonts via <link> if you want. Images: use https://placehold.co/WIDTHxHEIGHT/e9e7ff/4f46e5?text=Label. Put each part in its own <section> with a meaningful id (hero, features, pricing, faq, contact…). Every form must be <form data-lb-form="Form name" data-lb-success="Thank-you text"> with name attributes on inputs (name, email, phone…). Buttons that link to sections use href="#id". Write real, specific, persuasive copy for the business described (no lorem ipsum).`;
-export async function aiWebsite(ai, brief, multi) {
+export async function aiWebsite(ai, brief, multi, files = []) {
   const sys = multi
     ? `You are a senior web designer. Create a small multi-page website. Output ONLY the pages, each one a complete HTML document (<!DOCTYPE html>…</html>) preceded by a line exactly like: ===PAGE Home|index.html=== . First page must be index.html. 3 to 5 pages. Every page has the same header with a <nav data-lb-autonav> containing links to every page file, and the same footer. ${AI_RULES}`
     : `You are a senior web designer. Create ONE high-converting landing page. Output ONLY one complete HTML document (<!DOCTYPE html>…</html>), nothing else. ${AI_RULES}`;
-  const out = await callAI(ai, sys, brief, 16000);
+  const out = await callAI(ai, sys, brief, 16000, files);
   if (!multi) { const h = strip(out), k = h.search(/<!doctype|<html/i); return [{ name: "Home", file: "index.html", html: k > 0 ? h.slice(k) : h }]; }
   const parts = out.split(/^===PAGE\s+(.+?)\|(.+?)===\s*$/m), pages = [];
   for (let i = 1; i < parts.length; i += 3) pages.push({ name: parts[i].trim(), file: parts[i + 1].trim().replace(/[^\w.-]/g, "-"), html: strip(parts[i + 2]) });
   if (!pages.length) return [{ name: "Home", file: "index.html", html: strip(out) }];
   return pages;
 }
-export const aiSection = (ai, brief) => callAI(ai, `You are a senior web designer. Output ONLY one HTML fragment: a single <section> element with ALL styling as inline style="" attributes (no <style>, no classes, no JavaScript). Responsive: use flex-wrap and max-width containers. Images: https://placehold.co/WIDTHxHEIGHT/e9e7ff/4f46e5?text=Label. Forms: <form data-lb-form="Form name"> with name attributes. Real, specific copy.`, brief, 6000).then((raw) => { const t = strip(raw), i = t.search(/<section/i), k = t.toLowerCase().lastIndexOf("</section>"); return i >= 0 && k > i ? t.slice(i, k + 10) : t; });
+export const aiSection = (ai, brief, files = []) => callAI(ai, `You are a senior web designer. Output ONLY one HTML fragment: a single <section> element with ALL styling as inline style="" attributes (no <style>, no classes, no JavaScript). Responsive: use flex-wrap and max-width containers. Images: https://placehold.co/WIDTHxHEIGHT/e9e7ff/4f46e5?text=Label. Forms: <form data-lb-form="Form name"> with name attributes. Real, specific copy.`, brief, 6000, files).then((raw) => { const t = strip(raw), i = t.search(/<section/i), k = t.toLowerCase().lastIndexOf("</section>"); return i >= 0 && k > i ? t.slice(i, k + 10) : t; });
 
 /* ---- AI: change one selected section/element ---- */
 export async function aiEdit(ai, html, instruction) {
@@ -399,6 +426,10 @@ export const domainState = (p, subs = subsCache()) => {
   return "needs";
 };
 export const admin = (action, o = {}) => phpCall(acctSrv(), { action: "adm_" + action, ...o });
+/* Google Sheets + email alerts: the server sends each new lead to your Apps Script web app */
+export const hooksSave = (o) => { let forms = []; try { const E = JSON.parse(localStorage.getItem("lb_session") || "{}").email; forms = [...loadForms(E).map((f) => f.id), ...loadCal(E).map((e) => e.id)]; } catch { /* ignore */ } return phpCall(acctSrv(), { action: "hooks", ...o, forms }); };
+export const hooksGet = () => phpCall(acctSrv(), { action: "hooks", get: 1 });
+export const hooksTest = () => phpCall(acctSrv(), { action: "hooktest" });
 const bytes64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 export const filesForServer = (files) => files.map((f) => ({ name: f.name, b64: bytes64(typeof f.data === "string" ? new TextEncoder().encode(f.data) : f.data) }));
 /* pull leads collected by live sites into the CRM (merged by lead id) */

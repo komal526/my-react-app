@@ -120,10 +120,11 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
       w.style.transform = "none";
       const sc = c.querySelector(".ai-score"), h = c.querySelector(".ai-h .grow");
       const r = w.getBoundingClientRect(), cx0 = r.left + r.width / 2, cy0 = r.top + r.height / 2;
-      const T = (x, y, s, rot) => ({ transform: `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${s.toFixed(3)}) rotate(${rot}deg)` });
+      /* every frame has the same parts (perspective · move · 3D turn · size · tilt) so the browser blends them smoothly */
+      const T = (x, y, s, rot, ry = 0) => ({ transform: `perspective(700px) translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotateY(${ry}deg) scale(${s.toFixed(3)}) rotate(${rot}deg)` });
       const f = [];
-      const at = (o, p, rot = 0) => f.push({ offset: o, ...T(p[0], p[1], p[2], rot) });
-      const hops = (from, to, o0, o1, back, n = 6, lift = 26) => { for (let i = 1; i <= n; i++) { const t = i / n, e = t * t * (3 - 2 * t), x = from[0] + (to[0] - from[0]) * e, y = from[1] + (to[1] - from[1]) * e, s = from[2] + (to[2] - from[2]) * e; f.push({ offset: o0 + (o1 - o0) * t, ...T(x, y - (i % 2 ? lift * Math.max(s, 0.5) : 0), s, i === n ? 0 : (i % 2 ? (back ? -7 : 7) : (back ? 4 : -4))) }); } };
+      const at = (o, p, rot = 0, ry = 0) => f.push({ offset: o, ...T(p[0], p[1], p[2], rot, ry) });
+      const hops = (from, to, o0, o1, back, n = 6, lift = 26) => { for (let i = 1; i <= n; i++) { const t = i / n, e = t * t * (3 - 2 * t), x = from[0] + (to[0] - from[0]) * e, y = from[1] + (to[1] - from[1]) * e, s = from[2] + (to[2] - from[2]) * e; f.push({ offset: o0 + (o1 - o0) * t, ...T(x, y - (i % 2 ? lift * Math.max(s, 0.5) : 0), s, i === n ? 0 : (i % 2 ? (back ? -7 : 7) : (back ? 4 : -4)), i === n ? 0 : (back ? 18 : -18) * Math.sin(Math.PI * t)) }); } };
       const HOME = [0, 0, 1];
       /* stop 1: the empty space above the AI CORE, as big as fits (up to the same size) */
       const core = c.parentElement && c.parentElement.querySelector(".al-core3"), col = core && core.parentElement;
@@ -132,7 +133,7 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
         /* room = from the top of this row (plus the small gap above it) down to the top of the core ring */
         const row = c.parentElement.getBoundingClientRect(), k = core.getBoundingClientRect();
         const top = row.top - 10, bottom = k.top + 8, room = bottom - top, colW = col ? col.getBoundingClientRect().width : 240;
-        const S = Math.max(0.5, Math.min(1, (room - 6) / r.height, (colW + 70) / r.width));
+        const S = Math.max(0.45, Math.min(0.66, (room - 6) / r.height, (colW + 70) / r.width));   /* a bit "zoomed out" above the core */
         CORE = [k.left + k.width / 2 - cx0, bottom - (r.height * S) / 2 - cy0, S];
       }
       /* stop 2: the space between the title and the score (small) */
@@ -142,7 +143,8 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
       at(0, HOME); at(0.12, HOME);
       if (CORE) {
         hops(HOME, CORE, 0.12, 0.26, false, 7, 34);
-        at(0.29, [CORE[0], CORE[1] - 14, CORE[2]]); at(0.31, CORE); at(0.42, CORE);
+        /* lands on the core, then turns left and right in 3D while saying hi */
+        at(0.29, [CORE[0], CORE[1] - 14, CORE[2]]); at(0.31, CORE); at(0.34, CORE, 0, -22); at(0.37, CORE, 0, 22); at(0.4, CORE, 0, -10); at(0.42, CORE);
         hops(CORE, HOME, 0.42, 0.54, true, 7, 34);
       } else at(0.54, HOME);
       at(0.6, HOME);
