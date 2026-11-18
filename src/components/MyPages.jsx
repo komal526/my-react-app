@@ -301,7 +301,7 @@ function DashFooter({ onNew, onGo, onTemplates, onLeads, onAnalytics, onConsult 
   );
 }
 
-export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl, onDomain }) {
+export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl, onDomain, onView, onSaveDraft }) {
   /* free subdomains (slug → name.crecapo.tech) so each card shows its real live address */
   const [subs, setSubs] = useState(subsCache);
   useEffect(() => {
@@ -351,12 +351,12 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
           <button className="pri" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ Create new</button> <button onClick={onImport}>Import HTML</button></div>
       ) : (
         <div className={mode === "dash" && !query ? "grid pc-grid" : "grid"}>{shown.slice(0, limit).map((p) => (
-          <div key={p.id} className="card" onClick={() => onOpen(p.id)} onContextMenu={(e) => { e.preventDefault(); setMenu(p.id); }} title="Click to edit · right-click for more">
+          <div key={p.id} className="card" onClick={() => (onView ? onView(p) : onOpen(p.id))} onContextMenu={(e) => { e.preventDefault(); setMenu(p.id); }} title="Click to preview · right-click for more">
             <Thumb html={p.pages[0].html} img={tplImg(p)} />
             <div className="cb">
               <div className="ct"><b>{p.name}</b></div>
               {(() => { const live = p.status === "published" ? liveAddr(p, subs) : "", ds = domainState(p, subs);
-                return <div className={"pc-st " + (live ? "on" : "")}><i />{live ? "Live" : "Draft"}
+                return <div className={"pc-st " + (live ? "on" : "")}><i />{live ? "Live" : p.unsaved ? <b className="pc-unsaved">Not saved</b> : "Draft"}
                   {live ? <a className="pc-live" href={live} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} title="Open the live website">{live.replace(/^https?:\/\//, "").replace(/\/$/, "")} ↗</a> : <span className="mut">· not live yet</span>}
                   {live && ds === "needs" && onDomain && <span className="pc-need" title="Only on the temporary link — give it a domain">no domain</span>}</div>; })()}
               <div className="db-cardbtns" onClick={(e) => e.stopPropagation()}>

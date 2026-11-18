@@ -3835,3 +3835,26 @@ html.lb-hidden .tg-frame .tg-reel{animation-play-state:paused}
 @media (max-width:1100px){.tb-home span,.tb-ai span{display:none}}
 .ai-modes button{font-size:11px;padding:6px 2px;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .ai-studio-btn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px!important}
+/* v81 — save flow: unsaved drafts, project preview, toast */
+.tb-save{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:11px;border:1.5px dashed #f5b301;background:rgba(245,179,1,.12);color:#ffd35c;font:inherit;font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap;animation:tbSave 2.4s ease-in-out infinite}
+.tb-save:hover{background:#f5b301;color:#0d1324;border-style:solid}
+@keyframes tbSave{50%{box-shadow:0 0 0 5px rgba(245,179,1,.18)}}
+@media (max-width:1100px){.tb-save span{display:none}}
+.uv-ov{position:fixed;inset:0;z-index:500;background:rgba(9,13,40,.55);display:grid;place-items:center;padding:16px;backdrop-filter:blur(3px)}
+.uv-box{background:#fff;border-radius:20px;padding:28px 26px 22px;max-width:440px;width:100%;text-align:center;box-shadow:0 30px 70px -20px rgba(0,0,0,.5);font-family:Manrope,Inter,system-ui,sans-serif;border-top:5px solid #f5b301}
+.uv-ic{display:inline-grid;place-items:center;width:54px;height:54px;border-radius:50%;background:#fff7d6;font-size:24px}
+.uv-box h3{margin:10px 0 6px;font-size:19px;color:#0d1324}.uv-box p{margin:0 0 18px;color:#5d6785;line-height:1.55}
+.uv-row{display:flex;flex-direction:column;gap:8px}
+.uv-row button{border:0;border-radius:12px;padding:12px;font:inherit;font-weight:800;cursor:pointer}
+.uv-save{background:#0d1324;color:#f5b301}.uv-no{background:#fef2f2;color:#b91c1c}.uv-keep{background:#f1f3f8;color:#3a4361}
+.dash-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:600;background:#0d1324;color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;box-shadow:0 20px 40px -16px rgba(0,0,0,.55);border-left:4px solid #f5b301;animation:fsIn .25s ease;font-family:Manrope,Inter,system-ui,sans-serif}
+.pk-acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pk-acts button{border:1px solid #e1e5ef;background:#fff;border-radius:10px;padding:8px 12px;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+.pk-acts .pk-edit{background:#0d1324;color:#f5b301;border-color:#0d1324}
+.pk-acts .pk-save{background:#f5b301;color:#0d1324;border-color:#f5b301}
+.pk-acts .pk-del{color:#b91c1c}
+.dash .pc-unsaved{color:#b45309;font-weight:800}
+.pk-acts button{background:#fff!important;color:#0d1324!important;border:1px solid #e1e5ef!important;border-radius:10px!important;padding:8px 14px!important;font-weight:800!important}
+.pk-acts .pk-edit{background:#f5b301!important;color:#0d1324!important;border-color:#f5b301!important}
+.pk-acts .pk-save{background:#10b981!important;color:#fff!important;border-color:#10b981!important}
+.pk-acts .pk-del{color:#b91c1c!important}

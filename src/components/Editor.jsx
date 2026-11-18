@@ -17,7 +17,7 @@ const pillOf = (g, nm) => g === "Layout" ? "layout" : g === "Media" ? "media" : 
   : g === "Basic" ? (/Button|Hyperlink/.test(nm) ? "cta" : nm === "Icon" ? "media" : "text") : /Call to action|Banner|Payment button/.test(nm) ? "cta" : "prebuilt";
 const TABS = [["add", "plus", "Add"], ["layers", "layers", "Layers"], ["pages", "pages", "Pages"], ["site", "globe", "Site"], ["edit", "pen", "Edit"]];
 
-export default function Editor({ page, user, forms = [], events = [], integ, onSave, onBack, onPublish, onPages, onType }) {
+export default function Editor({ page, user, forms = [], events = [], integ, onSave, onBack, onPublish, onPages, onType, unsaved = false, onSaveProject = () => {} }) {
   const [src, setSrc] = useState(page.pages[0].html);
   const [ver, setVer] = useState(0), [mode, setMode] = useState("visual"), [dev, setDev] = useState(() => (window.innerWidth < 600 ? "mobile" : window.innerWidth <= 1024 ? "tablet" : "desktop")), [tab, setTab] = useState("add"), [itab, setItab] = useState("content");
   const [selEl, setSelEl] = useState(null), [selKey, setSelKey] = useState(0), [, setTick] = useState(0), [codeText, setCodeText] = useState("");
@@ -421,6 +421,7 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
         <button className="ib" title={page.pages.length > 1 ? "Export site (.zip)" : "Export HTML"} onClick={exportFile} disabled={mode !== "visual" || !!busy}><Icon n="download" s={16} /></button>
         <span className="sep" />
         <div className="split"><button className="btn ghost" onClick={preview} disabled={mode !== "visual"}><Icon n="eye" s={15} /> Preview</button><button className="btn ghost ic" title="Copy temporary preview link" onClick={copyLink} disabled={mode !== "visual"}><Icon n="link" s={15} /></button></div>
+        {unsaved && <button className="tb-save" onClick={() => { flush(); setTimeout(onSaveProject, 0); }} title="This new project isn't in your projects yet">💾 <span>Save to projects</span></button>}
         <button className="btn publish" onClick={() => { flush(); onPublish(exportHtml()); }} disabled={mode !== "visual"}>Publish</button>
       </header>
 

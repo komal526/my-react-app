@@ -6,7 +6,7 @@ import { Icon } from "./icons.jsx";
 /* ================= Templates gallery: filters, search, hover-scroll previews, full-screen preview ================= */
 const W = { desktop: "100%", tablet: "820px", mobile: "390px" };
 
-function PreviewModal({ t, onClose, onUse }) {
+function PreviewModal({ t, onClose, onUse, onSave }) {
   const pages = useMemo(() => (t.file ? [{ id: "f", name: "Home" }] : t.make(t.name)), [t]);
   const [i, setI] = useState(0), [dev, setDev] = useState("desktop");
   return (
@@ -15,7 +15,7 @@ function PreviewModal({ t, onClose, onUse }) {
         <div className="tp-ttl"><i style={{ background: t.accent || "#3d6bff" }} /><b>{t.name}</b><span>{t.cat}</span></div>
         {pages.length > 1 && <div className="tp-pages">{pages.map((p, k) => <button key={p.id} className={i === k ? "on" : ""} onClick={() => setI(k)}>{p.name}</button>)}</div>}
         <div className="tp-dev">{Object.keys(W).map((d) => <button key={d} title={d[0].toUpperCase() + d.slice(1)} className={dev === d ? "on" : ""} onClick={() => setDev(d)}><Icon n={d} s={17} /></button>)}</div>
-        <button className="pri" onClick={() => onUse(t)}>Use this template</button>
+        <div className="pk-acts"><button className="pk-save" onClick={() => onSave(t)}>💾 Save to my projects</button><button className="pk-edit" onClick={() => onUse(t)}>✏️ Edit</button></div>
         <button className="tp-x" onClick={onClose} aria-label="Close">✕</button>
       </div>
       <div className="tp-stage">{t.file ? <iframe title={t.name} src={tplUrl(t)} style={{ width: W[dev] }} sandbox="allow-scripts allow-same-origin allow-forms" /> : <iframe title={t.name} srcDoc={pages[i].html} style={{ width: W[dev] }} sandbox="allow-same-origin" />}</div>
@@ -36,7 +36,7 @@ function glide(card, down) {
   scrollers.set(f, requestAnimationFrame(step));
 }
 
-export default function Templates({ onUse, mine = [], onDeleteMine = () => {} }) {
+export default function Templates({ onUse, onSave = onUse, mine = [], onDeleteMine = () => {} }) {
   const [live, setLive] = useState(""); /* only the card under the mouse loads its live page */
   const [type, setType] = useState("all"), [cat, setCat] = useState(""), [q, setQ] = useState(""), [open, setOpen] = useState(null);
   const MINE = mine.map(asTemplate);
@@ -72,7 +72,7 @@ export default function Templates({ onUse, mine = [], onDeleteMine = () => {} })
           <a className="tg-shot" href={t.file ? tplUrl(t) : undefined} target="_blank" rel="noopener" onClick={(e) => { e.preventDefault(); setOpen(t); }}>
             <div className="tg-chrome"><i /><i /><i /><span>{t.file ? (t.type === "website" ? "Website" : "Landing page") : pages.length > 1 ? `${pages.length} pages` : "1 page"}</span></div>
             <div className="tg-frame">{t.file ? <>{t.thumb && <div className="tg-reel" style={{ "--i": i }}><img src={tplUrl({ file: t.thumb.replace("/thumbs/", "/long/") })} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.parentNode.classList.add("short"); e.currentTarget.src = tplUrl({ file: t.thumb }); }} /><img src={tplUrl({ file: t.thumb.replace("/thumbs/", "/long/") })} alt="" loading="lazy" decoding="async" /></div>}{live === t.key && <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin" tabIndex={-1} scrolling="no" onLoad={(e) => { const f = e.currentTarget, c = f.closest(".tg-card"); f.classList.add("on"); f.dataset.ready = "1"; if (c && c.matches(":hover")) glide(c, true); }} />}</> : <iframe title={t.name} srcDoc={pages[0].html} sandbox="allow-same-origin" tabIndex={-1} />}</div>
-            <div className="tg-hover"><button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(t); }}>👁 Preview</button><button className="pri" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUse(t); }}>Use template</button>{t.file && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(tplUrl(t), "_blank", "noopener"); }}>↗ New tab</button>}</div>
+            <div className="tg-hover"><button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(t); }}>👁 Preview</button><button className="pri" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUse(t); }}>✏️ Edit</button><button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSave(t); }}>💾 Save</button>{t.file && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(tplUrl(t), "_blank", "noopener"); }}>↗ New tab</button>}</div>
           </a>
           <div className="tg-info">
             <div className="tg-row"><b>{t.name}</b>{t.mine && <span className="tg-mine">★ Mine</span>}<span className={"tg-type " + t.type}>{t.type === "website" ? "Website" : "Landing"}</span></div>
@@ -80,7 +80,7 @@ export default function Templates({ onUse, mine = [], onDeleteMine = () => {} })
             <div className="tg-meta"><i style={{ background: t.accent || "#9aa3b8" }} />{t.cat}{t.mine && <button className="tg-del" onClick={() => { if (window.confirm(`Delete the template "${t.name}"? Your original project stays.`)) onDeleteMine(t.id); }}>Delete</button>}</div>
           </div>
         </div>); })}</div>
-      {open && <PreviewModal t={open} onClose={() => setOpen(null)} onUse={(t) => { setOpen(null); onUse(t); }} />}
+      {open && <PreviewModal t={open} onClose={() => setOpen(null)} onUse={(t) => { setOpen(null); onUse(t); }} onSave={(t) => { setOpen(null); onSave(t); }} />}
     </>
   );
 }
