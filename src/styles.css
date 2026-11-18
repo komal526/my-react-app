@@ -3641,3 +3641,17 @@ html.lb-hidden .tg-frame .tg-reel{animation-play-state:paused}
 .dash .db-tot b{color:#0d1324;font-size:14px;margin-right:3px}.dash .db-tot i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
 .dash .db-tot i.v{background:#7c4dff}.dash .db-tot i.l{background:var(--lb-y,#f5b301)}.dash .db-tot .mut{margin-left:auto}
 .dash .db-row2{content-visibility:visible!important;contain:none!important;overflow:visible!important}
+/* v75 — AI: connect with just a key */
+.dash .ig-quick{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:14px;border:1px solid rgba(var(--lb-yr,245,179,1),.6);border-top:4px solid var(--lb-y,#f5b301);background:linear-gradient(135deg,#fffdf4,#fff 60%,#f6f8ff);margin-bottom:12px}
+.dash .ig-quick>b{font-size:15px;color:#0d1324}
+.dash .ig-quick .row{display:flex;gap:8px;flex-wrap:wrap}.dash .ig-quick input{flex:1 1 260px;min-width:0;padding:11px 12px;border:1.5px solid #d5dae6;border-radius:10px;font:inherit}
+.dash .ig-quick input:focus{outline:none;border-color:var(--lb-y,#f5b301);box-shadow:0 0 0 3px rgba(var(--lb-yr,245,179,1),.18)}
+.dash .ig-quick .pri{background:#0d1324!important;color:var(--lb-y,#f5b301)!important;border:0!important;border-radius:10px!important;padding:10px 22px!important;font-weight:800!important}
+.dash .ig-quick a{color:#1e3a8a;font-weight:700}
+.dash .ig-qmsg{padding:10px 12px;border-radius:10px;font-size:13.5px}.dash .ig-qmsg.ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}.dash .ig-qmsg.bad{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.dash .ig-conn{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.dash .ig-cr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid #e6e9f2;border-radius:12px;background:#fff}.dash .ig-cr.on{border-color:var(--lb-y,#f5b301)}
+.dash .ig-cr .grow{display:flex;flex-direction:column;min-width:0}.dash .ig-cr small{font-size:12px}
+.dash .ig-cdot{width:9px;height:9px;border-radius:50%;background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+.dash .ig-tst{flex-basis:100%}
+.dash .ig-adv{margin-bottom:12px}.dash .ig-adv summary{cursor:pointer;font-weight:700;color:#5d6785;margin-bottom:10px}

@@ -208,8 +208,54 @@ export const AI_PROVIDERS = [
   { id: "gemini", name: "Google Gemini", model: "gemini-flash-latest", keyUrl: "https://aistudio.google.com/app/apikey", hint: "AIza…" },
   { id: "deepseek", name: "DeepSeek", model: "deepseek-chat", keyUrl: "https://platform.deepseek.com/api_keys", hint: "sk-…" },
 ];
+/* ---- connect with ONLY a key: find out which AI company it belongs to, check it works, and pick the best model ---- */
+const pickBest = (ids, prefs, re) => { for (const p of prefs) { const f = ids.find((x) => x === p); if (f) return f; } const m = ids.filter((x) => re.test(x)); return m[0] || ids[0] || ""; };
+async function listModels(provider, key) {
+  let r, j;
+  if (provider === "gemini") {
+    r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } }); j = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error((j.error && j.error.message) || "Key not accepted"), { status: r.status });
+    const ids = (j.models || []).filter((m) => (m.supportedGenerationMethods || []).includes("generateContent")).map((m) => String(m.name).replace(/^models\//, ""));
+    /* newest stable "flash" model: fast, cheap and on the free tier */
+    const flash = ids.filter((x) => /^gemini-\d+(\.\d+)?-flash$/.test(x)).sort((a, b) => parseFloat(b.split("-")[1]) - parseFloat(a.split("-")[1]));
+    return flash[0] || (ids.includes("gemini-flash-latest") ? "gemini-flash-latest" : pickBest(ids, [], /^gemini-.*flash(?!.*(lite|tts|image|audio|live))/));
+  }
+  if (provider === "claude") {
+    r = await fetch("https://api.anthropic.com/v1/models?limit=100", { headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" } }); j = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error((j.error && j.error.message) || "Key not accepted"), { status: r.status });
+    const ids = (j.data || []).map((m) => m.id); return ids.find((x) => /sonnet/.test(x)) || ids[0] || "claude-sonnet-5-5";
+  }
+  const base = provider === "deepseek" ? "https://api.deepseek.com" : "https://api.openai.com/v1";
+  r = await fetch(base + "/models", { headers: { authorization: "Bearer " + key } }); j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error((j.error && j.error.message) || "Key not accepted"), { status: r.status });
+  const ids = (j.data || []).map((m) => m.id);
+  if (provider === "deepseek") return ids.includes("deepseek-chat") ? "deepseek-chat" : ids[0] || "deepseek-chat";
+  return pickBest(ids, ["gpt-5.1", "gpt-5", "gpt-4.1", "gpt-4o"], /^gpt-(?!.*(audio|realtime|transcribe|tts|image|search))/);
+}
+export async function detectAI(raw) {
+  const key = String(raw || "").trim().replace(/\s+/g, "");
+  if (key.length < 20) throw new Error("That doesn't look like a full API key — copy it again with the Copy button.");
+  const guess = /^sk-ant-/.test(key) ? ["claude"] : /^(AIza|AQ\.)/.test(key) ? ["gemini"] : /^sk-/.test(key) ? ["openai", "deepseek"] : ["gemini", "openai", "claude", "deepseek"];
+  let last = null;
+  for (const provider of guess) {
+    try { const model = await listModels(provider, key); return { provider, key, model }; }
+    catch (e) { last = e; }
+  }
+  throw new Error("This key didn't work" + (last && last.message ? ": " + last.message.slice(0, 140) : "") + ". Check you copied the whole key, and that it isn't deleted.");
+}
 const strip = (t) => { let v = String(t || "").trim(); const m = v.match(/```(?:html)?[^\n]*\n([\s\S]*?)```/i); if (m) v = m[1]; return v.trim(); };
 export async function callAI(ai, system, prompt, maxTokens = 12000) {
+  try { return await callAI1(ai, system, prompt, maxTokens); }
+  catch (e) {
+    /* the saved model was retired → pick the current best one for this key and try once more */
+    const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0], key = (ai.keys || {})[pr.id];
+    if (!key || !/not found|does not exist|not supported|unknown model|invalid model|no such model/i.test(e.message)) throw e;
+    const model = await listModels(pr.id, key).catch(() => ""); if (!model) throw e;
+    callAI.newModel = { provider: pr.id, model };
+    return callAI1({ ...ai, models: { ...(ai.models || {}), [pr.id]: model } }, system, prompt, maxTokens);
+  }
+}
+async function callAI1(ai, system, prompt, maxTokens) {
   const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0], key = (ai.keys || {})[pr.id], model = (ai.models || {})[pr.id] || pr.model;
   if (!key) {
     /* no key in this browser → ask through your server (your encrypted key, or the platform Gemini key) */
@@ -478,7 +524,12 @@ export async function autoServer(integ, onInteg, urlOverride) {
   const ak = accountKey();
   if (info.configured) {
     /* already connected — if it was connected with this same login, reconnect silently */
-    if (ak) { try { const r = await phpCall({ url, key: ak, _noheal: 1 }, { action: "ping" }); const next = { ...integ, server: { url, key: ak, ok: true, ip: r.ip || "", base: r.base || "", sitesDomain: info.sitesDomain || "" } }; onInteg(next); return { ok: true, integ: next }; } catch { /* different key */ } }
+    /* accounts (v66+): the server knows you by your login — no key needed. Show the server's real reason if it says no. */
+    try { const r = await phpCall({ url, key: ak, _noheal: 1 }, { action: "ping" }); const next = { ...integ, server: { url, key: ak, ok: true, ip: r.ip || "", base: r.base || "", sitesDomain: info.sitesDomain || "" } }; onInteg(next); return { ok: true, integ: next }; }
+    catch (e) {
+      const accountsWorld = info.accounts || info.vps || (typeof window !== "undefined" && window.LB_TENANT);
+      if (e.code || !/wrong key/i.test(e.message) || accountsWorld) return { ok: false, reason: "error", error: /wrong key/i.test(e.message) ? "This server can't check your login yet. Admin: on the VPS run  bash /opt/launchbuilder/vps/lb-saas-setup.sh  then reload this page." : e.message };
+    }
     return { ok: false, reason: "key", url };
   }
   const key = ak || "lbk_" + Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");

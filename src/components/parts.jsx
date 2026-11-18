@@ -195,7 +195,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
   const srvOk = serverOn(integ), netOk = !!integ && publishReady(integ);
   const [dest, setDest] = useState(page.host ? "server" : page.netlify ? "netlify" : srvOk ? "server" : netOk ? "netlify" : "");
   /* your own hosting connects by itself the first time (no setup screen) */
-  const [auto, setAuto] = useState(srvOk ? "ok" : "checking"), [pkey, setPkey] = useState(""), [rurl, setRurl] = useState(""), [rbusy, setRbusy] = useState(false), [diag, setDiag] = useState(null), [ownDiag, setOwnDiag] = useState("");
+  const [auto, setAuto] = useState(srvOk ? "ok" : "checking"), [pkey, setPkey] = useState(""), [rurl, setRurl] = useState(""), [rbusy, setRbusy] = useState(false), [diag, setDiag] = useState(null), [ownDiag, setOwnDiag] = useState(""), [autoErr, setAutoErr] = useState("");
   /* publish from anywhere (even localhost) to your Hostinger: just type its address */
   const connectRemote = async () => {
     const url = serverUrlFrom(rurl); if (!url) return;
@@ -208,7 +208,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
   };
   useEffect(() => {
     if (srvOk || !onInteg) { if (!srvOk) setAuto("none"); return; }
-    autoServer(integ, onInteg).then((a) => { setAuto(a.ok ? "ok" : a.reason); setOwnDiag(a.diag || ""); if (a.ok && !page.netlify) setDest("server"); });
+    autoServer(integ, onInteg).then((a) => { setAuto(a.ok ? "ok" : a.reason); setOwnDiag(a.diag || ""); setAutoErr(a.error || ""); if (a.ok && !page.netlify) setDest("server"); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const useKey = async () => {
     setErr("");
@@ -281,7 +281,7 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
             </> : <>
               <b>Publishing isn't switched on yet</b>
               <p className="mut">This builder needs a one-time server setup by the person who installed it. After that, Publish works in one click — no addresses to type.</p>
-              <div className="pub-diag"><b>What's wrong:</b> {{
+              <div className="pub-diag"><b>What's wrong:</b> {autoErr || {
                 missing: "The builder's server file isn't on this server. Upload the latest build (the dist folder) again — it includes it.",
                 nophp: "The server can't run PHP yet. Run the VPS setup script once (it installs everything).",
                 unreachable: "The builder couldn't reach its own server.",
