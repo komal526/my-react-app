@@ -124,14 +124,33 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
       let brief = (mode === "new" ? `Business / page name: ${n}\n` : "") + `Brief: ${prompt.trim() || "Use the attached information."}`;
       docs.forEach((d) => { brief += `\n\nInformation from the user's document "${d.name}" (use it for real content — names, prices, dates, services):\n${d.text}`; });
       if (files.some((f) => f.kind === "pdf")) brief += `\n\nThe attached PDF is the user's own material — use its real details.`;
-      if (imgs.length) brief += `\n\nThe user attached ${imgs.length} picture(s), in this order: ${imgs.map((f, i) => `${i + 1}) ${f.name}`).join(", ")}. Look at them for content and colours. Put them into the page where they fit (logo, hero, product, gallery, team): use exactly <img src="lb-img:1">, <img src="lb-img:2"> … (or url('lb-img:1') in CSS). Use every picture once.`;
+      if (imgs.length) brief += `\n\nThe user attached ${imgs.length} picture(s), in this order: ${imgs.map((f, i) => `${i + 1}) ${f.name}`).join(", ")}. Look at them for content and colours. These are the user's REAL pictures — you MUST use every one of them in the page instead of stock photos: put each where it fits best (logo in the header, the main photo in the hero, products/services cards, gallery, team, about). Write exactly <img src="lb-img:1">, <img src="lb-img:2"> … (or background-image:url('lb-img:1') in CSS). Do not use any other image URLs for those spots.`;
+      /* put YOUR pictures into the page: where the AI placed them (lb-img:N) — and any it forgot replace its stock / placeholder
+         pictures in order, or (if there are none) go into a gallery before the footer. So every uploaded picture is used. */
       const put = (h) => imgs.reduce((x, f, i) => x.split(`lb-img:${i + 1}`).join(f.page), h);
+      const useAll = (htmls, sectionOnly = false) => {
+        const left = imgs.filter((f, i) => !htmls.some((h) => h.includes(`lb-img:${i + 1}`)));
+        let out = htmls.map(put); if (!left.length) return out;
+        const d = new DOMParser().parseFromString(sectionOnly ? `<!DOCTYPE html><html><body>${out[0]}</body></html>` : out[0], "text/html");
+        const stock = [...d.querySelectorAll("img")].filter((im) => { const src = im.getAttribute("src") || ""; return !/^data:image/.test(src) && !/logo|icon|avatar/i.test((im.getAttribute("alt") || "") + " " + (im.className || "")); });
+        const rest = [];
+        left.forEach((f, k) => { if (stock[k]) { stock[k].setAttribute("src", f.page); stock[k].removeAttribute("srcset"); if (!stock[k].getAttribute("alt")) stock[k].setAttribute("alt", f.name.replace(/\.\w+$/, "")); stock[k].style.objectFit = stock[k].style.objectFit || "cover"; } else rest.push(f); });
+        /* background placeholders: url(https://…unsplash/placehold…) */
+        if (rest.length) [...d.querySelectorAll("[style*='url(']")].forEach((el) => { if (rest.length && /url\((['"]?)https?:\/\/[^)]*(unsplash|placehold|picsum|pexels|via\.placeholder|dummyimage)/i.test(el.getAttribute("style"))) el.setAttribute("style", el.getAttribute("style").replace(/url\((['"]?)https?:\/\/[^)]*\)/i, `url('${rest.shift().page}')`)); });
+        if (rest.length) {
+          const g = d.createElement("section"); g.setAttribute("data-lb-name", "Gallery"); g.setAttribute("style", "padding:56px 24px");
+          g.innerHTML = `<div style="max-width:1140px;margin:0 auto"><h2 style="text-align:center;margin:0 0 24px">Gallery</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">${rest.map((f) => `<img src="${f.page}" alt="${f.name.replace(/\.\w+$/, "").replace(/"/g, "")}" style="width:100%;height:240px;object-fit:cover;border-radius:16px" loading="lazy">`).join("")}</div></div>`;
+          const foot = [...d.body.children].reverse().find((x) => x.tagName === "FOOTER"); foot ? foot.before(g) : d.body.appendChild(g);
+        }
+        out[0] = sectionOnly ? d.body.innerHTML : "<!DOCTYPE html>\n" + d.documentElement.outerHTML;
+        return out;
+      };
       if (mode === "editor") {
-        if (how === "section") { const h = await aiSection(ai || {}, brief, send); onApply({ how: "section", html: put(h) }); }
-        else { const pages = await aiWebsite(ai || {}, brief, false, send); onApply({ how: "page", html: put(pages[0].html) }); }
+        if (how === "section") { const h = await aiSection(ai || {}, brief, send); onApply({ how: "section", html: useAll([h], true)[0] }); }
+        else { const pages = await aiWebsite(ai || {}, brief, false, send); onApply({ how: "page", html: useAll([pages[0].html])[0] }); }
       } else {
         const pages = await aiWebsite(ai || {}, brief, type === "website", send);
-        onCreate(n, pages.map((p) => pg(p.name, p.file, put(p.html))), type);
+        const done = useAll(pages.map((p) => p.html)); onCreate(n, pages.map((p, i) => pg(p.name, p.file, done[i])), type);
       }
     } catch (e) { setErr(e.message === "NO_AI_KEY" ? "Connect an AI first." : e.message); setBusy(""); }
   };

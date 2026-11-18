@@ -199,7 +199,9 @@ export default function Dashboard({ user, onLogout }) {
     try { localStorage.setItem(DK, JSON.stringify(projects.filter((p) => p.unsaved).map(({ recovered, ...p }) => p))); } catch { /* storage full: the draft just isn't kept after a reload */ }
   }, [projects, E]); // eslint-disable-line react-hooks/exhaustive-deps
   /* what the lists show: saved projects + drafts you changed but haven't saved */
-  const listed = useMemo(() => projects.filter((p) => !p.unsaved || p.recovered), [projects]);
+  const listed = useMemo(() => projects.filter((p) => !p.unsaved), [projects]);
+  /* new projects you changed but never saved (e.g. the browser was closed) — shown apart, never counted as projects */
+  const drafts = useMemo(() => projects.filter((p) => p.unsaved && p.recovered), [projects]);
   /* leads / visits arrive from preview & form-link tabs */
   useEffect(() => {
     const f = (e) => { if (!e || !e.key || e.key === "lb_leads_" + E) setLeads(loadLeads(E)); if (!e || !e.key || e.key === "lb_events_" + E) setEvents(loadEvents(E)); };
@@ -297,7 +299,7 @@ export default function Dashboard({ user, onLogout }) {
 
   return (
     <div className={"dash" + (mini && wide ? " mini" : "")} onClick={() => um && setUm(false)}>
-      <Sidebar role={me ? me.role : ""} mini={mini && wide} onMini={() => { const v = !mini; setMini(v); localStorage.setItem("lb_nav_mini", v ? "1" : "0"); }} open={navOpen} onClose={() => setNavOpen(false)} view={view} onView={setView} count={projects.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, followups: fuDue(leads), forms: forms.length, calendar: cal.length }} />
+      <Sidebar role={me ? me.role : ""} mini={mini && wide} onMini={() => { const v = !mini; setMini(v); localStorage.setItem("lb_nav_mini", v ? "1" : "0"); }} open={navOpen} onClose={() => setNavOpen(false)} view={view} onView={setView} count={listed.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, followups: fuDue(leads), forms: forms.length, calendar: cal.length }} />
       {navOpen && <div className="nv-ov" onClick={() => setNavOpen(false)} />}
       <section><Suspense fallback={<div className="lazy-load"><span className="pub-spin" /></div>}>
         <div className="mbar"><button className="mbar-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
@@ -305,6 +307,8 @@ export default function Dashboard({ user, onLogout }) {
           {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
         <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses"})[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={listed} forms={forms} cal={cal} onOpenProject={setOpenId} />
+        {["pages", "websites", "landings", "projects"].includes(view) && drafts.length > 0 && <div className="drafts-bar"><b>💾 {drafts.length === 1 ? "1 unsaved draft" : drafts.length + " unsaved drafts"}</b><span>Not in your projects yet — save it, or delete it.</span>
+          <div className="drafts-list">{drafts.map((d) => <div key={d.id} className="drafts-it"><span>{d.name}</span><button onClick={() => setPeek({ id: d.id })}>Preview</button><button onClick={() => setOpenId(d.id)}>Edit</button><button className="ok" onClick={() => saveDraft(d.id)}>Save</button><button className="no" onClick={() => window.confirm(`Delete the unsaved "${d.name}"?`) && discardDraft(d.id)}>Delete</button></div>)}</div></div>}
         {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} leads={leads} events={evs} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
@@ -320,7 +324,7 @@ export default function Dashboard({ user, onLogout }) {
         {view === "domains" && <Domains projects={listed} onPatch={patch} onPatchPage={patchPage} onInteg={onInteg} onOpen={setOpenId} integ={integ} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onPublish={(p) => setModal({ type: "publish", id: p.id })} me={me} focus={domFocus} />}
         {view === "lms" && <LMS user={user} />}
         {view === "pixels" && <Pixels integ={integ} onChange={onInteg} projects={listed} />}
-        {view === "settings" && <Settings user={user} count={projects.length} onDeleteAll={() => setProjects([])} />}
+        {view === "settings" && <Settings user={user} count={listed.length} onDeleteAll={() => setProjects([])} />}
       </Suspense></section>
       {modal && modal.type === "new" && <NewModal mine={myTpl} kind={modal.kind || "landing"} onClose={() => setModal(null)} onCreate={create} onImport={() => { setModal(null); setView("import"); }} ai={integ.ai} onSetupAI={() => { setModal(null); setView("integrations"); }} onStudio={(o) => { setModal(null); studioTab(o); }} />}
       {pubModal}
@@ -348,10 +352,10 @@ function ProjectPeek({ p, onClose, onEdit, onSave, onDiscard, onTab, onPublish }
           {onSave && <button className="pk-save" onClick={onSave}>💾 Save to projects</button>}
           <button className="pk-edit" onClick={onEdit}>✏️ Edit</button>
           {!onSave && <button onClick={onPublish}>🚀 {p.status === "published" ? "Republish" : "Publish"}</button>}
-          <button onClick={onTab} title="Open in a new tab">↗</button>
-          {onDiscard && <button className="pk-del" onClick={onDiscard} title="Delete this unsaved project">🗑</button>}
+          <button className="pk-ic" onClick={onTab} title="Open in a new tab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h5" /></svg><span>New tab</span></button>
+          {onDiscard && <button className="pk-ic pk-del" onClick={onDiscard} title="Delete this unsaved project"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3" /></svg><span>Delete</span></button>}
         </div>
-        <button className="tp-x" onClick={onClose} aria-label="Close">✕</button>
+        <button className="pk-close" onClick={onClose} aria-label="Close" title="Close (Esc)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
       </div>
       <div className="tp-stage"><iframe title={p.name} srcDoc={page.html} style={{ width: { desktop: "100%", tablet: "820px", mobile: "390px" }[dev] }} sandbox="allow-scripts allow-forms" /></div>
     </div></div>

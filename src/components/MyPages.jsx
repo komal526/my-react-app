@@ -104,7 +104,8 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
       const sc = c.querySelector(".ai-score"), h = c.querySelector(".ai-h .grow");
       const r = w.getBoundingClientRect(), cx0 = r.left + r.width / 2, cy0 = r.top + r.height / 2;
       /* every frame has the same parts (perspective · move · 3D turn · size · tilt) so the browser blends them smoothly */
-      const T = (x, y, s, rot, ry = 0) => ({ transform: `perspective(700px) translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotateY(${ry}deg) scale(${s.toFixed(3)}) rotate(${rot}deg)` });
+      /* 2D only (move · size · tilt): 3D turns made the browser draw the robot as a blurry bitmap */
+      const T = (x, y, s, rot, ry = 0) => ({ transform: `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${(s * (1 - Math.abs(ry) / 400)).toFixed(3)}, ${s.toFixed(3)}) rotate(${rot}deg)` });
       const f = [];
       const at = (o, p, rot = 0, ry = 0) => f.push({ offset: o, ...T(p[0], p[1], p[2], rot, ry) });
       const hops = (from, to, o0, o1, back, n = 6, lift = 26) => { for (let i = 1; i <= n; i++) { const t = i / n, e = t * t * (3 - 2 * t), x = from[0] + (to[0] - from[0]) * e, y = from[1] + (to[1] - from[1]) * e, s = from[2] + (to[2] - from[2]) * e; f.push({ offset: o0 + (o1 - o0) * t, ...T(x, y - (i % 2 ? lift * Math.max(s, 0.5) : 0), s, i === n ? 0 : (i % 2 ? (back ? -7 : 7) : (back ? 4 : -4)), i === n ? 0 : (back ? 18 : -18) * Math.sin(Math.PI * t)) }); } };

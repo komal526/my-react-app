@@ -23,7 +23,7 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
   const [selEl, setSelEl] = useState(null), [selKey, setSelKey] = useState(0), [, setTick] = useState(0), [codeText, setCodeText] = useState("");
   const [box, setBox] = useState({ w: 900, h: 600 }), [q, setQ] = useState(""), [shut, setShut] = useState(() => new Set()), [panel, setPanel] = useState(() => window.innerWidth > 900), [navFloat, setNavFloat] = useState(false);
   const [aiQ, setAiQ] = useState(""), [aiBusy, setAiBusy] = useState(false), [pill, setPill] = useState("all");
-  const aiPick = useRef(false);   /* while "AI → Change selected" is open, clicking the page picks the part to change (the panel stays) */
+  const aiPick = useRef(true);   /* while "AI → Change selected" is open, clicking the page picks the part to change (the panel stays) */
   const [theme, setTheme] = useState(() => { const t = localStorage.getItem("lb_theme"); return t === "aurora" ? "aurora" : "clean"; });
   const flipTheme = () => { const t = theme === "aurora" ? "clean" : "aurora"; setTheme(t); localStorage.setItem("lb_theme", t); };
   const [toast, setToast] = useState(""), [busy, setBusy] = useState(""), [editing, setEditing] = useState(false), [openLink, setOpenLink] = useState(false);
@@ -370,13 +370,15 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
 
   const [studio, setStudio] = useState(false);
   /* ---------- AI assistant: add a section · change the selected part · update the whole page ---------- */
-  const [aiMode, setAiMode] = useState("add"), [aiSrv, setAiSrv] = useState(null);
+  const [aiMode, setAiMode] = useState("part"), [aiSrv, setAiSrv] = useState(null);
   const aiCfg = browserAi(integ);
   useEffect(() => { if (!aiCfg) serverAiReady().then(setAiSrv).catch(() => setAiSrv(false)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const aiReady = aiCfg ? true : aiSrv;
   const aiName = aiCfg ? (AI_PROVIDERS.find((p) => p.id === aiCfg.provider) || {}).name : aiSrv ? "Server AI" : "";
   /* what "Change selected" changes: the selected element (the page body is never changed this way) */
-  const aiTarget = () => { const e = selRef.current; return e && D() && e !== D().body && D().body.contains(e) ? e : null; };
+  /* "Change section" works on the whole section around what you clicked (its top-level block); click the section itself to be sure */
+  const aiTarget = () => { let e = selRef.current; if (!e || !D() || e === D().body || !D().body.contains(e)) return null;
+    while (e.parentElement && e.parentElement !== D().body && !/^(SECTION|HEADER|FOOTER|NAV)$/.test(e.tagName)) e = e.parentElement; return e; };
   const runAi = async () => {
     const q = aiQ.trim(); if (q.length < 4 || aiBusy) return;
     setAiBusy(true);
@@ -444,13 +446,14 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
             {!qq && pill === "all" && <div className="lg lg-ai">
               <button className={"lg-h" + (shut.has("AI") ? " shut" : "")} onClick={() => setShut((s) => { const n = new Set(s); n.has("AI") ? n.delete("AI") : n.add("AI"); return n; })}><span>✨ AI assistant</span><em>{aiName}</em><Icon n="chevd" s={13} /></button>
               {!shut.has("AI") && (aiReady ? <div className="aibox">
-                <div className="ai-modes">{[["add", "Add"], ["part", "Change part"], ["page", "Whole page"]].map(([k, l]) => <button key={k} className={aiMode === k ? "on" : ""} disabled={aiBusy} onClick={() => { setAiMode(k); aiPick.current = k === "part"; }}>{l}</button>)}</div>
-                {aiMode === "part" && (aiTarget() ? <p className="ai-tgt">Changing: <b>{nameOf(aiTarget())}</b><small> — click another part of the page to change that instead</small></p> : <p className="ai-tgt warn">Click the part of the page you want to change (a section, heading, card…).</p>)}
+                <div className="ai-modes">{[["part", "✏️", "Change section"], ["page", "📄", "Whole page"], ["add", "➕", "Add section"]].map(([k, ic, l]) => <button key={k} className={aiMode === k ? "on" : ""} disabled={aiBusy} onClick={() => { setAiMode(k); aiPick.current = k === "part"; }}><span>{ic}</span>{l}</button>)}</div>
+                {aiMode === "part" && (aiTarget() ? <p className="ai-tgt">Changing: <b>{nameOf(aiTarget())}</b><small> — click another part of the page to change that instead</small></p> : <p className="ai-tgt warn">Click the section on the page you want to change.</p>)}
                 <textarea rows={3} value={aiQ} disabled={aiBusy} onChange={(e) => setAiQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) runAi(); }}
-                  placeholder={aiMode === "add" ? "e.g. Pricing section with 3 plans: ₹499 basic, ₹999 pro, ₹1,999 premium" : aiMode === "part" ? "e.g. Make this more persuasive, add a WhatsApp button, use a dark blue background" : "e.g. Change the colours to green and white, make all headings shorter and punchier"} />
-                <button className="btn pri sm" disabled={aiBusy || aiQ.trim().length < 4 || (aiMode === "part" && !aiTarget())} onClick={runAi}>{aiBusy ? "✨ Working… (20–60 s)" : aiMode === "add" ? "✨ Generate & add" : aiMode === "part" ? "✨ Change it" : "✨ Update the page"}</button>
-                <p className="hint">{aiMode === "add" ? "Added below the selected element." : aiMode === "part" ? "Only the selected part changes. Ctrl+Z undoes it." : "AI rewrites the whole page with your change. Ctrl+Z undoes it."}</p>
-                <button className="btn sm ai-studio-btn" onClick={() => setStudio(true)}>✨ AI Studio — pictures, docs, mic ↗</button></div>
+                  placeholder={aiMode === "add" ? "e.g. Pricing section with 3 plans: ₹499 basic, ₹999 pro, ₹1,999 premium" : aiMode === "part" ? "e.g. Make this section more persuasive, add a WhatsApp button, use a dark blue background" : "e.g. Change the colours to green and white, make all headings shorter and punchier"} />
+                <button className="btn pri sm" disabled={aiBusy || aiQ.trim().length < 4 || (aiMode === "part" && !aiTarget())} onClick={runAi}>{aiBusy ? "✨ Working… (20–60 s)" : aiMode === "add" ? "✨ Generate & add" : aiMode === "part" ? "✨ Update section" : "✨ Update the page"}</button>
+                <p className="hint">{aiMode === "add" ? "Added below the selected element." : aiMode === "part" ? "Only this section changes. Ctrl+Z undoes it." : "AI rewrites the whole page with your change. Ctrl+Z undoes it."}</p>
+                <div className="ai-new"><b>Need a brand-new page or website?</b><small>AI Studio builds one from your words, pictures and documents.</small>
+                  <button className="btn sm ai-studio-btn" onClick={() => { try { localStorage.setItem("lb_studio_go", JSON.stringify({ type: page.type === "website" ? "website" : "landing" })); } catch { /* ignore */ } window.open(location.origin + location.pathname + "#/studio", "_blank"); }}>✨ Create new with AI Studio ↗</button></div></div>
                 : aiReady === null ? <p className="hint pad">Checking AI…</p>
                 : <p className="hint pad">Connect an AI first: Dashboard → <b>Integrations → AI builders</b> → paste your key (a free Gemini key works).</p>)}
             </div>}
