@@ -3616,3 +3616,28 @@ html.lb-hidden .tg-frame .tg-reel{animation-play-state:paused}
 .dash .wl-drop>span:not(.wl-drop-ic){display:flex;flex-direction:column}.dash .wl-drop b{font-size:13.5px;color:#0d1324}.dash .wl-drop small{color:#5d6785;font-size:12px}
 .dash .dm-dup{margin:0 0 -6px;padding:12px 14px 16px;border-radius:14px 14px 0 0;background:#fff7d6;border:1px solid rgba(var(--lb-yr,245,179,1),.6);color:#7c4a03;font-size:13px;line-height:1.5}
 .dash .dm-dup .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.dash .dm-dup button{background:#fff;border:1px solid #e6c766;border-radius:9px;padding:6px 12px;font-weight:700;cursor:pointer}
+/* v70 — white-label theme colours editor */
+.dash .wl-theme{grid-column:1/-1;gap:8px}
+.dash .wl-presets{display:flex;gap:8px;flex-wrap:wrap}
+.dash .wl-presets button{display:flex;padding:4px!important;border:2px solid #e1e5ef!important;border-radius:999px!important;background:#fff!important;cursor:pointer}
+.dash .wl-presets button.on{border-color:#0d1324!important}.dash .wl-presets i{width:18px;height:18px;border-radius:50%;display:block}.dash .wl-presets i+i{margin-left:-5px;border:2px solid #fff}
+.dash .wl-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.dash .wl-two label{display:flex;flex-direction:column;gap:4px;font-weight:700}.dash .wl-two small{font-weight:500;color:#5d6785}
+.dash .wl-mock{display:flex;border-radius:12px;overflow:hidden;border:1px solid #e1e5ef;max-width:520px}
+.dash .wl-mock-side{background:#0d1324;padding:12px;display:flex;flex-direction:column;gap:6px;width:150px;font-size:12px}
+.dash .wl-mock-side em{font-style:normal;color:#c9d0e6}.dash .wl-mock-side b{margin-top:6px;font-size:11.5px;border:1px solid;border-radius:8px;padding:5px 7px}
+.dash .wl-mock-logo{width:22px;height:22px;border-radius:6px;display:block}
+.dash .wl-mock-main{flex:1;background:#f6f7fb;padding:12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:#5d6785;font-weight:600}
+.dash .wl-mock-main span{width:100%}.dash .wl-mock-main button{border:0!important;border-radius:8px!important;padding:6px 12px!important;font-weight:800!important}
+.dash .wl-mock-main i{width:60px;height:8px;border-radius:9px}
+.dash .wl-reset{align-self:flex-start;background:none!important;border:0!important;color:#1e3a8a!important;font-weight:700!important;padding:0!important;cursor:pointer;text-decoration:underline}
+.dash .db-row2>.ai-card{position:relative;z-index:4}
+/* v72 — robot never hidden under other cards; chart fills its card */
+.dash .db-row2{position:relative;z-index:6}
+.dash .db-card:has(.db-chartw){display:flex;flex-direction:column}
+.dash .db-chartw{position:relative;flex:1 1 auto;min-height:170px}
+.dash .db-chartw .db-chart{position:absolute;inset:0;width:100%;height:100%}
+.dash .db-tot{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #f0eef8;font-size:12.5px;color:#5d6785}
+.dash .db-tot b{color:#0d1324;font-size:14px;margin-right:3px}.dash .db-tot i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.dash .db-tot i.v{background:#7c4dff}.dash .db-tot i.l{background:var(--lb-y,#f5b301)}.dash .db-tot .mut{margin-left:auto}
+.dash .db-row2{content-visibility:visible!important;contain:none!important;overflow:visible!important}

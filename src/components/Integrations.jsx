@@ -1,4 +1,5 @@
 // LaunchBuilder v10 — Integrations.jsx
+import { BRAND } from "../brand.js";
 import { useState } from "react";
 import { WA_PROVIDERS, AI_PROVIDERS, callAI, serverCall, serverUrl, phpCall, defaultServerUrl, lovableUrl, boltText } from "../lib.js";
 
@@ -78,8 +79,8 @@ export default function Integrations({ integ, onChange, initial = "" }) {
   const testMail = async () => {
     if (!em.ownerEmail) return flash("Add your email address first");
     try {
-      if (em.provider !== "emailjs") { await fetch(em.webhook, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ event: "email.send", to: em.ownerEmail, subject: "LaunchBuilder test email", html: "It works! 🎉 Your form emails will arrive like this.", from: em.fromName || "LaunchBuilder", test: true }) }); return flash(em.provider === "gmail" ? "Test sent — check your Gmail inbox in a few seconds" : "Test sent to your webhook"); }
-      const r = await fetch("https://api.emailjs.com/api/v1.0/email/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ service_id: em.serviceId, template_id: em.templateId, user_id: em.publicKey, template_params: { to_email: em.ownerEmail, subject: "LaunchBuilder test email", message: "It works! 🎉<br>Your form emails will look like this.", from_name: em.fromName || "LaunchBuilder", reply_to: em.ownerEmail } }) });
+      if (em.provider !== "emailjs") { await fetch(em.webhook, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ event: "email.send", to: em.ownerEmail, subject: BRAND.product + " test email", html: "It works! 🎉 Your form emails will arrive like this.", from: em.fromName || BRAND.product, test: true }) }); return flash(em.provider === "gmail" ? "Test sent — check your Gmail inbox in a few seconds" : "Test sent to your webhook"); }
+      const r = await fetch("https://api.emailjs.com/api/v1.0/email/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ service_id: em.serviceId, template_id: em.templateId, user_id: em.publicKey, template_params: { to_email: em.ownerEmail, subject: BRAND.product + " test email", message: "It works! 🎉<br>Your form emails will look like this.", from_name: em.fromName || BRAND.product, reply_to: em.ownerEmail } }) });
       const t = await r.text(); flash(r.ok ? "✓ Test email sent — check your inbox (and spam)" : "✕ EmailJS: " + t.slice(0, 120));
     } catch { flash("✕ Couldn't reach EmailJS — check your internet"); }
   };
@@ -242,7 +243,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
             <div className="ig-p ig-bolt"><div className="row between"><b>⚡ Bolt.new</b><span className="badge draft">Free tier</span></div><p className="mut sm">Copies your prompt and opens Bolt — paste it (Ctrl+V) and press send.</p>
               <button className="pri" disabled={!hand.trim()} onClick={() => { navigator.clipboard.writeText(boltText(hand)).then(() => flash("Prompt copied — paste it in Bolt"), () => {}); window.open("https://bolt.new", "_blank"); }}>Copy &amp; open Bolt ↗</button></div>
           </div>
-          <p className="mut sm">When you like the result: download its code → in LaunchBuilder <b>My pages → Import HTML</b> → pick the <code>index.html</code>. Your prompt already asks them for a single static page so it imports cleanly.</p>
+          <p className="mut sm">When you like the result: download its code → in {BRAND.product} <b>My pages → Import HTML</b> → pick the <code>index.html</code>. Your prompt already asks them for a single static page so it imports cleanly.</p>
         </div>
         <p className="mut sm">Use it: <b>+ Create new → Create with AI</b> for a full page or website, or in the editor <b>Add → AI section</b>. Keys stay in this browser and are sent only to that AI company. Each generation uses your API credits. If a provider shows a network/CORS error, it doesn't allow browser calls — use another one.</p>
       </Card>

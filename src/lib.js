@@ -1,4 +1,5 @@
 // LaunchBuilder v66 — lib.js
+import { BRAND } from "./brand.js";
 import { DESIGNS } from "./designs.js";
 import { cloudToken } from "./cloud.js";
 // Helpers, page templates, saving/loading projects, leads and preview links
@@ -385,7 +386,7 @@ export const browserAi = (integ) => {
 /* order: your server (your encrypted key, or the platform Gemini key) → the key saved in Integrations → AI */
 export async function askAI(integ, system, messages, max = 1500) {
   let srvErr = null;
-  try { const j = await phpCall(srvFor(integ), { action: "ai", system, messages, max }); askAI.via = j.source === "own" ? "your server key" : "LaunchBuilder AI"; return j.text; }
+  try { const j = await phpCall(srvFor(integ), { action: "ai", system, messages, max }); askAI.via = j.source === "own" ? "your server key" : BRAND.product + " AI"; return j.text; }
   catch (e) { srvErr = e; }
   const ai = browserAi(integ);
   if (ai) {
@@ -430,7 +431,7 @@ export const longThumb = (t) => (import.meta.env.BASE_URL || "/") + t.thumb.repl
 export const HOSTINGER_NS = ["ns1.dns-parking.com", "ns2.dns-parking.com"];
 
 /* ==================== Lovable / Bolt.new hand-off ==================== */
-const HANDOFF = "\n\nImportant: build it as a single static index.html file with all CSS inline (no React build step), so it can be imported into LaunchBuilder.";
+const HANDOFF = "\n\nImportant: build it as a single static index.html file with all CSS inline (no React build step), so it can be imported into the page builder.";
 export const lovableUrl = (prompt) => "https://lovable.dev/#prompt=" + encodeURIComponent(prompt + HANDOFF);
 export const boltText = (prompt) => prompt + HANDOFF;
 
@@ -509,8 +510,8 @@ export const SERVER_HELP = {
   blocked: "The website loads, but lb-server.php didn't answer. Most likely the file isn't uploaded there (the site shows its 404 page). Upload the latest dist folder contents to that website's folder.",
   missing: "lb-server.php is not on this website (404). Upload the latest dist folder contents — it includes lb-server.php — into this website's folder (public_html, or the subdomain's folder).",
   nophp: "The file is there but PHP isn't running — the server shows the code instead of running it. This needs Hostinger web hosting (not the Website Builder plan).",
-  notjson: "Something answered, but it isn't LaunchBuilder's server file. Make sure the file at this address is the latest lb-server.php.",
-  other: "Something answered, but it isn't LaunchBuilder's server file. Upload the latest lb-server.php.",
+  notjson: "Something answered, but it isn't the builder's server file. Make sure the file at this address is the latest lb-server.php.",
+  other: "Something answered, but it isn't the builder's server file. Upload the latest lb-server.php.",
 };
 
 /* automatic subdomain for a published site: <slug>.<sites domain> */

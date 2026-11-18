@@ -220,6 +220,10 @@ if ($TU) { $ME = lb_register($TU, $DATA, $HOSTT); if (isset($ME['error'])) fail(
 elseif ($LEGACY) { $s0 = lb_saas(); $ME = array('uid' => 'owner', 'email' => isset($s0['admins'][0]) ? strtolower($s0['admins'][0]) : '', 'name' => 'Owner', 'role' => 'admin', 'tenant' => '', 'disabled' => false, 'sub_limit' => null); }
 if (!$ME) {
   if ($TU === false) fail('LOGIN_EXPIRED: Your login expired. Log out and log in again.');
+  $sentTok = isset($d['tok']) && strlen((string)$d['tok']) >= 10;
+  /* a logged-in account that the server can't recognise yet → say exactly why */
+  if ($sentTok && !lb_saas()) fail('SETUP: Accounts are not switched on on this server yet. Admin: on the VPS run  bash /opt/launchbuilder/vps/lb-saas-setup.sh  then reload.');
+  if ($sentTok && !empty($GLOBALS['LB_SB_DOWN'])) fail('The server could not reach Supabase to check your login. Try again in a minute (admin: check the VPS internet / supabase_url in /etc/launchbuilder/saas.json).');
   if (empty($cfg['key'])) fail('Server not set up yet — click Connect in Integrations.');
   fail('Wrong key for this server.');
 }

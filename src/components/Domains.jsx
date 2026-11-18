@@ -122,7 +122,7 @@ function Diag({ r, domain, builder }) {
   r = { dns: [], websites: [], files: [], ...r };
   const items = [];
   const add = (st, t, p) => items.push([st, t, p]);
-  add("ok", "LaunchBuilder server is up to date", null);
+  add("ok", BRAND.product + " server is up to date", null);
   add("ok", "Your website is published", null);
   if (r.dns.length) add("ok", "The domain points to Hostinger", <>DNS answers <code>{r.dns.join(", ")}</code>.</>);
   else add("bad", "The domain doesn't point anywhere yet", <>If you bought it on Hostinger: hPanel → Domains → {domain} → DNS / Nameservers → choose <b>Use Hostinger nameservers</b> → then <b>Reset DNS records</b>. Bought elsewhere: set nameservers <code>ns1.dns-parking.com</code> and <code>ns2.dns-parking.com</code>. Updates take 10 min – a few hours.</>);
@@ -131,7 +131,7 @@ function Diag({ r, domain, builder }) {
     {r.can_list ? <> Websites I can see on this hosting: {r.websites.length ? r.websites.map((w) => <code key={w} style={{ marginRight: 4 }}>{w}</code>) : "none"}.{" "}If you already added it but it's not in this list, it was added to a <b>different hosting plan</b> — add it to the same plan as the builder.</> : " (I can't list the other websites on this hosting — that usually means it's on a different plan.)"}</>);
   if (r.folder) {
     if (r.copied) add("ok", "Your website is copied into the domain", null);
-    else if (!r.writable) add("bad", "Hostinger doesn't let LaunchBuilder write into the domain's folder", <>File Manager → <code>domains/{domain}/public_html</code> → right-click → Permissions → <b>755</b>. Then press <b>Connect &amp; check</b>.</>);
+    else if (!r.writable) add("bad", "Hostinger doesn't let " + BRAND.product + " write into the domain's folder", <>File Manager → <code>domains/{domain}/public_html</code> → right-click → Permissions → <b>755</b>. Then press <b>Connect &amp; check</b>.</>);
     else if ((r.files || []).some((f) => /wp-config|index\.php/.test(f))) add("bad", "That website already has another site inside (WordPress/PHP)", <>Files found: {r.files.map((f) => <code key={f} style={{ marginRight: 4 }}>{f}</code>)}. Delete them in File Manager (or use an empty website), then press <b>Connect &amp; check</b>.</>);
     else add("bad", "Your website isn't copied into the domain yet", <>Press <b>Connect &amp; check</b> above.</>);
   }
@@ -167,7 +167,7 @@ function VDiag({ r: r0 }) {
 function PublishFirst({ p, onPublish }) {
   return <div className="panel dm"><div className="dm-h"><div><b>{p.name}</b><div className="mut sm">{p.type === "website" ? `Website · ${p.pages.length} pages` : "Landing page"} · not published yet</div></div><div className="grow" />
     <span className="badge draft">No domain</span><button className="pri" onClick={() => onPublish(p)}>Publish to connect a domain</button></div>
-    <p className="mut sm" style={{ margin: "10px 2px 0" }}>Publish once — it goes live on your LaunchBuilder server. Then come back here, type the domain, add 2 DNS records and press <b>Connect &amp; check</b>.</p></div>;
+    <p className="mut sm" style={{ margin: "10px 2px 0" }}>Publish once — it goes live on your {BRAND.product} server. Then come back here, type the domain, add 2 DNS records and press <b>Connect &amp; check</b>.</p></div>;
 }
 
 function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, integ, onOpen, vps = null }) {
@@ -239,7 +239,7 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
   const state = chk && chk.state;
   const ADD_SITE = ["Add the domain as a website in Hostinger", <>hPanel → <b>Websites</b> → <b>+ Add website</b> → <b>Empty website</b> (or “Skip, start with an empty site”) → {where === "hostinger" ? <>pick <b>{d || "your domain"}</b></> : <>choose <b>“Use an existing domain”</b> → type <b>{d || "your domain"}</b></>} → finish.
     <div className="row" style={{ marginTop: 8 }}><a className="btn" href="https://hpanel.hostinger.com/websites" target="_blank" rel="noopener">Open hPanel → Websites ↗</a></div></>];
-  const GO = ["Press “Connect & check” below", <>LaunchBuilder puts your website on the domain and checks that it opens. When you publish again, the domain updates by itself.</>];
+  const GO = ["Press “Connect & check” below", <>{BRAND.product} puts your website on the domain and checks that it opens. When you publish again, the domain updates by itself.</>];
   const STEPS = where === "hostinger" ? [ADD_SITE, GO]
     : where === "ns" ? [
       ["Change the nameservers where you bought the domain", <>At GoDaddy / Namecheap / BigRock… → your domain → <b>Nameservers</b> → <b>Custom</b> → enter these two → Save:<div className="dm-ns" style={{ margin: "8px 0" }}>{HOSTINGER_NS.map((x) => <div key={x}><C v={x} /></div>)}</div><span className="mut sm">Hostinger then manages the DNS for you. Can take a few hours to update.</span></>],
@@ -444,7 +444,7 @@ function AutoSub({ integ, onInteg, projects, info }) {
           <li><span className="dm-n">1</span><div><b>Add <code>{root}</code> to your builder's website (once)</b><div className="mut">hPanel → <b>Websites</b> → <b>{builder}</b> → <b>Domains</b> → <b>Parked domains</b> → add <C v={root} />. (Skip if {root} is already the builder's domain.)</div></div></li>
           <li><span className="dm-n">2</span><div><b>Create a “wildcard” subdomain</b><div className="mut">Same website → <b>Domains → Subdomains</b> → in the name box type <C v={label ? "*." + label : "*"} /> (choose <b>{root}</b>) → tick <b>Custom folder</b> → enter <C v="public_html/sites" /> → <b>Create</b>.</div></div></li>
           <li><span className="dm-n">3</span><div><b>Check the DNS (usually automatic)</b><div className="mut">hPanel → <b>Domains → {root} → DNS records</b>: there should be an <b>A</b> record named <C v={label ? "*." + label : "*"} /> pointing to your Website IP. Add it if missing.</div></div></li>
-          <li><span className="dm-n">4</span><div><b>Press “Activate & test”</b><div className="mut">LaunchBuilder sets up the routing and tests one of your published websites.</div></div></li>
+          <li><span className="dm-n">4</span><div><b>Press “Activate & test”</b><div className="mut">{BRAND.product} sets up the routing and tests one of your published websites.</div></div></li>
         </ol>}
         <div className="cw-go"><button className="pri big" disabled={!!busy || !validDomain(d)} onClick={() => save(d)}>{busy ? "Working…" : cur ? "Save & test again" : "Activate & test"}</button>{cur && <button className="red" disabled={!!busy} onClick={() => { setVal(""); save(""); }}>Turn off</button>}</div>
         {msg && <div className={"cw-st " + msg[0]}>{msg[1]}</div>}

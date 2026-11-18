@@ -60,7 +60,7 @@ export function auditPage(html, { isWebsite = false } = {}) {
   });
 
   /* mobile */
-  if (!d.querySelector('meta[name="viewport"]')) add("mobile", 3, "Missing mobile viewport tag", "Without it phones show a tiny desktop page. LaunchBuilder adds it on publish — republish the page.");
+  if (!d.querySelector('meta[name="viewport"]')) add("mobile", 3, "Missing mobile viewport tag", "Without it phones show a tiny desktop page. The builder adds it on publish — republish the page.");
   const css = all("style").map((s) => s.textContent).join("\n");
   if (!/@media[^{]*max-width/i.test(css) && !/@media/i.test(html)) add("mobile", 2, "No mobile layout rules", "The page has no phone-specific styles. Check it in the editor's phone view and stack columns on small screens.");
   const wide = all("[style]").filter((e) => { const m = (e.getAttribute("style") || "").match(/(?:^|;)\s*width\s*:\s*(\d{3,4})px/i); return m && +m[1] > 480; });

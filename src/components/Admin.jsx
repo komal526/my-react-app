@@ -187,7 +187,19 @@ function TenantForm({ t, owner = false, onDone, onCancel }) {
       <input type="file" hidden accept="image/*,.svg,.ico" onChange={(e) => { logoFile(e.target.files[0]); e.target.value = ""; }} />
     </label>
     <div className="wl-logo-in"><input value={v.logo && v.logo.startsWith("data:") ? "" : v.logo || ""} onChange={set("logo")} placeholder="…or paste an https:// image link" />{v.logo && <button type="button" onClick={() => setV({ ...v, logo: "" })}>Remove</button>}</div></div>;
-  const color = <label className="wl-f">Brand colour<div className="wl-col"><input type="color" value={v.color || "#f5b301"} onChange={set("color")} /><input value={v.color || ""} onChange={set("color")} /></div></label>;
+  /* theme colours: main = buttons, active menu, highlights · second = text & glows on the dark parts (e.g. "Upgrade to Pro") */
+  const PRESETS = [["Gold (default)", "#f5b301", "#ffd35c"], ["Green", "#10b981", "#6ee7b7"], ["Blue", "#2563eb", "#93c5fd"], ["Purple", "#7c3aed", "#c4b5fd"], ["Pink", "#db2777", "#f9a8d4"], ["Orange", "#ea580c", "#fdba74"], ["Red", "#dc2626", "#fca5a5"], ["Teal", "#0d9488", "#5eead4"]];
+  const c1 = v.color || "#f5b301", c2 = v.color2 || "#ffd35c";
+  const color = <div className="wl-f wl-theme">Theme colours
+    <div className="wl-presets">{PRESETS.map(([n, a, b]) => <button key={n} type="button" title={n} className={c1 === a && c2 === b ? "on" : ""} onClick={() => setV({ ...v, color: a, color2: b })}><i style={{ background: a }} /><i style={{ background: b }} /></button>)}</div>
+    <div className="wl-two">
+      <label>Main colour<small>buttons, active menu, highlights</small><div className="wl-col"><input type="color" value={c1} onChange={set("color")} /><input value={v.color || ""} placeholder="#f5b301" onChange={set("color")} /></div></label>
+      <label>Second colour<small>text & glows on the dark parts</small><div className="wl-col"><input type="color" value={c2} onChange={set("color2")} /><input value={v.color2 || ""} placeholder="#ffd35c" onChange={set("color2")} /></div></label>
+    </div>
+    <div className="wl-mock"><div className="wl-mock-side"><span className="wl-mock-logo" style={{ background: c1 }} /><em style={{ color: c1 }}>● Domains</em><em>Projects</em><b style={{ color: c2, borderColor: c1 }}>👑 Upgrade to Pro</b></div>
+      <div className="wl-mock-main"><span>Preview</span><button type="button" style={{ background: "#0d1324", color: c1 }}>🚀 Live</button><button type="button" style={{ background: c1, color: "#0d1324" }}>Use</button><i style={{ background: c2 }} /></div></div>
+    <button type="button" className="wl-reset" onClick={() => setV({ ...v, color: "#f5b301", color2: "#ffd35c" })}>Reset to default colours</button>
+  </div>;
   return (
     <div className="panel wl-form">
       <div className="wl-fh"><b>{owner ? "Your brand" : v.id ? "Edit " + v.name : "Add a client"}</b>
@@ -201,7 +213,6 @@ function TenantForm({ t, owner = false, onDone, onCancel }) {
       <details className="wl-more"><summary>More options</summary>
         <div className="wl-fg">
           {!owner && F({ k: "product", l: "Software name (if different)", ph: v.name || "Same as client name" })}
-          <label className="wl-f">Light colour<div className="wl-col"><input type="color" value={v.color2 || "#ffd35c"} onChange={set("color2")} /><input value={v.color2 || ""} onChange={set("color2")} /></div></label>
           {!owner && F({ k: "sites_domain", l: "Domain for their customers' subdomains", ph: v.app_domain ? rootDomain(String(v.app_domain).replace(/^https?:\/\//, "")) : "theirbrand.com" })}
           {!owner && F({ k: "max_users", l: "Max accounts", ph: "Unlimited", type: "number" })}
           {!owner && F({ k: "sub_limit", l: "Free subdomains per account", ph: "5", type: "number" })}

@@ -26,13 +26,16 @@ const Trend = ({ v }) => (v ? <em className={"db-trend" + (v < 0 ? " down" : "")
 
 /* small dependency-free line chart (views + leads, last 7 days) */
 function LineChart({ days }) {
-  const W = 560, H = 190, P = { l: 34, r: 14, t: 16, b: 26 };
+  /* the chart fills its card: it is drawn at the card's real size, so there is no empty space under it */
+  const box = useRef(null), [sz, setSz] = useState({ w: 560, h: 200 });
+  useEffect(() => { const el = box.current; if (!el || !window.ResizeObserver) return; const ro = new ResizeObserver(() => setSz({ w: Math.max(260, Math.round(el.clientWidth)), h: Math.max(170, Math.round(el.clientHeight)) })); ro.observe(el); return () => ro.disconnect(); }, []);
+  const W = sz.w, H = sz.h, P = { l: 34, r: 14, t: 16, b: 26 };
   const max = Math.max(4, ...days.map((d) => Math.max(d.views, d.leads)));
   const nice = Math.ceil(max / 4) * 4, x = (i) => P.l + (i * (W - P.l - P.r)) / (days.length - 1), y = (v) => H - P.b - (v / nice) * (H - P.t - P.b);
   const path = (k) => days.map((d, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(d[k]).toFixed(1)}`).join(" ");
   const area = `${path("views")} L${x(days.length - 1)},${H - P.b} L${x(0)},${H - P.b} Z`, last = days[days.length - 1];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="db-chart" role="img" aria-label="Views and leads, last 7 days">
+    <div ref={box} className="db-chartw"><svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="db-chart" role="img" aria-label="Views and leads, last 7 days">
       <defs><linearGradient id="dbv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7c4dff" stopOpacity=".28" /><stop offset="1" stopColor="#7c4dff" stopOpacity="0" /></linearGradient></defs>
       {[0, 1, 2, 3, 4].map((i) => { const v = (nice / 4) * i; return <g key={i}><line x1={P.l} x2={W - P.r} y1={y(v)} y2={y(v)} className="db-grid" /><text x={P.l - 8} y={y(v) + 4} textAnchor="end" className="db-ax">{v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + "K" : v}</text></g>; })}
       {days.map((d, i) => <text key={i} x={x(i)} y={H - 6} textAnchor="middle" className="db-ax">{d.label}</text>)}
@@ -40,8 +43,8 @@ function LineChart({ days }) {
       <circle cx={x(days.length - 1)} cy={y(last.views)} r="5" className="db-ping" /><circle cx={x(days.length - 1)} cy={y(last.leads)} r="5" className="db-ping l" />
       {days.map((d, i) => <g key={i}><circle cx={x(i)} cy={y(d.views)} r="3.6" className="db-pv" /><circle cx={x(i)} cy={y(d.leads)} r="3.2" className="db-pl" /></g>)}
       <g transform={`translate(${x(days.length - 1) - 44},${Math.max(4, y(last.views) - 30)})`}><rect width="52" height="22" rx="7" className="db-tagv" /><text x="26" y="15" textAnchor="middle" className="db-tagt">{last.views}</text></g>
-      <g transform={`translate(${x(days.length - 1) - 40},${Math.min(H - P.b - 26, y(last.leads) - 30)})`}><rect width="44" height="22" rx="7" className="db-tagl" /><text x="22" y="15" textAnchor="middle" className="db-tagt">{last.leads}</text></g>
-    </svg>
+      {(last.views !== last.leads || last.views > 0) && <g transform={`translate(${x(days.length - 1) - 40},${Math.min(H - P.b - 26, y(last.leads) - 30)})`}><rect width="44" height="22" rx="7" className="db-tagl" /><text x="22" y="15" textAnchor="middle" className="db-tagt">{last.leads}</text></g>}
+    </svg></div>
   );
 }
 
@@ -103,35 +106,71 @@ function Robot({ mood = "ok" }) {
 }
 const tipKey = (t) => t.p.id + "|" + t.title.replace(/\d+/g, "#");
 function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
-  /* the robot hops along a path to the free space beside the score, says hi, and hops back (Web Animations API) */
+  /* the robot's trip (Web Animations API, one 24 s loop):
+     home → hops up to the free space above the AI CORE (big, clearly visible) → says hi → hops home
+     → hops to the space beside the score → says hi → hops home. Restarts from the beginning each time the card scrolls into view. */
   const walk = useRef(null), card = useRef(null);
   useEffect(() => {
     const w = walk.current, c = card.current; if (!w || !c || !w.animate || !window.ResizeObserver) return;
     if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let anims = [];
+    const D = 24000;
     const build = () => {
       anims.forEach((x) => x.cancel()); anims = [];
-      const sc = c.querySelector(".ai-score"), h = c.querySelector(".ai-h .grow"); if (!sc || !h) return;
-      const r = w.getBoundingClientRect(), a = sc.getBoundingClientRect();
-      const txt = Math.max(...[...h.children].map((k) => { const rg = document.createRange(); rg.selectNodeContents(k); return rg.getBoundingClientRect().right; }));
-      const S = 0.42, dx = (txt + a.left) / 2 - (r.left + r.width / 2), dy = a.top + a.height / 2 - (r.top + r.height / 2) - 6;
+      w.style.transform = "none";
+      const sc = c.querySelector(".ai-score"), h = c.querySelector(".ai-h .grow");
+      const r = w.getBoundingClientRect(), cx0 = r.left + r.width / 2, cy0 = r.top + r.height / 2;
       const T = (x, y, s, rot) => ({ transform: `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${s.toFixed(3)}) rotate(${rot}deg)` });
-      const f = [{ offset: 0, ...T(0, 0, 1, 0) }, { offset: 0.24, ...T(0, 0, 1, 0) }];
-      const hops = (from, to, o0, o1, back) => { const n = 6; for (let i = 1; i <= n; i++) { const t = i / n, e = t * t * (3 - 2 * t), x = from[0] + (to[0] - from[0]) * e, y = from[1] + (to[1] - from[1]) * e, s = from[2] + (to[2] - from[2]) * e; f.push({ offset: o0 + (o1 - o0) * t, ...T(x, y - (i % 2 ? 26 * s : 0), s, i === n ? 0 : (i % 2 ? (back ? -7 : 7) : (back ? 4 : -4))) }); } };
-      hops([0, 0, 1], [dx, dy, S], 0.24, 0.38, false);
-      f.push({ offset: 0.42, ...T(dx, dy - 12, S, 0) }, { offset: 0.46, ...T(dx, dy, S, 0) }, { offset: 0.6, ...T(dx, dy, S, 0) });
-      hops([dx, dy, S], [0, 0, 1], 0.6, 0.74, true);
-      f.push({ offset: 1, ...T(0, 0, 1, 0) });
-      const D = 17000;
+      const f = [];
+      const at = (o, p, rot = 0) => f.push({ offset: o, ...T(p[0], p[1], p[2], rot) });
+      const hops = (from, to, o0, o1, back, n = 6, lift = 26) => { for (let i = 1; i <= n; i++) { const t = i / n, e = t * t * (3 - 2 * t), x = from[0] + (to[0] - from[0]) * e, y = from[1] + (to[1] - from[1]) * e, s = from[2] + (to[2] - from[2]) * e; f.push({ offset: o0 + (o1 - o0) * t, ...T(x, y - (i % 2 ? lift * Math.max(s, 0.5) : 0), s, i === n ? 0 : (i % 2 ? (back ? -7 : 7) : (back ? 4 : -4))) }); } };
+      const HOME = [0, 0, 1];
+      /* stop 1: the empty space above the AI CORE, as big as fits (up to the same size) */
+      const core = c.parentElement && c.parentElement.querySelector(".al-core3"), col = core && core.parentElement;
+      let CORE = null;
+      if (core && core.getBoundingClientRect().width > 0) {
+        /* room = from the top of this row (plus the small gap above it) down to the top of the core ring */
+        const row = c.parentElement.getBoundingClientRect(), k = core.getBoundingClientRect();
+        const top = row.top - 10, bottom = k.top + 8, room = bottom - top, colW = col ? col.getBoundingClientRect().width : 240;
+        const S = Math.max(0.5, Math.min(1, (room - 6) / r.height, (colW + 70) / r.width));
+        CORE = [k.left + k.width / 2 - cx0, bottom - (r.height * S) / 2 - cy0, S];
+      }
+      /* stop 2: the space between the title and the score (small) */
+      let SCORE = null;
+      if (sc && h) { const a = sc.getBoundingClientRect(), txt = Math.max(...[...h.children].map((k) => { const rg = document.createRange(); rg.selectNodeContents(k); return rg.getBoundingClientRect().right; })); SCORE = [(txt + a.left) / 2 - cx0, a.top + a.height / 2 - cy0 - 6, 0.42]; }
+      if (!CORE && !SCORE) return;
+      at(0, HOME); at(0.12, HOME);
+      if (CORE) {
+        hops(HOME, CORE, 0.12, 0.26, false, 7, 34);
+        at(0.29, [CORE[0], CORE[1] - 14, CORE[2]]); at(0.31, CORE); at(0.42, CORE);
+        hops(CORE, HOME, 0.42, 0.54, true, 7, 34);
+      } else at(0.54, HOME);
+      at(0.6, HOME);
+      if (SCORE) {
+        hops(HOME, SCORE, 0.6, 0.7, false);
+        at(0.72, [SCORE[0], SCORE[1] - 12, SCORE[2]]); at(0.74, SCORE); at(0.84, SCORE);
+        hops(SCORE, HOME, 0.84, 0.95, true);
+      }
+      at(1, HOME);
       anims.push(w.animate(f, { duration: D, iterations: Infinity }));
+      /* the "Hi!" bubble: at home, above the core, and beside the score (bigger there because the robot is small) */
       const hi = w.querySelector(".rb4-hi");
-      if (hi) anims.push(hi.animate([{ offset: 0, opacity: 0, transform: "scale(.4)" }, { offset: 0.04, opacity: 1, transform: "scale(1.08)" }, { offset: 0.06, opacity: 1, transform: "scale(1)" }, { offset: 0.2, opacity: 1, transform: "scale(1)" }, { offset: 0.24, opacity: 0, transform: "scale(.4)" },
-        { offset: 0.44, opacity: 0, transform: "scale(.4)" }, { offset: 0.48, opacity: 1, transform: "scale(1.9)" }, { offset: 0.58, opacity: 1, transform: "scale(1.8)" }, { offset: 0.61, opacity: 0, transform: "scale(.4)" }, { offset: 1, opacity: 0, transform: "scale(.4)" }], { duration: D, iterations: Infinity }));
+      if (hi) {
+        const k = [{ offset: 0, opacity: 0, transform: "scale(.4)" }, { offset: 0.03, opacity: 1, transform: "scale(1.08)" }, { offset: 0.05, opacity: 1, transform: "scale(1)" }, { offset: 0.1, opacity: 1, transform: "scale(1)" }, { offset: 0.12, opacity: 0, transform: "scale(.4)" }];
+        if (CORE) { const b = Math.min(1.2, 1 / CORE[2]); k.push({ offset: 0.31, opacity: 0, transform: "scale(.4)" }, { offset: 0.33, opacity: 1, transform: `scale(${(b * 1.08).toFixed(2)})` }, { offset: 0.35, opacity: 1, transform: `scale(${b.toFixed(2)})` }, { offset: 0.41, opacity: 1, transform: `scale(${b.toFixed(2)})` }, { offset: 0.43, opacity: 0, transform: "scale(.4)" }); }
+        if (SCORE) k.push({ offset: 0.74, opacity: 0, transform: "scale(.4)" }, { offset: 0.76, opacity: 1, transform: "scale(1.9)" }, { offset: 0.83, opacity: 1, transform: "scale(1.8)" }, { offset: 0.85, opacity: 0, transform: "scale(.4)" });
+        k.push({ offset: 1, opacity: 0, transform: "scale(.4)" });
+        anims.push(hi.animate(k, { duration: D, iterations: Infinity }));
+      }
     };
     const vis = () => anims.forEach((x) => (document.hidden ? x.pause() : x.play()));
     const ro = new ResizeObserver(() => build()); ro.observe(c); build();
+    /* when the card scrolls into view, start the trip from the beginning so it's seen clearly */
+    let seen = true;
+    const io = window.IntersectionObserver ? new IntersectionObserver(([e]) => { if (e.isIntersecting && e.intersectionRatio > 0.55 && !seen) anims.forEach((x) => { x.currentTime = 0; x.play(); }); seen = e.isIntersecting && e.intersectionRatio > 0.55; }, { threshold: [0, 0.55, 1] }) : null;
+    if (io) io.observe(c);
     document.addEventListener("visibilitychange", vis);
-    return () => { ro.disconnect(); document.removeEventListener("visibilitychange", vis); anims.forEach((x) => x.cancel()); };
+    return () => { ro.disconnect(); if (io) io.disconnect(); document.removeEventListener("visibilitychange", vis); anims.forEach((x) => x.cancel()); };
   }, []);
   const [now, setNow] = useState(Date.now()), [daily, setDaily] = useState(""), [scan, setScan] = useState(false);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(t); }, []);
@@ -423,7 +462,8 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
               </div>))}
           </div>
         </div>
-        <div className="db-card"><div className="db-ch"><h3>Views &amp; Leads Overview</h3><span className="db-leg"><i className="v" />Views<i className="l" />Leads</span><span className="db-wk">This week</span></div><LineChart days={st.days} /></div>
+        <div className="db-card"><div className="db-ch"><h3>Views &amp; Leads Overview</h3><span className="db-leg"><i className="v" />Views<i className="l" />Leads</span><span className="db-wk">This week</span></div><LineChart days={st.days} />
+          {(() => { const v = st.days.reduce((n, d) => n + d.views, 0), l = st.days.reduce((n, d) => n + d.leads, 0); return <div className="db-tot"><span><i className="v" /><b>{v}</b> views</span><span><i className="l" /><b>{l}</b> leads</span><span><b>{v ? ((l / v) * 100).toFixed(1) : "0.0"}%</b> conversion</span><span className="mut">last 7 days</span></div>; })()}</div>
         <SmartInsights events={events} leads={leads} onAsk={() => onConsult && onConsult({ tab: "ask", ask: "Why isn't my page performing well?" })} onAnalytics={onAnalytics} onGo={(v) => onViewAll && onViewAll(v)} />
       </div>
 

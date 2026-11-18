@@ -57,7 +57,7 @@ function lb_token_user($tok, $DATA) {
   $cf = $dir . '/' . substr(hash('sha256', $tok), 0, 40) . '.json';
   if (file_exists($cf) && filemtime($cf) > time() - 600) { $u = lb_j($cf, null); if ($u && !empty($u['id'])) return $u; }
   list($code, $b) = lb_http(rtrim($s['supabase_url'], '/') . '/auth/v1/user', array('apikey: ' . $s['anon_key'], 'Authorization: Bearer ' . $tok));
-  if ($code === 0) { if (file_exists($cf)) { $u = lb_j($cf, null); if ($u && !empty($u['id'])) return $u; } return null; }   /* Supabase down: use the last answer */
+  if ($code === 0) { if (file_exists($cf)) { $u = lb_j($cf, null); if ($u && !empty($u['id'])) return $u; } $GLOBALS['LB_SB_DOWN'] = true; return null; }   /* Supabase not reachable: use the last answer */
   $j = json_decode($b, true);
   if ($code !== 200 || !is_array($j) || empty($j['id'])) return false;
   $u = array('id' => (string)$j['id'], 'email' => strtolower(isset($j['email']) ? $j['email'] : ''),
