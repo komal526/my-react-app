@@ -1,7 +1,7 @@
 // LaunchBuilder v10 — Integrations.jsx
 import { BRAND } from "../brand.js";
 import { useState } from "react";
-import { WA_PROVIDERS, AI_PROVIDERS, callAI, detectAI, serverCall, serverUrl, phpCall, defaultServerUrl, lovableUrl, boltText } from "../lib.js";
+import { WA_PROVIDERS, AI_PROVIDERS, callAI, detectAI, listModels, serverCall, serverUrl, phpCall, defaultServerUrl, lovableUrl, boltText } from "../lib.js";
 
 /* ================= Integrations: WhatsApp automation, payments, AI providers ================= */
 const WA_HELP = {
@@ -102,15 +102,21 @@ export default function Integrations({ integ, onChange, initial = "" }) {
   };
   const srvList = async () => { setSrvSites("loading"); try { const r = await phpCall(srv, { action: "sites" }); setSrvSites(r.sites || []); } catch (e) { setSrvSites({ error: e.message }); } };
   const loadSites = async () => { setSites("loading"); try { const r = await serverCall(integ, { event: "sites" }); setSites(r.sites || []); } catch (e) { setSites({ error: e.message }); } };
-  const [qk, setQk] = useState(""), [qbusy, setQbusy] = useState(false), [qmsg, setQmsg] = useState(null);
-  const quick = async () => {
-    setQbusy(true); setQmsg(null);
-    try {
-      const r = await detectAI(qk), nm = (AI_PROVIDERS.find((p) => p.id === r.provider) || {}).name;
-      set("ai", { provider: r.provider, keys: { ...(ai.keys || {}), [r.provider]: r.key }, models: { ...(ai.models || {}), [r.provider]: r.model } });
-      setQk(""); setQmsg(["ok", <>✓ Connected to <b>{nm}</b> — using <b>{r.model}</b>. You're ready to create with AI.</>]);
-    } catch (e) { setQmsg(["bad", e.message]); }
-    setQbusy(false);
+  /* connect with ONLY the key: check it, pick the best model automatically (the Model box stays optional).
+     A key pasted into the wrong card (e.g. a Gemini key in OpenAI) is moved to the right one. */
+  const [checked, setChecked] = useState({});
+  const connectKey = async (id, key) => {
+    setChecked((c) => ({ ...c, [id]: key })); setTest((t) => ({ ...t, [id]: "Checking the key…" }));
+    let prov = id, model = "";
+    try { model = await listModels(id, key); }
+    catch (e) {
+      try { const r = await detectAI(key); prov = r.provider; model = r.model; }
+      catch { set("ai", { keys: { ...(ai.keys || {}), [id]: key } }); setTest((t) => ({ ...t, [id]: "✕ " + String(e.message || "Key not accepted").slice(0, 120) })); return; }
+    }
+    const keys = { ...(ai.keys || {}), [prov]: key }; if (prov !== id && keys[id] === key) delete keys[id];
+    set("ai", { provider: prov, keys, autoModels: { ...(ai.autoModels || {}), [prov]: model } });
+    const nm = (AI_PROVIDERS.find((x) => x.id === prov) || {}).name;
+    setTest((t) => ({ ...t, [id]: prov !== id ? "" : t[id], [prov]: (prov !== id ? "✓ This is a " + nm + " key — moved here, using " : "✓ Connected — using ") + "" + model }));
   };
   const testAI = async (id) => {
     setTest({ ...test, [id]: "Testing…" });
@@ -234,35 +240,18 @@ export default function Integrations({ integ, onChange, initial = "" }) {
       </Card>
 
       <Card id="ai" sel={sel} onClose={close} ic="✦" t="AI providers" sub="Use your own API key to create websites and sections from a prompt." on={AI_PROVIDERS.some((p) => (ai.keys || {})[p.id])}>
-        {/* the easy way: paste ANY key — we find the AI company, check the key and choose the best model */}
-        <div className="ig-quick">
-          <b>Paste your AI key — that's all</b>
-          <span className="mut sm">Google Gemini, ChatGPT (OpenAI), Claude or DeepSeek — we recognise the key, check it works and choose the best model for you.</span>
-          <div className="row"><input type="password" value={qk} onChange={(e) => { setQk(e.target.value); setQmsg(null); }} onKeyDown={(e) => e.key === "Enter" && quick()} placeholder="Paste any API key here" autoComplete="off" />
-            <button className="pri" disabled={!qk.trim() || qbusy} onClick={quick}>{qbusy ? "Checking…" : "Connect"}</button></div>
-          {qmsg && <div className={"ig-qmsg " + qmsg[0]}>{qmsg[1]}</div>}
-          <span className="mut sm">No key yet? Free one: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio ↗</a> → Create API key → Copy key.</span>
-        </div>
-        {AI_PROVIDERS.some((p) => (ai.keys || {})[p.id]) && <div className="ig-conn">{AI_PROVIDERS.filter((p) => (ai.keys || {})[p.id]).map((p) => (
-          <div key={p.id} className={"ig-cr" + (ai.provider === p.id ? " on" : "")}>
-            <span className="ig-cdot" /><div className="grow"><b>{p.name}</b><small className="mut">Model: {(ai.models || {})[p.id] || p.model} · key …{String(ai.keys[p.id]).slice(-4)}</small></div>
-            {ai.provider === p.id ? <span className="badge published">Default</span> : <button className="xs" onClick={() => set("ai", { provider: p.id })}>Make default</button>}
-            <button className="xs" onClick={() => testAI(p.id)}>Test</button>
-            <button className="xs red" onClick={() => { const k = { ...ai.keys }; delete k[p.id]; const left = AI_PROVIDERS.find((x) => k[x.id]); set("ai", { keys: k, provider: ai.provider === p.id ? (left ? left.id : ai.provider) : ai.provider }); }}>Remove</button>
-            {test[p.id] && <span className={"sm ig-tst " + (test[p.id].startsWith("✓") ? "green" : test[p.id].startsWith("✕") ? "red" : "mut")}>{test[p.id]}</span>}
-          </div>))}</div>}
-        <details className="ig-adv"><summary>Advanced: enter keys and models by hand</summary>
         <div className="ig-ai">{AI_PROVIDERS.map((p) => {
           const k = (ai.keys || {})[p.id] || "", m = (ai.models || {})[p.id] || "";
           return <div key={p.id} className={"ig-p" + (ai.provider === p.id ? " on" : "")}>
             <div className="row between"><label className="ig-radio"><input type="radio" checked={ai.provider === p.id} onChange={() => set("ai", { provider: p.id })} /><b>{p.name}</b></label>{ai.provider === p.id && <span className="badge published">Default</span>}</div>
             <label>API key <a href={p.keyUrl} target="_blank" rel="noopener" className="sm">Get a key ↗</a>
-              <div className="row"><input type={show[p.id] ? "text" : "password"} value={k} placeholder={p.hint} onChange={(e) => set("ai", { keys: { ...ai.keys, [p.id]: e.target.value.trim() } })} /><button className="xs" onClick={() => setShow({ ...show, [p.id]: !show[p.id] })}>{show[p.id] ? "Hide" : "Show"}</button></div></label>
-            <label>Model<input value={m} placeholder={p.model} onChange={(e) => set("ai", { models: { ...ai.models, [p.id]: e.target.value.trim() } })} /></label>
+              <div className="row"><input type={show[p.id] ? "text" : "password"} value={k} placeholder={p.hint} onChange={(e) => set("ai", { keys: { ...ai.keys, [p.id]: e.target.value.trim() } })}
+                onPaste={(e) => { const v = e.clipboardData.getData("text").trim(); if (v) { e.preventDefault(); connectKey(p.id, v); } }} onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== checked[p.id]) connectKey(p.id, v); }} />
+                <button className="xs" onClick={() => setShow({ ...show, [p.id]: !show[p.id] })}>{show[p.id] ? "Hide" : "Show"}</button></div></label>
+            <label><span>Model <span className="ig-opt">optional</span></span><input value={m} placeholder={(ai.autoModels || {})[p.id] ? "Automatic: " + ai.autoModels[p.id] : "Automatic — best model"} onChange={(e) => set("ai", { models: { ...ai.models, [p.id]: e.target.value.trim() } })} /></label>
             <div className="row"><button disabled={!k} onClick={() => testAI(p.id)}>Test</button>{test[p.id] && <span className={"sm " + (test[p.id].startsWith("✓") ? "green" : test[p.id].startsWith("✕") ? "red" : "mut")}>{test[p.id]}</span>}</div>
           </div>;
         })}</div>
-        </details>
         <div className="ig-ext">
           <div className="ig-ext-h"><b>Lovable &amp; Bolt.new</b><span className="mut sm">No API key needed — opens their site with your idea, then import the result here.</span></div>
           <textarea rows={3} value={hand} onChange={(e) => setHand(e.target.value)} placeholder="Describe your page — e.g. Landing page for a ₹21 AI ads workshop, dark modern style, countdown, trainer bio, FAQ and registration form" />

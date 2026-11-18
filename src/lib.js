@@ -210,7 +210,7 @@ export const AI_PROVIDERS = [
 ];
 /* ---- connect with ONLY a key: find out which AI company it belongs to, check it works, and pick the best model ---- */
 const pickBest = (ids, prefs, re) => { for (const p of prefs) { const f = ids.find((x) => x === p); if (f) return f; } const m = ids.filter((x) => re.test(x)); return m[0] || ids[0] || ""; };
-async function listModels(provider, key) {
+export async function listModels(provider, key) {
   let r, j;
   if (provider === "gemini") {
     r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } }); j = await r.json().catch(() => ({}));
@@ -256,7 +256,7 @@ export async function callAI(ai, system, prompt, maxTokens = 12000) {
   }
 }
 async function callAI1(ai, system, prompt, maxTokens) {
-  const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0], key = (ai.keys || {})[pr.id], model = (ai.models || {})[pr.id] || pr.model;
+  const pr = AI_PROVIDERS.find((p) => p.id === ai.provider) || AI_PROVIDERS[0], key = (ai.keys || {})[pr.id], model = (ai.models || {})[pr.id] || (ai.autoModels || {})[pr.id] || pr.model;  /* your model → the automatic best model → a safe default */
   if (!key) {
     /* no key in this browser → ask through your server (your encrypted key, or the platform Gemini key) */
     try { return (await phpCall({ url: defaultServerUrl(), key: accountKey() }, { action: "ai", system, messages: [{ role: "user", content: prompt }], max: Math.min(maxTokens, 12000) })).text; }
