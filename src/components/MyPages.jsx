@@ -1,6 +1,7 @@
 // LaunchBuilder v48 — MyPages.jsx (Dashboard · Websites · Landing pages)
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { Thumb } from "./parts.jsx";
+import Robot from "./Robot.jsx";
 import { Icon } from "./icons.jsx";
 import { liveAddr, domainState, subsCache, subList, LIMIT, FILE_TEMPLATES, FEATURED_TPL, longThumb, fuDue, aiAvailable, askAI, tplUrl } from "../lib.js";
 import { metrics, consult, areaName } from "./insights.js";
@@ -86,24 +87,6 @@ function SmartInsights({ events, leads, onAsk, onAnalytics, onGo }) {
 
 /* ---------- AI Consultant: a robot that keeps checking your pages and live numbers, and tells you what to fix ---------- */
 /* AI Consultant robot — your reference image, split into layers so each part moves on its own (pictures live in styles.css) */
-function Robot({ mood = "ok" }) {
-  /* pictures load a moment after the dashboard appears */
-  useEffect(() => { const go = () => import("./robotArt.js").then((m) => m.default()); if ("requestIdleCallback" in window) requestIdleCallback(go, { timeout: 1200 }); else setTimeout(go, 300); }, []);
-  return (
-    <div className={"rb4 rb4-" + mood} aria-hidden="true">
-      <i className="rb4-pad" />
-      <i className="rb4-l rb4-b1 rb4-badge1" />
-      <i className="rb4-l rb4-b2 rb4-badge2" />
-      <i className="rb4-l rb4-sp rb4-spark" />
-      <div className="rb4-me">
-        <i className="rb4-l rb4-body" />
-        <i className="rb4-l rb4-arm" />
-        <i className="rb4-chest" /><i className="rb4-blink" />
-      </div>
-      <i className="rb4-l rb4-hi rb4-bubble" />
-    </div>
-  );
-}
 const tipKey = (t) => t.p.id + "|" + t.title.replace(/\d+/g, "#");
 function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
   /* the robot's trip (Web Animations API, one 24 s loop):
@@ -133,7 +116,7 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
         /* room = from the top of this row (plus the small gap above it) down to the top of the core ring */
         const row = c.parentElement.getBoundingClientRect(), k = core.getBoundingClientRect();
         const top = row.top - 10, bottom = k.top + 8, room = bottom - top, colW = col ? col.getBoundingClientRect().width : 240;
-        const S = Math.max(0.45, Math.min(0.66, (room - 6) / r.height, (colW + 70) / r.width));   /* a bit "zoomed out" above the core */
+        const S = Math.max(0.5, Math.min(1, (room - 6) / r.height, (colW + 70) / r.width));   /* as big as fits above the core */
         CORE = [k.left + k.width / 2 - cx0, bottom - (r.height * S) / 2 - cy0, S];
       }
       /* stop 2: the space between the title and the score (small) */

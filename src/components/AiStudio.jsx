@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { aiWebsite, aiSection, browserAi, serverAiReady, AI_PROVIDERS, pg } from "../lib.js";
 import { BRAND } from "../brand.js";
+import Robot from "./Robot.jsx";
 
 const IDEAS = [
   "A landing page for my ₹499 astrology workshop on Sunday, with booking form and WhatsApp button",
@@ -137,25 +138,29 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
 
   return (
     <div className="ais" onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
-      <i className="ais-orb o1" /><i className="ais-orb o2" /><i className="ais-orb o3" />
+      <i className="ais-blob b1" /><i className="ais-blob b2" /><i className="ais-blob b3" /><i className="ais-dots d1" /><i className="ais-dots d2" />
+      <i className="ais-star s1">✦</i><i className="ais-star s2">✦</i><i className="ais-star s3">✦</i><i className="ais-star s4">✦</i>
+      {/* floating cards on the right: picture · document · code */}
+      <div className="ais-deco" aria-hidden="true"><i className="ais-ring" /><span className="ais-cd c1"><Ico d={I_IMG} s={34} /></span><span className="ais-cd c2"><b /><b /><b /><b /></span><span className="ais-cd c3">&lt;/&gt;</span></div>
       <header className="ais-top">
         <button className="ais-back" onClick={onClose} disabled={!!busy}>← Back</button>
-        <span className="ais-brand">✦ {BRAND.product} AI Studio</span>
+        <span className="ais-brand">{BRAND.logo ? <img src={BRAND.logo} alt="" /> : <i className="ais-hex">⬡</i>}{BRAND.product} AI Studio</span>
         <span className={"ais-ai " + (ready ? "on" : srv === null && !ai ? "" : "off")}>{ready ? <><i />{provName}</> : srv === null ? "Checking AI…" : "No AI connected"}</span>
       </header>
 
       <main className="ais-main">
-        <h1>{mode === "editor" ? "What should AI build on this page?" : <>What do you want to <em>create</em>?</>}</h1>
+        <h1>{mode === "editor" ? <>What should AI <em>build</em> here?</> : <>What do you want to <em>create</em>?</>}</h1>
         <p className="ais-sub">Describe it, add pictures or documents about your business, or just speak — AI builds it and you can edit everything after.</p>
 
         <div className="ais-opts">
           {mode === "new" ? <>
-            <div className="ais-seg">{[["landing", "Landing page"], ["website", "Website"]].map(([k, l]) => <button key={k} className={type === k ? "on" : ""} onClick={() => setType(k)} disabled={!!busy}>{l}</button>)}</div>
-            <input className="ais-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (optional)" disabled={!!busy} />
+            <div className="ais-seg">{[["landing", "✦", "Landing page"], ["website", "🌐", "Website"]].map(([k, ic, l]) => <button key={k} className={type === k ? "on" : ""} onClick={() => setType(k)} disabled={!!busy}><span>{ic}</span>{l}</button>)}
+              <label className="ais-name"><span>👤</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (optional)" disabled={!!busy} /></label></div>
           </> : <div className="ais-seg">{[["section", "Add a new section"], ["page", "Replace the whole page"]].map(([k, l]) => <button key={k} className={how === k ? "on" : ""} onClick={() => setHow(k)} disabled={!!busy}>{l}</button>)}</div>}
         </div>
 
         <div className={"ais-box" + (listen ? " rec" : "") + (busy ? " busy" : "")}>
+          <div className="ais-bot"><Robot mood={busy ? "alert" : "happy"} /></div>
           <textarea ref={taRef} value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={!!busy} autoFocus
             placeholder={listen ? "Listening… speak now" : mode === "editor" ? "e.g. A pricing section with 3 plans: ₹499 basic, ₹999 pro, ₹1,999 premium — with a Book now button" : "Describe your page — what is it, who is it for, what should visitors do (register, call, buy)? Price, city, colours…"}
             onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) go(); }} />
@@ -163,7 +168,7 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
             <span key={i} className={"ais-file " + f.kind}>{f.kind === "image" ? <img src={f.thumb} alt="" /> : <b>{f.kind === "pdf" ? "PDF" : "DOC"}</b>}<small>{f.name}</small>
               {!busy && <button onClick={() => setFiles((x) => x.filter((_, k) => k !== i))} aria-label="Remove">✕</button>}</span>))}</div>}
           <div className="ais-bar">
-            <span className="ais-hint">{files.length ? `${files.length}/${MAX_FILES} files` : "Drop pictures or documents here"}</span>
+            <span className="ais-hint"><i><Ico d={I_DOC} s={15} /></i>{files.length ? `${files.length}/${MAX_FILES} files` : "Drop pictures or documents here"}</span>
             <div className="grow" />
             <button className="ais-ic" title="Add pictures (logo, products, photos)" onClick={() => imgIn.current.click()} disabled={!!busy}><Ico d={I_IMG} /></button>
             <button className="ais-ic" title="Add a document (PDF, Word, text) about your business" onClick={() => docIn.current.click()} disabled={!!busy}><Ico d={I_DOC} /></button>
@@ -179,8 +184,8 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
         {err && <div className="ais-err">{err}{!ready && <button onClick={onSetupAI}>Connect an AI</button>}</div>}
         {!ready && srv === false && !err && <div className="ais-err soft">Connect an AI first — paste a free Gemini key in Integrations → AI builders. <button onClick={onSetupAI}>Connect an AI</button></div>}
 
-        {mode === "new" && !busy && <div className="ais-ideas">{IDEAS.map((x) => <button key={x} onClick={() => setPrompt(x)}>{x.length > 58 ? x.slice(0, 56) + "…" : x}</button>)}</div>}
-        <p className="ais-foot">Pictures go into your page · documents give AI your real details (prices, services, dates) · Ctrl+Enter to create</p>
+        {mode === "new" && !busy && <div className="ais-ideas">{IDEAS.map((x) => <button key={x} onClick={() => setPrompt(x)}><span>✦</span>{x.length > 50 ? x.slice(0, 48) + "…" : x}</button>)}</div>}
+        <p className="ais-foot"><i>⬡</i>Pictures go into your page · documents give AI your real details (prices, services, dates) · Ctrl+Enter to create</p>
       </main>
     </div>
   );
