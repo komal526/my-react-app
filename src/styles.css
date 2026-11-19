@@ -4304,3 +4304,21 @@ html.lb-hidden .ais-bot2{animation-play-state:paused}
 .tb-upd.ok{border-color:#22c55e!important;color:#4ade80!important;background:rgba(34,197,94,.12)!important}
 .tb-upd.err{border-color:#ef4444!important;color:#fca5a5!important;background:rgba(239,68,68,.12)!important}
 .tb-upd .pub-spin{width:14px;height:14px;border-width:2px}
+/* v97 — Canva-style resize handle + move grip */
+.qb-rz{position:absolute;z-index:31;width:16px;height:16px;border-radius:50%;background:#fff;border:2.5px solid #3b6cff;box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:nwse-resize;touch-action:none}
+.qb-rz.v{cursor:ns-resize;border-radius:6px;width:34px;height:10px}
+.qb-rz:hover{transform:scale(1.2)}
+.qb-rz[data-size]::after{content:attr(data-size);position:absolute;left:22px;top:-6px;white-space:nowrap;background:#ff2d95;color:#fff;font:600 11px/1 system-ui,sans-serif;padding:5px 7px;border-radius:6px}
+.qb-grip{font-style:normal;margin-right:5px;color:#3b6cff;font-weight:900}
+.lb-moving .qb,.lb-moving .qb-mini,.lb-moving .qb-rz{opacity:0!important;pointer-events:none!important;transition:opacity .1s}
+/* Advanced → Easy code */
+.ec{display:flex;flex-direction:column;gap:10px}
+.ec-sel{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12.5px}
+.ec-sel span{color:#64748b;font-weight:600}
+.ec-sel code{background:#eef2ff;color:#3730a3;border-radius:7px;padding:3px 8px;font-size:12.5px;cursor:pointer}
+.ec-sel code:hover{background:#e0e7ff}
+.ec-tabs{display:flex;background:#f1f3f8;border-radius:11px;padding:3px;gap:2px}
+.ec-tabs button{flex:1;border:0;background:none;border-radius:9px;padding:7px 4px;font:inherit;font-size:12.5px;font-weight:700;color:#5b6378;cursor:pointer}
+.ec-tabs button.on{background:#fff;color:#0d1324;box-shadow:0 1px 4px rgba(15,23,42,.12)}
+.ec-pre{white-space:pre-wrap;font-size:13px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:10px;max-height:180px;overflow:auto;color:#334155}
+.ec .code{width:100%}

@@ -2,7 +2,7 @@
 // Customize panel, Canva-style quick toolbar and icons
 import { useState, useLayoutEffect, useRef } from "react";
 import { aiEdit } from "../lib.js";
-import { INL, SH, GFONTS, SYSFONTS, ensureFont, fontStack, fontName, nameOf, readImage, putAsset, hydrate, field as fieldHtml } from "./tools.js";
+import { readCfg, INL, SH, GFONTS, SYSFONTS, ensureFont, fontStack, fontName, nameOf, readImage, putAsset, hydrate, field as fieldHtml } from "./tools.js";
 
 import { Icon, ICON_PATHS } from "./icons.jsx";
 export { Icon };
@@ -27,6 +27,44 @@ function HtmlBox({ el, A }) {
 function CodeArea({ value, onApply, rows = 8, placeholder }) {
   const [v, setV] = useState(value);
   return <><textarea className="code" rows={rows} value={v} placeholder={placeholder} onChange={(e) => setV(e.target.value)} spellCheck={false} /><button className="btn pri sm" onClick={() => onApply(v)}>Apply</button></>;
+}
+
+/* ================= Easy code: Content · HTML · CSS · JavaScript for the selected element ================= */
+const slugId = (t) => (t || "").toLowerCase().replace(/<[^>]+>/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 28);
+const jsBlock = (js, id) => { const m = (js || "").match(new RegExp(`/\\* lb-el:${id} \\*/[\\s\\S]*?\\n([\\s\\S]*?)\\n\\}\\);\\n/\\* /lb-el:${id} \\*/`)); return m ? m[1] : ""; };
+function EasyCode({ el, A, dev, changed }) {
+  const a = A.current, doc = el.ownerDocument, isBody = el.tagName === "BODY";
+  const [t, setT] = useState(() => { try { return localStorage.getItem("lb_code_tab") || "content"; } catch { return "content"; } });
+  const pick = (k) => { setT(k); try { localStorage.setItem("lb_code_tab", k); } catch { /* ignore */ } };
+  const [, force] = useState(0);
+  const leaf = [...el.childNodes].every((c) => c.nodeType === 3 || c.nodeType === 8 || (c.nodeType === 1 && INL.has(c.tagName)));
+  const userCls = [...el.classList].filter((c) => !/^lb-/.test(c));
+  const sel = isBody ? "body" : el.id ? "#" + el.id : userCls[0] ? "." + userCls[0] : "";
+  const makeId = () => { const d = doc; let b = slugId(el.textContent) || el.tagName.toLowerCase(), id = b, i = 2; while (d.getElementById(id)) id = b + "-" + i++; el.id = id; changed(); a.commit(); force((x) => x + 1); return id; };
+  const copy = (v) => { try { navigator.clipboard.writeText(v); } catch { /* ignore */ } };
+  const cfg = readCfg(doc), id = el.id;
+  const saveJs = (code) => {
+    const eid = id || makeId(); const c = readCfg(doc); let js = (c.js || "").replace(new RegExp(`\\n?/\\* lb-el:${eid} \\*/[\\s\\S]*?/\\* /lb-el:${eid} \\*/\\n?`), "\n").trim();
+    if (code.trim()) js = (js ? js + "\n\n" : "") + `/* lb-el:${eid} */ document.querySelectorAll("#${eid}").forEach(function (el) {\n${code.trim()}\n});\n/* /lb-el:${eid} */`;
+    let s = doc.getElementById("lb-settings"); if (!s) { s = doc.createElement("script"); s.id = "lb-settings"; s.type = "application/json"; doc.head.appendChild(s); }
+    s.textContent = JSON.stringify({ ...c, js }).replace(/</g, "\\u003c"); changed(); a.commit(); force((x) => x + 1);
+  };
+  const tabs = [["content", "Content"], ...(isBody ? [] : [["html", "HTML"]]), ["css", "CSS"], ...(isBody ? [] : [["js", "JavaScript"]])];
+  return (
+    <div className="ec">
+      <div className="ec-sel">{sel ? <><span>Selector</span><code onClick={() => copy(sel)} title="Click to copy">{sel}</code>{userCls.slice(sel.startsWith(".") ? 1 : 0).map((c) => <code key={c} onClick={() => copy("." + c)} title="Click to copy">.{c}</code>)}</>
+        : <><span>No ID yet</span><button className="btn sm" onClick={makeId}>＋ Give it an ID</button></>}</div>
+      <div className="ec-tabs">{tabs.map(([k, l]) => <button key={k} className={t === k ? "on" : ""} onClick={() => pick(k)}>{l}</button>)}</div>
+      {t === "content" && (leaf && !isBody
+        ? <><CodeArea key={"c" + el.getAttribute("data-lb-id")} rows={5} value={el.innerHTML.trim()} placeholder="Type the text here…" onApply={(v) => { el.innerHTML = v; changed(); a.commit(); }} /><p className="hint">This is the text on the page. You can also double-click it on the page and type.</p></>
+        : <div className="ec-txt"><p className="hint">{isBody ? "The whole page" : `This box holds ${el.children.length} item${el.children.length === 1 ? "" : "s"}`} — its text:</p><div className="ec-pre">{(el.innerText || "").trim().slice(0, 900) || "(no text)"}</div><p className="hint">Click a text on the page to change just that text.</p></div>)}
+      {t === "html" && <><HtmlBox key={"h" + el.getAttribute("data-lb-id")} el={el} A={A} /><p className="hint">The full code of this element. Change anything, then press Apply code.</p></>}
+      {t === "css" && <><CodeArea key={"s" + dev + el.getAttribute("data-lb-id")} rows={8} value={a.css.get(el)} placeholder={`selector {\n  color: #1e40af;\n  border-radius: 16px;\n}\nselector:hover {\n  transform: translateY(-4px);\n}`} onApply={(v) => { a.css.set(el, v); changed(); a.commit(); }} />
+        <p className="hint">Write <b>selector</b> for this element{sel && sel !== "body" ? <> (it means <b>{sel}</b>)</> : ""}. Works with :hover and @media too.{dev !== "desktop" ? " You're in " + dev + " view — this CSS is for every device; use @media for one device." : ""}</p></>}
+      {t === "js" && <><CodeArea key={"j" + (id || "") + (cfg.js || "").length} rows={8} value={id ? jsBlock(cfg.js, id) : ""} placeholder={'// "el" is this element\nel.addEventListener("click", function () {\n  alert("Hello!");\n});'} onApply={saveJs} />
+        <p className="hint">Use <b>el</b> for this element{id ? <> (<b>#{id}</b>)</> : " (an ID is added for you)"}. Runs in Preview and on the live site, not inside the editor.</p></>}
+    </div>
+  );
 }
 
 /* ================= Inspector ================= */
@@ -357,16 +395,13 @@ export default function Inspector({ el, A, pages = [], dev, itab, setItab, openL
 
       {/* ===================== ADVANCED ===================== */}
       {itab === "adv" && <>
-        <G t="Identity" open>
+        <G t="Easy code — content, HTML, CSS, JavaScript" open><EasyCode el={el} A={A} dev={dev} changed={changed} /></G>
+        <G t="Identity">
           {!isBody && <F l="Layer name (shown in Layers)"><input value={el.getAttribute("data-lb-name") || ""} placeholder={nameOf(el)} onChange={(e) => attrSet("data-lb-name", e.target.value)} /></F>}
           <F l="Element ID" hint={el.id ? <>Link to it with <b>#{el.id}</b> (same page) or <b>page.html#{el.id}</b>.</> : "Give a unique ID so menus/buttons can scroll here."}>
             <input value={el.getAttribute("id") || ""} placeholder="e.g. pricing" onChange={(e) => attrSet("id", e.target.value.replace(/\s+/g, "-").replace(/[^\w-]/g, ""))} /></F>
           <F l="CSS classes" hint="Space separated. Style them in Site → Custom CSS."><input value={userCls} placeholder="my-class another" onChange={(e) => { const k = keepCls(); el.className = (e.target.value + " " + k.join(" ")).trim(); changed(); }} /></F>
           <F l="Custom attributes" hint="One per line: name=value (e.g. aria-label=Menu, data-id=7)"><CodeArea value={attrs} rows={3} onApply={applyAttrs} /></F>
-        </G>
-        <G t="Custom CSS (this element)" open>
-          <p className="hint">Use <code>selector</code> for this element. Works with hover, media queries and child elements.</p>
-          <CodeArea key={dev} rows={8} value={a.css.get(el)} placeholder={"selector {\n  transition: .3s;\n}\nselector:hover {\n  transform: translateY(-4px);\n}\n@media (max-width:767px) {\n  selector { padding: 16px; }\n}"} onApply={(v) => { a.css.set(el, v); changed(); a.commit(); }} />
         </G>
         {!isBody && <G t="Motion effects">
           <div className="g2"><F l="Entrance animation"><select value={el.getAttribute("data-lb-anim") || ""} onChange={(e) => attrSet("data-lb-anim", e.target.value)}><option value="">None</option><option value="fade-up">Fade up</option><option value="fade-down">Fade down</option><option value="fade-left">Slide from left</option><option value="fade-right">Slide from right</option><option value="zoom">Zoom in</option><option value="flip">Flip</option></select></F>
@@ -378,7 +413,6 @@ export default function Inspector({ el, A, pages = [], dev, itab, setItab, openL
           <div className="tgs">{[["d", "desktop", "Hide on desktop"], ["t", "tablet", "Hide on tablet"], ["m", "mobile", "Hide on mobile"]].map(([k, ic, l]) => <Toggle key={k} on={el.classList.contains("lb-hide-" + k)} label={<><Icon n={ic} s={12} /> {l}</>} onChange={(v) => { el.classList.toggle("lb-hide-" + k, v); changed(); }} />)}</div>
           <p className="hint">Hidden elements look faded in the editor.</p>
         </G>}
-        {!isBody && <G t="HTML code (this element)"><HtmlBox el={el} A={A} /></G>}
       </>}
     </div>
   );
@@ -405,7 +439,7 @@ const docColors = (doc) => {
 };
 
 export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
-  const top = useRef(), bot = useRef(), [pop, setPop] = useState(""), [more, setMore] = useState(false);
+  const top = useRef(), bot = useRef(), rz = useRef(), [pop, setPop] = useState(""), [more, setMore] = useState(false);
   const [aiQ, setAiQ] = useState(""), [aiBusy, setAiBusy] = useState(false), [aiErr, setAiErr] = useState("");
   const a = A.current, doc = el.ownerDocument, w = doc.defaultView, cs = w.getComputedStyle(el), tag = el.tagName;
   const st = (k) => a.getStyle(el, k) || "";
@@ -428,6 +462,7 @@ export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
     t.style.display = b.style.display = off ? "none" : "";
     if (off) return;
     const cx = x + wd / 2, tw = t.offsetWidth, bw = b.offsetWidth;
+    if (rz.current) { rz.current.style.left = Math.min(W - 12, x + wd - 8) + "px"; rz.current.style.top = Math.min(H - 12, y + h - 8) + "px"; }
     t.style.left = Math.max(8, Math.min(W - tw - 8, cx - tw / 2)) + "px";
     t.style.top = (y - t.offsetHeight - 12 >= 6 ? y - t.offsetHeight - 12 : Math.max(6, Math.min(H - 110, y + 10))) + "px";
     b.style.left = Math.max(8, Math.min(W - bw - 8, cx - bw / 2)) + "px";
@@ -448,6 +483,24 @@ export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
   useLayoutEffect(() => { posRef.current = place; place(); return () => { posRef.current = null; }; });
 
   const keep = (e) => e.preventDefault(); // don't steal focus from text being edited
+  /* Canva-style resize: drag the round handle at the corner */
+  const sect = a.sectionish(el), RZ = useRef(null);
+  const rzDown = (e) => {
+    e.preventDefault(); e.stopPropagation(); rz.current.setPointerCapture(e.pointerId);
+    const r = el.getBoundingClientRect(); RZ.current = { x: e.clientX, y: e.clientY, w: r.width, h: r.height, o: null };
+  };
+  const rzMove = (e) => {
+    const R0 = RZ.current; if (!R0) return;
+    const nw = Math.max(24, Math.round(R0.w + (e.clientX - R0.x) / sc)), nh = Math.max(16, Math.round(R0.h + (e.clientY - R0.y) / sc));
+    const o = sect ? { minHeight: nh + "px" } : isImg ? { width: nw + "px", height: "auto", maxWidth: "100%" } : isText ? { width: nw + "px", maxWidth: "100%" } : { width: nw + "px", maxWidth: "100%", minHeight: nh + "px" };
+    Object.entries(o).forEach(([k, v]) => el.style.setProperty(k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase()), v, "important"));
+    R0.o = o; R0.label = sect ? `height ${nh}` : isImg || isText ? `width ${nw}` : `${nw} × ${nh}`; rz.current.setAttribute("data-size", R0.label); place();
+  };
+  const rzUp = () => {
+    const R0 = RZ.current; RZ.current = null; if (!R0 || !R0.o) return; rz.current.removeAttribute("data-size");
+    Object.keys(R0.o).forEach((k) => el.style.removeProperty(k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())));
+    a.setStyle(el, R0.o); a.commit(); requestAnimationFrame(place);
+  };
   const B = ({ ic, label, on, onClick, title, cls = "" }) => (
     <button className={"qb-b" + (on ? " on" : "") + " " + cls} title={title || label} onMouseDown={keep} onClick={onClick}>{ic && <Icon n={ic} s={15} />}{label && <span>{label}</span>}</button>
   );
@@ -570,8 +623,10 @@ export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
       <B ic="sparkle" label="Style" title="All style options" onClick={() => onOpen("style")} />
       {pop && !locked && pops[pop] && <div className="qb-popwrap">{pops[pop]()}</div>}
     </div>
+    {!locked && el.tagName !== "BODY" && <span ref={rz} className={"qb-rz" + (sect ? " v" : "")} title={sect ? "Drag to change the height" : "Drag to resize"} onPointerDown={rzDown} onPointerMove={rzMove} onPointerUp={rzUp} onPointerCancel={rzUp} />}
     <div ref={bot} className="qb-mini" onMouseDown={(e) => e.stopPropagation()}>
-      <span className="qb-name">{nameOf(el)}</span>
+      <span className="qb-name" title={sect ? "Drag a section to move it up or down" : "Press and drag the element to move it anywhere"}>{!sect && !locked && <em className="qb-grip">✥</em>}{nameOf(el)}</span>
+      {a.isMoved(el) && <B label="⟲" title="Put it back where it was" onClick={() => a.resetPos(el)} />}
       <B ic="lock" title={locked ? "Unlock" : "Lock (prevents moving and deleting)"} on={locked} onClick={() => a.toggleLock(el)} />
       <B ic="copy" title="Duplicate (Ctrl+D)" onClick={a.dup} />
       <B ic="trash" title="Delete (Del)" cls="del" onClick={a.del} />

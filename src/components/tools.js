@@ -28,6 +28,11 @@ img:not(.lb-sel){-webkit-user-drag:none}
 [data-lb-track]{flex-wrap:wrap!important;transform:none!important;row-gap:12px}
 [data-lb-cookie]{position:relative!important;inset:auto!important;transform:none!important}
 [data-lb-lock].lb-sel{outline-style:dashed!important;outline-color:#f59e0b!important}
+.lb-sel:not(body):not([contenteditable]){cursor:move}
+#lb-guides{position:fixed;inset:0;pointer-events:none;z-index:2147483646}
+#lb-guides i{position:fixed;background:#ff2d95;box-shadow:0 0 0 .5px #fff}
+#lb-guides b{position:fixed;font:600 11px/1 system-ui,sans-serif;color:#fff;background:#ff2d95;padding:4px 6px;border-radius:6px;white-space:nowrap}
+html.lb-moving,html.lb-moving *{cursor:grabbing!important;user-select:none!important}
 .lbw-dd:has(.lb-sel)>.lbw-ddm{display:block}.lbw-dd:has(.lb-sel)>.lbw-mega{display:grid}`;
 
 const SV = (d) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
@@ -77,7 +82,7 @@ export const cleanNode = (r, exp) => {
     if (n.hasAttribute("data-lb-asset")) n.removeAttribute("src");
     ["class", "style"].forEach((a) => n.getAttribute(a) === "" && n.removeAttribute(a));
   });
-  r.querySelectorAll("#lb-ind,#lb-tools").forEach((n) => n.remove());
+  r.querySelectorAll("#lb-ind,#lb-tools,#lb-guides").forEach((n) => n.remove());
 };
 
 /* ---- images are resized (max 1600px) before they are stored, so pages stay light ---- */

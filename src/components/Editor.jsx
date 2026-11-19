@@ -286,6 +286,72 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
     return { el: t, mode: f < 0.5 ? "before" : "after", r, row };
   };
 
+  /* ---------------- Canva-style free moving: press on an element and drag it anywhere ----------------
+     Saved as CSS "translate" (so the page stays a real, responsive website). Desktop moves don't touch the phone
+     layout; moves made in Mobile / Tablet view are kept only for that device. Pink guides snap to centres and edges. */
+  const SECTIONISH = (el) => !el || el.tagName === "BODY" || el.parentElement === el.ownerDocument.body || /^(SECTION|HEADER|FOOTER|MAIN|NAV)$/.test(el.tagName) && el.parentElement && el.parentElement.parentElement === el.ownerDocument.body;
+  const offOf = (el) => { const v = (getStyle(el, "translate") || "").trim(); if (!v || v === "none") return [0, 0]; const [x, y = "0px"] = v.split(/\s+/); return [parseFloat(x) || 0, parseFloat(y) || 0]; };
+  const isMoved = (el) => { const [x, y] = offOf(el); return !!(x || y); };
+  const resetPos = (el) => { setStyle(el, { translate: "" }); if (devRef.current === "desktop" && resp.get(el, "mobile", "translate") === "none") resp.set(el, "mobile", { translate: "" }); commit(true); requestAnimationFrame(placeTools); say("Position reset"); };
+  const nudge = (el, dx, dy) => { const [x, y] = offOf(el); placeAt(el, x + dx, y + dy); commit(false); requestAnimationFrame(placeTools); };
+  const placeAt = (el, x, y) => {
+    const v = Math.round(x) || Math.round(y) ? `${Math.round(x)}px ${Math.round(y)}px` : "";
+    const w = el.ownerDocument.defaultView; if (v && w.getComputedStyle(el).position === "static") el.style.position = "relative";
+    setStyle(el, { translate: v });
+    if (devRef.current === "desktop" && v && resp.get(el, "mobile", "translate") === "") resp.set(el, "mobile", { translate: "none" });   /* phone layout stays tidy */
+  };
+  const freeMove = (d) => {
+    const win = d.defaultView; let P = null;
+    const G = () => { let g = d.getElementById("lb-guides"); if (!g) { g = d.createElement("div"); g.id = "lb-guides"; d.body.appendChild(g); } return g; };
+    const clearG = () => { const g = d.getElementById("lb-guides"); if (g) g.remove(); };
+    const box = (el) => { let c = el.parentElement; while (c && c.parentElement && c.parentElement !== d.body && !/^(SECTION|HEADER|FOOTER)$/.test(c.tagName)) c = c.parentElement; return c || d.body; };
+    d.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0 || e.altKey || mode !== "visual") return;
+      let t = e.target; if (t.nodeType !== 1 || t.isContentEditable || (t.closest && t.closest("#lb-tools,#lb-ind"))) return;
+      if (t.closest("svg")) t = t.closest("svg");
+      const sel = selRef.current, el = sel && sel !== d.body && sel.contains(t) && !SECTIONISH(sel) ? sel : t;
+      if (SECTIONISH(el) || el.closest("[data-lb-lock]") || /^(HTML|INPUT|TEXTAREA|SELECT|OPTION)$/.test(el.tagName)) return;
+      e.preventDefault();   /* no text selection, no browser drag ghost */
+      const r = el.getBoundingClientRect(), [ox, oy] = offOf(el), c = box(el);
+      const cr = c.getBoundingClientRect(), sx = win.scrollX, sy = win.scrollY;
+      const peers = [...c.querySelectorAll("h1,h2,h3,h4,p,a,button,img,svg,figure,ul,div,span,form,video,iframe")].filter((n) => n !== el && !el.contains(n) && !n.contains(el) && n.offsetWidth > 24 && n.offsetHeight > 12).slice(0, 80)
+        .map((n) => { const q = n.getBoundingClientRect(); return { l: q.left + sx, c: q.left + sx + q.width / 2, r: q.right + sx, t: q.top + sy, m: q.top + sy + q.height / 2, b: q.bottom + sy }; });
+      const C = { l: cr.left + sx, c: cr.left + sx + cr.width / 2, r: cr.right + sx, t: cr.top + sy, m: cr.top + sy + cr.height / 2, b: cr.bottom + sy };
+      P = { el, x0: e.clientX, y0: e.clientY, sx, sy, ox, oy, r: { l: r.left + sx, w: r.width, t: r.top + sy, h: r.height }, C, peers, on: false, inl: el.style.getPropertyValue("translate"), imp: el.style.getPropertyPriority("translate") };
+    }, true);
+    d.addEventListener("pointermove", (e) => {
+      if (!P) return;
+      let dx = e.clientX - P.x0 + (win.scrollX - P.sx), dy = e.clientY - P.y0 + (win.scrollY - P.sy);
+      if (!P.on) { if (Math.abs(dx) + Math.abs(dy) < 5) return; P.on = true; if (selRef.current !== P.el) select(P.el); d.documentElement.classList.add("lb-moving"); wrap.current && wrap.current.classList.add("lb-moving"); }
+      /* auto-scroll near the top / bottom edge */
+      const H = win.innerHeight; if (e.clientY < 40) win.scrollBy(0, -14); else if (e.clientY > H - 40) win.scrollBy(0, 14);
+      /* snap: element left / centre / right (and top / middle / bottom) to the section and to other elements */
+      const lines = [], TH = 6, R0 = P.r;
+      const xs = [P.C.l + 24, P.C.c, P.C.r - 24, ...P.peers.flatMap((q) => [q.l, q.c, q.r])], ys = [P.C.m, ...P.peers.flatMap((q) => [q.t, q.m, q.b])];
+      let bx = null; [0, 0.5, 1].forEach((k) => { const v = R0.l + dx + R0.w * k; xs.forEach((x, i) => { const df = x - v; if (Math.abs(df) <= TH && (!bx || Math.abs(df) < Math.abs(bx.df))) bx = { df, x, ctr: i === 1 }; }); });
+      let by = null; [0, 0.5, 1].forEach((k) => { const v = R0.t + dy + R0.h * k; ys.forEach((y, i) => { const df = y - v; if (Math.abs(df) <= TH && (!by || Math.abs(df) < Math.abs(by.df))) by = { df, y, ctr: i === 0 }; }); });
+      if (bx) { dx += bx.df; lines.push(`<i style="left:${bx.x - win.scrollX}px;top:${P.C.t - win.scrollY}px;width:1px;height:${P.C.b - P.C.t}px"></i>`); }
+      if (by) { dy += by.df; lines.push(`<i style="top:${by.y - win.scrollY}px;left:${P.C.l - win.scrollX}px;height:1px;width:${P.C.r - P.C.l}px"></i>`); }
+      const nx = P.ox + dx, ny = P.oy + dy;
+      lines.push(`<b style="left:${R0.l + dx - win.scrollX}px;top:${Math.max(4, R0.t + dy - win.scrollY - 24)}px">${bx && bx.ctr ? "centre · " : ""}x ${Math.round(nx)} · y ${Math.round(ny)}</b>`);
+      G().innerHTML = lines.join("");
+      P.el.style.setProperty("translate", `${Math.round(nx)}px ${Math.round(ny)}px`, "important");
+      if (win.getComputedStyle(P.el).position === "static") P.el.style.position = "relative";
+      P.nx = nx; P.ny = ny; placeTools();
+    }, true);
+    const end = () => {
+      if (!P) return; const p = P; P = null; clearG(); d.documentElement.classList.remove("lb-moving"); wrap.current && wrap.current.classList.remove("lb-moving");
+      if (!p.on) return;
+      p.el.style.removeProperty("translate"); if (p.inl) p.el.style.setProperty("translate", p.inl, p.imp);
+      placeAt(p.el, p.nx, p.ny); commit(true); requestAnimationFrame(placeTools);
+      moved.current = Date.now();
+      if (!localStorage.getItem("lb_move_tip")) { say("Moved ✓ — tip: arrow keys nudge it, Alt + drag moves it into another spot"); try { localStorage.setItem("lb_move_tip", "1"); } catch { /* ignore */ } }
+    };
+    d.addEventListener("pointerup", end, true); d.addEventListener("pointercancel", end, true);
+  };
+  const moved = useRef(0);
+  Object.assign(A.current, { isMoved, resetPos, sectionish: SECTIONISH, place: placeTools });
+
   /* ---------------- wire up the page iframe ---------------- */
   const setup = () => {
     const d = D(); if (!d || !d.body) return;
@@ -293,7 +359,9 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
     selRef.current = null; setSelEl(null); hydrate(d);
     H.current = { past: [], future: [], cur: snap(), t: 0, dirty: false };
     const on = (ev, fn, cap) => d.addEventListener(ev, fn, cap);
+    freeMove(d);
     on("click", (e) => {
+      if (Date.now() - moved.current < 300) { e.preventDefault(); e.stopPropagation(); return; }   /* the click that ends a drag */
       let t = e.target; const tb = t.closest && t.closest("#lb-tools [data-a]");
       if (tb) { e.preventDefault(); e.stopPropagation(); const k = tb.getAttribute("data-a"); A.current[k === "up" ? "move" : k === "down" ? "move" : k](k === "up" ? -1 : 1); return; }
       if (t.closest && t.closest("#lb-tools")) return e.preventDefault();
@@ -310,7 +378,7 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
     on("mouseover", (e) => { d.querySelectorAll(".lb-hover").forEach((x) => x.classList.remove("lb-hover")); const t = e.target; if (t.nodeType === 1 && t !== d.body && t.id !== "lb-ind" && !(t.closest && t.closest("#lb-tools"))) t.classList.add("lb-hover"); });
     on("mouseleave", () => d.querySelectorAll(".lb-hover").forEach((x) => x.classList.remove("lb-hover")));
     on("scroll", () => placeTools(), { passive: true });
-    on("dragstart", (e) => { const t = e.target; if (t === selRef.current && t.tagName !== "BODY" && !t.closest("[data-lb-lock]")) { drag.current = { el: t }; e.dataTransfer.setData("text/plain", "m"); e.dataTransfer.effectAllowed = "move"; } else e.preventDefault(); });
+    on("dragstart", (e) => { const t = e.target; if (!e.altKey && !SECTIONISH(t) && !drag.current) { e.preventDefault(); return; } if (t === selRef.current && t.tagName !== "BODY" && !t.closest("[data-lb-lock]")) { drag.current = { el: t }; e.dataTransfer.setData("text/plain", "m"); e.dataTransfer.effectAllowed = "move"; } else e.preventDefault(); });
     on("dragover", (e) => { if (!drag.current) return; e.preventDefault(); const w = where(e); w ? showInd(w) : hideInd(); });
     on("drop", (e) => {
       const dr = drag.current; if (!dr) return; e.preventDefault(); const w = where(e); hideInd(); drag.current = null; if (!w) return;
@@ -328,6 +396,7 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
     if (mod && k === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && k === "y") { e.preventDefault(); redo(); }
     else if (mod && k === "d" && selRef.current) { e.preventDefault(); dup(); }
+    else if (/^arrow(up|down|left|right)$/.test(k) && !mod && selRef.current && !SECTIONISH(selRef.current) && !selRef.current.closest("[data-lb-lock]")) { e.preventDefault(); const n = e.shiftKey ? 10 : 1; nudge(selRef.current, k === "arrowleft" ? -n : k === "arrowright" ? n : 0, k === "arrowup" ? -n : k === "arrowdown" ? n : 0); }
     else if (e.key === "Delete" && selRef.current) del();
     else if (e.key === "Escape" && selRef.current) parent();
   };
