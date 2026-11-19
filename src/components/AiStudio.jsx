@@ -429,10 +429,9 @@ export function VoiceChat({ ai, integ = {}, lang, voiceOn = true, setVoice = () 
           <div ref={orb} className={"vc-orb " + st} onClick={tapOrb} title={LBL[st]}>
             <i /><i /><span>{st === "listening" ? <Ico d={I_MIC} s={34} /> : st === "thinking" ? <b className="vc-think"><em /><em /><em /></b> : <b className="vc-bars">{[0, 1, 2, 3, 4, 5, 6].map((k) => <em key={k} style={{ "--k": k }} />)}</b>}</span></div>
           <b className="vc-st">{LBL[st]}</b>
-          <small className="vc-lang">Talking in {ln} · {voiceOn ? (natural ? "natural AI voice" : "browser voice") : "voice off"}</small>
+          <small className="vc-lang">Talking in {ln}</small>
           <div className="vc-dots">{["speaking", "listening", "thinking"].map((x) => <i key={x} className={st === x ? "on" : ""} />)}</div>
         </div>
-        {notes && <div className="vc-notes"><b>✦ What I understood</b><span>{notes}</span></div>}
         <div className="vc-log">{msgs.map((m, k) => <div key={k} className={"vc-m " + m.who}><span className="vc-av">{m.who === "ai" ? ROBO : USER}</span><p>{m.t}</p></div>)}
           {live && <div className="vc-m me live"><span className="vc-av">{USER}</span><p>{live}</p></div>}<i ref={endRef} /></div>
         {err && <div className="aip-err">{err}</div>}
