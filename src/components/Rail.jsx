@@ -15,6 +15,7 @@ const P = {
   link: <><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1" /></>,
   reload: <><path d="M20 11a8 8 0 10-2.3 5.7" /><path d="M20 4v7h-7" /></>,
   home: <><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /></>,
+  ai: <><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></>,
 };
 export const RI = P;
 const Svg = ({ d }) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>;
@@ -56,7 +57,7 @@ export function TplView({ k }) {
   if (!t) return <div className="pv-dead"><div><h2>This template doesn't exist</h2><a href={location.pathname}>Go to dashboard</a></div></div>;
   const use = () => { try { localStorage.setItem("lb_tpl_go", t.key); } catch { /* ignore */ } location.href = location.pathname; };
   return (
-    <RailView dev={dev} setDev={setDev} actions={[{ ic: RI.edit, l: "Use", cls: "k-pri", fn: use }, { ic: RI.home, l: "Dashboard", fn: () => { location.href = location.pathname; } }]}>
+    <RailView dev={dev} setDev={setDev} actions={[{ ic: RI.ai, l: "Edit with AI", cls: "k-ai", fn: () => { try { localStorage.setItem("lb_tpl_ai", "1"); } catch { /* ignore */ } use(); } }, { ic: RI.edit, l: "Use", cls: "k-pri", fn: use }, { ic: RI.home, l: "Dashboard", fn: () => { location.href = location.pathname; } }]}>
       <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
     </RailView>
   );

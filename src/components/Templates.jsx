@@ -7,12 +7,12 @@ import { Icon } from "./icons.jsx";
 /* ================= Templates gallery: filters, search, hover-scroll previews, full-screen preview ================= */
 const W = { desktop: "100%", tablet: "820px", mobile: "390px" };
 
-function PreviewModal({ t, onClose, onUse }) {
+function PreviewModal({ t, onClose, onUse, onAi }) {
   const pages = useMemo(() => (t.file ? [{ id: "f", name: "Home" }] : t.make(t.name)), [t]);
   const [i, setI] = useState("0"), [dev, setDev] = useState("desktop");
   return (
     <RailView dev={dev} setDev={setDev} onClose={onClose} pages={pages.map((p, k) => ({ v: String(k), l: p.name }))} page={i} setPage={setI}
-      actions={[{ ic: RI.edit, l: "Use", cls: "k-pri", fn: () => onUse(t) }, t.file && { ic: RI.tab, l: "New tab", cls: "k-tab", fn: () => window.open(tplTabUrl(t), "_blank") }]}>
+      actions={[onAi && { ic: RI.ai, l: "Edit with AI", cls: "k-ai", fn: () => onAi(t) }, { ic: RI.edit, l: "Use", cls: "k-pri", fn: () => onUse(t) }, t.file && { ic: RI.tab, l: "New tab", cls: "k-tab", fn: () => window.open(tplTabUrl(t), "_blank") }]}>
       {t.file ? <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin allow-forms" /> : <iframe title={t.name} srcDoc={pages[+i].html} sandbox="allow-same-origin" />}
     </RailView>
   );
@@ -31,7 +31,7 @@ function glide(card, down) {
   scrollers.set(f, requestAnimationFrame(step));
 }
 
-export default function Templates({ onUse, onSave = onUse, mine = [], onDeleteMine = () => {} }) {
+export default function Templates({ onUse, onAi, onSave = onUse, mine = [], onDeleteMine = () => {} }) {
   const [live, setLive] = useState(""); /* only the card under the mouse loads its live page */
   const [type, setType] = useState("all"), [cat, setCat] = useState(""), [q, setQ] = useState(""), [open, setOpen] = useState(null);
   const MINE = mine.map(asTemplate);
@@ -75,7 +75,7 @@ export default function Templates({ onUse, onSave = onUse, mine = [], onDeleteMi
             <div className="tg-meta"><i style={{ background: t.accent || "#9aa3b8" }} />{t.cat}{t.mine && <button className="tg-del" onClick={() => { if (window.confirm(`Delete the template "${t.name}"? Your original project stays.`)) onDeleteMine(t.id); }}>Delete</button>}</div>
           </div>
         </div>); })}</div>
-      {open && <PreviewModal t={open} onClose={() => setOpen(null)} onUse={(t) => { setOpen(null); onUse(t); }} onSave={(t) => { setOpen(null); onSave(t); }} />}
+      {open && <PreviewModal t={open} onAi={onAi && ((t) => { setOpen(null); onAi(t); })} onClose={() => setOpen(null)} onUse={(t) => { setOpen(null); onUse(t); }} onSave={(t) => { setOpen(null); onSave(t); }} />}
     </>
   );
 }

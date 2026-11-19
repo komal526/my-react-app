@@ -11,7 +11,7 @@ const Analytics = lazy(() => import("./Analytics.jsx"));
 const Integrations = lazy(() => import("./Integrations.jsx"));
 const Calendar = lazy(() => import("./Calendar.jsx"));
 import { Icon } from "./icons.jsx";
-import { RailView, RI } from "./Rail.jsx";
+import { RailView, RI } from "./Rail.jsx";QA
 const Settings = lazy(() => import("./Settings.jsx"));
 const Pixels = lazy(() => import("./Pixels.jsx"));
 const LMS = lazy(() => import("./LMS.jsx"));
@@ -19,6 +19,7 @@ const ImportPage = lazy(() => import("./ImportPage.jsx"));
 const FollowUps = lazy(() => import("./FollowUps.jsx"));
 const Consultant = lazy(() => import("./Consultant.jsx"));
 const AiStudio = lazy(() => import("./AiStudio.jsx"));
+const AiEditor = lazy(() => import("./AiStudio.jsx").then((m) => ({ default: m.AiEditor })));
 /* opened as #/studio in a new tab → start loading the studio right away (no dashboard flash) */
 if (/^#\/studio/.test(location.hash)) import("./AiStudio.jsx");
 import { BRAND } from "../brand.js";
@@ -291,8 +292,30 @@ export default function Dashboard({ user, onLogout }) {
     else create(t.mine ? t.name + " (copy)" : t.name, t.make(t.name), t.type, undefined, o);
     if (save) { setToast("✓ “" + t.name + "” saved to your projects"); }
   };
-  /* "Use" pressed on a template opened in its own tab */
-  useEffect(() => { let k = ""; try { k = localStorage.getItem("lb_tpl_go") || ""; localStorage.removeItem("lb_tpl_go"); } catch { /* ignore */ } const t = k && FILE_TEMPLATES.find((x) => x.key === k); if (t && !full()) applyTpl(t); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  /* ---- Edit with AI: a project or a template opens in the AI preview, where you ask for changes ---- */
+  const [aiEdit, setAiEdit] = useState(null);
+  const aiProject = (p) => { setPeek(null); setAiEdit({ kind: "project", pid: p.id, name: p.name, type: p.type, pages: p.pages }); };
+  const aiTpl = async (t) => {
+    try { const pages = t.file ? [pg("Home", "index.html", await loadTemplateHtml(t))] : t.make(t.mine ? t.name + " (copy)" : t.name); setAiEdit({ kind: "tpl", tpl: t.key, name: t.name, type: t.type, pages }); }
+    catch (e) { alert(e.message); }
+  };
+  const aiDone = (how, r) => {
+    const a = aiEdit; setAiEdit(null);
+    if (a.kind === "tpl") return studioDone(r.name, r.pages, r.type, how);
+    const p = projects.find((x) => x.id === a.pid); if (!p) return;
+    if (how === "copy") { if (full()) return; create(r.name + " (AI copy)", r.pages.map((x) => ({ ...x, id: uid() })), r.type, undefined, { save: true, open: false }); setToast("✓ Saved as a new project"); return; }
+    if (r.hist.length) setProjects((ps) => ps.map((x) => (x.id === p.id ? { ...x, name: r.name || x.name, pages: r.pages, updated: Date.now() } : x)));
+    else if (r.name !== p.name) patch(p.id, { name: r.name });
+    if (how === "editor") setOpenId(p.id);
+    else setToast(r.hist.length ? (p.status === "published" ? "✓ Changes saved — press Update to put them on your live site" : "✓ Changes saved") : "No changes to save");
+  };
+  const aiClose = (r) => { if (r && r.hist && r.hist.length && !window.confirm("Close without saving the AI changes?")) return; setAiEdit(null); };
+  /* "Use" / "Edit with AI" pressed in a template or preview opened in its own tab */
+  useEffect(() => {
+    let k = "", ai = "", pid = ""; try { k = localStorage.getItem("lb_tpl_go") || ""; ai = localStorage.getItem("lb_tpl_ai") || ""; pid = localStorage.getItem("lb_ai_go") || ""; ["lb_tpl_go", "lb_tpl_ai", "lb_ai_go"].forEach((x) => localStorage.removeItem(x)); } catch { /* ignore */ }
+    const t = k && FILE_TEMPLATES.find((x) => x.key === k); if (t) { if (ai) aiTpl(t); else if (!full()) applyTpl(t); }
+    const p = pid && projects.find((x) => x.id === pid); if (p) aiProject(p);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const evs = useMemo(() => resolveEvents(events, projects), [events, projects]);
   const open = projects.find((p) => p.id === openId);
   openRef.current = openId;
@@ -347,12 +370,12 @@ export default function Dashboard({ user, onLogout }) {
           {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
         <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses"})[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={listed} forms={forms} cal={cal} onOpenProject={setOpenId} />
-        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
+        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onAiEdit={aiProject} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
           onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} onConsult={consultOpen} onUseTpl={applyTpl} onDomain={(p) => { setDomFocus({ id: p.id, ts: Date.now() }); setView("domains"); }} />}
         {view === "import" && <ImportPage onBack={() => setView("pages")} onFile={importFile} />}
-        {view === "templates" && <Templates mine={myTpl} onDeleteMine={(id) => putTpl(myTpl.filter((x) => x.id !== id))} onUse={(t) => applyTpl(t)} onSave={(t) => applyTpl(t, true)} />}
+        {view === "templates" && <Templates onAi={aiTpl} mine={myTpl} onDeleteMine={(id) => putTpl(myTpl.filter((x) => x.id !== id))} onUse={(t) => applyTpl(t)} onSave={(t) => applyTpl(t, true)} />}
         {view === "forms" && <Forms forms={forms} onSave={onSaveForms} projects={listed} leads={leads} onAddToPage={addFormToPage} onLeads={() => setView("leads")} integ={integ} onIntegrations={() => setView("integrations")} />}
         {view === "calendar" && <Calendar events={cal} onSave={onSaveCal} leads={leads} projects={listed} integ={integ} onInteg={onInteg} onAddToPage={addHtmlToPage} onPatchLead={patchLead} onDeleteLead={deleteLead} />}
         {view === "integrations" && <Integrations key={igTile} initial={igTile} integ={integ} onChange={onInteg} />}
@@ -367,8 +390,11 @@ export default function Dashboard({ user, onLogout }) {
       {modal && modal.type === "new" && <NewModal mine={myTpl} kind={modal.kind || "landing"} onClose={() => setModal(null)} onCreate={create} onImport={() => { setModal(null); setView("import"); }} ai={integ.ai} onSetupAI={() => { setModal(null); setView("integrations"); }} onStudio={(o) => { setModal(null); studioTab(o); }} />}
       {pubModal}
       {ai && <Suspense fallback={null}><Consultant open={!!ai} initial={ai} onClose={() => setAi(null)} projects={listed} events={evs} leads={leads} integ={integ} user={user} onCreate={(n, pages, t) => { if (!full()) create(n, pages, t); }} onStudio={(o) => { setAi(null); studioTab(o); }} /></Suspense>}
-      {peek && (() => { const p = projects.find((x) => x.id === peek.id); return p ? <ProjectPeek p={p} onClose={() => setPeek(null)} onEdit={() => { setPeek(null); setOpenId(p.id); }} onTab={() => openPreview(p)}
+      {peek && (() => { const p = projects.find((x) => x.id === peek.id); return p ? <ProjectPeek p={p} onAi={() => aiProject(p)} onClose={() => setPeek(null)} onEdit={() => { setPeek(null); setOpenId(p.id); }} onTab={() => openPreview(p)}
         onSave={p.unsaved ? () => { if (saveDraft(p.id)) setPeek(null); } : null} onDiscard={p.unsaved ? () => { if (window.confirm(`Delete the unsaved "${p.name}"?`)) { discardDraft(p.id); setPeek(null); } } : null} onPublish={() => { setPeek(null); setModal({ type: "publish", id: p.id }); }} /> : null; })()}
+      {aiEdit && <Suspense fallback={<div className="ais-boot"><span className="pub-spin" /></div>}><AiEditor integ={integ} item={aiEdit} onClose={aiClose} onDone={aiDone}
+        badge={aiEdit.kind === "project" ? "Edit with AI" : "Template · edit with AI"}
+        acts={aiEdit.kind === "project" ? [["save", "💾", "Save changes", "aip-save"], ["editor", "✏️", "Open in editor", "aip-edit"], ["copy", "📄", "Save as a new copy", "aip-draft"]] : undefined} /></Suspense>}
       {toast && <div className="dash-toast">{toast}</div>}
       {studio && <Suspense fallback={null}><AiStudio {...studio} integ={integ} onClose={closeStudio} onSetupAI={() => { closeStudio(); setView("integrations"); setIgTile("ai"); }} onCreate={studioDone} /></Suspense>}
     </div>
@@ -376,12 +402,12 @@ export default function Dashboard({ user, onLogout }) {
 }
 
 /* preview of a project, full screen — exactly as visitors see it, with the action bar on the right */
-function ProjectPeek({ p, onClose, onEdit, onSave, onDiscard, onTab, onPublish }) {
+function ProjectPeek({ p, onClose, onEdit, onSave, onDiscard, onTab, onPublish, onAi }) {
   const [i, setI] = useState("0"), [dev, setDev] = useState("desktop");
   const page = p.pages[Math.min(+i, p.pages.length - 1)];
   return (
     <RailView dev={dev} setDev={setDev} onClose={onClose} pages={p.pages.map((x, k) => ({ v: String(k), l: x.name }))} page={i} setPage={setI}
-      actions={[{ ic: RI.edit, l: "Edit", cls: "k-pri", fn: onEdit }, onSave && { ic: RI.save, l: "Save", cls: "k-ok", fn: onSave },
+      actions={[{ ic: RI.ai, l: "Edit with AI", cls: "k-ai", fn: onAi }, { ic: RI.edit, l: "Edit", cls: "k-pri", fn: onEdit }, onSave && { ic: RI.save, l: "Save", cls: "k-ok", fn: onSave },
         !onSave && { ic: RI.pub, l: p.status === "published" ? "Republish" : "Publish", fn: onPublish }, { ic: RI.tab, l: "New tab", fn: onTab },
         onDiscard && { ic: RI.del, l: "Delete", cls: "k-del", fn: onDiscard }]}>
       <iframe title={p.name} srcDoc={page.html} sandbox="allow-scripts allow-forms" />

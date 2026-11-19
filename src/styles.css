@@ -4246,3 +4246,13 @@ html.lb-hidden .ais-bot2{animation-play-state:paused}
 .aip-wv.w1{top:158px}.aip-wv.w2{top:170px}
 .aip-hero{min-height:168px}
 .cg-fb b{color:#fff!important;text-shadow:0 1px 3px rgba(0,0,0,.75)!important}
+/* v89 — Edit with AI button in the side bar */
+.pk2 .pk2-b.k-ai{background:linear-gradient(135deg,#6d5dfc,#3d2fd0)!important;color:#fff!important;box-shadow:0 0 14px rgba(109,93,252,.55)}
+.pk2 .pk2-b.k-ai small{line-height:1.15}
+.aip-side.v88 .aip-mic{background:rgba(8,12,44,.6)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important;padding:0!important;border-radius:50%!important}
+.aip-side.v88 .aip-mic.on{background:#e5484d!important;border-color:#e5484d!important}
+.aip-side.v88 .aip-x{background:rgba(10,14,50,.6)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important;padding:0!important;border-radius:50%!important}
+.aip-side.v88 .aip-qa button{background:rgba(26,33,105,.55)!important;color:#fff!important;border:1px solid rgba(255,255,255,.13)!important;border-radius:999px!important;padding:0 18px!important}
+.aip-side.v88 .aip-undo{background:none!important;border:0!important;padding:4px!important;color:var(--lb-y,#f5b301)!important}
+.aip-side.v88 .aip-dev button{border:0!important;padding:0!important;background:transparent!important}
+.aip-side.v88 .aip-dev button.on{background:rgba(var(--lb-yr,245,179,1),.12)!important}

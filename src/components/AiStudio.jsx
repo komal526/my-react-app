@@ -256,7 +256,8 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
 const QUICK = [["🎨", "Make the colours brighter"], [<svg key="w" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#25d366" /><path d="M7.2 17.6l.8-2.8a5.6 5.6 0 112.1 2.1zM10 8.6c-.3 0-.6.1-.8.4-.5.6-.5 1.5.2 2.6.8 1.2 2 2.2 3.3 2.6.8.2 1.5 0 1.8-.6l.1-.6-1.3-.6-.6.7c-.8-.3-1.5-1-1.9-1.8l.6-.6-.6-1.3z" fill="#fff" /></svg>, "Add a WhatsApp button"], ["⭐", "Add customer reviews"], [<b key="t" className="aip-T">T</b>, "Shorter text, bigger headings"], [<b key="q" className="aip-Q">?</b>, "Add an FAQ section"]];
 const DEV = { desktop: <><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></>, tablet: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M11 18h2" /></>, mobile: <><rect x="7" y="2.5" width="10" height="19" rx="2.2" /><path d="M11 18.5h2" /></> };
 const I_UNDO = <path d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3" />;
-function StudioPreview({ res, setRes, ai, lang, mic, listen, stopMic, err, setErr, onBack, onDone }) {
+/* acts: [[how, icon, label, cls]] — the buttons at the bottom · badge: the green line at the top */
+function StudioPreview({ res, setRes, ai, lang, mic, listen, stopMic, err, setErr, onBack, onDone, acts, badge, backTitle = "Back to the brief" }) {
   const [i, setI] = useState(0), [dev, setDev] = useState("desktop"), [ask, setAsk] = useState(""), [busy, setBusy] = useState(false);
   const page = res.pages[Math.min(i, res.pages.length - 1)];
   const apply = async (txt) => {
@@ -280,10 +281,10 @@ function StudioPreview({ res, setRes, ai, lang, mic, listen, stopMic, err, setEr
       </div></div>
       <aside className="aip-side v88">
         <i className="aip-wv w1" /><i className="aip-wv w2" /><i className="aip-wv w3" />
-        <button className="aip-x" onClick={onBack} disabled={busy} title="Back to the brief">✕</button>
+        <button className="aip-x" onClick={onBack} disabled={busy} title={backTitle}>✕</button>
         <div className="aip-hero">
           <div className="aip-bot"><Robot mood="happy" /></div>
-          <div className="aip-ht"><span className="aip-ready"><i>✓</i>Your {res.type === "website" ? "website" : "page"} is ready <em>✦</em></span>
+          <div className="aip-ht"><span className="aip-ready"><i>✓</i>{badge || <>Your {res.type === "website" ? "website" : "page"} is ready</>} <em>✦</em></span>
             <textarea className="aip-name" rows={2} value={res.name} onChange={(e) => setRes((r) => ({ ...r, name: e.target.value.replace(/\n/g, " ") }))} title="Name — click to change" /></div>
         </div>
         <div className="aip-row">
@@ -304,9 +305,8 @@ function StudioPreview({ res, setRes, ai, lang, mic, listen, stopMic, err, setEr
         <div className="aip-qa"><b><em>⚡</em>Quick Actions</b>
           {QUICK.map(([ic, q]) => <button key={q} onClick={() => apply(q)} disabled={busy}><span className="aip-qi">{ic}</span>{q}<i>›</i></button>)}</div>
         <div className="aip-acts">
-          <button className="aip-save" onClick={() => onDone("save")} disabled={busy}><span>💾</span>Save to projects<i>›</i></button>
-          <button className="aip-edit" onClick={() => onDone("editor")} disabled={busy}><span>✏️</span>Open in editor</button>
-          <button className="aip-draft" onClick={() => onDone("draft")} disabled={busy}><span>📝</span>Keep as draft</button>
+          {(acts || [["save", "💾", "Save to projects", "aip-save"], ["editor", "✏️", "Open in editor", "aip-edit"], ["draft", "📝", "Keep as draft", "aip-draft"]]).map(([how, ic, l, cls]) => (
+            <button key={how} className={cls} onClick={() => onDone(how, res)} disabled={busy}><span>{ic}</span>{l}{cls === "aip-save" && <i>›</i>}</button>))}
         </div>
       </aside>
     </div>
@@ -391,4 +391,28 @@ export function VoiceChat({ ai, lang, voiceOn = true, setVoice = () => {}, onBri
       </div>
     </div>
   );
+}
+
+/* ---------- "Edit with AI" for an existing project or a template: preview + ask for changes ---------- */
+export function AiEditor({ integ = {}, item, onClose, onDone, acts, badge }) {
+  const [res, setRes] = useState(() => ({ name: item.name, type: item.type || "landing", pages: item.pages, hist: [] }));
+  const [listen, setListen] = useState(""), [err, setErr] = useState(""), rec = useRef(null);
+  const lang = (() => { try { return localStorage.getItem("lb_ai_lang") || "en-IN"; } catch { return "en-IN"; } })();
+  const ai = browserAi(integ);
+  useEffect(() => () => { try { rec.current && rec.current.stop(); } catch { /* ignore */ } }, []);
+  useEffect(() => { const k = (e) => { if (e.key === "Escape" && !listen) onClose(res); }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [listen, res, onClose]);
+  const stopMic = () => { try { rec.current && rec.current.stop(); } catch { /* ignore */ } };
+  const mic = (where, cur, set) => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return setErr("Speaking isn't supported in this browser — use Chrome or Edge.");
+    if (listen) return stopMic();
+    const r = new SR(); r.lang = lang; r.interimResults = true; r.continuous = true; rec.current = r;
+    const base = cur ? cur.replace(/\s*$/, " ") : ""; let fin = "";
+    r.onresult = (e) => { let inter = ""; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) fin += t + " "; else inter += t; } set(base + fin + inter); };
+    r.onerror = (e) => { if (e.error !== "no-speech" && e.error !== "aborted") setErr(e.error === "not-allowed" ? "Allow the microphone for this site (lock icon in the address bar)." : "Mic: " + e.error); };
+    r.onend = () => setListen("");
+    try { r.start(); setListen(where); setErr(""); } catch { setListen(""); }
+  };
+  return <StudioPreview res={res} setRes={setRes} ai={ai} lang={lang} mic={mic} listen={listen} stopMic={stopMic} err={err} setErr={setErr}
+    onBack={() => onClose(res)} backTitle="Close" onDone={onDone} acts={acts} badge={badge} />;
 }
