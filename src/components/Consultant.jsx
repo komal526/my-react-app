@@ -177,7 +177,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
   const tips = r ? r.issues.filter((i) => i.sev > 0).slice(0, 3) : [];
   return (
     <div className="cn-wrap" onClick={onClose}>
-      <aside className={"cn v88" + (talk ? " cn-talking" : "")} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="AI Consultant">
+      <aside className="cn v88" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="AI Consultant">
         <header className="cn-top">
           <span className="cn-bot"><Robot mood={busy ? "alert" : "happy"} /></span>
           <div className="grow"><b>AI Consultant</b><small className={"cn-stat " + (ready === null ? "" : ready ? "ok" : "off")}><i />{ready === null ? "Checking AI…" : ready ? "Online · " + ready : "Audit mode · add an AI key for full answers"}</small></div>
@@ -237,7 +237,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
             <button className="pri cn-send" disabled={!q.trim() || !!busy} aria-label="Send"><Icon n="send" s={17} /></button>
             <button type="button" className="cn-talk" onClick={() => { if (listen && recog.current) recog.current.stop(); setTalk(true); }} disabled={!!busy} title="Voice chat — talk with the AI"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 12a8 8 0 0114.9-4" /><path d="M20 12a8 8 0 01-14.9 4" /><path d="M9 10v4M12 8v8M15 10v4" /></svg><span>Talk</span></button>
           </form>
-          {talk && <VoiceChat inline integ={integ} lang={lang} onLang={setLang} voiceOn={voiceOn} setVoice={setVoice} greet={voiceGreet()} ask={voiceAsk} onClose={voiceClose} />}
+          {talk && <VoiceChat integ={integ} lang={lang} onLang={setLang} voiceOn={voiceOn} setVoice={setVoice} greet={voiceGreet()} ask={voiceAsk} onClose={voiceClose} />}
         </>}
       </aside>
     </div>

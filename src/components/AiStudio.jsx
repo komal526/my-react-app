@@ -205,8 +205,7 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
           </> : <div className="ais-seg">{[["section", "Add a new section"], ["page", "Replace the whole page"]].map(([k, l]) => <button key={k} className={how === k ? "on" : ""} onClick={() => setHow(k)} disabled={!!busy}>{l}</button>)}</div>}
         </div>
 
-        {talk && <VoiceChat inline ai={ai} integ={integ} lang={lang} onLang={setLang} voiceOn={voiceOn} setVoice={setVoice} onClose={() => setTalk(false)} onBrief={(b) => { setTalk(false); setPrompt(b); go(b); }} />}
-        {!talk && <div className="ais-wrap">
+        <div className="ais-wrap">
           <div className="ais-walk"><div className="ais-bot2"><Robot mood={busy ? "alert" : "happy"} /></div></div>
           <div className={"ais-box v87" + (listen ? " rec" : "") + (busy ? " busy" : "")}>
             <div className="ais-in">
@@ -240,12 +239,13 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
             <div className="grow" />
             <button className="ais-go big" onClick={go} disabled={!!busy || !ready}><span className="ais-gsp">✦</span>{mode === "editor" ? (how === "section" ? "Add section" : "Rebuild page") : "Create " + (type === "website" ? "website" : "page")} <Ico d={I_ARROW} s={18} /></button>
           </div>
-        </div>}
+        </div>
 
         {err && <div className="ais-err">{err}{!ready && <button onClick={onSetupAI}>Connect an AI</button>}</div>}
         {!ready && srv === false && !err && <div className="ais-err soft">Connect an AI first — paste a free Gemini key in Integrations → AI builders. <button onClick={onSetupAI}>Connect an AI</button></div>}
 
-        {mode === "new" && !busy && !talk && <div className="ais-ideas">{IDEAS.map((x) => <button key={x} onClick={() => setPrompt(x)}><span>✦</span>{x.length > 50 ? x.slice(0, 48) + "…" : x}</button>)}</div>}
+        {mode === "new" && !busy && <div className="ais-ideas">{IDEAS.map((x) => <button key={x} onClick={() => setPrompt(x)}><span>✦</span>{x.length > 50 ? x.slice(0, 48) + "…" : x}</button>)}</div>}
+        {talk && <VoiceChat ai={ai} integ={integ} lang={lang} onLang={setLang} voiceOn={voiceOn} setVoice={setVoice} onClose={() => setTalk(false)} onBrief={(b) => { setTalk(false); setPrompt(b); go(b); }} />}
         <p className="ais-foot"><i>⬡</i>Pictures go into your page · documents give AI your real details (prices, services, dates) · Ctrl+Enter to create</p>
       </main>
     </div>
@@ -385,12 +385,14 @@ export function VoiceChat({ ai, integ = {}, lang: lang0, voiceOn = true, setVoic
     if (!alive.current) return;
     if (!SR) { setErr("Voice needs Chrome or Edge. You can still type below."); setSt("idle"); return; }
     stopTalk();
-    const r = new SR(); r.lang = curLang(); r.interimResults = true; r.continuous = false; rec.current = r; let fin = "";
-    r.onresult = (e) => { let it = ""; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) fin += t + " "; else it += t; } setLive(fin + it); };
+    const r = new SR(); r.lang = curLang(); r.interimResults = true; r.continuous = true; rec.current = r; let fin = "", it = "", gap = 0;
+    /* keeps listening while you talk; sends after you stop for about 1.6 seconds (not at the first small pause) */
+    r.onresult = (e) => { it = ""; fin = ""; for (let i = 0; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) fin += t + " "; else it += t; } setLive(fin + it); clearTimeout(gap); gap = setTimeout(() => { try { r.stop(); } catch { /* ignore */ } }, 1600); };
     r.onerror = (e) => { if (e.error === "not-allowed") { setErr("Allow the microphone for this site (lock icon in the address bar)."); misses.current = 9; } };
     r.onend = () => {
-      if (rec.current !== r) return; rec.current = null; setLive(""); if (!alive.current) return;
-      if (fin.trim()) { misses.current = 0; send(fin.trim()); }
+      clearTimeout(gap); if (rec.current !== r) return; rec.current = null; setLive(""); if (!alive.current) return;
+      fin = (fin + " " + it).trim();
+      if (fin) { misses.current = 0; send(fin.trim()); }
       else if (++misses.current <= 2) setTimeout(listen, 250);   /* hands-free: keep listening a little longer */
       else setSt("idle");
     };
