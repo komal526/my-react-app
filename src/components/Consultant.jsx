@@ -4,6 +4,44 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "./icons.jsx";
 import { askAI, browserAi, serverAiReady, aiStatus, aiSaveKey, aiRemoveKey, AI_PROVIDERS, AI_PAGE_SYS, parseAiPages, pg } from "../lib.js";
 import { consult, contextFor, areaName } from "./insights.js";
+import Robot from "./Robot.jsx";
+import { VoiceChat, LANGS } from "./AiStudio.jsx";
+
+/* ---------- pictures for "Ask about a page" ---------- */
+const col = (v) => (v >= 80 ? "#22c55e" : v >= 55 ? "#f5b301" : "#ef4444");
+function Gauge({ v }) {
+  const R0 = 52, C = 2 * Math.PI * R0, k = Math.max(0, Math.min(100, v)) / 100;
+  return <svg className="cg-gauge" viewBox="0 0 130 130" aria-label={"Score " + v}>
+    <circle cx="65" cy="65" r={R0} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="12" />
+    <circle cx="65" cy="65" r={R0} fill="none" stroke={col(v)} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${C * k} ${C}`} transform="rotate(-90 65 65)" style={{ filter: `drop-shadow(0 0 6px ${col(v)})` }} />
+    <text x="65" y="66" textAnchor="middle" fontSize="34" fontWeight="800" fill="#fff">{v}</text><text x="65" y="88" textAnchor="middle" fontSize="11" fill="#aab2dc">out of 100</text></svg>;
+}
+function Radar({ areas }) {
+  const ks = Object.keys(areas), n = ks.length, c = 95, R0 = 62;
+  const pt = (i, f) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / n; return [c + Math.cos(a) * R0 * f, c + Math.sin(a) * R0 * f]; };
+  const poly = (f) => ks.map((_, i) => pt(i, typeof f === "function" ? f(i) : f).join(",")).join(" ");
+  return <svg className="cg-radar" viewBox="-28 -4 246 198" aria-label="Scores by area">
+    {[0.25, 0.5, 0.75, 1].map((f) => <polygon key={f} points={poly(f)} fill="none" stroke="rgba(255,255,255,.12)" />)}
+    {ks.map((_, i) => <line key={i} x1={c} y1={c} x2={pt(i, 1)[0]} y2={pt(i, 1)[1]} stroke="rgba(255,255,255,.1)" />)}
+    <polygon points={poly((i) => Math.max(0.04, areas[ks[i]] / 100))} fill="rgba(245,179,1,.28)" stroke="#f5b301" strokeWidth="2" />
+    {ks.map((k, i) => { const [x, y] = pt(i, Math.max(0.04, areas[k] / 100)); return <circle key={k} cx={x} cy={y} r="3.5" fill={col(areas[k])} />; })}
+    {ks.map((k, i) => { const [x, y] = pt(i, 1.32); return <text key={k} x={x} y={y + 3} textAnchor="middle" fontSize="9.5" fill="#cfd5f5">{areaName(k).split(/[ &]/)[0]} {areas[k]}</text>; })}
+  </svg>;
+}
+function Funnel({ m }) {
+  const rows = [["Visitors", m.visitors, "👀"], ["Button clicks", m.clicks, "👆"], ["Form started", m.starts || 0, "✍️"], ["Sign-ups", m.subs, "🎉"]], top = Math.max(1, m.visitors);
+  return <div className="cg-fun">{rows.map(([l, v, ic], i) => <div key={l} className="cg-fr"><span className="cg-fi">{ic}</span><div className="cg-fb"><i style={{ width: Math.max(4, (v / top) * 100) + "%", opacity: 1 - i * 0.14 }} /><b>{l}</b></div><em>{v}</em>
+    {i > 0 && <small>{rows[i - 1][1] ? Math.round((v / rows[i - 1][1]) * 100) : 0}%</small>}</div>)}</div>;
+}
+function Spark({ events, pid }) {
+  const DAY = 864e5, now = Date.now(), days = [...Array(14)].map((_, i) => { const a = new Date(now - (13 - i) * DAY); a.setHours(0, 0, 0, 0); return a.getTime(); });
+  const v = days.map((a) => events.filter((e) => e.pid === pid && e.t === "view" && e.ts >= a && e.ts < a + DAY).length), mx = Math.max(1, ...v);
+  const pts = v.map((x, i) => `${(i / 13) * 300},${70 - (x / mx) * 60}`).join(" ");
+  return <div className="cg-spark"><div className="cg-sh"><b>Visits · last 14 days</b><em>{v.reduce((a, b) => a + b, 0)}</em></div>
+    <svg viewBox="0 0 300 76" preserveAspectRatio="none"><defs><linearGradient id="cgS" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#f5b301" stopOpacity=".45" /><stop offset="1" stopColor="#f5b301" stopOpacity="0" /></linearGradient></defs>
+      <polygon points={`0,76 ${pts} 300,76`} fill="url(#cgS)" /><polyline points={pts} fill="none" stroke="#f5b301" strokeWidth="2.5" strokeLinejoin="round" /></svg></div>;
+}
+const SEV = ["", "💡", "⚠️", "🔥"];
 
 const ASK_SYS = `You are ${BRAND.product}'s AI Landing Page Performance Consultant. You get ONE user's real page outline, live analytics and an automatic audit.
 Rules: base every point on the data given — quote real numbers and real text from their page. Be direct and practical: give at most 5 numbered fixes, most important first, each with the exact new wording or the exact change to make in the builder. No generic marketing theory. If data is too small (under ~20 visitors) say so in one line and focus on the page content. Keep it under 220 words. Reply in the same language the user writes in (Hindi, Hinglish or English).`;
@@ -43,8 +81,10 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
   const [msgs, setMsgs] = useState([]), [planMsgs, setPlanMsgs] = useState([]);
   const [q, setQ] = useState(""), [busy, setBusy] = useState(""), [err, setErr] = useState(""), [noKey, setNoKey] = useState(false);
   const [st, setSt] = useState(null), [prov, setProv] = useState("claude"), [key, setKey] = useState(""), [model, setModel] = useState(""), [kmsg, setKmsg] = useState("");
-  const [kind, setKind] = useState("landing"), [ready, setReady] = useState(null), [listen, setListen] = useState(false), [lang, setLang] = useState("en-IN"), [copied, setCopied] = useState(-1);
+  const [kind, setKind] = useState("landing"), [ready, setReady] = useState(null), [listen, setListen] = useState(false), [lang, setLang] = useState(() => { try { return localStorage.getItem("lb_ai_lang") || "en-IN"; } catch { return "en-IN"; } }), [copied, setCopied] = useState(-1);
   const box = useRef(null), recog = useRef(null), base = useRef("");
+  const [talk, setTalk] = useState(false), [voiceOn, setVoice0] = useState(() => { try { return localStorage.getItem("lb_ai_voice") !== "0"; } catch { return true; } });
+  const setVoice = (v) => { setVoice0(v); try { localStorage.setItem("lb_ai_voice", v ? "1" : "0"); } catch { /* ignore */ } };
   /* which AI will answer? (shown in the header) */
   useEffect(() => { if (!open) return; const b = browserAi(integ); serverAiReady().then((ok) => setReady(ok ? BRAND.product + " AI" : b ? (AI_PROVIDERS.find((p) => p.id === b.provider) || {}).name : "")); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   /* 🎤 speak instead of typing (Chrome / Edge): English or Hindi */
@@ -66,7 +106,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
 
   useEffect(() => { if (!open) return; setTab(initial.tab || "ask"); if (initial.pid) setPid(initial.pid); if (initial.ask) setTimeout(() => send(initial.ask, initial.tab || "ask"), 50); }, [open, initial.nonce]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setMsgs([]); setErr(""); }, [pid]);
-  useEffect(() => { if (box.current) box.current.scrollTop = box.current.scrollHeight; }, [msgs, planMsgs, busy]);
+  useEffect(() => { if (box.current) box.current.scrollTop = (tab === "plan" ? planMsgs : msgs).length || busy ? box.current.scrollHeight : 0; }, [msgs, planMsgs, busy, tab]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (open && tab === "settings" && !st) aiStatus(integ).then(setSt).catch((e) => setSt({ error: e.message })); }, [open, tab]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { const k = (e) => e.key === "Escape" && open && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [open, onClose]);
 
@@ -94,6 +134,18 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
     } finally { setBusy(""); }
   };
 
+  /* ---- voice chat: same AI, short spoken answers; the talk is kept in the chat afterwards ---- */
+  const LN = ((LANGS.find((x) => x[0] === lang) || LANGS[0])[2].split("·").pop() || "English").trim();
+  const voiceGreet = () => (tab === "plan" ? "Hi! Tell me about the page you want to build — your business, and what visitors should do." : r ? `I checked ${r.p.name}. Its score is ${r.score} out of 100. Ask me anything — for example, how to get more sign-ups.` : "Create a page first, then I can check it for you.");
+  const voiceAsk = async (h) => {
+    const msgs0 = h.map((x) => ({ role: x.who === "ai" ? "assistant" : "user", content: x.t })); while (msgs0.length && msgs0[0].role === "assistant") msgs0.shift();
+    const sys = (tab === "plan" ? PLAN_SYS : ASK_SYS + "\n\n" + contextFor(r)) + `\n\nYOU ARE TALKING BY VOICE: reply in ${LN}, in at most 3 short spoken sentences, plain words — no lists, no markdown, no emojis.` + (tab === "plan" ? " Only when the plan is complete, write the full plan as text and end with PLAN READY." : "");
+    return askAI(integ, sys, [...(tab === "plan" ? planMsgs : msgs).map(({ role, content }) => ({ role, content })), ...msgs0], tab === "plan" ? 1800 : 500);
+  };
+  const voiceClose = (h = []) => {
+    setTalk(false); const add = h.slice(1).map((x) => ({ role: x.who === "ai" ? "assistant" : "user", content: x.t, ...(x.who === "ai" ? { via: "🎙 voice chat" } : {}) }));
+    if (add.length) (tab === "plan" ? setPlanMsgs : setMsgs)((l) => [...l, ...add]);
+  };
   const planReady = tab === "plan" && planMsgs.length > 0 && /PLAN READY\s*$/i.test(planMsgs[planMsgs.length - 1].content || "");
   /* the message box grows with your text (up to 6 lines) and always shows the LAST line you typed or spoke */
   const taRef = useRef(null);
@@ -124,9 +176,9 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
   const tips = r ? r.issues.filter((i) => i.sev > 0).slice(0, 3) : [];
   return (
     <div className="cn-wrap" onClick={onClose}>
-      <aside className="cn" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="AI Consultant">
+      <aside className="cn v88" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="AI Consultant">
         <header className="cn-top">
-          <span className="cn-av"><svg viewBox="0 0 40 40" width="30" height="30" aria-hidden="true"><rect x="6" y="9" width="28" height="22" rx="9" fill="#0f1238" /><rect x="10" y="14" width="20" height="12" rx="6" fill="#060824" /><circle cx="16" cy="20" r="2.6" fill="#7ef0ff" className="cn-eye" /><circle cx="24" cy="20" r="2.6" fill="#7ef0ff" className="cn-eye" /><line x1="20" y1="9" x2="20" y2="4" stroke="#0f1238" strokeWidth="2" /><circle cx="20" cy="4" r="2.2" fill="#0f1238" /></svg></span>
+          <span className="cn-bot"><Robot mood={busy ? "alert" : "happy"} /></span>
           <div className="grow"><b>AI Consultant</b><small className={"cn-stat " + (ready === null ? "" : ready ? "ok" : "off")}><i />{ready === null ? "Checking AI…" : ready ? "Online · " + ready : "Audit mode · add an AI key for full answers"}</small></div>
           <button className="cn-x" onClick={onClose} aria-label="Close">✕</button>
         </header>
@@ -152,12 +204,17 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
             <select value={r ? r.p.id : ""} onChange={(e) => setPid(e.target.value)} aria-label="Page">{data.res.map((x) => <option key={x.p.id} value={x.p.id}>{x.p.name}</option>)}</select>
             {r && <div className="cn-score" style={{ "--s": r.score }}><b>{r.score}</b><small>score</small></div>}
           </div>}
-          {tab === "ask" && r && <div className="cn-areas">{Object.entries(r.areas).map(([k, v]) => <span key={k} className={v >= 80 ? "ok" : v >= 55 ? "mid" : "bad"}><i style={{ width: v + "%" }} />{areaName(k)}<b>{v}</b></span>)}</div>}
+
 
           <div className="cn-body" ref={box}>
             {!list.length && tab === "ask" && <div className="cn-hello">
-              {r ? <><p>I checked <b>{r.p.name}</b>: {r.m.visitors} visitors, {r.m.clicks} button clicks and {r.m.subs} sign-ups in the last 30 days.</p>
-                {tips.length ? <><small>Fix these first</small>{tips.map((t, i) => <div key={i} className={"cn-tip s" + t.sev}><b>{t.title}</b><p>{t.fix}</p></div>)}</> : <p>No big problems found. Ask me anything about this page.</p>}</>
+              {r ? <div className="cg">
+                <div className="cg-top"><div className="cg-card cg-g"><Gauge v={r.score} /><b>{r.score >= 80 ? "Great page" : r.score >= 55 ? "Good — can be better" : "Needs work"}</b></div>
+                  <div className="cg-card cg-r"><Radar areas={r.areas} /></div></div>
+                <div className="cg-card"><div className="cg-sh"><b>From visit to sign-up · 30 days</b><em className={"cg-conv " + (r.m.conv >= 3 ? "ok" : r.m.conv >= 1 ? "mid" : "bad")}>{r.m.conv.toFixed(1)}% convert</em></div><Funnel m={r.m} /></div>
+                <div className="cg-card"><Spark events={events} pid={r.p.id} /></div>
+                {tips.length ? <div className="cg-fix"><small>Fix these first</small>{tips.map((t, i) => <div key={i} className={"cn-tip s" + t.sev}><span className="cg-sev">{SEV[t.sev] || "💡"}</span><div><b>{t.title}</b><p>{t.fix}</p></div></div>)}</div> : <p>No big problems found. Ask me anything about this page.</p>}
+              </div>
                 : <p>Create a page first — then I can check its content, buttons, form, mobile view, speed and conversions.</p>}
             </div>}
             {!list.length && tab === "plan" && <div className="cn-hello"><p>Tell me what you want to build — your business, who it's for and what visitors should do. I'll ask a few questions, suggest ideas, write a plan, and then build the page for you.</p>
@@ -175,9 +232,11 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
           <form className={"cn-in" + (listen ? " rec" : "")} onSubmit={(e) => { e.preventDefault(); send(q); }}>
             <button type="button" className={"cn-mic" + (listen ? " on" : "")} onClick={toggleMic} title={listen ? "Stop listening" : "Speak your question"} aria-label={listen ? "Stop listening" : "Speak your question"}><Icon n="mic" s={18} /></button>
             <div className="cn-field"><textarea ref={taRef} rows={1} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(q); } }} placeholder={listen ? "Listening… speak now" : tab === "plan" ? "Describe your page, or answer the questions…" : "Ask about this page…"} />
-              <select value={lang} onChange={(e) => setLang(e.target.value)} title="Voice language" aria-label="Voice language" disabled={listen}><option value="en-IN">EN</option><option value="hi-IN">हिं</option></select></div>
+              <select value={lang} onChange={(e) => { setLang(e.target.value); try { localStorage.setItem("lb_ai_lang", e.target.value); } catch { /* ignore */ } }} title="Language" aria-label="Language" disabled={listen}>{LANGS.map(([v, sh, full]) => <option key={v} value={v} label={full}>{sh}</option>)}</select></div>
             <button className="pri cn-send" disabled={!q.trim() || !!busy} aria-label="Send"><Icon n="send" s={17} /></button>
+            <button type="button" className="cn-talk" onClick={() => { if (listen && recog.current) recog.current.stop(); setTalk(true); }} disabled={!!busy} title="Voice chat — talk with the AI"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 12a8 8 0 0114.9-4" /><path d="M20 12a8 8 0 01-14.9 4" /><path d="M9 10v4M12 8v8M15 10v4" /></svg><span>Talk</span></button>
           </form>
+          {talk && <VoiceChat lang={lang} voiceOn={voiceOn} setVoice={setVoice} greet={voiceGreet()} ask={voiceAsk} onClose={voiceClose} />}
         </>}
       </aside>
     </div>

@@ -21,8 +21,7 @@ const Svg = ({ d }) => <svg width="18" height="18" viewBox="0 0 24 24" fill="non
 
 /* actions: [{ ic: RI.edit | "iconName", l: "Edit", cls: "k-pri" | "k-ok" | "k-del", fn }] · pages: [{ v, l }] */
 export function Rail({ dev, setDev, pages, page, setPage, actions = [], onClose, note }) {
-  const [fold, setFold] = useState(() => { try { return localStorage.getItem("lb_pk_fold") === "1"; } catch { return false; } });
-  useEffect(() => { try { localStorage.setItem("lb_pk_fold", fold ? "1" : "0"); } catch { /* ignore */ } }, [fold]);
+  const [fold, setFold] = useState(false);   /* always opens; fold it away with ‹ / › */
   const B = ({ ic, l, on, cls = "", fn }) => <button className={"pk2-b " + cls + (on ? " on" : "")} onClick={fn} title={l}><span className="pk2-i">{typeof ic === "string" ? <Icon n={ic} s={17} /> : <Svg d={ic} />}</span><small>{l}</small></button>;
   return (
     <aside className={"pk2-rail" + (fold ? " fold" : "")}>

@@ -253,7 +253,9 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
 }
 
 /* ---------- the finished page: preview it, keep asking for changes, then Save / Open in editor ---------- */
-const QUICK = ["Make the colours brighter", "Add a WhatsApp button", "Add customer reviews", "Shorter text, bigger headings", "Add an FAQ section"];
+const QUICK = [["🎨", "Make the colours brighter"], [<svg key="w" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#25d366" /><path d="M7.2 17.6l.8-2.8a5.6 5.6 0 112.1 2.1zM10 8.6c-.3 0-.6.1-.8.4-.5.6-.5 1.5.2 2.6.8 1.2 2 2.2 3.3 2.6.8.2 1.5 0 1.8-.6l.1-.6-1.3-.6-.6.7c-.8-.3-1.5-1-1.9-1.8l.6-.6-.6-1.3z" fill="#fff" /></svg>, "Add a WhatsApp button"], ["⭐", "Add customer reviews"], [<b key="t" className="aip-T">T</b>, "Shorter text, bigger headings"], [<b key="q" className="aip-Q">?</b>, "Add an FAQ section"]];
+const DEV = { desktop: <><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></>, tablet: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M11 18h2" /></>, mobile: <><rect x="7" y="2.5" width="10" height="19" rx="2.2" /><path d="M11 18.5h2" /></> };
+const I_UNDO = <path d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3" />;
 function StudioPreview({ res, setRes, ai, lang, mic, listen, stopMic, err, setErr, onBack, onDone }) {
   const [i, setI] = useState(0), [dev, setDev] = useState("desktop"), [ask, setAsk] = useState(""), [busy, setBusy] = useState(false);
   const page = res.pages[Math.min(i, res.pages.length - 1)];
@@ -276,32 +278,35 @@ function StudioPreview({ res, setRes, ai, lang, mic, listen, stopMic, err, setEr
         <iframe title="Preview" srcDoc={page.html} sandbox="allow-scripts allow-forms" />
         {busy && <div className="aip-busy"><div className="ais-spark">✦</div><b>Updating your {res.type === "website" ? "page" : "page"}…</b><small>Usually 20–60 seconds</small></div>}
       </div></div>
-      <aside className="aip-side">
-        <div className="aip-head"><button className="aip-back" onClick={onBack} disabled={busy} title="Back to the brief">←</button>
-          <div><small>✦ Your {res.type === "website" ? "website" : "page"} is ready</small>
-            <input className="aip-name" value={res.name} onChange={(e) => setRes((r) => ({ ...r, name: e.target.value }))} title="Name" /></div></div>
+      <aside className="aip-side v88">
+        <i className="aip-wv w1" /><i className="aip-wv w2" /><i className="aip-wv w3" />
+        <button className="aip-x" onClick={onBack} disabled={busy} title="Back to the brief">✕</button>
+        <div className="aip-hero">
+          <div className="aip-bot"><Robot mood="happy" /></div>
+          <div className="aip-ht"><span className="aip-ready"><i>✓</i>Your {res.type === "website" ? "website" : "page"} is ready <em>✦</em></span>
+            <textarea className="aip-name" rows={2} value={res.name} onChange={(e) => setRes((r) => ({ ...r, name: e.target.value.replace(/\n/g, " ") }))} title="Name — click to change" /></div>
+        </div>
         <div className="aip-row">
           {res.pages.length > 1 && <select className="aip-pg" value={i} onChange={(e) => setI(+e.target.value)}>{res.pages.map((x, k) => <option key={k} value={k}>{x.name}</option>)}</select>}
-          <div className="aip-dev">{[["desktop", "🖥"], ["tablet", "▭"], ["mobile", "📱"]].map(([d, ic]) => <button key={d} className={dev === d ? "on" : ""} onClick={() => setDev(d)} title={d}>{ic}</button>)}</div>
+          <div className="aip-dev">{[["desktop", "Desktop"], ["tablet", "Tablet"], ["mobile", "Mobile"]].map(([d, l]) => <button key={d} className={dev === d ? "on" : ""} onClick={() => setDev(d)} title={l}><Ico d={DEV[d]} s={22} /></button>)}</div>
         </div>
         <div className="aip-ask">
-          <label>Want changes? Just ask</label>
+          <div className="aip-ah"><span className="aip-spk">✦</span><b>Want changes? Just ask</b>{res.hist.length > 0 && <button className="aip-undo" onClick={undo} disabled={busy} title="Undo the last change"><Ico d={I_UNDO} s={20} /></button>}</div>
           <textarea value={ask} onChange={(e) => setAsk(e.target.value)} disabled={busy} placeholder={listen === "edit" ? "Listening… speak now" : "e.g. Make the header dark blue, change the price to ₹999, add a photo gallery…"}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); apply(); } }} />
           <div className="aip-askbar">
-            <button className={"ais-ic mic" + (listen === "edit" ? " on" : "")} onClick={() => mic("edit", ask, setAsk)} disabled={busy} title={listen ? "Stop" : "Speak (" + langName(lang) + ")"}><Ico d={listen === "edit" ? I_STOP : I_MIC} /></button>
-            {listen === "edit" && <span className="aip-live"><span className="ais-wave"><i /><i /><i /><i /><i /></span>Listening…</span>}
-            <div className="grow" />
-            {res.hist.length > 0 && <button className="aip-undo" onClick={undo} disabled={busy}>↶ Undo</button>}
-            <button className="aip-apply" onClick={apply} disabled={busy || !ask.trim()}>{busy ? "Updating…" : "Apply ✦"}</button>
+            <button className={"aip-mic" + (listen === "edit" ? " on" : "")} onClick={() => mic("edit", ask, setAsk)} disabled={busy} title={listen ? "Stop" : "Speak (" + langName(lang) + ")"}><Ico d={listen === "edit" ? I_STOP : I_MIC} s={22} /></button>
+            {listen === "edit" ? <span className="aip-live"><span className="ais-wave"><i /><i /><i /><i /><i /></span>Listening…</span>
+              : <button className="aip-apply" onClick={apply} disabled={busy || !ask.trim()}>{busy ? "Updating…" : <>Apply <em>✦</em></>}</button>}
           </div>
-          <div className="aip-quick">{QUICK.map((q) => <button key={q} onClick={() => apply(q)} disabled={busy}>{q}</button>)}</div>
           {err && <div className="aip-err">{err}</div>}
         </div>
+        <div className="aip-qa"><b><em>⚡</em>Quick Actions</b>
+          {QUICK.map(([ic, q]) => <button key={q} onClick={() => apply(q)} disabled={busy}><span className="aip-qi">{ic}</span>{q}<i>›</i></button>)}</div>
         <div className="aip-acts">
-          <button className="aip-save" onClick={() => onDone("save")} disabled={busy}>💾 Save to projects</button>
-          <button className="aip-edit" onClick={() => onDone("editor")} disabled={busy}>✏️ Open in editor</button>
-          <button className="aip-draft" onClick={() => onDone("draft")} disabled={busy}>📝 Keep as draft</button>
+          <button className="aip-save" onClick={() => onDone("save")} disabled={busy}><span>💾</span>Save to projects<i>›</i></button>
+          <button className="aip-edit" onClick={() => onDone("editor")} disabled={busy}><span>✏️</span>Open in editor</button>
+          <button className="aip-draft" onClick={() => onDone("draft")} disabled={busy}><span>📝</span>Keep as draft</button>
         </div>
       </aside>
     </div>
@@ -314,7 +319,8 @@ const GREET = {
   hi: "नमस्ते! मैं आपका पेज बनाने में मदद करूँगा। बताइए — आपका बिज़नेस क्या है, और यह पेज किस लिए है?",
 };
 const VSYS = (ln) => `You are a friendly website consultant talking BY VOICE with a small-business owner in India. Speak ${ln} (if they mix English words, that's fine — answer naturally the same way). Ask ONE short question at a time, at most 2 short sentences, no lists, no markdown, no emojis. Learn: what the business is and what the page is for, who it's for and the city, the offer / price / dates, what visitors should do (call, WhatsApp, form, buy), and preferred colours or style. After 3 to 6 answers — or as soon as the owner says to build / start / bas / ho gaya — reply with ONE short sentence in ${ln} saying you are building it now, then the word READY: and after it a complete, detailed brief in English for a web designer, starting with "Business name: <name>."  (business name, purpose, audience, sections, offer, prices, contact/CTA, colours, language for the page text). Never write READY: before that.`;
-function VoiceChat({ ai, lang, voiceOn = true, setVoice = () => {}, onBrief, onClose }) {
+/* ask(hist) → the reply text (used by the AI Consultant) · greet = first line · onClose(hist) gets the conversation */
+export function VoiceChat({ ai, lang, voiceOn = true, setVoice = () => {}, onBrief, onClose, ask, greet }) {
   const [msgs, setMsgs] = useState([]), [st, setSt] = useState("thinking"), [live, setLive] = useState(""), [err, setErr] = useState("");
   const mute = !voiceOn;
   const rec = useRef(null), alive = useRef(true), hist = useRef([]), muteRef = useRef(false), endRef = useRef(null);
@@ -345,15 +351,16 @@ function VoiceChat({ ai, lang, voiceOn = true, setVoice = () => {}, onBrief, onC
     setSt("thinking");
     try {
       const tr = hist.current.map((x) => (x.who === "ai" ? "Consultant: " : "Owner: ") + x.t).join("\n");
+      if (ask) { const a = String(await ask(hist.current)).replace(/[*#_`]/g, "").replace(/\n{2,}/g, "\n").trim(); if (!alive.current) return; push("ai", a); await say(a); listen(); return; }
       const out = (await callAI(ai || {}, VSYS(ln), (first ? "(Start the conversation: greet in one line and ask the first question.)" : tr) + "\nConsultant:", 1200)).replace(/^\s*Consultant:\s*/i, "").replace(/[*#_`]/g, "").trim();
       if (!alive.current) return;
       const k = out.search(/READY:/i);
-      if (k >= 0) { const bye = out.slice(0, k).trim(), brief = out.slice(k + 6).trim(); if (bye) { push("ai", bye); await say(bye); } if (alive.current) onBrief(brief + "\n\nConversation:\n" + hist.current.filter((x) => x.who === "me").map((x) => "- " + x.t).join("\n")); return; }
+      if (k >= 0 && onBrief) { const bye = out.slice(0, k).trim(), brief = out.slice(k + 6).trim(); if (bye) { push("ai", bye); await say(bye); } if (alive.current) onBrief(brief + "\n\nConversation:\n" + hist.current.filter((x) => x.who === "me").map((x) => "- " + x.t).join("\n")); return; }
       push("ai", out); await say(out); listen();
     } catch (e) { if (alive.current) { setErr(e.message === "NO_AI_KEY" ? "Connect an AI first." : e.message); setSt("idle"); } }
   };
   useEffect(() => {
-    const g = GREET[lang.split("-")[0]];
+    const g = greet || GREET[lang.split("-")[0]];
     if (g) { push("ai", g); say(g).then(listen); } else send("", true);
     return () => { alive.current = false; halt(); try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ } };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -362,10 +369,10 @@ function VoiceChat({ ai, lang, voiceOn = true, setVoice = () => {}, onBrief, onC
   const ROBO = <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M16 4v4M16 3.5h.01" /><rect x="5" y="9" width="22" height="17" rx="7" /><path d="M11 16.5c1-1.4 2.6-1.4 3.4 0M17.6 16.5c1-1.4 2.6-1.4 3.4 0M12 21c2.4 1.8 5.6 1.8 8 0" /><path d="M3 15v5M29 15v5" /></svg>;
   const USER = <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4.2" /><path d="M3.5 21c.8-4.6 4.3-7 8.5-7s7.7 2.4 8.5 7z" /></svg>;
   return (
-    <div className="vc-ov" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="vc-ov" onClick={(e) => e.target === e.currentTarget && onClose(hist.current)}>
       <div className="vc-box v87">
         <i className="vc-wave w1" /><i className="vc-wave w2" /><i className="vc-wave w3" />
-        <button className="vc-x" onClick={onClose} title="End">✕</button>
+        <button className="vc-x" onClick={() => onClose(hist.current)} title="End">✕</button>
         <div className="vc-top">
           <div className="vc-bot"><Robot mood={st === "thinking" ? "alert" : "happy"} /></div>
           <div className={"vc-orb " + st} onClick={() => (st === "listening" ? rec.current && rec.current.stop() : st === "idle" ? listen() : st === "speaking" ? window.speechSynthesis.cancel() : null)} title={st === "idle" ? "Tap to answer" : ""}>
@@ -380,7 +387,7 @@ function VoiceChat({ ai, lang, voiceOn = true, setVoice = () => {}, onBrief, onC
           <label><span>✦</span><input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="…or type your answer" /></label>
           <button disabled={!typed.trim() || st === "thinking"}><Ico d={I_SEND} s={18} />Send</button></form>
         <div className="vc-acts"><button className={"vc-voice" + (voiceOn ? " on" : "")} onClick={() => { if (voiceOn) try { window.speechSynthesis.cancel(); } catch { /* ignore */ } setVoice(!voiceOn); }}><Ico d={voiceOn ? I_SPK : I_MUTE} s={20} />Voice {voiceOn ? "on" : "off"}<i /></button>
-          <button className="vc-go" disabled={st === "thinking" || hist.current.filter((x) => x.who === "me").length < 1} onClick={() => { halt(); send("That's enough — please build it now."); }}><span>✦</span>Build it now <Ico d={I_ARROW} s={18} /></button></div>
+          {onBrief && <button className="vc-go" disabled={st === "thinking" || hist.current.filter((x) => x.who === "me").length < 1} onClick={() => { halt(); send("That's enough — please build it now."); }}><span>✦</span>Build it now <Ico d={I_ARROW} s={18} /></button>}</div>
       </div>
     </div>
   );
