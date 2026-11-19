@@ -371,12 +371,12 @@ export default function Dashboard({ user, onLogout }) {
           {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
         <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses"})[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={listed} forms={forms} cal={cal} onOpenProject={setOpenId} />
-        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onAiEdit={aiProject} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
+        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
           onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} onConsult={consultOpen} onUseTpl={applyTpl} onDomain={(p) => { setDomFocus({ id: p.id, ts: Date.now() }); setView("domains"); }} />}
         {view === "import" && <ImportPage onBack={() => setView("pages")} onFile={importFile} />}
-        {view === "templates" && <Templates onAi={aiTpl} mine={myTpl} onDeleteMine={(id) => putTpl(myTpl.filter((x) => x.id !== id))} onUse={(t) => applyTpl(t)} onSave={(t) => applyTpl(t, true)} />}
+        {view === "templates" && <Templates mine={myTpl} onDeleteMine={(id) => putTpl(myTpl.filter((x) => x.id !== id))} onUse={(t) => applyTpl(t)} onSave={(t) => applyTpl(t, true)} />}
         {view === "forms" && <Forms forms={forms} onSave={onSaveForms} projects={listed} leads={leads} onAddToPage={addFormToPage} onLeads={() => setView("leads")} integ={integ} onIntegrations={() => setView("integrations")} />}
         {view === "calendar" && <Calendar events={cal} onSave={onSaveCal} leads={leads} projects={listed} integ={integ} onInteg={onInteg} onAddToPage={addHtmlToPage} onPatchLead={patchLead} onDeleteLead={deleteLead} />}
         {view === "integrations" && <Integrations key={igTile} initial={igTile} integ={integ} onChange={onInteg} />}
@@ -408,7 +408,7 @@ function ProjectPeek({ p, onClose, onEdit, onSave, onDiscard, onTab, onPublish, 
   const page = p.pages[Math.min(+i, p.pages.length - 1)];
   return (
     <RailView dev={dev} setDev={setDev} onClose={onClose} pages={p.pages.map((x, k) => ({ v: String(k), l: x.name }))} page={i} setPage={setI}
-      actions={[{ ic: RI.ai, l: "Edit with AI", cls: "k-ai", fn: onAi }, { ic: RI.edit, l: "Edit", cls: "k-pri", fn: onEdit }, onSave && { ic: RI.save, l: "Save", cls: "k-ok", fn: onSave },
+      actions={[{ ic: RI.edit, l: "Edit", cls: "k-pri", fn: onEdit }, onSave && { ic: RI.save, l: "Save", cls: "k-ok", fn: onSave },
         !onSave && { ic: RI.pub, l: p.status === "published" ? "Republish" : "Publish", fn: onPublish }, { ic: RI.tab, l: "New tab", fn: onTab },
         onDiscard && { ic: RI.del, l: "Delete", cls: "k-del", fn: onDiscard }]}>
       <iframe title={p.name} srcDoc={page.html} sandbox="allow-scripts allow-forms" />

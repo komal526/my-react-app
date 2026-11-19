@@ -12,7 +12,7 @@ function PreviewModal({ t, onClose, onUse, onAi }) {
   const [i, setI] = useState("0"), [dev, setDev] = useState("desktop");
   return (
     <RailView dev={dev} setDev={setDev} onClose={onClose} pages={pages.map((p, k) => ({ v: String(k), l: p.name }))} page={i} setPage={setI}
-      actions={[onAi && { ic: RI.ai, l: "Edit with AI", cls: "k-ai", fn: () => onAi(t) }, { ic: RI.edit, l: "Use", cls: "k-pri", fn: () => onUse(t) }, t.file && { ic: RI.tab, l: "New tab", cls: "k-tab", fn: () => window.open(tplTabUrl(t), "_blank") }]}>
+      actions={[{ ic: RI.edit, l: "Use", cls: "k-pri", fn: () => onUse(t) }, t.file && { ic: RI.tab, l: "New tab", cls: "k-tab", fn: () => window.open(tplTabUrl(t), "_blank") }]}>
       {t.file ? <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin allow-forms" /> : <iframe title={t.name} srcDoc={pages[+i].html} sandbox="allow-same-origin" />}
     </RailView>
   );

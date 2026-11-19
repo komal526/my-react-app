@@ -57,7 +57,7 @@ export function TplView({ k }) {
   if (!t) return <div className="pv-dead"><div><h2>This template doesn't exist</h2><a href={location.pathname}>Go to dashboard</a></div></div>;
   const use = () => { try { localStorage.setItem("lb_tpl_go", t.key); } catch { /* ignore */ } location.href = location.pathname; };
   return (
-    <RailView dev={dev} setDev={setDev} actions={[{ ic: RI.ai, l: "Edit with AI", cls: "k-ai", fn: () => { try { localStorage.setItem("lb_tpl_ai", "1"); } catch { /* ignore */ } use(); } }, { ic: RI.edit, l: "Use", cls: "k-pri", fn: use }, { ic: RI.home, l: "Dashboard", fn: () => { location.href = location.pathname; } }]}>
+    <RailView dev={dev} setDev={setDev} actions={[{ ic: RI.edit, l: "Use", cls: "k-pri", fn: use }, { ic: RI.home, l: "Dashboard", fn: () => { location.href = location.pathname; } }]}>
       <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
     </RailView>
   );
