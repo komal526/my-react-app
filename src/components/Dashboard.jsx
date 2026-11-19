@@ -135,6 +135,8 @@ export default function Dashboard({ user, onLogout }) {
   const [ai, setAi] = useState(null);
   const consultOpen = (o = {}) => setAi({ ...o, nonce: Date.now() });
   /* AI Studio opens in its own browser tab: #/studio (the brief is handed over through this browser's storage) */
+  /* "Admin panel" in the menu → Domains page, scrolled to the panel */
+  useEffect(() => { if (view !== "admin") return; setView("domains"); let n = 0; const t = setInterval(() => { const el = document.querySelector(".adm-embed"); if (el || ++n > 40) { clearInterval(t); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); } }, 150); }, [view]);
   const [studio, setStudio] = useState(() => { if (!/^#\/studio/.test(location.hash)) return null; let o = {}; try { o = JSON.parse(localStorage.getItem("lb_studio_go") || "{}"); localStorage.removeItem("lb_studio_go"); } catch { o = {}; } return { type: o.type || "landing", name: o.name || "", prompt: o.prompt || "", tab: true }; });
   const studioTab = (o = {}) => { try { localStorage.setItem("lb_studio_go", JSON.stringify(o)); } catch { /* ignore */ } const w = window.open(location.origin + location.pathname + "#/studio", "_blank"); if (!w) setStudio(o); };
   const closeStudio = () => { if (studio && studio.tab) { history.replaceState(null, "", location.pathname + location.search); if (window.opener) { window.close(); } } setStudio(null); };

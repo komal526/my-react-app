@@ -12,6 +12,20 @@ header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
+/* v17: the answer is ALWAYS clean JSON — PHP warnings never mix into it (they go to lb-data/php-errors.log),
+   and a crash comes back as a readable error instead of an empty page */
+@ini_set('display_errors', '0'); ob_start();
+set_error_handler(function ($no, $msg, $file, $line) { @file_put_contents(__DIR__ . '/lb-data/php-errors.log', date('c') . " [$no] $msg (" . basename($file) . ":$line)\n", FILE_APPEND); return true; });
+register_shutdown_function(function () {
+  $e = error_get_last();
+  if ($e && in_array($e['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR), true)) {
+    while (ob_get_level()) ob_end_clean();
+    if (!headers_sent()) { http_response_code(200); header('Content-Type: application/json; charset=utf-8'); }
+    @file_put_contents(__DIR__ . '/lb-data/php-errors.log', date('c') . ' FATAL ' . $e['message'] . ' (' . basename($e['file']) . ':' . $e['line'] . ")\n", FILE_APPEND);
+    echo json_encode(array('ok' => false, 'error' => 'Server error: ' . $e['message'] . ' (' . basename($e['file']) . ' line ' . $e['line'] . ')'));
+  }
+});
+if (!file_exists(__DIR__ . '/lb-accounts.php')) { echo json_encode(array('ok' => false, 'error' => 'lb-accounts.php is missing next to lb-server.php — push all files to GitHub and run lb-deploy again.')); exit; }
 require_once __DIR__ . '/lb-accounts.php';
 
 $ROOT  = __DIR__;
@@ -23,7 +37,7 @@ if (!is_dir($SITES)) @mkdir($SITES, 0755, true);
 if (!file_exists($DATA . '/.htaccess')) @file_put_contents($DATA . '/.htaccess', "Require all denied\nDeny from all\n");
 if (!file_exists($DATA . '/index.html')) @file_put_contents($DATA . '/index.html', '');
 
-function out($a)  { echo json_encode($a, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); exit; }
+function out($a)  { while (ob_get_level()) ob_end_clean(); $j = json_encode($a, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined('JSON_INVALID_UTF8_SUBSTITUTE') ? JSON_INVALID_UTF8_SUBSTITUTE : 0) | JSON_PARTIAL_OUTPUT_ON_ERROR); echo $j === false ? '{"ok":false,"error":"Could not encode the answer"}' : $j; exit; }
 function fail($m) { out(array('ok' => false, 'error' => $m)); }
 function jread($f, $def) { if (!file_exists($f)) return $def; $j = json_decode((string)@file_get_contents($f), true); return is_array($j) ? $j : $def; }
 function jwrite($f, $v) {
@@ -130,7 +144,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 16, 'accounts' => (bool)lb_saas(), 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 17, 'accounts' => (bool)lb_saas(), 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
 
 /* ---------- Google Sheets + email alerts (one Apps Script web app per account) ---------- */
 function lb_hook_file($DATA, $uid) { $d = $DATA . '/hooks'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . substr(hash('sha256', 'u:' . $uid), 0, 24) . '.json'; }
@@ -640,7 +654,7 @@ if ($act === 'sitesdomain') {
 function lb_my_subs($ME, $DATA) {
   $map = jread($DATA . '/domains.json', array()); $dw = lb_downers($DATA); $res = array();
   foreach ($dw as $h => $o) if (isset($o['kind']) && $o['kind'] === 'sub' && isset($map[$h]) && lb_is_me($o['uid'], $ME))
-    $res[] = array('host' => $h, 'target' => $map[$h], 'ts' => isset($o['ts']) ? $o['ts'] : 0, 'https' => file_exists('/etc/nginx/lb-ssl/' . $h . '.conf'));
+    $res[] = array('host' => $h, 'target' => $map[$h], 'ts' => isset($o['ts']) ? $o['ts'] : 0, 'https' => @file_exists('/etc/nginx/lb-ssl/' . $h . '.conf'));
   usort($res, function ($a, $b) { return $a['ts'] - $b['ts']; });
   return $res;
 }
@@ -799,7 +813,7 @@ if ($act === 'adm_tenants') {
   foreach ($tn as $id => $t) {
     if ($OWN_T !== null && $id !== $OWN_T) continue;
     $n = 0; foreach ($users as $u) if (isset($u['tenant']) && $u['tenant'] === $id) $n++;
-    $res[] = array_merge(array('id' => $id, 'users' => $n, 'https' => !empty($t['app_domain']) && file_exists('/etc/nginx/lb-ssl/' . $t['app_domain'] . '.conf')), $t);
+    $res[] = array_merge(array('id' => $id, 'users' => $n, 'https' => !empty($t['app_domain']) && @file_exists('/etc/nginx/lb-ssl/' . $t['app_domain'] . '.conf')), $t);
   }
   out(array('ok' => true, 'tenants' => $res, 'ip' => vps_info()['ip'], 'main' => lb_main_domain($DATA)));
 }
@@ -861,7 +875,7 @@ if ($act === 'adm_tenant_check') {
   $wild = $probe ? $res($probe) : array();
   $opens = 0; if ($app && in_array($ip, $app, true)) { list($opens) = lb_get('http://' . $t['app_domain'] . '/lb-server.php?action=info'); }
   out(array('ok' => true, 'ip' => $ip, 'app' => $app, 'app_ok' => in_array($ip, $app, true), 'app_opens' => $opens,
-    'app_https' => !empty($t['app_domain']) && file_exists('/etc/nginx/lb-ssl/' . $t['app_domain'] . '.conf'), 'wild' => $wild, 'wild_ok' => $probe !== '' && in_array($ip, $wild, true)));
+    'app_https' => !empty($t['app_domain']) && @file_exists('/etc/nginx/lb-ssl/' . $t['app_domain'] . '.conf'), 'wild' => $wild, 'wild_ok' => $probe !== '' && in_array($ip, $wild, true)));
 }
 
 fail('Unknown action');

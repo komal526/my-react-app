@@ -97,6 +97,8 @@ const GROUPS = [
 export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open = false, onClose = () => {}, mini = false, onMini = () => {}, role = "" }) {
   /* the collapsed menu stays short: the main pages only */
   const HIDE_MINI = ["followups", "analytics", "pixels", "lms"];
+  /* admin (you) and white-label owners get an "Admin panel" link — it opens the panel at the bottom of Domains */
+  const groups = role === "admin" || role === "owner" ? GROUPS.map((g) => (g[0] === "reports" ? [g[0], g[1], g[2], [...g[3], ["admin", "users", role === "owner" ? "My clients" : "Admin panel"]]] : g)) : GROUPS;
   const [shut, setShut] = useState(() => { try { return JSON.parse(localStorage.getItem("lb_nav_shut") || "[]"); } catch { return []; } }), [fly, setFly] = useState("");
   const toggle = (g) => { const n = shut.includes(g) ? shut.filter((x) => x !== g) : [...shut, g]; setShut(n); localStorage.setItem("lb_nav_shut", JSON.stringify(n)); };
   const go = (k) => { onView(k); onClose(); };
@@ -116,11 +118,11 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
       {mini ? <div className="sb3-scroll sb3-rail">
         {/* collapsed: every page as an icon with a small name */}
         <div className={"sb3-m" + (isOn("pages") ? " on" : "")} onClick={() => go("pages")} title="Dashboard"><Icon n="grid" s={24} /><small>Home</small></div>
-        {GROUPS.flatMap(([, , , items]) => items).filter(([k]) => !HIDE_MINI.includes(k)).map(([k, ic, nm]) => (
+        {groups.flatMap(([, , , items]) => items).filter(([k]) => !HIDE_MINI.includes(k)).map(([k, ic, nm]) => (
           <div key={k} className={"sb3-m" + (isOn(k) ? " on" : "")} onClick={() => go(k)} title={nm}><Icon n={ic} s={24} /><small>{MINI[k] || nm}</small>{badges[k] ? <i className="sb3-dotb" /> : null}</div>))}
       </div> : <div className="sb3-scroll">
         <Item k="pages" ic="grid" nm="Dashboard" />
-        {GROUPS.map(([g, gic, label, items]) => {
+        {groups.map(([g, gic, label, items]) => {
           const closed = false; // groups always stay open
           return <div key={g} className={"sb3-grp" + (closed ? " shut" : "")}>
             {!mini ? <div className="sb3-gh"><Icon n={gic} s={16} /><span>{label}</span></div> : <div className="sb3-sep" />}

@@ -399,7 +399,8 @@ export async function phpCall(srv, body) {
   try { r = await fetch(url, { method: "POST", body: JSON.stringify({ ...body, key: (srv && srv.key) || "", ...(tok ? { tok } : {}) }) }); }
   catch { throw new Error("Couldn't reach lb-server.php. Make sure it's uploaded next to your builder (public_html)."); }
   if (r.status === 404) throw new Error("lb-server.php was not found at " + url + ". Upload it to the same folder as the builder.");
-  let j; try { j = await r.json(); } catch { throw new Error("The server didn't answer correctly. Does your hosting support PHP? (Hostinger web hosting does.)"); }
+  /* show what the server really sent, so the cause is visible (e.g. a PHP error or an nginx 502) */
+  let j, raw = ""; try { raw = await r.text(); j = JSON.parse(raw); } catch { const t = raw.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 220); throw new Error(`The server didn't answer correctly (HTTP ${r.status}${t ? ": " + t : ", empty answer"}). On the VPS run lb-deploy again; if it stays, send this message.`); }
   /* key from an older browser session? try the key that comes from your login */
   if (!j.ok && /wrong key/i.test(j.error || "") && srv && !body._acct) { const ak = accountKey(); if (ak && ak !== srv.key) { srv.key = ak; return phpCall(srv, { ...body, _acct: true }); } }
   if (!j.ok && /not set up yet/i.test(j.error || "") && body.action !== "setup" && srv && srv.key && !body._healed) {
