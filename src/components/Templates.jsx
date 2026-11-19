@@ -1,25 +1,20 @@
 // LaunchBuilder v42 — Templates.jsx (fast: image previews, live page only on hover)
 import { useMemo, useState } from "react";
 import { FILE_TEMPLATES, asTemplate, tplUrl } from "../lib.js";
+import { RailView, RI, tplTabUrl } from "./Rail.jsx";
 import { Icon } from "./icons.jsx";
 
 /* ================= Templates gallery: filters, search, hover-scroll previews, full-screen preview ================= */
 const W = { desktop: "100%", tablet: "820px", mobile: "390px" };
 
-function PreviewModal({ t, onClose, onUse, onSave }) {
+function PreviewModal({ t, onClose, onUse }) {
   const pages = useMemo(() => (t.file ? [{ id: "f", name: "Home" }] : t.make(t.name)), [t]);
-  const [i, setI] = useState(0), [dev, setDev] = useState("desktop");
+  const [i, setI] = useState("0"), [dev, setDev] = useState("desktop");
   return (
-    <div className="tp-ov" onClick={onClose}><div className="tp-box" onClick={(e) => e.stopPropagation()}>
-      <div className="tp-bar">
-        <div className="tp-ttl"><i style={{ background: t.accent || "#3d6bff" }} /><b>{t.name}</b><span>{t.cat}</span></div>
-        {pages.length > 1 && <div className="tp-pages">{pages.map((p, k) => <button key={p.id} className={i === k ? "on" : ""} onClick={() => setI(k)}>{p.name}</button>)}</div>}
-        <div className="tp-dev">{Object.keys(W).map((d) => <button key={d} title={d[0].toUpperCase() + d.slice(1)} className={dev === d ? "on" : ""} onClick={() => setDev(d)}><Icon n={d} s={17} /></button>)}</div>
-        <div className="pk-acts"><button className="pk-edit" onClick={() => onUse(t)}>✏️ Use this template</button>{t.file && <button className="tg-tab" onClick={() => window.open(tplUrl(t), "_blank", "noopener")}>↗ New tab</button>}</div>
-        <button className="tp-x" onClick={onClose} aria-label="Close">✕</button>
-      </div>
-      <div className="tp-stage">{t.file ? <iframe title={t.name} src={tplUrl(t)} style={{ width: W[dev] }} sandbox="allow-scripts allow-same-origin allow-forms" /> : <iframe title={t.name} srcDoc={pages[i].html} style={{ width: W[dev] }} sandbox="allow-same-origin" />}</div>
-    </div></div>
+    <RailView dev={dev} setDev={setDev} onClose={onClose} pages={pages.map((p, k) => ({ v: String(k), l: p.name }))} page={i} setPage={setI}
+      actions={[{ ic: RI.edit, l: "Use", cls: "k-pri", fn: () => onUse(t) }, t.file && { ic: RI.tab, l: "New tab", cls: "k-tab", fn: () => window.open(tplTabUrl(t), "_blank") }]}>
+      {t.file ? <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin allow-forms" /> : <iframe title={t.name} srcDoc={pages[+i].html} sandbox="allow-same-origin" />}
+    </RailView>
   );
 }
 
@@ -72,7 +67,7 @@ export default function Templates({ onUse, onSave = onUse, mine = [], onDeleteMi
           <a className="tg-shot" href={t.file ? tplUrl(t) : undefined} target="_blank" rel="noopener" onClick={(e) => { e.preventDefault(); setOpen(t); }}>
             <div className="tg-chrome"><i /><i /><i /><span>{t.file ? (t.type === "website" ? "Website" : "Landing page") : pages.length > 1 ? `${pages.length} pages` : "1 page"}</span></div>
             <div className="tg-frame">{t.file ? <>{t.thumb && <div className="tg-reel" style={{ "--i": i }}><img src={tplUrl({ file: t.thumb.replace("/thumbs/", "/long/") })} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.parentNode.classList.add("short"); e.currentTarget.src = tplUrl({ file: t.thumb }); }} /><img src={tplUrl({ file: t.thumb.replace("/thumbs/", "/long/") })} alt="" loading="lazy" decoding="async" /></div>}{live === t.key && <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin" tabIndex={-1} scrolling="no" onLoad={(e) => { const f = e.currentTarget, c = f.closest(".tg-card"); f.classList.add("on"); f.dataset.ready = "1"; if (c && c.matches(":hover")) glide(c, true); }} />}</> : <iframe title={t.name} srcDoc={pages[0].html} sandbox="allow-same-origin" tabIndex={-1} />}</div>
-            <div className="tg-hover"><button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(t); }}>👁 Preview</button><button className="pri" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUse(t); }} title="Open it in the editor">✏️ Use</button>{t.file && <button className="tg-tab" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(tplUrl(t), "_blank", "noopener"); }}>↗ New tab</button>}</div>
+            <div className="tg-hover"><button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(t); }}>👁 Preview</button><button className="pri" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUse(t); }} title="Open it in the editor">✏️ Use</button>{t.file && <button className="tg-tab" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(tplTabUrl(t), "_blank"); }}>↗ New tab</button>}</div>
           </a>
           <div className="tg-info">
             <div className="tg-row"><b>{t.name}</b>{t.mine && <span className="tg-mine">★ Mine</span>}<span className={"tg-type " + t.type}>{t.type === "website" ? "Website" : "Landing"}</span></div>

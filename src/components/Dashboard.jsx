@@ -11,6 +11,7 @@ const Analytics = lazy(() => import("./Analytics.jsx"));
 const Integrations = lazy(() => import("./Integrations.jsx"));
 const Calendar = lazy(() => import("./Calendar.jsx"));
 import { Icon } from "./icons.jsx";
+import { RailView, RI } from "./Rail.jsx";
 const Settings = lazy(() => import("./Settings.jsx"));
 const Pixels = lazy(() => import("./Pixels.jsx"));
 const LMS = lazy(() => import("./LMS.jsx"));
@@ -21,7 +22,7 @@ const AiStudio = lazy(() => import("./AiStudio.jsx"));
 /* opened as #/studio in a new tab → start loading the studio right away (no dashboard flash) */
 if (/^#\/studio/.test(location.hash)) import("./AiStudio.jsx");
 import { BRAND } from "../brand.js";
-import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount } from "../lib.js";
+import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount, FILE_TEMPLATES } from "../lib.js";
 import { formHtml, bookingWidget } from "./tools.js";
 import { resolveEvents } from "./insights.js";
 
@@ -207,15 +208,16 @@ export default function Dashboard({ user, onLogout }) {
     const t0 = setTimeout(run, 1500), t = setInterval(run, 60000); return () => { clearTimeout(t0); clearInterval(t); };
   }, [srv, E]); // eslint-disable-line react-hooks/exhaustive-deps
   /* saving is batched: big projects are written once after you pause (not on every keystroke) — and always before the tab closes */
-  const saveNow = useRef(null);
+  const saveNow = useRef(null), dirty = useRef(false);
   saveNow.current = () => {
+    if (!dirty.current) return; dirty.current = false;   /* nothing changed here → never overwrite what another tab saved */
     if (!saveProjects(E, projects.filter((p) => !p.unsaved))) alert("Browser storage is full. Delete some projects or use smaller images.");
     try { localStorage.setItem(DK, JSON.stringify(projects.filter((p) => p.unsaved).map(({ recovered, ...p }) => p))); } catch { /* storage full: the draft just isn't kept after a reload */ }
   };
   const firstSave = useRef(true);
   useEffect(() => {
     if (firstSave.current) { firstSave.current = false; return; }   /* just loaded — nothing changed */
-    const t = setTimeout(() => saveNow.current(), 350); return () => clearTimeout(t);
+    dirty.current = true; const t = setTimeout(() => saveNow.current(), 350); return () => clearTimeout(t);
   }, [projects, E]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { const f = () => saveNow.current(); window.__lbSave = f; window.addEventListener("pagehide", f); window.addEventListener("beforeunload", f); return () => { window.removeEventListener("pagehide", f); window.removeEventListener("beforeunload", f); f(); }; }, []);
   /* what the lists show: saved projects + drafts you changed but haven't saved */
@@ -289,6 +291,8 @@ export default function Dashboard({ user, onLogout }) {
     else create(t.mine ? t.name + " (copy)" : t.name, t.make(t.name), t.type, undefined, o);
     if (save) { setToast("✓ “" + t.name + "” saved to your projects"); }
   };
+  /* "Use" pressed on a template opened in its own tab */
+  useEffect(() => { let k = ""; try { k = localStorage.getItem("lb_tpl_go") || ""; localStorage.removeItem("lb_tpl_go"); } catch { /* ignore */ } const t = k && FILE_TEMPLATES.find((x) => x.key === k); if (t && !full()) applyTpl(t); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const evs = useMemo(() => resolveEvents(events, projects), [events, projects]);
   const open = projects.find((p) => p.id === openId);
   openRef.current = openId;
@@ -343,8 +347,6 @@ export default function Dashboard({ user, onLogout }) {
           {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
         <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses"})[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={listed} forms={forms} cal={cal} onOpenProject={setOpenId} />
-        {["pages", "websites", "landings"].includes(view) && drafts.length > 0 && <div className="drafts-bar"><b>📝 {drafts.length === 1 ? "1 draft" : drafts.length + " drafts"}</b><span>Not in your projects yet — open Drafts to save or delete.</span>
-          <div className="drafts-list"><button className="ok" onClick={() => { setView("projects"); setPjKind({ k: "drafts", ts: Date.now() }); }}>Open Drafts →</button></div></div>}
         {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
@@ -373,41 +375,16 @@ export default function Dashboard({ user, onLogout }) {
   );
 }
 
-/* preview of a project, full screen — exactly as visitors see it. A slim bar on the right has every action (fold it away with ›). */
-const PI = {
-  edit: <path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" />,
-  pub: <><path d="M12 15V3M7 8l5-5 5 5" /><path d="M5 15v4a2 2 0 002 2h10a2 2 0 002-2v-4" /></>,
-  tab: <path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h5" />,
-  save: <><path d="M5 3h11l3 3v13a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" /><path d="M7 3v5h8V3M7 21v-7h10v7" /></>,
-  del: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3" />,
-  x: <path d="M6 6l12 12M18 6L6 18" />,
-};
-const Pi = ({ d }) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>;
+/* preview of a project, full screen — exactly as visitors see it, with the action bar on the right */
 function ProjectPeek({ p, onClose, onEdit, onSave, onDiscard, onTab, onPublish }) {
-  const [i, setI] = useState(0), [dev, setDev] = useState("desktop"), [fold, setFold] = useState(() => localStorage.getItem("lb_pk_fold") === "1");
-  useEffect(() => { const k = (e) => e.key === "Escape" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose]);
-  useEffect(() => { try { localStorage.setItem("lb_pk_fold", fold ? "1" : "0"); } catch { /* ignore */ } }, [fold]);
-  const page = p.pages[Math.min(i, p.pages.length - 1)];
-  const B = ({ ic, l, on, cls = "", fn }) => <button className={"pk2-b " + cls + (on ? " on" : "")} onClick={fn} title={l}><span className="pk2-i">{typeof ic === "string" ? <Icon n={ic} s={17} /> : <Pi d={ic} />}</span><small>{l}</small></button>;
+  const [i, setI] = useState("0"), [dev, setDev] = useState("desktop");
+  const page = p.pages[Math.min(+i, p.pages.length - 1)];
   return (
-    <div className="pk2" role="dialog" aria-label={p.name}>
-      <div className={"pk2-stage " + dev}><iframe title={p.name} srcDoc={page.html} sandbox="allow-scripts allow-forms" /></div>
-      <aside className={"pk2-rail" + (fold ? " fold" : "")}>
-        <button className="pk2-fold" onClick={() => setFold(!fold)} title={fold ? "Show actions" : "Hide actions"}>{fold ? "‹" : "›"}</button>
-        {!fold && <>
-          <div className="pk2-name" title={p.name}><i style={{ background: p.unsaved ? "#f5b301" : p.status === "published" ? "#10b981" : "#94a3b8" }} /><b>{p.name}</b><span>{p.unsaved ? "Draft" : p.status === "published" ? "Live" : "Not live"}</span></div>
-          {p.pages.length > 1 && <select className="pk2-pg" value={i} onChange={(e) => setI(+e.target.value)} title="Page">{p.pages.map((x, k) => <option key={x.id} value={k}>{x.name}</option>)}</select>}
-          <div className="pk2-g">{[["desktop", "Desktop"], ["tablet", "Tablet"], ["mobile", "Mobile"]].map(([d, l]) => <B key={d} ic={d} l={l} on={dev === d} fn={() => setDev(d)} />)}</div>
-          <div className="pk2-g">
-            <B ic={PI.edit} l="Edit" cls="k-pri" fn={onEdit} />
-            {onSave && <B ic={PI.save} l="Save" cls="k-ok" fn={onSave} />}
-            {!onSave && <B ic={PI.pub} l={p.status === "published" ? "Republish" : "Publish"} fn={onPublish} />}
-            <B ic={PI.tab} l="New tab" fn={onTab} />
-            {onDiscard && <B ic={PI.del} l="Delete" cls="k-del" fn={onDiscard} />}
-          </div>
-        </>}
-        <button className="pk2-x" onClick={onClose} title="Close (Esc)"><Pi d={PI.x} /></button>
-      </aside>
-    </div>
+    <RailView dev={dev} setDev={setDev} onClose={onClose} pages={p.pages.map((x, k) => ({ v: String(k), l: x.name }))} page={i} setPage={setI}
+      actions={[{ ic: RI.edit, l: "Edit", cls: "k-pri", fn: onEdit }, onSave && { ic: RI.save, l: "Save", cls: "k-ok", fn: onSave },
+        !onSave && { ic: RI.pub, l: p.status === "published" ? "Republish" : "Publish", fn: onPublish }, { ic: RI.tab, l: "New tab", fn: onTab },
+        onDiscard && { ic: RI.del, l: "Delete", cls: "k-del", fn: onDiscard }]}>
+      <iframe title={p.name} srcDoc={page.html} sandbox="allow-scripts allow-forms" />
+    </RailView>
   );
 }

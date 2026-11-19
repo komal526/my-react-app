@@ -13,6 +13,7 @@ function CloudStatus() {
   return <div className={"cloud-st " + st}><div><span>{M[0]}</span> {M[1]}</div>{st === "offline" && why && <small>{why}</small>}</div>;
 }
 import { Icon } from "./icons.jsx";
+import { RailView, RI } from "./Rail.jsx";
 import { BRAND } from "../brand.js";
 
 /* ==================== Modal, Thumb, Sidebar, NewModal, PublishModal ==================== */
@@ -30,7 +31,7 @@ export function Modal({ children, onClose }) {
    · at most 2 previews load at the same time, top ones first
    · a template picture (or a light skeleton) shows instantly while the real page draws */
 const TH_CACHE = new Map();
-const THUMB_CSS = "<style>*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}[class*=reveal],[class*=fade],[class*=animate],[class*=stagger]>*,[data-aos],[data-anim],[data-r],.in-view,.hidden-up,.hero-in,.hero h1 .w,.letter,[class*=hero-title],[class*=hero-sub],[class*=hero-eyebrow],[class*=hero-button],[class*=hero-cta],[class*=hero-search],.search,.bento-card,.timeline-item{opacity:1!important;transform:none!important;visibility:visible!important;clip-path:none!important}html,body{overflow:hidden!important}</style>";
+const THUMB_CSS = "<style>*,*::before,*::after{animation-duration:.001s!important;animation-delay:0s!important;animation-iteration-count:1!important;animation-fill-mode:both!important;transition:none!important;scroll-behavior:auto!important}[class*=reveal],[class*=fade],[class*=animate],[class*=stagger]>*,[data-aos],[data-anim],[data-r],.in-view,.hidden-up,.hero-in,.hero h1 .w,.letter,[class*=hero-title],[class*=hero-sub],[class*=hero-eyebrow],[class*=hero-button],[class*=hero-cta],[class*=hero-search],.search,.bento-card,.timeline-item{opacity:1!important;transform:none!important;visibility:visible!important;clip-path:none!important}html,body{overflow:hidden!important}</style>";
 /* a preview only needs the top of the page: keep the first ~2 screens, drop scripts, videos, embeds and most images */
 const trimBody = (h) => {
   try {
@@ -372,20 +373,15 @@ export function Preview({ token, file: initFile }) {
   const copy = async () => { const u = previewUrl(token, file); try { await navigator.clipboard.writeText(u); flash("Link copied"); } catch { window.prompt("Copy this link", u); } };
 
   return (
-    <div className="pv">
-      <div className="pv-bar">
-        <div className="pv-l"><span className="pv-logo"><Icon n="logo" s={16} /></span><b>{proj.name}</b>
-          <select value={file} onChange={(e) => { setHash(""); setFile(e.target.value); window.history.pushState(null, "", `#/preview/${token}/${e.target.value}`); }}>
-            {proj.pages.map((p) => <option key={p.id} value={p.file}>{p.name} — {p.file}</option>)}{!pg && <option value={file}>{file} (missing)</option>}</select>
-          <span className={"pv-live" + (pulse ? " pulse" : "")}><i />Live draft</span></div>
-        <div className="pv-dev">{Object.keys(W).map((k) => <button key={k} className={dev === k ? "on" : ""} onClick={() => setDev(k)} title={k}><Icon n={k} s={16} /></button>)}</div>
-        <div className="pv-r"><span className="pv-exp" title="Preview links are temporary">Link expires in {hrs} h</span><button onClick={copy}><Icon n="link" s={14} /> Copy link</button><button onClick={() => setVer((v) => v + 1)} title="Reload"><Icon n="redo" s={14} /></button></div>
-      </div>
-      <div className={"pv-stage " + dev}>
-        <iframe ref={ifr} title="preview" srcDoc={html} style={{ width: W[dev] }} sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals" allow="payment; autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; accelerometer; gyroscope; geolocation" />
-      </div>
+    <>
+      <RailView dev={dev} setDev={setDev} pages={[...proj.pages.map((p) => ({ v: p.file, l: p.name })), ...(!pg ? [{ v: file, l: file + " (missing)" }] : [])]} page={file}
+        setPage={(v) => { setHash(""); setFile(v); window.history.pushState(null, "", `#/preview/${token}/${v}`); }}
+        actions={[{ ic: RI.link, l: "Copy link", cls: "k-pri", fn: copy }, { ic: RI.reload, l: "Reload", fn: () => setVer((v) => v + 1) }, { ic: RI.home, l: "Dashboard", fn: () => { location.href = location.pathname; } }]}
+        note={<><i className={"pv-dot" + (pulse ? " pulse" : "")} />Live draft · link expires in {hrs} h</>}>
+        <iframe ref={ifr} title="preview" srcDoc={html} sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals" allow="payment; autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; accelerometer; gyroscope; geolocation" />
+      </RailView>
       {note && <div className="toast pv-toast">{note}</div>}
-    </div>
+    </>
   );
 }
 

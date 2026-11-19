@@ -1,6 +1,7 @@
 // LaunchBuilder v48 — MyPages.jsx (Dashboard · Websites · Landing pages)
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { Thumb } from "./parts.jsx";
+import { tplTabUrl } from "./Rail.jsx";
 import Robot from "./Robot.jsx";
 import { Icon } from "./icons.jsx";
 import { liveAddr, domainState, subsCache, subList, LIMIT, FILE_TEMPLATES, FEATURED_TPL, longThumb, fuDue, aiAvailable, askAI, tplUrl } from "../lib.js";
@@ -265,7 +266,7 @@ function FeaturedTpl({ onUse, onAll }) {
             <div className="ft-reel"><img src={longThumb(t)} alt="" loading="lazy" decoding="async" /><img src={longThumb(t)} alt="" loading="lazy" decoding="async" /></div>
             <div className="ft-acts">
               <button className="ft-use" onClick={() => { setBusy(t.key); Promise.resolve(onUse(t)).finally(() => setBusy("")); }} aria-label={"Use " + t.name}>{busy === t.key ? "Opening…" : "Use"}</button>
-              <a className="ft-pv" href={tplUrl(t)} target="_blank" rel="noopener" aria-label={"Preview " + t.name + " in a new tab"}>Preview</a>
+              <a className="ft-pv" href={tplTabUrl(t)} target="_blank" rel="noopener" aria-label={"Preview " + t.name + " in a new tab"}>Preview</a>
             </div>
           </div>
           <b>{t.name}</b><small>{t.cat}</small>

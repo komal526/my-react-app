@@ -72,6 +72,9 @@ const I_DOC = <path d="M21 12.5l-8.2 8.2a5.3 5.3 0 01-7.5-7.5l8.6-8.6a3.5 3.5 0 
 const I_MIC = <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0014 0M12 18v3" /></>;
 const I_ARROW = <path d="M5 12h14M13 6l6 6-6 6" />;
 const I_TALK = <><path d="M4 12a8 8 0 0114.9-4" /><path d="M20 12a8 8 0 01-14.9 4" /><path d="M9 10v4M12 8v8M15 10v4" /></>;
+const I_SPK = <><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11" /></>;
+const I_MUTE = <><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M17 9l5 6M22 9l-5 6" /></>;
+const I_SEND = <path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z" />;
 const I_STOP = <rect x="7" y="7" width="10" height="10" rx="2" />;
 
 /* mode "new"    → creates a new landing page / website (onCreate)
@@ -83,6 +86,9 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
   const setLang = (v) => { setLang0(v); try { localStorage.setItem("lb_ai_lang", v); } catch { /* ignore */ } };
   /* after AI builds: a preview you can keep changing by asking, then Save / Open in editor */
   const [res, setRes] = useState(null), [talk, setTalk] = useState(false);
+  const [voiceOn, setVoice0] = useState(() => { try { return localStorage.getItem("lb_ai_voice") !== "0"; } catch { return true; } });
+  const setVoice = (v) => { setVoice0(v); try { localStorage.setItem("lb_ai_voice", v ? "1" : "0"); } catch { /* ignore */ } };
+  const firstImg = files.find((f) => f.kind === "image");
   const prompt0Ref = useRef(prompt0);
   const ai = browserAi(integ), taRef = useRef(null), rec = useRef(null), imgIn = useRef(null), docIn = useRef(null);
   useEffect(() => { if (!ai) serverAiReady().then(setSrv).catch(() => setSrv(false)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -199,35 +205,47 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
           </> : <div className="ais-seg">{[["section", "Add a new section"], ["page", "Replace the whole page"]].map(([k, l]) => <button key={k} className={how === k ? "on" : ""} onClick={() => setHow(k)} disabled={!!busy}>{l}</button>)}</div>}
         </div>
 
-        <div className={"ais-box" + (listen ? " rec" : "") + (busy ? " busy" : "")}>
-          <div className="ais-bot"><Robot mood={busy ? "alert" : "happy"} /></div>
-          <textarea ref={taRef} value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={!!busy} autoFocus
-            placeholder={listen ? "Listening… speak now" : mode === "editor" ? "e.g. A pricing section with 3 plans: ₹499 basic, ₹999 pro, ₹1,999 premium — with a Book now button" : "Describe your page — what is it, who is it for, what should visitors do (register, call, buy)? Price, city, colours…"}
-            onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) go(); }} />
-          {files.length > 0 && <div className="ais-files">{files.map((f, i) => (
-            <span key={i} className={"ais-file " + f.kind}>{f.kind === "image" ? <img src={f.thumb} alt="" /> : <b>{f.kind === "pdf" ? "PDF" : "DOC"}</b>}<small>{f.name}</small>
-              {!busy && <button onClick={() => setFiles((x) => x.filter((_, k) => k !== i))} aria-label="Remove">✕</button>}</span>))}</div>}
-          <div className="ais-bar">
-            <span className="ais-hint"><i><Ico d={I_DOC} s={15} /></i>{files.length ? `${files.length}/${MAX_FILES} files` : "Drop pictures or documents here"}</span>
-            <div className="grow" />
-            <button className="ais-ic" title="Add pictures (logo, products, photos)" onClick={() => imgIn.current.click()} disabled={!!busy}><Ico d={I_IMG} /></button>
-            <button className="ais-ic" title="Add a document (PDF, Word, text) about your business" onClick={() => docIn.current.click()} disabled={!!busy}><Ico d={I_DOC} /></button>
-            <button className={"ais-ic mic" + (listen === "brief" ? " on" : "")} title={listen ? "Stop" : "Speak"} onClick={() => mic("brief")} disabled={!!busy}><Ico d={listen === "brief" ? I_STOP : I_MIC} /></button>
-            <select className="ais-lang" value={lang} onChange={(e) => setLang(e.target.value)} disabled={!!listen || !!busy} title="Speaking language">{LANGS.map(([v, , full]) => <option key={v} value={v}>{full.split("·").reverse().map((x) => x.trim()).join(" · ")}</option>)}</select>
-            {mode === "new" && <button className="ais-ic talk" title="Talk with AI — it asks you a few questions by voice, then builds" onClick={() => { stopMic(); setTalk(true); }} disabled={!!busy || !ready}><Ico d={I_TALK} /></button>}
-            <button className="ais-go" onClick={go} disabled={!!busy || !ready}>{mode === "editor" ? (how === "section" ? "Add section" : "Rebuild page") : "Create " + (type === "website" ? "website" : "page")} <Ico d={I_ARROW} s={16} /></button>
-            <input ref={imgIn} type="file" hidden multiple accept="image/*" onChange={(e) => { addImages(e.target.files); e.target.value = ""; }} />
-            <input ref={docIn} type="file" hidden multiple accept=".pdf,.docx,.txt,.md,.csv,application/pdf,text/plain" onChange={(e) => { addDocs(e.target.files); e.target.value = ""; }} />
+        <div className="ais-wrap">
+          <div className="ais-walk"><div className="ais-bot2"><Robot mood={busy ? "alert" : "happy"} /></div></div>
+          <div className={"ais-box v87" + (listen ? " rec" : "") + (busy ? " busy" : "")}>
+            <div className="ais-in">
+              <button className="ais-drop" onClick={() => imgIn.current.click()} disabled={!!busy} title="Add pictures (logo, products, photos)">
+                {firstImg ? <img src={firstImg.thumb} alt="" /> : <Ico d={I_IMG} s={34} />}<span className="ais-plus">+</span></button>
+              <div className="ais-txt"><span className="ais-sp">✦</span>
+                <textarea ref={taRef} value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={!!busy} autoFocus
+                  placeholder={listen ? "Listening… speak now" : mode === "editor" ? "e.g. A pricing section with 3 plans: ₹499 basic, ₹999 pro, ₹1,999 premium — with a Book now button" : "Describe your page — what is it, who is it for, what should visitors do (register, call, buy)? Price, city, colours…"}
+                  onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) go(); }} /></div>
+            </div>
+            {files.length > 0 && <div className="ais-files">{files.map((f, i) => (
+              <span key={i} className={"ais-file " + f.kind}>{f.kind === "image" ? <img src={f.thumb} alt="" /> : <b>{f.kind === "pdf" ? "PDF" : "DOC"}</b>}<small>{f.name}</small>
+                {!busy && <button onClick={() => setFiles((x) => x.filter((_, k) => k !== i))} aria-label="Remove">✕</button>}</span>))}</div>}
+            <div className="ais-bar">
+              <span className="ais-hint"><i />{files.length ? `${files.length}/${MAX_FILES} files added` : "Drop pictures or documents here"}<i /></span>
+              <div className="grow" />
+              <button className="ais-ic" title="Add pictures (logo, products, photos)" onClick={() => imgIn.current.click()} disabled={!!busy}><Ico d={I_IMG} /></button>
+              <button className="ais-ic" title="Add a document (PDF, Word, text) about your business" onClick={() => docIn.current.click()} disabled={!!busy}><Ico d={I_DOC} /></button>
+              <button className={"ais-ic mic" + (listen === "brief" ? " on" : "")} title={listen ? "Stop" : "Speak"} onClick={() => mic("brief")} disabled={!!busy}><Ico d={listen === "brief" ? I_STOP : I_MIC} /></button>
+              <label className="ais-langw" title="Speaking language"><span className="ais-flag">{(LANGS.find((x) => x[0] === lang) || LANGS[0])[1]}</span>
+                <select className="ais-lang" value={lang} onChange={(e) => setLang(e.target.value)} disabled={!!listen || !!busy}>{LANGS.map(([v, , full]) => <option key={v} value={v}>{full.split("·").reverse().map((x) => x.trim()).join(" · ")}</option>)}</select></label>
+              {mode === "new" && <button className="ais-ic talk" title="Talk with AI — it asks you a few questions by voice, then builds" onClick={() => { stopMic(); setTalk(true); }} disabled={!!busy || !ready}><Ico d={I_TALK} /></button>}
+              <input ref={imgIn} type="file" hidden multiple accept="image/*" onChange={(e) => { addImages(e.target.files); e.target.value = ""; }} />
+              <input ref={docIn} type="file" hidden multiple accept=".pdf,.docx,.txt,.md,.csv,application/pdf,text/plain" onChange={(e) => { addDocs(e.target.files); e.target.value = ""; }} />
+            </div>
+            {listen === "brief" && <div className="ais-listen" onClick={stopMic}><span className="ais-wave"><i /><i /><i /><i /><i /></span><b>Listening… speak in {langName(lang)}</b><small>Tap to stop</small></div>}
+            {busy && <div className="ais-busy"><div className="ais-spark">✦</div><b>{busy}</b><span>{STEPS[step]}</span><div className="ais-prog"><i style={{ width: Math.min(95, 12 + step * 16) + "%" }} /></div><small>Usually 20–90 seconds. Keep this window open.</small></div>}
           </div>
-          {listen === "brief" && <div className="ais-listen" onClick={stopMic}><span className="ais-wave"><i /><i /><i /><i /><i /></span><b>Listening… speak in {langName(lang)}</b><small>Tap to stop</small></div>}
-          {busy && <div className="ais-busy"><div className="ais-spark">✦</div><b>{busy}</b><span>{STEPS[step]}</span><div className="ais-prog"><i style={{ width: Math.min(95, 12 + step * 16) + "%" }} /></div><small>Usually 20–90 seconds. Keep this window open.</small></div>}
+          <div className="ais-under">
+            {mode === "new" && <button className={"ais-voice" + (voiceOn ? " on" : "")} onClick={() => setVoice(!voiceOn)} title="The AI's voice in voice chat"><Ico d={voiceOn ? I_SPK : I_MUTE} s={20} />Voice {voiceOn ? "on" : "off"}<i /></button>}
+            <div className="grow" />
+            <button className="ais-go big" onClick={go} disabled={!!busy || !ready}><span className="ais-gsp">✦</span>{mode === "editor" ? (how === "section" ? "Add section" : "Rebuild page") : "Create " + (type === "website" ? "website" : "page")} <Ico d={I_ARROW} s={18} /></button>
+          </div>
         </div>
 
         {err && <div className="ais-err">{err}{!ready && <button onClick={onSetupAI}>Connect an AI</button>}</div>}
         {!ready && srv === false && !err && <div className="ais-err soft">Connect an AI first — paste a free Gemini key in Integrations → AI builders. <button onClick={onSetupAI}>Connect an AI</button></div>}
 
         {mode === "new" && !busy && <div className="ais-ideas">{IDEAS.map((x) => <button key={x} onClick={() => setPrompt(x)}><span>✦</span>{x.length > 50 ? x.slice(0, 48) + "…" : x}</button>)}</div>}
-        {talk && <VoiceChat ai={ai} lang={lang} onClose={() => setTalk(false)} onBrief={(b) => { setTalk(false); setPrompt(b); go(b); }} />}
+        {talk && <VoiceChat ai={ai} lang={lang} voiceOn={voiceOn} setVoice={setVoice} onClose={() => setTalk(false)} onBrief={(b) => { setTalk(false); setPrompt(b); go(b); }} />}
         <p className="ais-foot"><i>⬡</i>Pictures go into your page · documents give AI your real details (prices, services, dates) · Ctrl+Enter to create</p>
       </main>
     </div>
@@ -296,8 +314,9 @@ const GREET = {
   hi: "नमस्ते! मैं आपका पेज बनाने में मदद करूँगा। बताइए — आपका बिज़नेस क्या है, और यह पेज किस लिए है?",
 };
 const VSYS = (ln) => `You are a friendly website consultant talking BY VOICE with a small-business owner in India. Speak ${ln} (if they mix English words, that's fine — answer naturally the same way). Ask ONE short question at a time, at most 2 short sentences, no lists, no markdown, no emojis. Learn: what the business is and what the page is for, who it's for and the city, the offer / price / dates, what visitors should do (call, WhatsApp, form, buy), and preferred colours or style. After 3 to 6 answers — or as soon as the owner says to build / start / bas / ho gaya — reply with ONE short sentence in ${ln} saying you are building it now, then the word READY: and after it a complete, detailed brief in English for a web designer, starting with "Business name: <name>."  (business name, purpose, audience, sections, offer, prices, contact/CTA, colours, language for the page text). Never write READY: before that.`;
-function VoiceChat({ ai, lang, onBrief, onClose }) {
-  const [msgs, setMsgs] = useState([]), [st, setSt] = useState("thinking"), [live, setLive] = useState(""), [mute, setMute] = useState(false), [err, setErr] = useState("");
+function VoiceChat({ ai, lang, voiceOn = true, setVoice = () => {}, onBrief, onClose }) {
+  const [msgs, setMsgs] = useState([]), [st, setSt] = useState("thinking"), [live, setLive] = useState(""), [err, setErr] = useState("");
+  const mute = !voiceOn;
   const rec = useRef(null), alive = useRef(true), hist = useRef([]), muteRef = useRef(false), endRef = useRef(null);
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition, ln = langName(lang);
   muteRef.current = mute;
@@ -340,19 +359,28 @@ function VoiceChat({ ai, lang, onBrief, onClose }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [typed, setTyped] = useState("");
   const LBL = { speaking: "AI is speaking…", listening: "Listening — speak now", thinking: "Thinking…", idle: "Tap the mic to answer" };
+  const ROBO = <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M16 4v4M16 3.5h.01" /><rect x="5" y="9" width="22" height="17" rx="7" /><path d="M11 16.5c1-1.4 2.6-1.4 3.4 0M17.6 16.5c1-1.4 2.6-1.4 3.4 0M12 21c2.4 1.8 5.6 1.8 8 0" /><path d="M3 15v5M29 15v5" /></svg>;
+  const USER = <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4.2" /><path d="M3.5 21c.8-4.6 4.3-7 8.5-7s7.7 2.4 8.5 7z" /></svg>;
   return (
     <div className="vc-ov" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="vc-box">
+      <div className="vc-box v87">
+        <i className="vc-wave w1" /><i className="vc-wave w2" /><i className="vc-wave w3" />
         <button className="vc-x" onClick={onClose} title="End">✕</button>
-        <div className={"vc-orb " + st} onClick={() => (st === "listening" ? rec.current && rec.current.stop() : st === "idle" ? listen() : st === "speaking" ? window.speechSynthesis.cancel() : null)}>
-          <i /><i /><i /><span><Ico d={st === "listening" ? I_MIC : I_TALK} s={34} /></span></div>
-        <b className="vc-st">{LBL[st]}</b><small className="vc-lang">Talking in {ln}</small>
-        <div className="vc-log">{msgs.map((m, k) => <p key={k} className={m.who}>{m.t}</p>)}{live && <p className="me live">{live}</p>}<i ref={endRef} /></div>
+        <div className="vc-top">
+          <div className="vc-bot"><Robot mood={st === "thinking" ? "alert" : "happy"} /></div>
+          <div className={"vc-orb " + st} onClick={() => (st === "listening" ? rec.current && rec.current.stop() : st === "idle" ? listen() : st === "speaking" ? window.speechSynthesis.cancel() : null)} title={st === "idle" ? "Tap to answer" : ""}>
+            <i /><i /><span>{st === "listening" ? <Ico d={I_MIC} s={34} /> : <b className="vc-bars">{[0, 1, 2, 3, 4, 5, 6].map((k) => <em key={k} style={{ "--k": k }} />)}</b>}</span></div>
+          <b className="vc-st">{LBL[st]}</b><small className="vc-lang">Talking in {ln}</small>
+          <div className="vc-dots">{["speaking", "listening", "thinking"].map((x) => <i key={x} className={st === x ? "on" : ""} />)}</div>
+        </div>
+        <div className="vc-log">{msgs.map((m, k) => <div key={k} className={"vc-m " + m.who}><span className="vc-av">{m.who === "ai" ? ROBO : USER}</span><p>{m.t}</p></div>)}
+          {live && <div className="vc-m me live"><span className="vc-av">{USER}</span><p>{live}</p></div>}<i ref={endRef} /></div>
         {err && <div className="aip-err">{err}</div>}
         <form className="vc-type" onSubmit={(e) => { e.preventDefault(); if (typed.trim() && st !== "thinking") { halt(); send(typed.trim()); setTyped(""); } }}>
-          <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="…or type your answer" /><button disabled={!typed.trim() || st === "thinking"}>Send</button></form>
-        <div className="vc-acts"><button onClick={() => setMute(!mute)}>{mute ? "🔇 Voice off" : "🔊 Voice on"}</button>
-          <button className="vc-go" disabled={st === "thinking" || hist.current.filter((x) => x.who === "me").length < 1} onClick={() => { halt(); send("That's enough — please build it now."); }}>✦ Build it now</button></div>
+          <label><span>✦</span><input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="…or type your answer" /></label>
+          <button disabled={!typed.trim() || st === "thinking"}><Ico d={I_SEND} s={18} />Send</button></form>
+        <div className="vc-acts"><button className={"vc-voice" + (voiceOn ? " on" : "")} onClick={() => { if (voiceOn) try { window.speechSynthesis.cancel(); } catch { /* ignore */ } setVoice(!voiceOn); }}><Ico d={voiceOn ? I_SPK : I_MUTE} s={20} />Voice {voiceOn ? "on" : "off"}<i /></button>
+          <button className="vc-go" disabled={st === "thinking" || hist.current.filter((x) => x.who === "me").length < 1} onClick={() => { halt(); send("That's enough — please build it now."); }}><span>✦</span>Build it now <Ico d={I_ARROW} s={18} /></button></div>
       </div>
     </div>
   );

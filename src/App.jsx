@@ -4,10 +4,12 @@ import Auth from "./components/Auth.jsx";
 import { cloudOn, cloudUser, cloudLogout, startCloud } from "./cloud.js";
 import Dashboard from "./components/Dashboard.jsx";
 import { Preview, FormPage, BookPage } from "./components/parts.jsx";
+import { TplView } from "./components/Rail.jsx";
 
 // Hash routes: "#/preview/<token>/<page.html>" = temporary preview link, "#/form/<id>" = form share link; everything else is the app.
 const route = () => {
   const f = location.hash.match(/^#\/form\/([\w-]+)/); if (f) return { form: f[1] };
+  const tp = location.hash.match(/^#\/tpl\/([\w%.-]+)/); if (tp) return { tpl: decodeURIComponent(tp[1]) };
   const bk = location.hash.match(/^#\/book\/([\w-]+)/); if (bk) return { book: bk[1] };
   const m = location.hash.match(/^#\/preview\/([^/]+)\/?(.*)$/); return m ? { token: m[1], file: decodeURIComponent(m[2] || "") || "index.html" } : null;
 };
@@ -30,6 +32,7 @@ export default function App() {
     startCloud(u).then((r) => { if (r && r.changed && !waiting) window.dispatchEvent(new CustomEvent("lb-cloud-pull", { detail: ["all"] })); }).catch((e) => console.warn("cloud:", e)).finally(() => { clearTimeout(t); setReady(true); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   if (pv && pv.form) return <FormPage key={pv.form} id={pv.form} />;
+  if (pv && pv.tpl) return <TplView key={pv.tpl} k={pv.tpl} />;
   if (pv && pv.book) return <BookPage key={pv.book} id={pv.book} />;
   if (pv) return <Preview key={pv.token} token={pv.token} file={pv.file} />;
   if (!ready) return /^#\/studio/.test(location.hash) ? <div className="ais-boot"><span className="pub-spin" /></div> : <div className="boot"><span className="pub-spin" />Loading your workspace…</div>;
