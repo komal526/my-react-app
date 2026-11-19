@@ -1,31 +1,32 @@
 // LaunchBuilder v66 — Dashboard.jsx
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
-const Editor = lazy(() => import("./Editor.jsx"));
 import { Sidebar, NewModal, PublishModal } from "./parts.jsx";
 import MyPages from "./MyPages.jsx";
+import Leads from "./Leads.jsx";
+import { Icon } from "./icons.jsx";
+import { RailView, RI } from "./Rail.jsx";
+import { BRAND } from "../brand.js";
+import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount, FILE_TEMPLATES } from "../lib.js";
+import { formHtml, bookingWidget } from "./tools.js";
+import { resolveEvents } from "./insights.js";
+const Editor = lazy(() => import("./Editor.jsx"));
 const Templates = lazy(() => import("./Templates.jsx"));
 const Domains = lazy(() => import("./Domains.jsx"));
-import Leads from "./Leads.jsx";
 const Forms = lazy(() => import("./Forms.jsx"));
 const Analytics = lazy(() => import("./Analytics.jsx"));
 const Integrations = lazy(() => import("./Integrations.jsx"));
 const Calendar = lazy(() => import("./Calendar.jsx"));
-import { Icon } from "./icons.jsx";
-import { RailView, RI } from "./Rail.jsx";QA
 const Settings = lazy(() => import("./Settings.jsx"));
 const Pixels = lazy(() => import("./Pixels.jsx"));
 const LMS = lazy(() => import("./LMS.jsx"));
 const ImportPage = lazy(() => import("./ImportPage.jsx"));
 const FollowUps = lazy(() => import("./FollowUps.jsx"));
 const Consultant = lazy(() => import("./Consultant.jsx"));
-const AiStudio = lazy(() => import("./AiStudio.jsx"));
-const AiEditor = lazy(() => import("./AiStudio.jsx").then((m) => ({ default: m.AiEditor })));
-/* opened as #/studio in a new tab → start loading the studio right away (no dashboard flash) */
-if (/^#\/studio/.test(location.hash)) import("./AiStudio.jsx");
-import { BRAND } from "../brand.js";
-import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount, FILE_TEMPLATES } from "../lib.js";
-import { formHtml, bookingWidget } from "./tools.js";
-import { resolveEvents } from "./insights.js";
+/* AI Studio: one loader for both screens · opened as #/studio in a new tab → start loading it right away (no dashboard flash) */
+const loadStudio = () => import("./AiStudio.jsx");
+const AiStudio = lazy(loadStudio);
+const AiEditor = lazy(() => loadStudio().then((m) => ({ default: m.AiEditor })));
+if (/^#\/studio/.test(location.hash)) { loadStudio(); }
 
 /* replace every copy of a linked calendar inside a page with its latest version */
 /* a quick fingerprint of a project's pages, to know whether a new project was changed */

@@ -4,6 +4,9 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { serverAiReady, LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
 import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
 import { cloudOn, lastStatus } from "../cloud.js";
+import { Icon } from "./icons.jsx";
+import { RailView, RI } from "./Rail.jsx";
+import { BRAND } from "../brand.js";
 /* small "saved to cloud" indicator in the sidebar */
 function CloudStatus() {
   const [st, setSt] = useState(lastStatus.s), [why, setWhy] = useState(lastStatus.why);
@@ -12,9 +15,6 @@ function CloudStatus() {
   const M = { saved: ["☁", "Saved to cloud"], saving: ["⟳", "Saving…"], loading: ["⟳", "Loading…"], offline: ["⚠", "Not saved to cloud"] }[st] || ["☁", "Saved to cloud"];
   return <div className={"cloud-st " + st}><div><span>{M[0]}</span> {M[1]}</div>{st === "offline" && why && <small>{why}</small>}</div>;
 }
-import { Icon } from "./icons.jsx";
-import { RailView, RI } from "./Rail.jsx";
-import { BRAND } from "../brand.js";
 
 /* ==================== Modal, Thumb, Sidebar, NewModal, PublishModal ==================== */
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal

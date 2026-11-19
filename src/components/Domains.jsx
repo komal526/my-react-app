@@ -1,8 +1,8 @@
 // LaunchBuilder v67 — Domains.jsx (free subdomains · your own domains · admin panel at the bottom)
 import { useState, useEffect, lazy, Suspense } from "react";
 import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS, defaultServerUrl, subUrl, subList, subClaim, subDelete, subsCache, liveAddr, domainState } from "../lib.js";
-const AdminPanel = lazy(() => import("./Admin.jsx"));
 import { BRAND } from "../brand.js";
+const AdminPanel = lazy(() => import("./Admin.jsx"));
 
 /* ================= Domains: connect a custom domain (DNS records or nameservers) and verify ================= */
 const copy = (t) => (navigator.clipboard ? navigator.clipboard.writeText(t).catch(() => window.prompt("Copy:", t)) : window.prompt("Copy:", t));

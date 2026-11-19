@@ -1,12 +1,12 @@
 // LaunchBuilder v15 — Editor.jsx
 // The builder: canvas, top bar, left panel (Add / Layers / Pages / Site / Edit)
 import { useState, useRef, useEffect, lazy, Suspense } from "react";
-const AiStudio = lazy(() => import("./AiStudio.jsx"));
 import { uid, slug, uniqFile, addr, previewToken, previewUrl, aiSection, aiEditPart, aiEditPage, browserAi, serverAiReady, AI_PROVIDERS } from "../lib.js";
 import { makeZip, EDITOR_CSS, CONT, WIDTH, cleanNode, nameOf, WIDGET_CSS, finalize, readCfg, LIB, PAGE_TPLS, hydrate, STRUCTURES, structureHtml, formHtml, bookingWidget } from "./tools.js";
 import Inspector, { Icon, QuickBar } from "./Inspector.jsx";
 import { BRAND } from "../brand.js";
 import PagesPanel, { Layers, SiteSettings, writeCfg } from "./PagesPanel.jsx";
+const AiStudio = lazy(() => import("./AiStudio.jsx"));
 
 const MQ = { tablet: "(max-width:1024px)", mobile: "(max-width:767px)" };
 const kebab = (k) => k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());

@@ -25,6 +25,21 @@
   </head>
   <body>
     <div id="root"><div class="lb-boot"><i></i><div><span><b></b>Loading LaunchBuilder…</span></div></div></div>
+    <script>
+      /* if the app can't start, show WHY instead of "Loading…" forever */
+      (function () {
+        function show(m) {
+          var box = document.querySelector("#root .lb-boot div"); if (!box) return;
+          box.innerHTML = '<div style="max-width:680px;padding:24px;text-align:left;font-size:14px;line-height:1.5"><strong style="display:block;color:#b91c1c;font-size:17px">LaunchBuilder could not start</strong>' +
+            '<p>Press <strong>Ctrl+Shift+R</strong>. If this stays, send a screenshot of this box.</p><pre style="white-space:pre-wrap;font-size:12px;background:#fff;border:1px solid #e5e7eb;padding:12px;border-radius:10px;max-height:300px;overflow:auto">' +
+            String(m || "").replace(/</g, "&lt;").slice(0, 3000) + '</pre><button style="padding:10px 16px;border-radius:10px;border:0;background:#0f1238;color:#f5b301;font-weight:700;cursor:pointer" onclick="location.reload()">Reload</button></div>';
+        }
+        window.__lbBootError = show;
+        window.addEventListener("error", function (e) { if (e.target && e.target !== window && e.target.tagName !== "SCRIPT") return; show((e.error && e.error.stack) || e.message || ("Could not load " + ((e.target && (e.target.src || e.target.href)) || "a file"))); }, true);
+        window.addEventListener("unhandledrejection", function (e) { var r = e.reason; show((r && (r.stack || r.message)) || r); });
+        setTimeout(function () { show("Still loading after 25 seconds. The newest files may not have built on the server: run lb-deploy again and check its last lines for an error."); }, 25000);
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
