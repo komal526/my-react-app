@@ -137,7 +137,8 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
   /* ---- voice chat: same AI, short spoken answers; the talk is kept in the chat afterwards ---- */
   const LN = ((LANGS.find((x) => x[0] === lang) || LANGS[0])[2].split("·").pop() || "English").trim();
   const voiceGreet = () => (tab === "plan" ? "Hi! Tell me about the page you want to build — your business, and what visitors should do." : r ? `I checked ${r.p.name}. Its score is ${r.score} out of 100. Ask me anything — for example, how to get more sign-ups.` : "Create a page first, then I can check it for you.");
-  const voiceAsk = async (h) => {
+  const voiceAsk = async (h, lg) => {
+    const LN = ((LANGS.find((x) => x[0] === (lg || lang)) || LANGS[0])[2].split("·").pop() || "English").trim();
     const msgs0 = h.map((x) => ({ role: x.who === "ai" ? "assistant" : "user", content: x.t })); while (msgs0.length && msgs0[0].role === "assistant") msgs0.shift();
     const sys = (tab === "plan" ? PLAN_SYS : ASK_SYS + "\n\n" + contextFor(r)) + `\n\nYOU ARE TALKING BY VOICE, like a real expert on a phone call: reply in ${LN}. First think about their real numbers and page, then give your honest view and concrete advice in 2 to 5 short, natural, warm sentences (contractions, \"Hmm\", \"Here\'s what I\'d do\"). Answer exactly what they asked; ask one follow-up only if it really helps. No lists, no markdown, no emojis — it is read aloud.` + (tab === "plan" ? " Only when the plan is complete, write the full plan as text and end with PLAN READY." : "");
     return askAI(integ, sys, [...(tab === "plan" ? planMsgs : msgs).map(({ role, content }) => ({ role, content })), ...msgs0], tab === "plan" ? 1800 : 900);
@@ -176,7 +177,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
   const tips = r ? r.issues.filter((i) => i.sev > 0).slice(0, 3) : [];
   return (
     <div className="cn-wrap" onClick={onClose}>
-      <aside className="cn v88" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="AI Consultant">
+      <aside className={"cn v88" + (talk ? " cn-talking" : "")} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="AI Consultant">
         <header className="cn-top">
           <span className="cn-bot"><Robot mood={busy ? "alert" : "happy"} /></span>
           <div className="grow"><b>AI Consultant</b><small className={"cn-stat " + (ready === null ? "" : ready ? "ok" : "off")}><i />{ready === null ? "Checking AI…" : ready ? "Online · " + ready : "Audit mode · add an AI key for full answers"}</small></div>
@@ -236,7 +237,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
             <button className="pri cn-send" disabled={!q.trim() || !!busy} aria-label="Send"><Icon n="send" s={17} /></button>
             <button type="button" className="cn-talk" onClick={() => { if (listen && recog.current) recog.current.stop(); setTalk(true); }} disabled={!!busy} title="Voice chat — talk with the AI"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 12a8 8 0 0114.9-4" /><path d="M20 12a8 8 0 01-14.9 4" /><path d="M9 10v4M12 8v8M15 10v4" /></svg><span>Talk</span></button>
           </form>
-          {talk && <VoiceChat integ={integ} lang={lang} voiceOn={voiceOn} setVoice={setVoice} greet={voiceGreet()} ask={voiceAsk} onClose={voiceClose} />}
+          {talk && <VoiceChat inline integ={integ} lang={lang} onLang={setLang} voiceOn={voiceOn} setVoice={setVoice} greet={voiceGreet()} ask={voiceAsk} onClose={voiceClose} />}
         </>}
       </aside>
     </div>

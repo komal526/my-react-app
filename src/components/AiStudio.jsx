@@ -205,7 +205,8 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
           </> : <div className="ais-seg">{[["section", "Add a new section"], ["page", "Replace the whole page"]].map(([k, l]) => <button key={k} className={how === k ? "on" : ""} onClick={() => setHow(k)} disabled={!!busy}>{l}</button>)}</div>}
         </div>
 
-        <div className="ais-wrap">
+        {talk && <VoiceChat inline ai={ai} integ={integ} lang={lang} onLang={setLang} voiceOn={voiceOn} setVoice={setVoice} onClose={() => setTalk(false)} onBrief={(b) => { setTalk(false); setPrompt(b); go(b); }} />}
+        {!talk && <div className="ais-wrap">
           <div className="ais-walk"><div className="ais-bot2"><Robot mood={busy ? "alert" : "happy"} /></div></div>
           <div className={"ais-box v87" + (listen ? " rec" : "") + (busy ? " busy" : "")}>
             <div className="ais-in">
@@ -239,13 +240,12 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
             <div className="grow" />
             <button className="ais-go big" onClick={go} disabled={!!busy || !ready}><span className="ais-gsp">✦</span>{mode === "editor" ? (how === "section" ? "Add section" : "Rebuild page") : "Create " + (type === "website" ? "website" : "page")} <Ico d={I_ARROW} s={18} /></button>
           </div>
-        </div>
+        </div>}
 
         {err && <div className="ais-err">{err}{!ready && <button onClick={onSetupAI}>Connect an AI</button>}</div>}
         {!ready && srv === false && !err && <div className="ais-err soft">Connect an AI first — paste a free Gemini key in Integrations → AI builders. <button onClick={onSetupAI}>Connect an AI</button></div>}
 
-        {mode === "new" && !busy && <div className="ais-ideas">{IDEAS.map((x) => <button key={x} onClick={() => setPrompt(x)}><span>✦</span>{x.length > 50 ? x.slice(0, 48) + "…" : x}</button>)}</div>}
-        {talk && <VoiceChat ai={ai} integ={integ} lang={lang} voiceOn={voiceOn} setVoice={setVoice} onClose={() => setTalk(false)} onBrief={(b) => { setTalk(false); setPrompt(b); go(b); }} />}
+        {mode === "new" && !busy && !talk && <div className="ais-ideas">{IDEAS.map((x) => <button key={x} onClick={() => setPrompt(x)}><span>✦</span>{x.length > 50 ? x.slice(0, 48) + "…" : x}</button>)}</div>}
         <p className="ais-foot"><i>⬡</i>Pictures go into your page · documents give AI your real details (prices, services, dates) · Ctrl+Enter to create</p>
       </main>
     </div>
@@ -333,13 +333,16 @@ const bestVoice = (lang) => {
   return ok.sort((a, b) => score(b) - score(a))[0] || null;
 };
 /* ask(hist) → the reply text (used by the AI Consultant) · greet = first line · onClose(hist) gets the conversation */
-export function VoiceChat({ ai, integ = {}, lang, voiceOn = true, setVoice = () => {}, onBrief, onClose, ask, greet }) {
+/* inline = shown inside the page (no pop-up) · onLang(v) = the language was changed in the chat */
+export function VoiceChat({ ai, integ = {}, lang: lang0, voiceOn = true, setVoice = () => {}, onBrief, onClose, ask, greet, inline = false, onLang }) {
+  const [lang, setLg] = useState(lang0), lref = useRef(lang0), askRef = useRef(ask); lref.current = lang; askRef.current = ask;
   const [msgs, setMsgs] = useState([]), [st, setSt] = useState("thinking"), [live, setLive] = useState(""), [err, setErr] = useState(""), [notes, setNotes] = useState(""), [tk, setTk] = useState(0);
   const [vname, setVname0] = useState(() => { try { return localStorage.getItem("lb_ai_vname") || "Kore"; } catch { return "Kore"; } }), [natural, setNatural] = useState(true);
   const setVname = (v) => { setVname0(v); try { localStorage.setItem("lb_ai_vname", v); } catch { /* ignore */ } };
   const mute = !voiceOn;
   const rec = useRef(null), alive = useRef(true), hist = useRef([]), muteRef = useRef(false), endRef = useRef(null), audio = useRef(null), orb = useRef(null), raf = useRef(0), misses = useRef(0), vref = useRef(vname);
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition, ln = langName(lang);
+  const curLang = () => lref.current, curLn = () => langName(lref.current);
   muteRef.current = mute; vref.current = vname;
   useEffect(() => { endRef.current && endRef.current.scrollIntoView({ block: "end" }); }, [msgs, live]);
   useEffect(() => { if (st !== "thinking") return; const t = setInterval(() => setTk((k) => k + 1), 1800); return () => clearInterval(t); }, [st]);
@@ -361,7 +364,7 @@ export function VoiceChat({ ai, integ = {}, lang, voiceOn = true, setVoice = () 
     if (muteRef.current || !alive.current || !t) return;
     setSt("speaking");
     /* 1) natural AI voice */
-    const url = await aiTts(integ, t, vref.current, "Say this in a warm, natural, friendly conversational voice" + (lang.startsWith("en") ? " with an Indian English accent" : " in " + ln));
+    const url = await aiTts(integ, t, vref.current, "Say this in a warm, natural, friendly conversational voice" + (curLang().startsWith("en") ? " with an Indian English accent" : " in " + curLn()));
     if (!alive.current) return;
     if (url) {
       setNatural(true);
@@ -372,8 +375,8 @@ export function VoiceChat({ ai, integ = {}, lang, voiceOn = true, setVoice = () 
     setNatural(false);
     await new Promise((ok) => {
       const S = window.speechSynthesis; if (!S) return ok();
-      S.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = lang; u.rate = 1.02; u.pitch = 1;
-      const v = bestVoice(lang); if (v) u.voice = v; u.onend = ok; u.onerror = ok; pulse(null); S.speak(u);
+      S.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = curLang(); u.rate = 1.02; u.pitch = 1;
+      const v = bestVoice(curLang()); if (v) u.voice = v; u.onend = ok; u.onerror = ok; pulse(null); S.speak(u);
       setTimeout(ok, 3000 + t.length * 150);   /* some browsers never fire "end" */
     });
     calm();
@@ -382,7 +385,7 @@ export function VoiceChat({ ai, integ = {}, lang, voiceOn = true, setVoice = () 
     if (!alive.current) return;
     if (!SR) { setErr("Voice needs Chrome or Edge. You can still type below."); setSt("idle"); return; }
     stopTalk();
-    const r = new SR(); r.lang = lang; r.interimResults = true; r.continuous = false; rec.current = r; let fin = "";
+    const r = new SR(); r.lang = curLang(); r.interimResults = true; r.continuous = false; rec.current = r; let fin = "";
     r.onresult = (e) => { let it = ""; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) fin += t + " "; else it += t; } setLive(fin + it); };
     r.onerror = (e) => { if (e.error === "not-allowed") { setErr("Allow the microphone for this site (lock icon in the address bar)."); misses.current = 9; } };
     r.onend = () => {
@@ -399,9 +402,9 @@ export function VoiceChat({ ai, integ = {}, lang, voiceOn = true, setVoice = () 
     if (!first) push("me", text);
     setSt("thinking"); setTk(0);
     try {
-      if (ask) { const a = String(await ask(hist.current)).replace(/[*#_`]/g, "").replace(/\n{2,}/g, "\n").trim(); if (!alive.current) return; push("ai", a); await say(a); listen(); return; }
+      if (askRef.current) { const a = String(await askRef.current(hist.current, curLang())).replace(/[*#_`]/g, "").replace(/\n{2,}/g, "\n").trim(); if (!alive.current) return; push("ai", a); await say(a); listen(); return; }
       const tr = hist.current.map((x) => (x.who === "ai" ? "Consultant: " : "Owner: ") + x.t).join("\n");
-      const out = (await callAI(ai || {}, VSYS(ln), (first ? "(Start the conversation: greet warmly in one or two lines and invite them to tell you about their business.)" : tr) + "\nConsultant:", 2500)).replace(/^\s*Consultant:\s*/i, "").replace(/[*#_`]/g, "").trim();
+      const out = (await callAI(ai || {}, VSYS(curLn()), (first ? "(Start the conversation: greet warmly in one or two lines and invite them to tell you about their business.)" : tr) + "\nConsultant:", 2500)).replace(/^\s*Consultant:\s*/i, "").replace(/[*#_`]/g, "").trim();
       if (!alive.current) return;
       const k = out.search(/READY:/i);
       if (k >= 0 && onBrief) { const bye = split(out.slice(0, k))[0], brief = out.slice(k + 6).trim(); if (bye) { push("ai", bye); await say(bye); } if (alive.current) onBrief(brief + (notes ? "\n\nSummary: " + notes : "") + "\n\nConversation:\n" + hist.current.filter((x) => x.who === "me").map((x) => "- " + x.t).join("\n")); return; }
@@ -415,13 +418,14 @@ export function VoiceChat({ ai, integ = {}, lang, voiceOn = true, setVoice = () 
     return () => { alive.current = false; halt(); stopTalk(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [typed, setTyped] = useState("");
+  const changeLang = (v) => { setLg(v); lref.current = v; onLang && onLang(v); try { localStorage.setItem("lb_ai_lang", v); } catch { /* ignore */ } if (st === "listening") { halt(); misses.current = 0; setTimeout(listen, 150); } };
   const LBL = { speaking: "AI is speaking… tap to interrupt", listening: "Listening — just talk", thinking: THINK[tk % THINK.length], idle: "Tap the circle to talk" };
   const tapOrb = () => { if (st === "listening") { rec.current && rec.current.stop(); } else if (st === "speaking") { stopTalk(); misses.current = 0; listen(); } else if (st === "idle") { misses.current = 0; listen(); } };
   const ROBO = <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M16 4v4M16 3.5h.01" /><rect x="5" y="9" width="22" height="17" rx="7" /><path d="M11 16.5c1-1.4 2.6-1.4 3.4 0M17.6 16.5c1-1.4 2.6-1.4 3.4 0M12 21c2.4 1.8 5.6 1.8 8 0" /><path d="M3 15v5M29 15v5" /></svg>;
   const USER = <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4.2" /><path d="M3.5 21c.8-4.6 4.3-7 8.5-7s7.7 2.4 8.5 7z" /></svg>;
   return (
-    <div className="vc-ov" onClick={(e) => e.target === e.currentTarget && onClose(hist.current)}>
-      <div className="vc-box v87 v93">
+    <div className={inline ? "vc-inline" : "vc-ov"} onClick={(e) => !inline && e.target === e.currentTarget && onClose(hist.current)}>
+      <div className={"vc-box v87 v93" + (inline ? " inl" : "")}>
         <i className="vc-wave w1" /><i className="vc-wave w2" /><i className="vc-wave w3" />
         <button className="vc-x" onClick={() => onClose(hist.current)} title="End">✕</button>
         <div className="vc-top">
@@ -429,7 +433,7 @@ export function VoiceChat({ ai, integ = {}, lang, voiceOn = true, setVoice = () 
           <div ref={orb} className={"vc-orb " + st} onClick={tapOrb} title={LBL[st]}>
             <i /><i /><span>{st === "listening" ? <Ico d={I_MIC} s={34} /> : st === "thinking" ? <b className="vc-think"><em /><em /><em /></b> : <b className="vc-bars">{[0, 1, 2, 3, 4, 5, 6].map((k) => <em key={k} style={{ "--k": k }} />)}</b>}</span></div>
           <b className="vc-st">{LBL[st]}</b>
-          <small className="vc-lang">Talking in {ln}</small>
+          <label className="vc-lsel" title="Talk in any language — change it any time"><span>🌐</span><select value={lang} onChange={(e) => changeLang(e.target.value)}>{LANGS.map(([v, , full]) => <option key={v} value={v}>{full.split("·").reverse().map((x) => x.trim()).join(" · ")}</option>)}</select></label>
           <div className="vc-dots">{["speaking", "listening", "thinking"].map((x) => <i key={x} className={st === x ? "on" : ""} />)}</div>
         </div>
         <div className="vc-log">{msgs.map((m, k) => <div key={k} className={"vc-m " + m.who}><span className="vc-av">{m.who === "ai" ? ROBO : USER}</span><p>{m.t}</p></div>)}

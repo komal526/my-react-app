@@ -4274,3 +4274,27 @@ html.lb-hidden .ais-bot2{animation-play-state:paused}
 .vc-vsel option{color:#0d1324}
 .vc-box.v93 .vc-go{margin-left:auto}
 @media (max-width:560px){.vc-vsel{max-width:120px}}
+/* v94 — voice chat inside the page (no pop-up) + language picker */
+.vc-inline{position:relative;display:flex;justify-content:center;margin:26px auto 0;max-width:760px;text-align:left}
+.vc-box.inl{width:100%;max-height:none;animation:lbPop .3s both}
+.vc-box.inl .vc-log{max-height:38vh}
+.vc-lsel{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:4px 6px 4px 12px;border-radius:999px;background:rgba(10,14,50,.55);border:1px solid rgba(255,255,255,.2);cursor:pointer}
+.vc-lsel span{font-size:14px}
+.vc-lsel select{border:0;background:transparent;color:#fff;font:inherit;font-size:14.5px;font-weight:600;padding:4px 2px;cursor:pointer;outline:none}
+.vc-lsel select option{color:#0d1324}
+/* consultant: the talk replaces the chat area */
+.dash .cn.v88.cn-talking .cn-body,.dash .cn.v88.cn-talking .cn-chips,.dash .cn.v88.cn-talking .cn-in,.dash .cn.v88.cn-talking .cn-ctx,.dash .cn.v88.cn-talking .cn-build{display:none!important}
+.dash .cn.v88 .vc-inline{flex:1;margin:0;padding:4px 12px 14px;overflow:auto;max-width:none}
+.dash .cn.v88 .vc-box.inl{border-radius:28px;padding-bottom:16px}
+.dash .cn.v88 .vc-box.inl .vc-bot{width:96px}.dash .cn.v88 .vc-box.inl .vc-bot .rb4{width:96px}
+.dash .cn.v88 .vc-box.inl .vc-orb{width:112px;height:112px}.dash .cn.v88 .vc-box.inl .vc-orb span{width:90px;height:90px}
+.dash .cn.v88 .vc-box.inl .vc-st{font-size:19px;text-align:center}
+.dash .cn.v88 .vc-box.inl .vc-type,.dash .cn.v88 .vc-box.inl .vc-acts{margin-left:14px;margin-right:14px}
+.dash .cn.v88 .vc-box.inl .vc-log{margin:6px 14px 0}
+.dash .cn.v88 .vc-box.inl .vc-type button{padding:0 16px!important}
+.dash .cn.v88 .vc-box.inl .vc-acts{flex-wrap:wrap}
+.dash .cn.v88 .vc-box.inl button{box-shadow:none}
+.dash .vc-box .vc-vsel{background:rgba(10,14,50,.55)!important;color:#fff!important;border:1px solid rgba(255,255,255,.22)!important;border-radius:999px!important;height:46px!important}
+.dash .vc-box .vc-x{background:rgba(10,14,50,.6)!important;color:#fff!important;border:1px solid rgba(255,255,255,.22)!important;border-radius:50%!important;padding:0!important}
+.dash .vc-box .vc-voice{background:rgba(10,14,50,.55)!important;color:#fff!important;border:2px solid rgba(255,255,255,.35)!important}
+.dash .vc-box .vc-lsel select{background:transparent!important;color:#fff!important;border:0!important;height:auto!important;box-shadow:none!important}
