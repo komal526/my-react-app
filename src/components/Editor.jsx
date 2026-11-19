@@ -357,8 +357,8 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
   };
   const curPage = page.pages.find((p) => p.id === curRef.current) || page.pages[0];
   const prevLink = () => previewUrl(previewToken(user.email, page.id), curPage.file);
-  const preview = () => { flush(); setTimeout(() => window.open(prevLink(), "_blank"), 60); };
-  const copyLink = async () => { flush(); const u = prevLink(); try { await navigator.clipboard.writeText(u); say("Preview link copied — valid for 72 hours"); } catch { window.prompt("Copy this preview link:", u); } };
+  const preview = () => { flush(); setTimeout(() => { if (window.__lbSave) window.__lbSave(); window.open(prevLink(), "_blank"); }, 60); };
+  const copyLink = async () => { flush(); setTimeout(() => window.__lbSave && window.__lbSave(), 60); const u = prevLink(); try { await navigator.clipboard.writeText(u); say("Preview link copied — valid for 72 hours"); } catch { window.prompt("Copy this preview link:", u); } };
   const toCode = () => { flush(); const h = exportHtml(); setSrc(h); setCodeText(h); setMode("code"); };
 
   /* ---------------- layout maths ---------------- */

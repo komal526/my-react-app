@@ -32,6 +32,6 @@ export default function App() {
   if (pv && pv.form) return <FormPage key={pv.form} id={pv.form} />;
   if (pv && pv.book) return <BookPage key={pv.book} id={pv.book} />;
   if (pv) return <Preview key={pv.token} token={pv.token} file={pv.file} />;
-  if (!ready) return <div className="boot"><span className="pub-spin" />Loading your workspace…</div>;
+  if (!ready) return /^#\/studio/.test(location.hash) ? <div className="ais-boot"><span className="pub-spin" /></div> : <div className="boot"><span className="pub-spin" />Loading your workspace…</div>;
   return user ? <Dashboard key={user.email} user={user} onLogout={logout} /> : <Auth onLogin={login} />;
 }

@@ -18,6 +18,8 @@ const ImportPage = lazy(() => import("./ImportPage.jsx"));
 const FollowUps = lazy(() => import("./FollowUps.jsx"));
 const Consultant = lazy(() => import("./Consultant.jsx"));
 const AiStudio = lazy(() => import("./AiStudio.jsx"));
+/* opened as #/studio in a new tab → start loading the studio right away (no dashboard flash) */
+if (/^#\/studio/.test(location.hash)) import("./AiStudio.jsx");
 import { BRAND } from "../brand.js";
 import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount } from "../lib.js";
 import { formHtml, bookingWidget } from "./tools.js";
@@ -119,7 +121,7 @@ export default function Dashboard({ user, onLogout }) {
   /* new projects (from scratch, a template or AI) stay "unsaved" until you press Save — they live in lb_drafts_ (this browser only).
      After a reload, a draft you changed comes back marked "Not saved"; an untouched one is dropped. */
   const DK = "lb_drafts_" + E;
-  const [projects, setProjects] = useState(() => { let d = []; try { d = JSON.parse(localStorage.getItem(DK) || "[]"); } catch { d = []; } return [...d.filter((p) => pagesHash(p.pages) !== p.orig).map((p) => ({ ...p, recovered: true })), ...loadProjects(E)]; });
+  const [projects, setProjects] = useState(() => { let d = []; try { d = JSON.parse(localStorage.getItem(DK) || "[]"); } catch { d = []; } return [...d.filter((p) => p.kept || pagesHash(p.pages) !== p.orig).map((p) => ({ ...p, recovered: true })), ...loadProjects(E)]; });
   const [toast, setToast] = useState(""); useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 3500); return () => clearTimeout(t); }, [toast]);
   const [forms, setForms] = useState(() => loadForms(E)), [leads, setLeads] = useState(() => loadLeads(E)), [events, setEvents] = useState(() => loadEvents(E));
   const [view, setView] = useState("pages"), [openId, setOpenId] = useState(null), [modal, setModal] = useState(null);
@@ -139,6 +141,14 @@ export default function Dashboard({ user, onLogout }) {
   useEffect(() => { if (view !== "admin") return; setView("domains"); let n = 0; const t = setInterval(() => { const el = document.querySelector(".adm-embed"); if (el || ++n > 40) { clearInterval(t); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); } }, 150); }, [view]);
   const [studio, setStudio] = useState(() => { if (!/^#\/studio/.test(location.hash)) return null; let o = {}; try { o = JSON.parse(localStorage.getItem("lb_studio_go") || "{}"); localStorage.removeItem("lb_studio_go"); } catch { o = {}; } return { type: o.type || "landing", name: o.name || "", prompt: o.prompt || "", tab: true }; });
   const studioTab = (o = {}) => { try { localStorage.setItem("lb_studio_go", JSON.stringify(o)); } catch { /* ignore */ } const w = window.open(location.origin + location.pathname + "#/studio", "_blank"); if (!w) setStudio(o); };
+  /* the studio finished: save → your projects · editor → opens it (kept in Drafts until saved) · draft → Drafts */
+  const studioDone = (n, pages, t, how = "editor") => {
+    if (studio && studio.tab) history.replaceState(null, "", location.pathname + location.search);
+    setStudio(null);
+    if (how === "save") { if (full()) return; create(n, pages, t, undefined, { save: true, open: false }); setView("projects"); setPjKind({ k: "all" }); setToast("✓ “" + n + "” saved to your projects"); }
+    else if (how === "draft") { create(n, pages, t, undefined, { open: false, kept: true }); setView("projects"); setPjKind({ k: "drafts" }); setToast("📝 “" + n + "” kept in Drafts"); }
+    else create(n, pages, t, undefined, { ask: false, kept: true });
+  };
   const closeStudio = () => { if (studio && studio.tab) { history.replaceState(null, "", location.pathname + location.search); if (window.opener) { window.close(); } } setStudio(null); };
   /* my account on the server: role (admin / workspace owner / user), free-subdomain limit, paused accounts */
   const [me, setMe] = useState(null), [blocked, setBlocked] = useState(null), [domFocus, setDomFocus] = useState(null);
@@ -147,7 +157,7 @@ export default function Dashboard({ user, onLogout }) {
     const f = (e) => setBlocked(e.detail); window.addEventListener("lb-blocked", f); return () => window.removeEventListener("lb-blocked", f);
   }, []);
   /* warm up the builder in the background — skipped when the browser asks to save data */
-  useEffect(() => { const c = navigator.connection; if (c && (c.saveData || /2g/.test(c.effectiveType || ""))) return; const t = setTimeout(() => { import("./Editor.jsx"); import("./Templates.jsx"); }, 2500); return () => clearTimeout(t); }, []);
+  useEffect(() => { const c = navigator.connection; if (c && (c.saveData || /2g/.test(c.effectiveType || ""))) return; const t = setTimeout(() => { import("./Editor.jsx"); import("./Templates.jsx"); import("./Domains.jsx"); }, 700); return () => clearTimeout(t); }, []);
   /* pause every animation while the tab is in the background */
   useEffect(() => { const f = () => document.documentElement.classList.toggle("lb-hidden", document.visibilityState === "hidden"); document.addEventListener("visibilitychange", f); return () => document.removeEventListener("visibilitychange", f); }, []);
   /* live updates from your other devices — refresh what's on screen (projects wait while the editor is open) */
@@ -196,21 +206,30 @@ export default function Dashboard({ user, onLogout }) {
     const run = () => syncServerEvents(E, integ, projRef.current).then((n) => { if (n) setEvents(loadEvents(E)); }).catch(() => {});
     const t0 = setTimeout(run, 1500), t = setInterval(run, 60000); return () => { clearTimeout(t0); clearInterval(t); };
   }, [srv, E]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
+  /* saving is batched: big projects are written once after you pause (not on every keystroke) — and always before the tab closes */
+  const saveNow = useRef(null);
+  saveNow.current = () => {
     if (!saveProjects(E, projects.filter((p) => !p.unsaved))) alert("Browser storage is full. Delete some projects or use smaller images.");
     try { localStorage.setItem(DK, JSON.stringify(projects.filter((p) => p.unsaved).map(({ recovered, ...p }) => p))); } catch { /* storage full: the draft just isn't kept after a reload */ }
+  };
+  const firstSave = useRef(true);
+  useEffect(() => {
+    if (firstSave.current) { firstSave.current = false; return; }   /* just loaded — nothing changed */
+    const t = setTimeout(() => saveNow.current(), 350); return () => clearTimeout(t);
   }, [projects, E]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const f = () => saveNow.current(); window.__lbSave = f; window.addEventListener("pagehide", f); window.addEventListener("beforeunload", f); return () => { window.removeEventListener("pagehide", f); window.removeEventListener("beforeunload", f); f(); }; }, []);
   /* what the lists show: saved projects + drafts you changed but haven't saved */
   const listed = useMemo(() => projects.filter((p) => !p.unsaved), [projects]);
   /* new projects you changed but never saved (e.g. the browser was closed) — shown apart, never counted as projects */
-  const drafts = useMemo(() => projects.filter((p) => p.unsaved && p.recovered), [projects]);
+  const drafts = useMemo(() => projects.filter((p) => p.unsaved && (p.recovered || p.kept) && p.id !== openId), [projects, openId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [pjKind, setPjKind] = useState({ k: "all" });
   /* leads / visits arrive from preview & form-link tabs */
   useEffect(() => {
     const f = (e) => { if (!e || !e.key || e.key === "lb_leads_" + E) setLeads(loadLeads(E)); if (!e || !e.key || e.key === "lb_events_" + E) setEvents(loadEvents(E)); };
     const g = () => f(); window.addEventListener("storage", f); window.addEventListener("lb-leads", g);
     return () => { window.removeEventListener("storage", f); window.removeEventListener("lb-leads", g); };
   }, [E]);
-  const openPreview = (p) => window.open(previewUrl(previewToken(E, p.id)), "_blank");
+  const openPreview = (p) => saveNow.current() || window.open(previewUrl(previewToken(E, p.id)), "_blank");
 
   /* ---- project actions ---- */
   const patch = (id, o) => setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, ...o, updated: Date.now() } : p)));
@@ -218,16 +237,18 @@ export default function Dashboard({ user, onLogout }) {
   const patchPages = (id, fn) => setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, updated: Date.now(), pages: fn(p.pages) } : p)));
   const full = () => projects.filter((p) => !p.unsaved).length >= LIMIT && (alert(`Free plan allows ${LIMIT} projects. Delete one to add another.`), true);
   /* save = true → goes straight into your projects (import, duplicate, "Save to my projects"); otherwise it opens as an unsaved draft */
-  const create = (name, pages, type, tpl, { save = false, open = true } = {}) => {
-    const p = { id: uid(), name, type, status: "draft", slug: slugify(name), domain: "", pages, updated: Date.now(), created: Date.now(), versions: [], ...(tpl ? { tpl } : {}), ...(save ? {} : { unsaved: true, orig: pagesHash(pages) }) };
-    setProjects((ps) => [p, ...ps]); setModal(null); if (open) { setOpenId(p.id); setView("pages"); }
+  /* ask = true → right after it opens: "Save to projects" or "Keep as draft" */
+  const create = (name, pages, type, tpl, { save = false, open = true, ask = true, kept = false } = {}) => {
+    const p = { id: uid(), name, type, status: "draft", slug: slugify(name), domain: "", pages, updated: Date.now(), created: Date.now(), versions: [], ...(tpl ? { tpl } : {}), ...(save ? {} : { unsaved: true, orig: pagesHash(pages), ...(kept ? { kept: true } : {}) }) };
+    setProjects((ps) => [p, ...ps]); setModal(!save && open && ask ? { type: "askSave", id: p.id } : null); if (open) { setOpenId(p.id); setView("pages"); }
     return p;
   };
-  const saveDraft = (id) => { if (projects.filter((p) => !p.unsaved).length >= LIMIT) return alert(`Free plan allows ${LIMIT} projects. Delete one to save this one.`), false; setProjects((ps) => ps.map(({ recovered, ...p }) => (p.id === id ? { ...p, unsaved: false, orig: undefined, updated: Date.now() } : { ...p, ...(recovered ? { recovered } : {}) }))); setToast("✓ Saved to your projects"); return true; };
+  const keepDraft = (id) => { setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, kept: true } : p))); setToast("📝 Kept in Drafts — save it to your projects any time"); };
+  const saveDraft = (id) => { if (projects.filter((p) => !p.unsaved).length >= LIMIT) return alert(`Free plan allows ${LIMIT} projects. Delete one to save this one.`), false; setProjects((ps) => ps.map(({ recovered, ...p }) => (p.id === id ? { ...p, unsaved: false, orig: undefined, kept: undefined, updated: Date.now() } : { ...p, ...(recovered ? { recovered } : {}) }))); setToast("✓ Saved to your projects"); return true; };
   const discardDraft = (id) => setProjects((ps) => ps.filter((p) => p.id !== id));
   /* leaving the editor: an untouched new project just disappears; a changed one asks Save / Don't save */
 
-  const leaveEditor = (p0) => { const p = projRef.current.find((x) => x.id === p0.id) || p0; if (!p.unsaved) return setOpenId(null); if (pagesHash(p.pages) === p.orig) { discardDraft(p.id); return setOpenId(null); } setModal({ type: "unsaved", id: p.id }); };
+  const leaveEditor = (p0) => { const p = projRef.current.find((x) => x.id === p0.id) || p0; if (!p.unsaved || p.kept) return setOpenId(null); if (pagesHash(p.pages) === p.orig) { discardDraft(p.id); return setOpenId(null); } setModal({ type: "unsaved", id: p.id }); };
   const [peek, setPeek] = useState(null);   /* project preview window (click on a project card) */
   const startNew = (kind) => !full() && setModal({ type: "new", kind: kind === "website" ? "website" : "landing" });
   const duplicate = (p) => !full() && create(p.name + " copy", p.pages.map((x) => ({ ...x, id: uid() })), p.type, undefined, { save: true });
@@ -238,7 +259,7 @@ export default function Dashboard({ user, onLogout }) {
     if (!/\.html?$/i.test(f.name)) return "Please choose a .html file.";
     if (f.size > 20 * 1024 * 1024) return "File is larger than 20 MB.";
     if (full()) return "Free plan limit reached.";
-    create(f.name.replace(/\.html?$/i, ""), [pg("Home", "index.html", await f.text())], "landing", undefined, { save: true });
+    create(f.name.replace(/\.html?$/i, ""), [pg("Home", "index.html", await f.text())], "landing");
   };
 
   /* ---- forms: save + keep every page that uses a form up to date ---- */
@@ -281,12 +302,25 @@ export default function Dashboard({ user, onLogout }) {
         unsaved={!!open.unsaved} onSaveProject={() => saveDraft(open.id)}
         onBack={() => { const o = open; setTimeout(() => leaveEditor(o), 30); }} onPublish={() => { if (open.unsaved && !saveDraft(open.id)) return; setModal({ type: "publish", id: open.id }); }} />
       {pubModal}
+      {modal && modal.type === "askSave" && <div className="uv-ov"><div className="uv-box">
+        <span className="uv-ic">✨</span><h3>“{open.name}” is ready</h3>
+        <p>Save it to your projects now, or keep it in Drafts (drafts aren't counted as projects — save them any time).</p>
+        <div className="uv-row"><button className="uv-save" onClick={() => { if (saveDraft(open.id)) setModal(null); }}>💾 Save to projects</button>
+          <button className="uv-keep" onClick={() => { keepDraft(open.id); setModal(null); }}>📝 Keep as draft</button></div></div></div>}
       {modal && modal.type === "unsaved" && <div className="uv-ov"><div className="uv-box">
         <span className="uv-ic">💾</span><h3>Save “{open.name}” to your projects?</h3>
         <p>You made changes to this new {open.type === "website" ? "website" : "page"}. If you don't save it, it's deleted.</p>
         <div className="uv-row"><button className="uv-save" onClick={() => { if (saveDraft(open.id)) { setModal(null); setOpenId(null); } }}>💾 Save to projects</button>
           <button className="uv-no" onClick={() => { discardDraft(open.id); setModal(null); setOpenId(null); }}>Don't save</button>
           <button className="uv-keep" onClick={() => setModal(null)}>Keep editing</button></div></div></div>}
+      {toast && <div className="dash-toast">{toast}</div>}
+    </Suspense>
+  );
+
+  /* AI Studio in its own browser tab: only the studio, nothing else first */
+  if (studio && studio.tab) return (
+    <Suspense fallback={<div className="ais-boot"><span className="pub-spin" /></div>}>
+      <AiStudio {...studio} integ={integ} onClose={closeStudio} onSetupAI={() => { closeStudio(); setView("integrations"); setIgTile("ai"); }} onCreate={studioDone} />
       {toast && <div className="dash-toast">{toast}</div>}
     </Suspense>
   );
@@ -309,9 +343,9 @@ export default function Dashboard({ user, onLogout }) {
           {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
         <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses"})[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={listed} forms={forms} cal={cal} onOpenProject={setOpenId} />
-        {["pages", "websites", "landings", "projects"].includes(view) && drafts.length > 0 && <div className="drafts-bar"><b>💾 {drafts.length === 1 ? "1 unsaved draft" : drafts.length + " unsaved drafts"}</b><span>Not in your projects yet — save it, or delete it.</span>
-          <div className="drafts-list">{drafts.map((d) => <div key={d.id} className="drafts-it"><span>{d.name}</span><button onClick={() => setPeek({ id: d.id })}>Preview</button><button onClick={() => setOpenId(d.id)}>Edit</button><button className="ok" onClick={() => saveDraft(d.id)}>Save</button><button className="no" onClick={() => window.confirm(`Delete the unsaved "${d.name}"?`) && discardDraft(d.id)}>Delete</button></div>)}</div></div>}
-        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} leads={leads} events={evs} user={user}
+        {["pages", "websites", "landings"].includes(view) && drafts.length > 0 && <div className="drafts-bar"><b>📝 {drafts.length === 1 ? "1 draft" : drafts.length + " drafts"}</b><span>Not in your projects yet — open Drafts to save or delete.</span>
+          <div className="drafts-list"><button className="ok" onClick={() => { setView("projects"); setPjKind({ k: "drafts", ts: Date.now() }); }}>Open Drafts →</button></div></div>}
+        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
           onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} onConsult={consultOpen} onUseTpl={applyTpl} onDomain={(p) => { setDomFocus({ id: p.id, ts: Date.now() }); setView("domains"); }} />}
@@ -334,32 +368,46 @@ export default function Dashboard({ user, onLogout }) {
       {peek && (() => { const p = projects.find((x) => x.id === peek.id); return p ? <ProjectPeek p={p} onClose={() => setPeek(null)} onEdit={() => { setPeek(null); setOpenId(p.id); }} onTab={() => openPreview(p)}
         onSave={p.unsaved ? () => { if (saveDraft(p.id)) setPeek(null); } : null} onDiscard={p.unsaved ? () => { if (window.confirm(`Delete the unsaved "${p.name}"?`)) { discardDraft(p.id); setPeek(null); } } : null} onPublish={() => { setPeek(null); setModal({ type: "publish", id: p.id }); }} /> : null; })()}
       {toast && <div className="dash-toast">{toast}</div>}
-      {studio && <Suspense fallback={null}><AiStudio {...studio} integ={integ} onClose={closeStudio} onSetupAI={() => { closeStudio(); setView("integrations"); setIgTile("ai"); }} onCreate={(n, pages, t) => { if (studio.tab) history.replaceState(null, "", location.pathname + location.search); setStudio(null); create(n, pages, t); }} /></Suspense>}
+      {studio && <Suspense fallback={null}><AiStudio {...studio} integ={integ} onClose={closeStudio} onSetupAI={() => { closeStudio(); setView("integrations"); setIgTile("ai"); }} onCreate={studioDone} /></Suspense>}
     </div>
   );
 }
 
-/* preview of a project, exactly as visitors see it — with Edit / Save to projects */
+/* preview of a project, full screen — exactly as visitors see it. A slim bar on the right has every action (fold it away with ›). */
+const PI = {
+  edit: <path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" />,
+  pub: <><path d="M12 15V3M7 8l5-5 5 5" /><path d="M5 15v4a2 2 0 002 2h10a2 2 0 002-2v-4" /></>,
+  tab: <path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h5" />,
+  save: <><path d="M5 3h11l3 3v13a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" /><path d="M7 3v5h8V3M7 21v-7h10v7" /></>,
+  del: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3" />,
+  x: <path d="M6 6l12 12M18 6L6 18" />,
+};
+const Pi = ({ d }) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>;
 function ProjectPeek({ p, onClose, onEdit, onSave, onDiscard, onTab, onPublish }) {
-  const [i, setI] = useState(0), [dev, setDev] = useState("desktop");
+  const [i, setI] = useState(0), [dev, setDev] = useState("desktop"), [fold, setFold] = useState(() => localStorage.getItem("lb_pk_fold") === "1");
   useEffect(() => { const k = (e) => e.key === "Escape" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose]);
+  useEffect(() => { try { localStorage.setItem("lb_pk_fold", fold ? "1" : "0"); } catch { /* ignore */ } }, [fold]);
   const page = p.pages[Math.min(i, p.pages.length - 1)];
+  const B = ({ ic, l, on, cls = "", fn }) => <button className={"pk2-b " + cls + (on ? " on" : "")} onClick={fn} title={l}><span className="pk2-i">{typeof ic === "string" ? <Icon n={ic} s={17} /> : <Pi d={ic} />}</span><small>{l}</small></button>;
   return (
-    <div className="tp-ov pk-ov" onClick={onClose}><div className="tp-box" onClick={(e) => e.stopPropagation()}>
-      <div className="tp-bar">
-        <div className="tp-ttl"><i style={{ background: p.unsaved ? "#f5b301" : p.status === "published" ? "#10b981" : "#94a3b8" }} /><b>{p.name}</b><span>{p.unsaved ? "Not saved yet" : p.status === "published" ? "Live" : "Draft"}</span></div>
-        {p.pages.length > 1 && <div className="tp-pages">{p.pages.map((x, k) => <button key={x.id} className={i === k ? "on" : ""} onClick={() => setI(k)}>{x.name}</button>)}</div>}
-        <div className="tp-dev">{[["desktop", "100%"], ["tablet", "820px"], ["mobile", "390px"]].map(([d]) => <button key={d} title={d[0].toUpperCase() + d.slice(1)} className={dev === d ? "on" : ""} onClick={() => setDev(d)}><Icon n={d} s={17} /></button>)}</div>
-        <div className="pk-acts">
-          {onSave && <button className="pk-save" onClick={onSave}>💾 Save to projects</button>}
-          <button className="pk-edit" onClick={onEdit}>✏️ Edit</button>
-          {!onSave && <button onClick={onPublish}>🚀 {p.status === "published" ? "Republish" : "Publish"}</button>}
-          <button className="pk-ic" onClick={onTab} title="Open in a new tab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h5" /></svg><span>New tab</span></button>
-          {onDiscard && <button className="pk-ic pk-del" onClick={onDiscard} title="Delete this unsaved project"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3" /></svg><span>Delete</span></button>}
-        </div>
-        <button className="pk-close" onClick={onClose} aria-label="Close" title="Close (Esc)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
-      </div>
-      <div className="tp-stage"><iframe title={p.name} srcDoc={page.html} style={{ width: { desktop: "100%", tablet: "820px", mobile: "390px" }[dev] }} sandbox="allow-scripts allow-forms" /></div>
-    </div></div>
+    <div className="pk2" role="dialog" aria-label={p.name}>
+      <div className={"pk2-stage " + dev}><iframe title={p.name} srcDoc={page.html} sandbox="allow-scripts allow-forms" /></div>
+      <aside className={"pk2-rail" + (fold ? " fold" : "")}>
+        <button className="pk2-fold" onClick={() => setFold(!fold)} title={fold ? "Show actions" : "Hide actions"}>{fold ? "‹" : "›"}</button>
+        {!fold && <>
+          <div className="pk2-name" title={p.name}><i style={{ background: p.unsaved ? "#f5b301" : p.status === "published" ? "#10b981" : "#94a3b8" }} /><b>{p.name}</b><span>{p.unsaved ? "Draft" : p.status === "published" ? "Live" : "Not live"}</span></div>
+          {p.pages.length > 1 && <select className="pk2-pg" value={i} onChange={(e) => setI(+e.target.value)} title="Page">{p.pages.map((x, k) => <option key={x.id} value={k}>{x.name}</option>)}</select>}
+          <div className="pk2-g">{[["desktop", "Desktop"], ["tablet", "Tablet"], ["mobile", "Mobile"]].map(([d, l]) => <B key={d} ic={d} l={l} on={dev === d} fn={() => setDev(d)} />)}</div>
+          <div className="pk2-g">
+            <B ic={PI.edit} l="Edit" cls="k-pri" fn={onEdit} />
+            {onSave && <B ic={PI.save} l="Save" cls="k-ok" fn={onSave} />}
+            {!onSave && <B ic={PI.pub} l={p.status === "published" ? "Republish" : "Publish"} fn={onPublish} />}
+            <B ic={PI.tab} l="New tab" fn={onTab} />
+            {onDiscard && <B ic={PI.del} l="Delete" cls="k-del" fn={onDiscard} />}
+          </div>
+        </>}
+        <button className="pk2-x" onClick={onClose} title="Close (Esc)"><Pi d={PI.x} /></button>
+      </aside>
+    </div>
   );
 }

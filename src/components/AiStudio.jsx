@@ -2,7 +2,7 @@
 // A full window for creating with AI: describe it (type or speak), add pictures and documents, then "Create page".
 // Opened from: Create new → Create with AI · the AI Consultant's plan · the editor's "Build with AI" button.
 import { useEffect, useRef, useState } from "react";
-import { aiWebsite, aiSection, browserAi, serverAiReady, AI_PROVIDERS, pg } from "../lib.js";
+import { aiWebsite, aiSection, aiEditPage, callAI, browserAi, serverAiReady, AI_PROVIDERS, pg } from "../lib.js";
 import { BRAND } from "../brand.js";
 import Robot from "./Robot.jsx";
 
@@ -13,6 +13,13 @@ const IDEAS = [
   "A real-estate project page with gallery, price list and site-visit form",
 ];
 const MAX_FILES = 6;
+/* speaking languages (Chrome / Edge understand all of these) */
+export const LANGS = [["en-IN", "EN", "English"], ["hi-IN", "हिं", "हिन्दी · Hindi"], ["pa-IN", "ਪੰ", "ਪੰਜਾਬੀ · Punjabi"], ["bn-IN", "বা", "বাংলা · Bengali"], ["mr-IN", "मरा", "मराठी · Marathi"],
+  ["gu-IN", "ગુ", "ગુજરાતી · Gujarati"], ["ta-IN", "த", "தமிழ் · Tamil"], ["te-IN", "తె", "తెలుగు · Telugu"], ["kn-IN", "ಕ", "ಕನ್ನಡ · Kannada"], ["ml-IN", "മ", "മലയാളം · Malayalam"],
+  ["ur-IN", "اُر", "اردو · Urdu"], ["or-IN", "ଓ", "ଓଡ଼ିଆ · Odia"], ["as-IN", "অ", "অসমীয়া · Assamese"]];
+const langName = (l) => ((LANGS.find((x) => x[0] === l) || LANGS[0])[2].split("·").pop() || "English").trim();
+/* uploaded pictures are huge data: links — hide them from the AI while it edits, put them back after */
+const slimPics = (h) => { const imgs = []; const t = h.replace(/data:[a-z]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, (m) => { imgs.push(m); return `lb-pic:${imgs.length - 1}`; }); return [t, (o) => imgs.reduce((x, m, i) => x.split(`lb-pic:${i}`).join(m), o)]; };
 
 /* ---------- reading the files people attach ---------- */
 const readBuf = (f) => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => no(new Error("Couldn't read " + f.name)); r.readAsArrayBuffer(f); });
@@ -64,17 +71,24 @@ const I_IMG = <><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="9"
 const I_DOC = <path d="M21 12.5l-8.2 8.2a5.3 5.3 0 01-7.5-7.5l8.6-8.6a3.5 3.5 0 015 5l-8.6 8.6a1.8 1.8 0 01-2.5-2.5l7.9-7.9" />;
 const I_MIC = <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0014 0M12 18v3" /></>;
 const I_ARROW = <path d="M5 12h14M13 6l6 6-6 6" />;
+const I_TALK = <><path d="M4 12a8 8 0 0114.9-4" /><path d="M20 12a8 8 0 01-14.9 4" /><path d="M9 10v4M12 8v8M15 10v4" /></>;
+const I_STOP = <rect x="7" y="7" width="10" height="10" rx="2" />;
 
 /* mode "new"    → creates a new landing page / website (onCreate)
    mode "editor" → builds into the page that's open: replace the page, or add a section (onApply) */
 export default function AiStudio({ mode = "new", type: type0 = "landing", name: name0 = "", prompt: prompt0 = "", integ = {}, onClose, onCreate, onApply, onSetupAI }) {
   const [type, setType] = useState(type0), [name, setName] = useState(name0), [prompt, setPrompt] = useState(prompt0), [how, setHow] = useState("section");
   const [files, setFiles] = useState([]), [busy, setBusy] = useState(""), [err, setErr] = useState(""), [step, setStep] = useState(0);
-  const [listen, setListen] = useState(false), [lang, setLang] = useState("en-IN"), [srv, setSrv] = useState(null);
+  const [listen, setListen] = useState(""), [lang, setLang0] = useState(() => { try { return localStorage.getItem("lb_ai_lang") || "en-IN"; } catch { return "en-IN"; } }), [srv, setSrv] = useState(null);
+  const setLang = (v) => { setLang0(v); try { localStorage.setItem("lb_ai_lang", v); } catch { /* ignore */ } };
+  /* after AI builds: a preview you can keep changing by asking, then Save / Open in editor */
+  const [res, setRes] = useState(null), [talk, setTalk] = useState(false);
+  const prompt0Ref = useRef(prompt0);
   const ai = browserAi(integ), taRef = useRef(null), rec = useRef(null), imgIn = useRef(null), docIn = useRef(null);
   useEffect(() => { if (!ai) serverAiReady().then(setSrv).catch(() => setSrv(false)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  prompt0Ref.current = prompt;
   useEffect(() => { const t = taRef.current; if (!t) return; t.style.height = "auto"; t.style.height = Math.min(Math.max(t.scrollHeight, 120), 320) + "px"; t.scrollTop = t.scrollHeight; }, [prompt]);
-  useEffect(() => { const k = (e) => { if (e.key === "Escape" && !busy) onClose(); }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [busy, onClose]);
+  useEffect(() => { const k = (e) => { if (e.key === "Escape" && !busy && !res && !talk) onClose(); }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [busy, onClose, res, talk]);
   useEffect(() => () => { try { rec.current && rec.current.stop(); } catch { /* ignore */ } }, []);
   const provName = ai ? (AI_PROVIDERS.find((p) => p.id === ai.provider) || {}).name : srv ? BRAND.product + " AI" : "";
   const ready = !!ai || srv === true;
@@ -98,29 +112,33 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
   const onDrop = (e) => { e.preventDefault(); const l = [...e.dataTransfer.files]; addImages(l.filter((f) => /^image\//.test(f.type))); addDocs(l.filter((f) => !/^image\//.test(f.type))); };
 
   /* ---- speak instead of typing ---- */
-  const mic = () => {
+  /* where = "brief" (the big box) or "edit" (the change box on the preview) */
+  const mic = (where = "brief", cur = prompt, set = setPrompt) => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return setErr("Speaking isn't supported in this browser — use Chrome or Edge.");
     if (listen) { try { rec.current.stop(); } catch { /* ignore */ } return; }
     const r = new SR(); r.lang = lang; r.interimResults = true; r.continuous = true; rec.current = r;
-    const base = prompt ? prompt.replace(/\s*$/, " ") : ""; let fin = "";
-    r.onresult = (e) => { let inter = ""; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) fin += t + " "; else inter += t; } setPrompt(base + fin + inter); };
+    const base = cur ? cur.replace(/\s*$/, " ") : ""; let fin = "";
+    r.onresult = (e) => { let inter = ""; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) fin += t + " "; else inter += t; } set(base + fin + inter); };
     r.onerror = (e) => { if (e.error !== "no-speech" && e.error !== "aborted") setErr(e.error === "not-allowed" ? "Allow the microphone for this site (lock icon in the address bar)." : "Mic: " + e.error); };
-    r.onend = () => setListen(false);
-    try { r.start(); setListen(true); setErr(""); } catch { setListen(false); }
+    r.onend = () => setListen("");
+    try { r.start(); setListen(where); setErr(""); } catch { setListen(""); }
   };
+  const stopMic = () => { try { rec.current && rec.current.stop(); } catch { /* ignore */ } };
 
   /* ---- create ---- */
   const STEPS = ["Reading your brief and files…", "Planning the sections…", "Writing the words…", "Designing the layout…", "Making it mobile-friendly…", "Almost there…"];
   useEffect(() => { if (!busy) return; setStep(0); const t = setInterval(() => setStep((s) => Math.min(s + 1, STEPS.length - 1)), 9000); return () => clearInterval(t); }, [busy]); // eslint-disable-line react-hooks/exhaustive-deps
-  const go = async () => {
-    if (listen) { try { rec.current.stop(); } catch { /* ignore */ } }
+  const go = async (said) => {
+    const prompt = typeof said === "string" ? said : prompt0Ref.current;
+    if (listen) stopMic();
     if (prompt.trim().length < 12 && !files.some((f) => f.kind !== "image")) return setErr("Describe what you want in a sentence or two — or attach a document about your business.");
     if (!ready) return setErr("Connect an AI first.");
     setErr(""); setBusy(mode === "editor" && how === "section" ? "Building your section…" : "Building your " + (type === "website" ? "website" : "page") + "…");
     try {
       const imgs = files.filter((f) => f.kind === "image"), docs = files.filter((f) => f.kind === "doc"), send = files.filter((f) => f.kind !== "doc").map((f) => ({ kind: f.kind, mime: f.mime, b64: f.b64, name: f.name }));
-      const n = name.trim() || prompt.trim().split(/[,.:\n]/)[0].slice(0, 40) || (docs[0] && docs[0].name.replace(/\.\w+$/, "")) || "AI page";
+      const bn = (prompt.match(/Business name:\s*([^\n.]{2,50})/i) || [])[1];
+      const n = name.trim() || (bn && bn.trim()) || prompt.trim().split(/[,.:\n]/)[0].slice(0, 40) || (docs[0] && docs[0].name.replace(/\.\w+$/, "")) || "AI page";
       let brief = (mode === "new" ? `Business / page name: ${n}\n` : "") + `Brief: ${prompt.trim() || "Use the attached information."}`;
       docs.forEach((d) => { brief += `\n\nInformation from the user's document "${d.name}" (use it for real content — names, prices, dates, services):\n${d.text}`; });
       if (files.some((f) => f.kind === "pdf")) brief += `\n\nThe attached PDF is the user's own material — use its real details.`;
@@ -150,10 +168,13 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
         else { const pages = await aiWebsite(ai || {}, brief, false, send); onApply({ how: "page", html: useAll([pages[0].html])[0] }); }
       } else {
         const pages = await aiWebsite(ai || {}, brief, type === "website", send);
-        const done = useAll(pages.map((p) => p.html)); onCreate(n, pages.map((p, i) => pg(p.name, p.file, done[i])), type);
+        const done = useAll(pages.map((p) => p.html)); setRes({ name: n, type, pages: pages.map((p, i) => pg(p.name, p.file, done[i])), hist: [] }); setBusy("");
       }
     } catch (e) { setErr(e.message === "NO_AI_KEY" ? "Connect an AI first." : e.message); setBusy(""); }
   };
+
+  if (res) return <StudioPreview res={res} setRes={setRes} ai={ai} lang={lang} mic={mic} listen={listen} stopMic={stopMic} err={err} setErr={setErr}
+    onBack={() => { setRes(null); setErr(""); }} onDone={(how) => onCreate(res.name, res.pages, res.type, how)} />;
 
   return (
     <div className="ais" onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
@@ -191,12 +212,14 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
             <div className="grow" />
             <button className="ais-ic" title="Add pictures (logo, products, photos)" onClick={() => imgIn.current.click()} disabled={!!busy}><Ico d={I_IMG} /></button>
             <button className="ais-ic" title="Add a document (PDF, Word, text) about your business" onClick={() => docIn.current.click()} disabled={!!busy}><Ico d={I_DOC} /></button>
-            <button className={"ais-ic mic" + (listen ? " on" : "")} title={listen ? "Stop" : "Speak"} onClick={mic} disabled={!!busy}><Ico d={I_MIC} /></button>
-            <select className="ais-lang" value={lang} onChange={(e) => setLang(e.target.value)} disabled={listen || !!busy} title="Speaking language"><option value="en-IN">EN</option><option value="hi-IN">हिं</option></select>
+            <button className={"ais-ic mic" + (listen === "brief" ? " on" : "")} title={listen ? "Stop" : "Speak"} onClick={() => mic("brief")} disabled={!!busy}><Ico d={listen === "brief" ? I_STOP : I_MIC} /></button>
+            <select className="ais-lang" value={lang} onChange={(e) => setLang(e.target.value)} disabled={!!listen || !!busy} title="Speaking language">{LANGS.map(([v, , full]) => <option key={v} value={v}>{full.split("·").reverse().map((x) => x.trim()).join(" · ")}</option>)}</select>
+            {mode === "new" && <button className="ais-ic talk" title="Talk with AI — it asks you a few questions by voice, then builds" onClick={() => { stopMic(); setTalk(true); }} disabled={!!busy || !ready}><Ico d={I_TALK} /></button>}
             <button className="ais-go" onClick={go} disabled={!!busy || !ready}>{mode === "editor" ? (how === "section" ? "Add section" : "Rebuild page") : "Create " + (type === "website" ? "website" : "page")} <Ico d={I_ARROW} s={16} /></button>
             <input ref={imgIn} type="file" hidden multiple accept="image/*" onChange={(e) => { addImages(e.target.files); e.target.value = ""; }} />
             <input ref={docIn} type="file" hidden multiple accept=".pdf,.docx,.txt,.md,.csv,application/pdf,text/plain" onChange={(e) => { addDocs(e.target.files); e.target.value = ""; }} />
           </div>
+          {listen === "brief" && <div className="ais-listen" onClick={stopMic}><span className="ais-wave"><i /><i /><i /><i /><i /></span><b>Listening… speak in {langName(lang)}</b><small>Tap to stop</small></div>}
           {busy && <div className="ais-busy"><div className="ais-spark">✦</div><b>{busy}</b><span>{STEPS[step]}</span><div className="ais-prog"><i style={{ width: Math.min(95, 12 + step * 16) + "%" }} /></div><small>Usually 20–90 seconds. Keep this window open.</small></div>}
         </div>
 
@@ -204,8 +227,133 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
         {!ready && srv === false && !err && <div className="ais-err soft">Connect an AI first — paste a free Gemini key in Integrations → AI builders. <button onClick={onSetupAI}>Connect an AI</button></div>}
 
         {mode === "new" && !busy && <div className="ais-ideas">{IDEAS.map((x) => <button key={x} onClick={() => setPrompt(x)}><span>✦</span>{x.length > 50 ? x.slice(0, 48) + "…" : x}</button>)}</div>}
+        {talk && <VoiceChat ai={ai} lang={lang} onClose={() => setTalk(false)} onBrief={(b) => { setTalk(false); setPrompt(b); go(b); }} />}
         <p className="ais-foot"><i>⬡</i>Pictures go into your page · documents give AI your real details (prices, services, dates) · Ctrl+Enter to create</p>
       </main>
+    </div>
+  );
+}
+
+/* ---------- the finished page: preview it, keep asking for changes, then Save / Open in editor ---------- */
+const QUICK = ["Make the colours brighter", "Add a WhatsApp button", "Add customer reviews", "Shorter text, bigger headings", "Add an FAQ section"];
+function StudioPreview({ res, setRes, ai, lang, mic, listen, stopMic, err, setErr, onBack, onDone }) {
+  const [i, setI] = useState(0), [dev, setDev] = useState("desktop"), [ask, setAsk] = useState(""), [busy, setBusy] = useState(false);
+  const page = res.pages[Math.min(i, res.pages.length - 1)];
+  const apply = async (txt) => {
+    const t = (typeof txt === "string" ? txt : ask).trim(); if (!t || busy) return;
+    if (listen) stopMic();
+    setErr(""); setBusy(true);
+    try {
+      const [slim, back] = slimPics(page.html);
+      const out = back(await aiEditPage(ai || {}, slim, t + "\n(Keep every image link written like lb-pic:N exactly as it is.)"));
+      setRes((r) => ({ ...r, hist: [...r.hist, r.pages].slice(-10), pages: r.pages.map((x, k) => (k === Math.min(i, r.pages.length - 1) ? { ...x, html: out } : x)) }));
+      setAsk("");
+    } catch (e) { setErr(e.message === "NO_AI_KEY" ? "Connect an AI first." : e.message); }
+    setBusy(false);
+  };
+  const undo = () => setRes((r) => (r.hist.length ? { ...r, pages: r.hist[r.hist.length - 1], hist: r.hist.slice(0, -1) } : r));
+  return (
+    <div className="aip">
+      <div className="aip-stage"><div className={"aip-frame " + dev}>
+        <iframe title="Preview" srcDoc={page.html} sandbox="allow-scripts allow-forms" />
+        {busy && <div className="aip-busy"><div className="ais-spark">✦</div><b>Updating your {res.type === "website" ? "page" : "page"}…</b><small>Usually 20–60 seconds</small></div>}
+      </div></div>
+      <aside className="aip-side">
+        <div className="aip-head"><button className="aip-back" onClick={onBack} disabled={busy} title="Back to the brief">←</button>
+          <div><small>✦ Your {res.type === "website" ? "website" : "page"} is ready</small>
+            <input className="aip-name" value={res.name} onChange={(e) => setRes((r) => ({ ...r, name: e.target.value }))} title="Name" /></div></div>
+        <div className="aip-row">
+          {res.pages.length > 1 && <select className="aip-pg" value={i} onChange={(e) => setI(+e.target.value)}>{res.pages.map((x, k) => <option key={k} value={k}>{x.name}</option>)}</select>}
+          <div className="aip-dev">{[["desktop", "🖥"], ["tablet", "▭"], ["mobile", "📱"]].map(([d, ic]) => <button key={d} className={dev === d ? "on" : ""} onClick={() => setDev(d)} title={d}>{ic}</button>)}</div>
+        </div>
+        <div className="aip-ask">
+          <label>Want changes? Just ask</label>
+          <textarea value={ask} onChange={(e) => setAsk(e.target.value)} disabled={busy} placeholder={listen === "edit" ? "Listening… speak now" : "e.g. Make the header dark blue, change the price to ₹999, add a photo gallery…"}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); apply(); } }} />
+          <div className="aip-askbar">
+            <button className={"ais-ic mic" + (listen === "edit" ? " on" : "")} onClick={() => mic("edit", ask, setAsk)} disabled={busy} title={listen ? "Stop" : "Speak (" + langName(lang) + ")"}><Ico d={listen === "edit" ? I_STOP : I_MIC} /></button>
+            {listen === "edit" && <span className="aip-live"><span className="ais-wave"><i /><i /><i /><i /><i /></span>Listening…</span>}
+            <div className="grow" />
+            {res.hist.length > 0 && <button className="aip-undo" onClick={undo} disabled={busy}>↶ Undo</button>}
+            <button className="aip-apply" onClick={apply} disabled={busy || !ask.trim()}>{busy ? "Updating…" : "Apply ✦"}</button>
+          </div>
+          <div className="aip-quick">{QUICK.map((q) => <button key={q} onClick={() => apply(q)} disabled={busy}>{q}</button>)}</div>
+          {err && <div className="aip-err">{err}</div>}
+        </div>
+        <div className="aip-acts">
+          <button className="aip-save" onClick={() => onDone("save")} disabled={busy}>💾 Save to projects</button>
+          <button className="aip-edit" onClick={() => onDone("editor")} disabled={busy}>✏️ Open in editor</button>
+          <button className="aip-draft" onClick={() => onDone("draft")} disabled={busy}>📝 Keep as draft</button>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+/* ---------- voice conversation: AI asks a few questions out loud, you answer by speaking, then it builds ---------- */
+const GREET = {
+  en: "Hi! I'll help you make your page. Tell me — what is your business, and what should this page do?",
+  hi: "नमस्ते! मैं आपका पेज बनाने में मदद करूँगा। बताइए — आपका बिज़नेस क्या है, और यह पेज किस लिए है?",
+};
+const VSYS = (ln) => `You are a friendly website consultant talking BY VOICE with a small-business owner in India. Speak ${ln} (if they mix English words, that's fine — answer naturally the same way). Ask ONE short question at a time, at most 2 short sentences, no lists, no markdown, no emojis. Learn: what the business is and what the page is for, who it's for and the city, the offer / price / dates, what visitors should do (call, WhatsApp, form, buy), and preferred colours or style. After 3 to 6 answers — or as soon as the owner says to build / start / bas / ho gaya — reply with ONE short sentence in ${ln} saying you are building it now, then the word READY: and after it a complete, detailed brief in English for a web designer, starting with "Business name: <name>."  (business name, purpose, audience, sections, offer, prices, contact/CTA, colours, language for the page text). Never write READY: before that.`;
+function VoiceChat({ ai, lang, onBrief, onClose }) {
+  const [msgs, setMsgs] = useState([]), [st, setSt] = useState("thinking"), [live, setLive] = useState(""), [mute, setMute] = useState(false), [err, setErr] = useState("");
+  const rec = useRef(null), alive = useRef(true), hist = useRef([]), muteRef = useRef(false), endRef = useRef(null);
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition, ln = langName(lang);
+  muteRef.current = mute;
+  useEffect(() => { endRef.current && endRef.current.scrollIntoView({ block: "end" }); }, [msgs, live]);
+  const push = (who, t) => { hist.current = [...hist.current, { who, t }]; setMsgs(hist.current); };
+  const say = (t) => new Promise((ok) => {
+    const S = window.speechSynthesis; if (muteRef.current || !S || !alive.current) return ok();
+    S.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = lang;
+    const vs = S.getVoices(), base = lang.split("-")[0], v = vs.find((x) => x.lang.replace("_", "-") === lang) || vs.find((x) => x.lang.toLowerCase().startsWith(base));
+    if (v) u.voice = v; u.onend = ok; u.onerror = ok; setSt("speaking"); S.speak(u);
+    setTimeout(ok, 3000 + t.length * 150);   /* some browsers never fire "end" */
+  });
+  const listen = () => {
+    if (!alive.current) return;
+    if (!SR) { setErr("Voice needs Chrome or Edge. You can still type your answer below."); setSt("idle"); return; }
+    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    const r = new SR(); r.lang = lang; r.interimResults = true; r.continuous = false; rec.current = r; let fin = "";
+    r.onresult = (e) => { let it = ""; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) fin += t + " "; else it += t; } setLive(fin + it); };
+    r.onerror = (e) => { if (e.error === "not-allowed") setErr("Allow the microphone for this site (lock icon in the address bar)."); };
+    r.onend = () => { if (rec.current !== r) return; rec.current = null; setLive(""); if (!alive.current) return; if (fin.trim()) send(fin.trim()); else setSt("idle"); };
+    try { r.start(); setSt("listening"); setErr(""); } catch { setSt("idle"); }
+  };
+  const halt = () => { const r = rec.current; rec.current = null; setLive(""); try { r && r.abort(); } catch { /* ignore */ } };
+  const send = async (text, first = false) => {
+    if (!first) push("me", text);
+    setSt("thinking");
+    try {
+      const tr = hist.current.map((x) => (x.who === "ai" ? "Consultant: " : "Owner: ") + x.t).join("\n");
+      const out = (await callAI(ai || {}, VSYS(ln), (first ? "(Start the conversation: greet in one line and ask the first question.)" : tr) + "\nConsultant:", 1200)).replace(/^\s*Consultant:\s*/i, "").replace(/[*#_`]/g, "").trim();
+      if (!alive.current) return;
+      const k = out.search(/READY:/i);
+      if (k >= 0) { const bye = out.slice(0, k).trim(), brief = out.slice(k + 6).trim(); if (bye) { push("ai", bye); await say(bye); } if (alive.current) onBrief(brief + "\n\nConversation:\n" + hist.current.filter((x) => x.who === "me").map((x) => "- " + x.t).join("\n")); return; }
+      push("ai", out); await say(out); listen();
+    } catch (e) { if (alive.current) { setErr(e.message === "NO_AI_KEY" ? "Connect an AI first." : e.message); setSt("idle"); } }
+  };
+  useEffect(() => {
+    const g = GREET[lang.split("-")[0]];
+    if (g) { push("ai", g); say(g).then(listen); } else send("", true);
+    return () => { alive.current = false; halt(); try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ } };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [typed, setTyped] = useState("");
+  const LBL = { speaking: "AI is speaking…", listening: "Listening — speak now", thinking: "Thinking…", idle: "Tap the mic to answer" };
+  return (
+    <div className="vc-ov" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="vc-box">
+        <button className="vc-x" onClick={onClose} title="End">✕</button>
+        <div className={"vc-orb " + st} onClick={() => (st === "listening" ? rec.current && rec.current.stop() : st === "idle" ? listen() : st === "speaking" ? window.speechSynthesis.cancel() : null)}>
+          <i /><i /><i /><span><Ico d={st === "listening" ? I_MIC : I_TALK} s={34} /></span></div>
+        <b className="vc-st">{LBL[st]}</b><small className="vc-lang">Talking in {ln}</small>
+        <div className="vc-log">{msgs.map((m, k) => <p key={k} className={m.who}>{m.t}</p>)}{live && <p className="me live">{live}</p>}<i ref={endRef} /></div>
+        {err && <div className="aip-err">{err}</div>}
+        <form className="vc-type" onSubmit={(e) => { e.preventDefault(); if (typed.trim() && st !== "thinking") { halt(); send(typed.trim()); setTyped(""); } }}>
+          <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="…or type your answer" /><button disabled={!typed.trim() || st === "thinking"}>Send</button></form>
+        <div className="vc-acts"><button onClick={() => setMute(!mute)}>{mute ? "🔇 Voice off" : "🔊 Voice on"}</button>
+          <button className="vc-go" disabled={st === "thinking" || hist.current.filter((x) => x.who === "me").length < 1} onClick={() => { halt(); send("That's enough — please build it now."); }}>✦ Build it now</button></div>
+      </div>
     </div>
   );
 }

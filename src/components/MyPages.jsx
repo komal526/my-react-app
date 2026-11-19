@@ -302,7 +302,9 @@ function DashFooter({ onNew, onGo, onTemplates, onLeads, onAnalytics, onConsult 
   );
 }
 
-export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl, onDomain, onView, onSaveDraft }) {
+/* hovering a project card starts loading the editor, so Edit opens at once */
+let warmed = false; const warm = () => { if (!warmed) { warmed = true; import("./Editor.jsx"); } };
+export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl, onDomain, onView, onSaveDraft, onDiscardDraft, drafts = [], kind0 }) {
   /* free subdomains (slug → name.crecapo.tech) so each card shows its real live address */
   const [subs, setSubs] = useState(subsCache);
   useEffect(() => {
@@ -310,12 +312,14 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
     if (projects.some((p) => p.host)) subList().catch(() => {});
     return () => window.removeEventListener("lb-subs", f);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [filter, setFilter] = useState("All"), [menu, setMenu] = useState(null), [kind, setKind] = useState("all");
+  const [filter, setFilter] = useState("All"), [menu, setMenu] = useState(null), [kind, setKind] = useState(() => (kind0 && kind0.k) || "all");
+  useEffect(() => { if (kind0 && kind0.k) setKind(kind0.k); }, [kind0]);
+  useEffect(() => { if (kind === "drafts" && !drafts.length) setKind("all"); }, [drafts.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const act = (fn, p) => () => { setMenu(null); fn(p); };
   const nWeb = projects.filter((p) => p.type === "website").length, nLand = projects.length - nWeb;
   const nDom = projects.filter((p) => domainState(p, subs) === "connected").length;
-  const typed = mode === "all" && kind === "domain" ? projects.filter((p) => domainState(p, subs) === "connected") : mode === "website" || (mode === "all" && kind === "website") ? projects.filter((p) => p.type === "website") : mode === "landing" || (mode === "all" && kind === "landing") ? projects.filter((p) => p.type !== "website") : projects;
-  const matching = typed.filter((p) => (filter === "All" || p.status === filter.toLowerCase()) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
+  const typed = mode === "all" && kind === "drafts" ? drafts : mode === "all" && kind === "domain" ? projects.filter((p) => domainState(p, subs) === "connected") : mode === "website" || (mode === "all" && kind === "website") ? projects.filter((p) => p.type === "website") : mode === "landing" || (mode === "all" && kind === "landing") ? projects.filter((p) => p.type !== "website") : projects;
+  const matching = typed.filter((p) => (filter === "All" || (filter === "Published" ? p.status === "published" : p.status !== "published")) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
   const shown = mode === "dash" && !query ? [...matching].sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 3) : matching;
   /* draw 12 cards first, the rest as you scroll (keeps the page instant with many projects) */
   const [limit, setLimit] = useState(12), more = useRef(null);
@@ -346,28 +350,32 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
     <>
       <div className="db-lh"><h2>{mode === "website" ? "Your websites" : mode === "landing" ? "Your landing pages" : mode === "all" ? "Your projects" : "Recent projects"} <span>({mode === "dash" && !query ? shown.length + " of " + typed.length : typed.length})</span></h2>
         {mode === "dash" && typed.length > 3 && <button className="link db-all" onClick={() => onViewAll && onViewAll()}>View all {typed.length} →</button>}
-        <div className="chips" style={{ margin: 0 }}>{["All", "Published", "Draft"].map((f) => <button key={f} className={filter === f ? "on" : ""} onClick={() => setFilter(f)}>{f}</button>)}</div></div>
+        <div className="chips" style={{ margin: 0 }}>{["All", "Published", "Not live"].map((f) => <button key={f} className={filter === f ? "on" : ""} onClick={() => setFilter(f)}>{f}</button>)}</div></div>
       {!shown.length ? (
         <div className="empty"><b>{typed.length ? "Nothing matches" : mode === "website" ? "No websites yet" : mode === "landing" ? "No landing pages yet" : "Nothing here yet"}</b><p className="mut">Create one from a template, with AI, or import an existing HTML file.</p>
           <button className="pri" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ Create new</button> <button onClick={onImport}>Import HTML</button></div>
       ) : (
         <div className={mode === "dash" && !query ? "grid pc-grid" : "grid"}>{shown.slice(0, limit).map((p) => (
-          <div key={p.id} className="card" onClick={() => (onView ? onView(p) : onOpen(p.id))} onContextMenu={(e) => { e.preventDefault(); setMenu(p.id); }} title="Click to preview · right-click for more">
+          <div key={p.id} className="card" onPointerEnter={warm} onClick={() => (onView ? onView(p) : onOpen(p.id))} onContextMenu={(e) => { e.preventDefault(); setMenu(p.id); }} title="Click to preview · right-click for more">
             <Thumb html={p.pages[0].html} img={tplImg(p)} />
             <div className="cb">
               <div className="ct"><b>{p.name}</b></div>
               {(() => { const live = p.status === "published" ? liveAddr(p, subs) : "", ds = domainState(p, subs);
-                return <div className={"pc-st " + (live ? "on" : "")}><i />{live ? "Live" : p.unsaved ? <b className="pc-unsaved">Not saved</b> : "Draft"}
+                return <div className={"pc-st " + (live ? "on" : "")}><i />{live ? "Live" : p.unsaved ? <b className="pc-unsaved">Draft · not saved</b> : "Not live"}
                   {live ? <a className="pc-live" href={live} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} title="Open the live website">{live.replace(/^https?:\/\//, "").replace(/\/$/, "")} ↗</a> : <span className="mut">· not live yet</span>}
                   {live && ds === "needs" && onDomain && <span className="pc-need" title="Only on the temporary link — give it a domain">no domain</span>}</div>; })()}
-              <div className="db-cardbtns" onClick={(e) => e.stopPropagation()}>
+              {p.unsaved ? <div className="db-cardbtns" onClick={(e) => e.stopPropagation()}>
+                <button onClick={() => onOpen(p.id)}><Icon n="pen" s={14} /> Edit</button>
+                {onSaveDraft && <button className="pri" onClick={() => onSaveDraft(p)}>💾 Save to projects</button>}
+                {onDiscardDraft && <button className="del" onClick={() => onDiscardDraft(p)} title="Delete this draft">🗑</button>}
+              </div> : <div className="db-cardbtns" onClick={(e) => e.stopPropagation()}>
                 <button onClick={() => onOpen(p.id)}><Icon n="pen" s={14} /> Edit</button>
                 {onPreview && <button onClick={act(onPreview, p)}><Icon n="eye" s={14} /> Preview</button>}
                 {onDomain && p.status === "published" && <button className="dom" onClick={act(onDomain, p)} title="Connect a domain or free subdomain">🌐 Domain</button>}
                 <button className="pri" onClick={act(onPublish, p)}>🚀 {p.status === "published" ? "Update" : "Publish"}</button>
-              </div>
+              </div>}
             </div>
-            <button className="dots" onClick={(e) => { e.stopPropagation(); setMenu(menu === p.id ? null : p.id); }}>⋯</button>
+            {!p.unsaved && <button className="dots" onClick={(e) => { e.stopPropagation(); setMenu(menu === p.id ? null : p.id); }}>⋯</button>}
             {menu === p.id && (
               <div className="menu" onClick={(e) => e.stopPropagation()}>
                 <div onClick={() => onOpen(p.id)}>Edit</div>{onPreview && <div onClick={act(onPreview, p)}>↗ Open in new tab</div>}<div onClick={act(onRename, p)}>Rename</div><div onClick={act(onDuplicate, p)}>Duplicate</div>{onSaveTpl && <div onClick={act(onSaveTpl, p)}>★ Save as template</div>}
@@ -389,7 +397,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
     <div onClick={() => setMenu(null)}>
       <div className="top"><div><h1>{mode === "website" ? "Websites" : mode === "landing" ? "Landing Pages" : "All projects"}</h1><p className="mut">{mode === "website" ? "Multi-page sites with a shared menu." : mode === "landing" ? "Single pages built to convert — offers, events, sign-ups." : "Every website and landing page you've built."}</p></div>
         <button className="pri big" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ New {mode === "website" ? "website" : mode === "landing" ? "landing page" : "project"}</button></div>
-      {mode === "all" && <div className="pj-kinds">{[["all", "All projects", projects.length, "layers"], ["website", "Websites", nWeb, "globe"], ["landing", "Landing pages", nLand, "pages"], ["domain", "With domain", nDom, "link"]].map(([k, l, n, ic]) => (
+      {mode === "all" && <div className="pj-kinds">{[["all", "All projects", projects.length, "layers"], ["website", "Websites", nWeb, "globe"], ["landing", "Landing pages", nLand, "pages"], ["domain", "With domain", nDom, "link"], ...(drafts.length ? [["drafts", "Drafts", drafts.length, "pen"]] : [])].map(([k, l, n, ic]) => (
         <button key={k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}><Icon n={ic} s={16} /><b>{l}</b><em>{n}</em></button>))}</div>}
       {shown.length > limit && <div ref={more} className="pc-more">Loading more projects…</div>}
       {list}
