@@ -1,6 +1,6 @@
 // LaunchBuilder v66 — Dashboard.jsx
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
-import { Sidebar, NewModal, PublishModal } from "./parts.jsx";
+import { Sidebar, NewModal, PublishModal, republishLive } from "./parts.jsx";
 import MyPages from "./MyPages.jsx";
 import Leads from "./Leads.jsx";
 import { Icon } from "./icons.jsx";
@@ -328,7 +328,8 @@ export default function Dashboard({ user, onLogout }) {
     <Suspense fallback={<div className="boot"><span className="pub-spin" />Opening the editor…</div>}>
       <Editor key={open.id} page={open} user={user} forms={forms} events={cal} integ={integ} onSave={(pid, h) => patchHtml(open.id, pid, h)} onPages={(fn) => patchPages(open.id, fn)} onType={(t) => patch(open.id, { type: t })}
         unsaved={!!open.unsaved} onSaveProject={() => saveDraft(open.id)}
-        onBack={() => { const o = open; setTimeout(() => leaveEditor(o), 30); }} onPublish={() => { if (open.unsaved && !saveDraft(open.id)) return; setModal({ type: "publish", id: open.id }); }} />
+        onBack={() => { const o = open; setTimeout(() => leaveEditor(o), 30); }} onPublish={() => { if (open.unsaved && !saveDraft(open.id)) return; setModal({ type: "publish", id: open.id }); }}
+        onUpdate={open.status === "published" && open.host && open.host.slug && !open.unsaved ? async () => { const p = projRef.current.find((x) => x.id === open.id) || open; try { const o = await republishLive(p, integ); patch(p.id, o); } catch (e) { if (e.message === "NOT_LIVE") { setModal({ type: "publish", id: p.id }); return; } throw e; } } : undefined} />
       {pubModal}
       {modal && modal.type === "askSave" && <div className="uv-ov"><div className="uv-box">
         <span className="uv-ic">✨</span><h3>“{open.name}” is ready</h3>

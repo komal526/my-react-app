@@ -182,6 +182,17 @@ export function NewModal({ onCreate, onImport, onClose, ai, onSetupAI, kind = "l
 }
 
 
+/* one click "Update": put the latest edits on the live site (same steps as Publish → Update live site) */
+export async function republishLive(page, integ) {
+  if (!page.host || !page.host.slug || !integ || !integ.server) throw new Error("NOT_LIVE");
+  const own = page.domain && page.domainStatus === "connected" ? "https://" + page.domain : "";
+  const base = ((integ.server.base) || location.origin).replace(/\/$/, ""), sl = page.host.slug;
+  const files = await buildSite(page.pages, own || `${base}/sites/${sl}`, { leadUrl: (integ.server.url || defaultServerUrl()), site: sl, pixels: pixelsFor(integ, page) });
+  const payload = filesForServer(files);
+  if (payload.reduce((n, f) => n + f.b64.length, 0) > 60e6) throw new Error("Your site is bigger than 45 MB. Use smaller videos or YouTube links.");
+  const r = await phpCall(integ.server, { action: "publish", slug: sl, files: payload });
+  return { status: "published", host: { ...page.host, url: r.url || page.host.url, folder: r.folder || page.host.folder, ts: Date.now() }, versions: [...(page.versions || []), { ts: Date.now(), pages: page.pages }].slice(-5) };
+}
 export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains, onInteg, projects = [] }) {
   /* link names your OTHER projects already use — publishing with one of them would replace that project's live site */
   const usedBy = (sl) => projects.find((x) => x.id !== page.id && x.host && x.host.slug === sl);

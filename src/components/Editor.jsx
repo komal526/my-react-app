@@ -17,7 +17,8 @@ const pillOf = (g, nm) => g === "Layout" ? "layout" : g === "Media" ? "media" : 
   : g === "Basic" ? (/Button|Hyperlink/.test(nm) ? "cta" : nm === "Icon" ? "media" : "text") : /Call to action|Banner|Payment button/.test(nm) ? "cta" : "prebuilt";
 const TABS = [["add", "plus", "Add"], ["layers", "layers", "Layers"], ["pages", "pages", "Pages"], ["site", "globe", "Site"], ["edit", "pen", "Edit"]];
 
-export default function Editor({ page, user, forms = [], events = [], integ, onSave, onBack, onPublish, onPages, onType, unsaved = false, onSaveProject = () => {} }) {
+export default function Editor({ page, user, forms = [], events = [], integ, onSave, onBack, onPublish, onPages, onType, unsaved = false, onSaveProject = () => {}, onUpdate }) {
+  const [upd, setUpd] = useState("");
   const [src, setSrc] = useState(page.pages[0].html);
   const [ver, setVer] = useState(0), [mode, setMode] = useState("visual"), [dev, setDev] = useState(() => (window.innerWidth < 600 ? "mobile" : window.innerWidth <= 1024 ? "tablet" : "desktop")), [tab, setTab] = useState("add"), [itab, setItab] = useState("content");
   const [selEl, setSelEl] = useState(null), [selKey, setSelKey] = useState(0), [, setTick] = useState(0), [codeText, setCodeText] = useState("");
@@ -424,6 +425,9 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
         <span className="sep" />
         <div className="split"><button className="btn ghost" onClick={preview} disabled={mode !== "visual"}><Icon n="eye" s={15} /> Preview</button><button className="btn ghost ic" title="Copy temporary preview link" onClick={copyLink} disabled={mode !== "visual"}><Icon n="link" s={15} /></button></div>
         {unsaved && <button className="tb-save" onClick={() => { flush(); setTimeout(onSaveProject, 0); }} title="This new project isn't in your projects yet">💾 <span>Save to projects</span></button>}
+        {onUpdate && <button className={"btn tb-upd" + (upd === "ok" ? " ok" : upd === "err" ? " err" : "")} disabled={mode !== "visual" || upd === "busy"} title="Put your latest edits on the live website"
+          onClick={() => { flush(); setUpd("busy"); setTimeout(() => onUpdate().then(() => { setUpd("ok"); say("✓ Live website updated"); setTimeout(() => setUpd(""), 2500); }).catch((e) => { setUpd("err"); say("Update failed: " + e.message); setTimeout(() => setUpd(""), 4000); }), 120); }}>
+          {upd === "busy" ? <><span className="pub-spin" /> Updating…</> : upd === "ok" ? "✓ Updated" : upd === "err" ? "Try again" : <><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 10-2.3 5.7" /><path d="M20 4v7h-7" /></svg> Update</>}</button>}
         <button className="btn publish" onClick={() => { flush(); onPublish(exportHtml()); }} disabled={mode !== "visual"}>Publish</button>
       </header>
 

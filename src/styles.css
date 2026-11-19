@@ -4298,3 +4298,9 @@ html.lb-hidden .ais-bot2{animation-play-state:paused}
 .dash .vc-box .vc-x{background:rgba(10,14,50,.6)!important;color:#fff!important;border:1px solid rgba(255,255,255,.22)!important;border-radius:50%!important;padding:0!important}
 .dash .vc-box .vc-voice{background:rgba(10,14,50,.55)!important;color:#fff!important;border:2px solid rgba(255,255,255,.35)!important}
 .dash .vc-box .vc-lsel select{background:transparent!important;color:#fff!important;border:0!important;height:auto!important;box-shadow:none!important}
+/* v96 — editor: one-click Update for live sites */
+.tb-upd{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border-radius:12px;border:1.5px solid var(--lb-y,#f5b301)!important;background:rgba(245,179,1,.1)!important;color:var(--lb-y,#f5b301)!important;font-weight:800;cursor:pointer;margin-right:8px}
+.tb-upd:hover:not(:disabled){background:rgba(245,179,1,.2)!important}
+.tb-upd.ok{border-color:#22c55e!important;color:#4ade80!important;background:rgba(34,197,94,.12)!important}
+.tb-upd.err{border-color:#ef4444!important;color:#fca5a5!important;background:rgba(239,68,68,.12)!important}
+.tb-upd .pub-spin{width:14px;height:14px;border-width:2px}
