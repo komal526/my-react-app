@@ -22,15 +22,50 @@ export default function Admin({ me, ip = "" }) {
           <p className="mut">{owner ? "Everyone using your workspace — sign-ups, logins and what they've published. Only you see this." : "Only you see this. Users have every feature — here you control the users, and give your software to other businesses on their own domain."}</p></div></div>
       <div className="adm-tabs">
         <button className={tab === "users" ? "on" : ""} onClick={() => setTab("users")}>👥 Accounts</button>
+        <button className={tab === "doms" ? "on" : ""} onClick={() => setTab("doms")}>🌐 All domains</button>
         <button className={tab === "wl" ? "on" : ""} onClick={() => setTab("wl")}>{owner ? "🎨 My brand" : "🏷 Give software to a client"}</button>
         {!owner && <button className={tab === "dns" ? "on" : ""} onClick={() => setTab("dns")}>⚙ Free-subdomain DNS</button>}
       </div>
-      {tab === "users" ? <Users me={me} /> : tab === "wl" ? <WhiteLabel me={me} /> : <div className="panel adm-dns">
+      {tab === "users" ? <Users me={me} /> : tab === "doms" ? <AllDomains me={me} /> : tab === "wl" ? <WhiteLabel me={me} /> : <div className="panel adm-dns">
         <b>One DNS record makes every free subdomain work</b>
         <p className="mut">In the DNS of <b>{me.subBase || "your domain"}</b> (Hostinger → Domains → {me.subBase || "your domain"} → DNS records) add:</p>
         <div className="ltable"><table><thead><tr><th>Type</th><th>Name</th><th>Value</th></tr></thead><tbody><tr><td><b>A</b></td><td><C v="*" /></td><td><C v={ip || me.ip || "your VPS IP"} /></td></tr></tbody></table></div>
         <p className="mut sm">Already done? Then nothing else is needed — users click “Live” and their subdomain opens within ~2 minutes.</p></div>}
     </div>
+  );
+}
+
+/* ---------------- every domain + free subdomain on the server — disconnect any of them ---------------- */
+function AllDomains({ me }) {
+  const [d, setD] = useState(null), [err, setErr] = useState(""), [q, setQ] = useState(""), [busy, setBusy] = useState(""), [msg, setMsg] = useState("");
+  const load = () => admin("domains").then((r) => { setD(r.domains || []); setErr(""); }).catch((e) => setErr(e.message));
+  useEffect(() => { load(); }, []);
+  useEffect(() => { if (!msg) return; const t = setTimeout(() => setMsg(""), 4000); return () => clearTimeout(t); }, [msg]);
+  const del = async (x) => {
+    if (!window.confirm(`Disconnect ${x.host}? It will stop showing the website right away.`)) return;
+    setBusy(x.host); try { await admin("domain_del", { host: x.host }); setMsg("✓ " + x.host + " disconnected"); await load(); } catch (e) { window.alert(e.message); } setBusy("");
+  };
+  if (err) return <div className="panel adm-err"><b>Couldn't load domains</b><p className="mut">{/Unknown action/i.test(err) ? "The server file is old — push the new files and run lb-deploy on the VPS." : err}</p></div>;
+  if (!d) return <div className="lazy-load"><span className="pub-spin" /></div>;
+  const s = q.trim().toLowerCase(), list = d.filter((x) => !s || (x.host + " " + x.email + " " + x.target).toLowerCase().includes(s));
+  return (
+    <>
+      <div className="adm-bar"><input className="adm-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search domain, email or website…" />
+        <div className="grow" /><button onClick={load}>↻ Refresh</button></div>
+      {msg && <div className="adm-ok">{msg}</div>}
+      <p className="mut sm adm-hint">Every address that opens a website on {me.role === "owner" ? "your workspace" : "this server"}. Disconnect works at once — the address then shows “not connected”.</p>
+      <div className="adm-table"><table>
+        <thead><tr><th>Address</th><th>Type</th><th>Website</th><th>Account</th><th>https</th><th></th></tr></thead>
+        <tbody>{list.map((x) => (
+          <tr key={x.host}>
+            <td><a className="dm-link" href={"http://" + x.host} target="_blank" rel="noopener">{x.host} ↗</a></td>
+            <td>{x.kind === "sub" ? <em className="adm-kind sub">Free subdomain</em> : <em className="adm-kind">Own domain</em>}</td>
+            <td><code>{x.target}</code></td><td>{x.email}</td><td>{x.https ? "✓" : <span className="mut">—</span>}</td>
+            <td><button className="dm-disc" disabled={busy === x.host} onClick={() => del(x)}>{busy === x.host ? "…" : "✕ Disconnect"}</button></td>
+          </tr>))}
+          {!list.length && <tr><td colSpan="6" className="mut" style={{ textAlign: "center", padding: 20 }}>{d.length ? "Nothing matches." : "No domains connected yet."}</td></tr>}
+        </tbody></table></div>
+    </>
   );
 }
 

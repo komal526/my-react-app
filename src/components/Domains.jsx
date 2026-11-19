@@ -231,7 +231,12 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
   };
   const remove = async () => {
     if (!window.confirm(`Disconnect ${obj.domain}?`)) return;
-    if (vps || serverOn(integ)) { try { await phpCall(srv.url ? srv : { url: defaultServerUrl(), key: srv.key }, { action: "domain", domain: "", ...route }); } catch { /* ignore */ } }
+    if (vps || serverOn(integ)) {
+      setBusy("disc"); setErr("");
+      try { await phpCall(srv.url ? srv : { url: defaultServerUrl(), key: srv.key }, { action: "domain", domain: "", remove: obj.domain, ...route }); }
+      catch (e) { setBusy(""); setOpen(true); setErr("Could not disconnect: " + e.message); return; }   // keep it shown as connected — the server still serves it
+      setBusy("");
+    }
     onSave({ domain: "", domainStatus: "", domainCheck: null, domainCopy: false }); setVal("");
   };
   useEffect(() => { if (open && obj.domain) check(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -281,7 +286,7 @@ function DomainRow({ label, sub: subLabel, url, folder, obj, onSave, route, inte
         <div className="dr-l"><b>{label}</b><span className="mut sm">{subLabel}</span></div>
         <div className="dr-d">{obj.domain ? <><a className="dm-link" href={"https://" + obj.domain} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()}>{obj.domain} ↗</a><span className={"badge " + st[0]}>{obj.domainStatus === "connected" ? "● Live" : "Setting up"}</span></>
           : <a href={url} target="_blank" rel="noopener" className={"sm " + (/\/sites\//.test(url) ? "mut" : "dm-link")} onClick={(e) => e.stopPropagation()}>{url.replace(/^https?:\/\//, "").replace(/\/$/, "")} ↗</a>}</div>
-        {obj.domain && <button className="dm-disc" onClick={(e) => { e.stopPropagation(); remove(); }} title="Disconnect this domain">✕ Disconnect</button>}
+        {obj.domain && <button className="dm-disc" disabled={busy === "disc"} onClick={(e) => { e.stopPropagation(); remove(); }} title="Disconnect this domain">{busy === "disc" ? "Disconnecting…" : "✕ Disconnect"}</button>}
         <button className={obj.domain ? "" : "pri"} onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>{open ? "Close" : obj.domain ? "Manage" : "Connect domain"}</button>
       </div>
       {open && <div className="dm-body cw">
@@ -332,7 +337,7 @@ function ServerCard({ p, onPatch, onPatchPage, onOpen, integ, onSetup, vps = nul
   );
 }
 
-export const SERVER_VERSION = 17;
+export const SERVER_VERSION = 18;
 
 /* ---------- free subdomains: name.crecapo.tech (or name.<white-label domain>) — no DNS for the user, limited per account ---------- */
 /* messages that disappear by themselves (ok after 5 s, errors after 9 s) */

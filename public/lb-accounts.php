@@ -4,6 +4,43 @@
 // white-label workspaces (tenants), and limits (5 free subdomains per user).
 // Settings live OUTSIDE the web folder in /etc/launchbuilder/saas.json (created by vps/lb-saas-setup.sh).
 
+/* Some servers have PHP without the "curl" add-on (error: Call to undefined function curl_init).
+   This small stand-in does the same web requests with PHP's built-in streams, so everything still works. */
+if (!function_exists('curl_init')) {
+  foreach (array('CURLOPT_URL' => 10002, 'CURLOPT_RETURNTRANSFER' => 19913, 'CURLOPT_TIMEOUT' => 13, 'CURLOPT_CONNECTTIMEOUT' => 78, 'CURLOPT_HTTPHEADER' => 10023,
+    'CURLOPT_POST' => 47, 'CURLOPT_POSTFIELDS' => 10015, 'CURLOPT_FOLLOWLOCATION' => 52, 'CURLOPT_MAXREDIRS' => 68, 'CURLOPT_SSL_VERIFYPEER' => 64,
+    'CURLOPT_SSL_VERIFYHOST' => 81, 'CURLOPT_USERAGENT' => 10018, 'CURLOPT_NOBODY' => 44, 'CURLOPT_CUSTOMREQUEST' => 10036, 'CURLINFO_HTTP_CODE' => 2097154) as $k => $v)
+    if (!defined($k)) define($k, $v);
+  function curl_init($url = null) { $h = new stdClass(); $h->o = array(CURLOPT_URL => $url); $h->code = 0; $h->err = ''; return $h; }
+  function curl_setopt($h, $k, $v) { $h->o[$k] = $v; return true; }
+  function curl_setopt_array($h, $a) { foreach ($a as $k => $v) $h->o[$k] = $v; return true; }
+  function curl_getinfo($h, $k = null) { return $k === CURLINFO_HTTP_CODE ? $h->code : array('http_code' => $h->code); }
+  function curl_error($h) { return $h->err; }
+  function curl_close($h) { }
+  function curl_exec($h) {
+    $o = $h->o; $g = function ($k, $d) use ($o) { return isset($o[$k]) ? $o[$k] : $d; };
+    if (!ini_get('allow_url_fopen')) { $h->err = 'PHP setting allow_url_fopen is off and the curl add-on is missing'; return false; }
+    $body = $g(CURLOPT_POSTFIELDS, null); if (is_array($body)) $body = http_build_query($body);
+    $method = $g(CURLOPT_CUSTOMREQUEST, '') ?: ($g(CURLOPT_NOBODY, false) ? 'HEAD' : (($g(CURLOPT_POST, false) || $body !== null) ? 'POST' : 'GET'));
+    $hd = (array)$g(CURLOPT_HTTPHEADER, array()); $hasCT = false;
+    foreach ($hd as $x) if (stripos($x, 'content-type:') === 0) $hasCT = true;
+    if ($body !== null && !$hasCT) $hd[] = 'Content-Type: application/x-www-form-urlencoded';
+    $hd[] = 'User-Agent: ' . $g(CURLOPT_USERAGENT, 'LaunchBuilder');
+    $follow = (bool)$g(CURLOPT_FOLLOWLOCATION, false);
+    $http = array('method' => $method, 'header' => implode("\r\n", $hd), 'ignore_errors' => true, 'protocol_version' => 1.1,
+      'timeout' => (float)$g(CURLOPT_TIMEOUT, 30), 'follow_location' => $follow ? 1 : 0, 'max_redirects' => $follow ? max(1, (int)$g(CURLOPT_MAXREDIRS, 5)) : 1);
+    if ($body !== null) $http['content'] = (string)$body;
+    $vp = (bool)$g(CURLOPT_SSL_VERIFYPEER, true);
+    $ctx = stream_context_create(array('http' => $http, 'ssl' => array('verify_peer' => $vp, 'verify_peer_name' => $vp && $g(CURLOPT_SSL_VERIFYHOST, 2) ? true : false)));
+    $res = @file_get_contents((string)$o[CURLOPT_URL], false, $ctx);
+    $lines = function_exists('http_get_last_response_headers') ? (array)http_get_last_response_headers() : (isset($http_response_header) ? $http_response_header : array());
+    foreach ($lines as $l) if (preg_match('#^HTTP/\S+\s+(\d{3})#', $l, $m)) $h->code = (int)$m[1];   /* last status line wins (after redirects) */
+    if ($res === false && $h->code === 0) { $e = error_get_last(); $h->err = $e ? preg_replace('/^.*?\):\s*/', '', $e['message']) : 'Could not connect'; return false; }
+    $res = (string)$res;
+    return $g(CURLOPT_RETURNTRANSFER, false) ? $res : (print($res) ? true : true);
+  }
+}
+
 if (!function_exists('lb_saas')) {
 
 function lb_j($f, $def) { if (!file_exists($f)) return $def; $j = json_decode((string)@file_get_contents($f), true); return is_array($j) ? $j : $def; }

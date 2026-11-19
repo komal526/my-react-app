@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 /* v17: the answer is ALWAYS clean JSON — PHP warnings never mix into it (they go to lb-data/php-errors.log),
    and a crash comes back as a readable error instead of an empty page */
 @ini_set('display_errors', '0'); ob_start();
-set_error_handler(function ($no, $msg, $file, $line) { @file_put_contents(__DIR__ . '/lb-data/php-errors.log', date('c') . " [$no] $msg (" . basename($file) . ":$line)\n", FILE_APPEND); return true; });
+set_error_handler(function ($no, $msg, $file, $line) { if (!(error_reporting() & $no)) return false; /* @-silenced */ @file_put_contents(__DIR__ . '/lb-data/php-errors.log', date('c') . " [$no] $msg (" . basename($file) . ":$line)\n", FILE_APPEND); return true; });
 register_shutdown_function(function () {
   $e = error_get_last();
   if ($e && in_array($e['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR), true)) {
@@ -144,7 +144,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 17, 'accounts' => (bool)lb_saas(), 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 18, 'accounts' => (bool)lb_saas(), 'http' => extension_loaded('curl') ? 'curl' : 'php', 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
 
 /* ---------- Google Sheets + email alerts (one Apps Script web app per account) ---------- */
 function lb_hook_file($DATA, $uid) { $d = $DATA . '/hooks'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . substr(hash('sha256', 'u:' . $uid), 0, 24) . '.json'; }
@@ -621,6 +621,12 @@ if ($act === 'domain') {
   $map = jread($DATA . '/domains.json', array()); $dw = lb_downers($DATA);
   /* this website (or page) had another custom domain → replace it (free subdomains stay) */
   foreach ($map as $dm => $sl) if ($sl === $target && (!isset($dw[$dm]['kind']) || $dw[$dm]['kind'] !== 'sub') && lb_is_me(isset($dw[$dm]['uid']) ? $dw[$dm]['uid'] : '', $ME)) { unset($map[$dm]); unset($dw[$dm]); }
+  /* disconnect a named domain (works even if it was connected to another page of the site) */
+  $rm = preg_replace('/^www\./', '', strtolower(trim(isset($d['remove']) ? (string)$d['remove'] : '')));
+  if ($rm !== '' && isset($map[$rm])) {
+    if (!lb_is_me(isset($dw[$rm]['uid']) ? $dw[$rm]['uid'] : '', $ME)) fail('This domain belongs to another account.');
+    unset($map[$rm]); unset($dw[$rm]);
+  }
   if ($domain !== '') {
     $bare = preg_replace('/^www\./', '', $domain);
     if (!lb_valid_domain($bare)) fail('Invalid domain');
@@ -746,6 +752,29 @@ function lb_counts($DATA) {
   foreach ($own as $sl => $o) { if (!isset($c[$o])) $c[$o] = array('sites' => 0, 'subs' => 0, 'domains' => 0); $c[$o]['sites']++; }
   foreach ($dw as $h => $o) { $u = $o['uid']; if (!isset($c[$u])) $c[$u] = array('sites' => 0, 'subs' => 0, 'domains' => 0); $c[$u][$o['kind'] === 'sub' ? 'subs' : 'domains']++; }
   return $c;
+}
+/* every connected domain + free subdomain, with its account — the admin can disconnect any of them */
+if ($act === 'adm_domains') {
+  $map = jread($DATA . '/domains.json', array()); $dw = lb_downers($DATA); $users = jread($DATA . '/users.json', array()); $res = array();
+  foreach ($map as $h => $t) {
+    $uid = isset($dw[$h]['uid']) ? $dw[$h]['uid'] : 'owner'; $u = isset($users[$uid]) ? $users[$uid] : array();
+    if ($OWN_T !== null && (!isset($u['tenant']) || $u['tenant'] !== $OWN_T)) continue;
+    $res[] = array('host' => $h, 'target' => $t, 'kind' => isset($dw[$h]['kind']) ? $dw[$h]['kind'] : 'custom', 'uid' => $uid,
+      'email' => $uid === 'owner' || $uid === '' ? 'admin (old site)' : (isset($u['email']) ? $u['email'] : $uid), 'ts' => isset($dw[$h]['ts']) ? $dw[$h]['ts'] : 0,
+      'https' => @file_exists('/etc/nginx/lb-ssl/' . $h . '.conf'));
+  }
+  usort($res, function ($a, $b) { return $b['ts'] - $a['ts']; });
+  out(array('ok' => true, 'domains' => $res));
+}
+if ($act === 'adm_domain_del') {
+  $h = preg_replace('/^www\./', '', strtolower(trim(isset($d['host']) ? (string)$d['host'] : '')));
+  $map = jread($DATA . '/domains.json', array()); $dw = lb_downers($DATA);
+  if (!isset($map[$h])) fail('Already disconnected.');
+  if ($OWN_T !== null) { $users = jread($DATA . '/users.json', array()); $uid = isset($dw[$h]['uid']) ? $dw[$h]['uid'] : ''; if (!isset($users[$uid]['tenant']) || $users[$uid]['tenant'] !== $OWN_T) fail('Not one of your clients\' domains.'); }
+  unset($map[$h]); unset($dw[$h]);
+  jwrite($DATA . '/domains.json', $map); jwrite($DATA . '/downers.json', $dw);
+  if (!vps_info()) write_rules($ROOT, $SITES, $prefix, $map, isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '');
+  out(array('ok' => true));
 }
 if ($act === 'adm_users') {
   $users = jread($DATA . '/users.json', array()); $c = lb_counts($DATA); $S = lb_saas();
