@@ -3879,3 +3879,13 @@ html.lb-hidden .tg-frame .tg-reel{animation-play-state:paused}
 .pk-close:hover{background:#f5b301}
 @media (max-width:900px){.pk-acts .pk-ic span{display:none}}
 .tp-box .tp-x{width:40px;height:40px;border-radius:12px!important;background:#fff!important;color:#0d1324!important;font-size:18px!important;font-weight:900!important;border:0!important}.tp-box .tp-x:hover{background:#f5b301!important}
+/* v83 — create account + limits */
+.dash .na{margin:0 0 12px;display:flex;flex-direction:column;gap:8px;border:1px solid rgba(var(--lb-yr,245,179,1),.6)}
+.dash .na-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.dash .na-g label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700;color:#3a4361}
+.dash .na-g input,.dash .na-g select{padding:9px 10px;border:1px solid #d5dae6;border-radius:9px;font:inherit;font-weight:500;min-width:0}
+.dash .na-g small{font-weight:500;color:#6b7398}
+.dash .na-pw{display:flex;gap:4px}.dash .na-pw input{flex:1}.dash .na-pw button{border:1px solid #d5dae6;background:#fff;border-radius:9px;padding:0 10px;cursor:pointer}
+.dash .na pre{white-space:pre-wrap;background:#0d1324;color:#e8ecf8;border-radius:10px;padding:12px;font-size:12.5px;margin:6px 0}
+.dash .na .row{display:flex;gap:8px;flex-wrap:wrap}
+.dash .plan-note{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:#f1f3fb;border:1px solid #e1e5f3;color:#3a4361;font-size:13.5px}.dash .plan-note b{color:#0d1324}

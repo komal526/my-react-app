@@ -36,7 +36,7 @@ export default function Admin({ me, ip = "" }) {
 
 /* ---------------- accounts ---------------- */
 function Users({ me }) {
-  const [d, setD] = useState(null), [err, setErr] = useState(""), [q, setQ] = useState(""), [f, setF] = useState("all"), [ws, setWs] = useState(""), [busy, setBusy] = useState("");
+  const [d, setD] = useState(null), [err, setErr] = useState(""), [q, setQ] = useState(""), [f, setF] = useState("all"), [ws, setWs] = useState(""), [busy, setBusy] = useState(""), [nw, setNew] = useState(false);
   const load = () => admin("users").then((r) => { setD(r); setErr(""); }).catch((e) => setErr(e.message));
   useEffect(() => { load(); const t = setInterval(load, 60000); return () => clearInterval(t); }, []);
   const set = async (u, o) => { setBusy(u.uid); try { await admin("user", { uid: u.uid, ...o }); await load(); } catch (e) { window.alert(e.message); } setBusy(""); };
@@ -65,11 +65,13 @@ function Users({ me }) {
         <input className="adm-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search email or name…" />
         <select value={f} onChange={(e) => setF(e.target.value)}><option value="all">All accounts</option><option value="active">Active in 7 days</option><option value="never">Nothing published</option><option value="paused">Paused</option></select>
         {me.role === "admin" && wsList.length > 0 && <select value={ws} onChange={(e) => setWs(e.target.value)}><option value="">Every workspace</option><option value="_main">Main (yours)</option>{wsList.map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select>}
-        <div className="grow" /><button onClick={load}>↻ Refresh</button><button onClick={csv}>⬇ Export CSV</button>
+        <div className="grow" /><button onClick={load}>↻ Refresh</button><button onClick={csv}>⬇ Export CSV</button><button className="adm-go" onClick={() => setNew(!nw)}>＋ Create account</button>
       </div>
+      {nw && <NewAccount me={me} tenants={wsList} onDone={() => { setNew(false); load(); }} />}
+      <p className="mut sm adm-hint">Limits: type a number in the boxes (empty = default, 0 = unlimited). Websites = live websites · Own domains = connected domains · Subdomains = free name.{me.subBase || "domain"}.</p>
       {!d.serviceKey && me.role === "admin" && <p className="mut sm adm-hint">Shows accounts that opened the builder. To also list accounts that only signed up, add the Supabase secret key when running <code>lb-saas-setup.sh</code>.</p>}
       <div className="adm-table"><table>
-        <thead><tr><th>Account</th>{me.role === "admin" && <th>Workspace</th>}<th>Signed up</th><th>Last login</th><th>Last active</th><th>Websites</th><th>Domains</th><th>Free subdomains</th><th>Status</th></tr></thead>
+        <thead><tr><th>Account</th>{me.role === "admin" && <th>Workspace</th>}<th>Signed up</th><th>Last login</th><th>Last active</th><th title="used / allowed">Websites</th><th title="used / allowed">Own domains</th><th title="used / allowed">Subdomains</th><th>Status</th></tr></thead>
         <tbody>{list.map((u) => (
           <tr key={u.uid} className={u.disabled ? "off" : ""}>
             <td><div className="adm-who"><span className="av">{(u.name || u.email || "?")[0].toUpperCase()}</span><div><b>{u.name || u.email.split("@")[0]}</b><small>{u.email}</small>
@@ -77,13 +79,40 @@ function Users({ me }) {
             {me.role === "admin" && <td>{u.tenantName || <span className="mut">Main</span>}</td>}
             <td>{day(u.created)}</td><td>{since(u.last_login)}</td>
             <td>{since(u.last_seen)}{u.dev && <small className="mut"> · {u.dev}</small>}{u.ip && <small className="mut adm-ip">{u.ip}</small>}</td>
-            <td><b>{u.sites}</b></td><td><b>{u.domains}</b></td>
-            <td>{u.subs} / {me.role === "admin" && !u.admin && !u.never ? <input className="adm-lim" type="number" min="0" defaultValue={u.sub_limit ?? ""} placeholder="5" title="Free subdomains for this account (empty = default)" onBlur={(e) => { const v = e.target.value; if (String(v) !== String(u.sub_limit ?? "")) set(u, { sub_limit: v === "" ? null : +v }); }} /> : u.admin ? "∞" : (u.sub_limit ?? "5")}</td>
-            <td>{u.admin || u.never ? <span className="badge published">Active</span> : <button className={"xs " + (u.disabled ? "pri" : "red")} disabled={busy === u.uid} onClick={() => { if (u.disabled || window.confirm(`Pause ${u.email}? They can't publish or change anything until you switch them back on. Their live websites keep working.`)) set(u, { disabled: !u.disabled }); }}>{u.disabled ? "▶ Switch on" : "⏸ Pause"}</button>}</td>
+            {[["sites", "site_limit", "∞", "Live websites"], ["domains", "dom_limit", "∞", "Own domains"], ["subs", "sub_limit", "5", "Free subdomains"]].map(([n, lk, ph, t]) => (
+              <td key={lk}><b>{u[n]}</b> / {!u.admin ? <input key={u.uid + lk + (u[lk] ?? "")} className="adm-lim" type="number" min="0" defaultValue={u[lk] ?? ""} placeholder={ph} title={t + " allowed for this account (empty = default, 0 = unlimited)"} onBlur={(e) => { const v = e.target.value; if (String(v) !== String(u[lk] ?? "")) set(u, { [lk]: v === "" ? null : +v }); }} /> : "∞"}</td>))}
+            <td>{u.admin || u.never || u.email === me.email ? <span className="badge published">Active</span> : <button className={"xs " + (u.disabled ? "pri" : "red")} disabled={busy === u.uid} onClick={() => { if (u.disabled || window.confirm(`Pause ${u.email}? They can't publish or change anything until you switch them back on. Their live websites keep working.`)) set(u, { disabled: !u.disabled }); }}>{u.disabled ? "▶ Switch on" : "⏸ Pause"}</button>}</td>
           </tr>))}
           {!list.length && <tr><td colSpan="9" className="mut adm-none">No accounts match.</td></tr>}
         </tbody></table></div>
     </>
+  );
+}
+
+/* create a login for a client: email + password you give them, with limits (e.g. 1 website, 1 subdomain, 1 domain) */
+function NewAccount({ me, tenants = [], onDone }) {
+  const gen = () => { const c = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let p = ""; const a = new Uint32Array(10); crypto.getRandomValues(a); a.forEach((x) => { p += c[x % c.length]; }); return p + "@" + (a[0] % 90 + 10); };
+  const [v, setV] = useState({ name: "", email: "", password: gen(), tenant: "", site_limit: "1", sub_limit: "1", dom_limit: "1" });
+  const [busy, setBusy] = useState(false), [err, setErr] = useState(""), [done, setDone] = useState(null), [cp, setCp] = useState(false);
+  const set = (k) => (e) => setV({ ...v, [k]: e.target.value });
+  const go = async () => { setErr(""); setBusy(true); try { const r = await admin("create_user", v); setDone({ ...v, login: r.login }); } catch (e) { setErr(e.message); } setBusy(false); };
+  if (done) { const msg = `Your ${done.login.replace(/^https:\/\//, "")} login is ready 🎉\n\nOpen: ${done.login}\nEmail: ${done.email}\nPassword: ${done.password}\n\nYou can create ${done.site_limit === "0" || !done.site_limit ? "unlimited" : done.site_limit} website(s), ${done.sub_limit === "0" ? "unlimited" : done.sub_limit || "5"} free subdomain(s) and connect ${done.dom_limit === "0" || !done.dom_limit ? "unlimited" : done.dom_limit} own domain(s). Please change your password after the first login.`;
+    return <div className="panel na"><b>✓ Account created</b><pre>{msg}</pre><div className="row"><button className="adm-go" onClick={() => { navigator.clipboard.writeText(msg); setCp(true); }}>{cp ? "✓ Copied" : "Copy login details"}</button><a className="btn" href={"https://wa.me/?text=" + encodeURIComponent(msg)} target="_blank" rel="noopener">Send on WhatsApp</a><button onClick={onDone}>Done</button></div></div>; }
+  return (
+    <div className="panel na">
+      <b>Create a login for a client</b><span className="mut sm">They log in with this email and password and build their own pages — only inside the limits you set.</span>
+      <div className="na-g">
+        <label>Name<input value={v.name} onChange={set("name")} placeholder="Client name" /></label>
+        <label>Email<input value={v.email} onChange={set("email")} placeholder="client@gmail.com" /></label>
+        <label>Password<div className="na-pw"><input value={v.password} onChange={set("password")} /><button type="button" onClick={() => setV({ ...v, password: gen() })} title="New password">↻</button></div></label>
+        {me.role === "admin" && tenants.length > 0 && <label>Workspace<select value={v.tenant} onChange={set("tenant")}><option value="">Main ({me.subBase || "your domain"})</option>{tenants.map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select></label>}
+        <label>Websites<input type="number" min="0" value={v.site_limit} onChange={set("site_limit")} /><small>0 = unlimited</small></label>
+        <label>Free subdomains<input type="number" min="0" value={v.sub_limit} onChange={set("sub_limit")} /></label>
+        <label>Own domains<input type="number" min="0" value={v.dom_limit} onChange={set("dom_limit")} /><small>0 = unlimited</small></label>
+      </div>
+      {err && <div className="cw-st bad">{err}</div>}
+      <div className="row"><button className="adm-go" disabled={busy} onClick={go}>{busy ? "Creating…" : "Create account"}</button></div>
+    </div>
   );
 }
 
@@ -216,6 +245,8 @@ function TenantForm({ t, owner = false, onDone, onCancel }) {
           {!owner && F({ k: "sites_domain", l: "Domain for their customers' subdomains", ph: v.app_domain ? rootDomain(String(v.app_domain).replace(/^https?:\/\//, "")) : "theirbrand.com" })}
           {!owner && F({ k: "max_users", l: "Max accounts", ph: "Unlimited", type: "number" })}
           {!owner && F({ k: "sub_limit", l: "Free subdomains per account", ph: "5", type: "number" })}
+          {!owner && F({ k: "site_limit", l: "Websites per account", ph: "Unlimited", type: "number" })}
+          {!owner && F({ k: "dom_limit", l: "Own domains per account", ph: "Unlimited", type: "number" })}
           {F({ k: "support_email", l: "Support email", ph: "support@theirbrand.com" })}
           {F({ k: "whatsapp", l: "Support WhatsApp", ph: "919876543210" })}
           {!owner && <label className="wl-f wl-chk2"><input type="checkbox" checked={v.active !== false} onChange={set("active")} /> Active</label>}

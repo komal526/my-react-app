@@ -96,7 +96,8 @@ function lb_register($u, $DATA, $hostTenant) {
   }
   $role = $admin ? 'admin' : ($tn !== '' && isset($tenants[$tn]['owner_email']) && strtolower($tenants[$tn]['owner_email']) === $u['email'] ? 'owner' : 'user');
   return array('uid' => $id, 'email' => $u['email'], 'name' => isset($r['name']) ? $r['name'] : '', 'role' => $role, 'tenant' => $tn,
-    'disabled' => !empty($r['disabled']), 'sub_limit' => isset($r['sub_limit']) ? $r['sub_limit'] : null);
+    'disabled' => !empty($r['disabled']), 'sub_limit' => isset($r['sub_limit']) ? $r['sub_limit'] : null,
+    'site_limit' => isset($r['site_limit']) ? $r['site_limit'] : null, 'dom_limit' => isset($r['dom_limit']) ? $r['dom_limit'] : null);
 }
 
 /* ---------- ownership: website (slug) → account, domain → account ---------- */
@@ -122,6 +123,17 @@ function lb_dom_mine($host, $ME, $DATA) { $dw = lb_downers($DATA); return lb_is_
 function lb_sub_base($ME, $DATA) {
   if ($ME['tenant'] !== '') { $t = lb_tenants($DATA); return isset($t[$ME['tenant']]['sites_domain']) ? strtolower($t[$ME['tenant']]['sites_domain']) : ''; }
   return lb_main_domain($DATA);
+}
+/* limits per account: websites (published), custom domains — 0 = unlimited. Account setting → workspace default → server default */
+function lb_limit($ME, $DATA, $k) {
+  if ($ME['role'] === 'admin') return 0;
+  if (isset($ME[$k]) && $ME[$k] !== null && $ME[$k] !== '') return (int)$ME[$k];
+  if ($ME['tenant'] !== '') { $t = lb_tenants($DATA); if (isset($t[$ME['tenant']][$k]) && $t[$ME['tenant']][$k] !== '') return (int)$t[$ME['tenant']][$k]; }
+  $s = lb_saas(); return isset($s[$k]) ? (int)$s[$k] : 0;
+}
+function lb_count_owned($ME, $DATA, $kind) {
+  if ($kind === 'site') { $n = 0; foreach (lb_owners($DATA) as $o) if ($o === $ME['uid']) $n++; return $n; }
+  $n = 0; foreach (lb_downers($DATA) as $o) if ($o['uid'] === $ME['uid'] && $o['kind'] === $kind) $n++; return $n;
 }
 function lb_sub_limit($ME, $DATA) {
   if ($ME['role'] === 'admin') return 1000;

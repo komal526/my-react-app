@@ -392,7 +392,7 @@ function FreeSubs({ projects, me, onPublish = () => {} }) {
         <ProjectPick projects={projects} subs={subs} value={pid} onChange={(v) => { setPid(v); setPage(""); }} />
         {proj && proj.host && proj.type === "website" && proj.pages.length > 1 && <select value={page} onChange={(e) => setPage(e.target.value)}><option value="">Whole website</option>{proj.pages.filter((x) => x.file !== "index.html").map((x) => <option key={x.id} value={x.file}>Only: {x.name}</option>)}</select>}
         <button className="fs-go" disabled={!!busy || !projects.length} onClick={create}>{busy === "add" ? "Creating…" : "🚀 Live"}</button>
-      </div> : <p className="mut sm fs-full">You've used all {limit} free subdomains. Remove one to add another — or connect your own domain below (unlimited).</p>}
+      </div> : <p className="mut sm fs-full">You've used all {limit} free subdomains. Remove one to add another{me && me.domLimit > 0 ? "." : " — or connect your own domain below (unlimited)."}</p>}
       {nm && !full && <p className="mut sm fs-prev">Will open at <b>https://{nm}.{base}</b></p>}
       {msg && <div className={"cw-st fs-toast " + msg[0]}>{msg[1]}<button className="fs-x" onClick={() => setMsg(null)} aria-label="Close">✕</button></div>}
       {subs.length > 0 && <div className="fs-list"><span className="fs-lh">Your subdomains</span>{subs.map((s) => (
@@ -481,6 +481,7 @@ export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ,
         <span>Push the latest code to GitHub, then run <code>lb-deploy</code> on the VPS.</span></div>}
       <div className="top"><div><h1>Domains</h1><p className="mut">Give every website — or a single page — its own domain (as many as you like). Add 2 DNS records; {BRAND.product} does the rest, including free https.</p></div></div>
       {vps && <div className="mode-note ok"><b>Your server:</b> point domains to <code>{vps.ip || "your VPS IP"}</code> <Copy v={vps.ip || ""} /></div>}
+      {me && me.role !== "admin" && (me.siteLimit > 0 || me.domLimit > 0) && <div className="plan-note">Your plan: {me.siteLimit > 0 ? <><b>{me.sitesUsed}/{me.siteLimit}</b> live websites · </> : null}<b>{me.subsUsed}/{me.subLimit}</b> free subdomains{me.domLimit > 0 ? <> · <b>{me.domsUsed}/{me.domLimit}</b> own domains</> : null}</div>}
       <FreeSubs projects={projects} me={me} onPublish={onPublish} />
       {serverOn(integ) && me && me.role === "admin" && (vps.sitesDomain || (integ.server && integ.server.sitesDomain)) && <AutoSub integ={integ} onInteg={onInteg} projects={projects} info={vps} />}
       <div className="stats">

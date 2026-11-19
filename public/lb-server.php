@@ -271,6 +271,8 @@ if ($act === 'publish') {
   $slug = isset($d['slug']) ? $d['slug'] : '';
   if (!valid_slug($slug)) fail('Use only lowercase letters, numbers and dashes for the link name.');
   if (!lb_site_mine($slug, $ME, $DATA, $SITES)) fail('TAKEN: The link name "' . $slug . '" is already used by another account. Change the link name and publish again.');
+  $own0 = lb_owners($DATA); $lim = lb_limit($ME, $DATA, 'site_limit');
+  if ($lim > 0 && !isset($own0[$slug]) && lb_count_owned($ME, $DATA, 'site') >= $lim) fail('LIMIT: Your plan allows ' . $lim . ' live website' . ($lim > 1 ? 's' : '') . '. Unpublish one or ask for a bigger plan.');
   $files = isset($d['files']) && is_array($d['files']) ? $d['files'] : array();
   if (!$files) fail('No files');
   $tmp = $SITES . '/.tmp-' . $slug . '-' . uniqid();
@@ -612,6 +614,9 @@ if ($act === 'domain') {
     if ($pl === 'app') fail('That is the builder\'s own address — use another domain for your website.');
     if ($pl === 'sub') fail('Addresses ending in this platform\'s domain are free subdomains — create it under "Free subdomains" on the Domains page.');
     if (isset($map[$bare]) && !lb_is_me(isset($dw[$bare]['uid']) ? $dw[$bare]['uid'] : '', $ME)) fail('This domain is already connected by another account. If it is yours, contact support.');
+    $dl = lb_limit($ME, $DATA, 'dom_limit');
+    $dn = 0; foreach ($dw as $o0) if ($o0['uid'] === $ME['uid'] && $o0['kind'] === 'custom') $dn++;
+    if ($dl > 0 && !isset($map[$bare]) && $dn >= $dl) fail('LIMIT: Your plan allows ' . $dl . ' own domain' . ($dl > 1 ? 's' : '') . '. Disconnect one or ask for a bigger plan.');
     $map[$bare] = $target; $dw[$bare] = array('uid' => $ME['uid'], 'kind' => 'custom', 'ts' => time());
   }
   jwrite($DATA . '/domains.json', $map); jwrite($DATA . '/downers.json', $dw);
@@ -643,7 +648,7 @@ if ($act === 'me') {
   $ts = lb_tenants($DATA);
   out(array('ok' => true, 'uid' => $ME['uid'], 'email' => $ME['email'], 'name' => $ME['name'], 'role' => $ME['role'], 'accounts' => (bool)lb_saas(), 'legacy' => !$TU,
     'tenant' => $ME['tenant'] !== '' && isset($ts[$ME['tenant']]) ? lb_tenant_public($ME['tenant'], $ts[$ME['tenant']]) : null,
-    'subBase' => lb_sub_base($ME, $DATA), 'subLimit' => lb_sub_limit($ME, $DATA), 'subsUsed' => count(lb_my_subs($ME, $DATA)), 'ip' => vps_info()['ip']));
+    'subBase' => lb_sub_base($ME, $DATA), 'subLimit' => lb_sub_limit($ME, $DATA), 'subsUsed' => count(lb_my_subs($ME, $DATA)), 'siteLimit' => lb_limit($ME, $DATA, 'site_limit'), 'sitesUsed' => lb_count_owned($ME, $DATA, 'site'), 'domLimit' => lb_limit($ME, $DATA, 'dom_limit'), 'domsUsed' => lb_count_owned($ME, $DATA, 'custom'), 'canCreate' => !empty(lb_saas()['service_key']), 'ip' => vps_info()['ip']));
 }
 
 /* ---------- free subdomains: name.crecapo.tech (or name.<white-label domain>) — 5 per account ---------- */
@@ -752,7 +757,7 @@ if ($act === 'adm_users') {
     $list[] = array('uid' => $id, 'email' => isset($u['email']) ? $u['email'] : '', 'name' => isset($u['name']) ? $u['name'] : '', 'tenant' => $t, 'tenantName' => $t !== '' && isset($tn[$t]) ? $tn[$t]['name'] : '',
       'created' => isset($u['created']) ? (int)$u['created'] : 0, 'last_login' => isset($u['last_login']) ? (int)$u['last_login'] : 0, 'last_seen' => $ls, 'seen' => isset($u['seen']) ? (int)$u['seen'] : 0,
       'ip' => $OWN_T === null && isset($u['ip']) ? $u['ip'] : '', 'dev' => isset($u['dev']) ? $u['dev'] : '', 'disabled' => !empty($u['disabled']), 'never' => !empty($u['never']), 'confirmed' => isset($u['confirmed']) ? $u['confirmed'] : null,
-      'sub_limit' => isset($u['sub_limit']) ? $u['sub_limit'] : null, 'admin' => lb_is_admin_email(isset($u['email']) ? $u['email'] : '')) + $k;
+      'sub_limit' => isset($u['sub_limit']) ? $u['sub_limit'] : null, 'site_limit' => isset($u['site_limit']) ? $u['site_limit'] : null, 'dom_limit' => isset($u['dom_limit']) ? $u['dom_limit'] : null, 'admin' => lb_is_admin_email(isset($u['email']) ? $u['email'] : '')) + $k;
   }
   usort($list, function ($a, $b) { return max($b['last_seen'], $b['last_login']) - max($a['last_seen'], $a['last_login']); });
   $tot = array('users' => count($list), 'active7' => $act7, 'sites' => array_sum(array_column($list, 'sites')), 'subs' => array_sum(array_column($list, 'subs')), 'domains' => array_sum(array_column($list, 'domains')), 'tenants' => $OWN_T === null ? count($tn) : 1);
@@ -764,10 +769,30 @@ if ($act === 'adm_user') {
   if ($OWN_T !== null && (isset($users[$id]['tenant']) ? $users[$id]['tenant'] : '') !== $OWN_T) fail('Not your workspace.');
   if (lb_is_admin_email(isset($users[$id]['email']) ? $users[$id]['email'] : '')) fail('Admin accounts can\'t be changed here.');
   if (isset($d['disabled'])) $users[$id]['disabled'] = (bool)$d['disabled'];
-  if (array_key_exists('sub_limit', $d) && $OWN_T === null) { $v = $d['sub_limit']; if ($v === null || $v === '') unset($users[$id]['sub_limit']); else $users[$id]['sub_limit'] = max(0, min(1000, (int)$v)); }
+  foreach (array('sub_limit', 'site_limit', 'dom_limit') as $lk) if (array_key_exists($lk, $d)) { $v = $d[$lk]; if ($v === null || $v === '') unset($users[$id][$lk]); else $users[$id][$lk] = max(0, min(1000, (int)$v)); }
   if (isset($d['tenant']) && $OWN_T === null) { $tn = lb_tenants($DATA); $tv = (string)$d['tenant']; if ($tv !== '' && !isset($tn[$tv])) fail('Unknown workspace'); $users[$id]['tenant'] = $tv; }
   lb_w($f, $users);
   out(array('ok' => true));
+}
+/* create a login for a client (email + password) — needs the Supabase secret key in saas.json */
+if ($act === 'adm_create_user') {
+  $S = lb_saas(); if (empty($S['service_key'])) fail('To create logins here, add the Supabase secret key: on the VPS run  bash /opt/launchbuilder/vps/lb-saas-setup.sh  again and paste it when asked. (Or ask the client to sign up themselves on the builder address.)');
+  $em = strtolower(trim(isset($d['email']) ? (string)$d['email'] : '')); $pw = (string)(isset($d['password']) ? $d['password'] : ''); $nm = clean_str(isset($d['name']) ? $d['name'] : '', 80);
+  if (!filter_var($em, FILTER_VALIDATE_EMAIL)) fail('Type a valid email.'); if (strlen($pw) < 8) fail('Password: at least 8 characters.');
+  $tid = $OWN_T !== null ? $OWN_T : (string)(isset($d['tenant']) ? $d['tenant'] : ''); $tn = lb_tenants($DATA);
+  if ($tid !== '' && !isset($tn[$tid])) fail('Unknown workspace.');
+  $users = jread($DATA . '/users.json', array());
+  if ($tid !== '' && !empty($tn[$tid]['max_users'])) { $c = 0; foreach ($users as $u) if (isset($u['tenant']) && $u['tenant'] === $tid) $c++; if ($c >= (int)$tn[$tid]['max_users']) fail('This workspace has reached its account limit (' . $tn[$tid]['max_users'] . ').'); }
+  $sk = $S['service_key']; $h = array('apikey: ' . $sk, 'Content-Type: application/json'); if (strpos($sk, 'sb_') !== 0) $h[] = 'Authorization: Bearer ' . $sk;
+  $c = curl_init(rtrim($S['supabase_url'], '/') . '/auth/v1/admin/users');
+  curl_setopt_array($c, array(CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_HTTPHEADER => $h, CURLOPT_POSTFIELDS => json_encode(array('email' => $em, 'password' => $pw, 'email_confirm' => true, 'user_metadata' => array('name' => $nm)))));
+  $b = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); curl_close($c); $j = json_decode((string)$b, true);
+  if ($code >= 300 || empty($j['id'])) { $m = isset($j['msg']) ? $j['msg'] : (isset($j['message']) ? $j['message'] : (isset($j['error_description']) ? $j['error_description'] : 'HTTP ' . $code)); fail(preg_match('/already|exists|registered/i', $m) ? 'An account with this email already exists.' : 'Supabase: ' . $m); }
+  $r = array('email' => $em, 'name' => $nm, 'tenant' => $tid, 'created' => time(), 'first_seen' => 0, 'seen' => 0, 'disabled' => false, 'by' => $ME['email']);
+  foreach (array('sub_limit', 'site_limit', 'dom_limit') as $lk) if (isset($d[$lk]) && $d[$lk] !== '' && $d[$lk] !== null) $r[$lk] = max(0, min(1000, (int)$d[$lk]));
+  $users[$j['id']] = $r; lb_w($DATA . '/users.json', $users);
+  $where = $tid !== '' && !empty($tn[$tid]['app_domain']) ? $tn[$tid]['app_domain'] : lb_main_domain($DATA);
+  out(array('ok' => true, 'uid' => $j['id'], 'login' => 'https://' . $where));
 }
 if ($act === 'adm_tenants') {
   $tn = lb_tenants($DATA); $users = jread($DATA . '/users.json', array()); $res = array();
@@ -810,7 +835,7 @@ if ($act === 'adm_tenant_save') {
     if (isset($dm0[$cur['app_domain']])) fail($cur['app_domain'] . ' already shows a website. Use a new address for the builder, like app.' . $cur['app_domain'] . ' (add an A record "app" → your server IP).');
     if (isset($in['owner_email'])) $cur['owner_email'] = strtolower(trim(clean_str($in['owner_email'], 120)));
     if (!empty($cur['owner_email']) && lb_is_admin_email($cur['owner_email'])) fail('That is your admin email. Use the client\'s own email — they create their account with it on their address.');
-    foreach (array('max_users', 'sub_limit') as $nk) if (array_key_exists($nk, $in)) $cur[$nk] = $in[$nk] === '' || $in[$nk] === null ? '' : max(0, min(100000, (int)$in[$nk]));
+    foreach (array('max_users', 'sub_limit', 'site_limit', 'dom_limit') as $nk) if (array_key_exists($nk, $in)) $cur[$nk] = $in[$nk] === '' || $in[$nk] === null ? '' : max(0, min(100000, (int)$in[$nk]));
     if (isset($in['active'])) $cur['active'] = (bool)$in['active'];
     if (isset($in['note'])) $cur['note'] = clean_str($in['note'], 500);
     if ($isNew) { $id = preg_replace('/[^a-z0-9-]+/', '-', strtolower($cur['name'])); $id = trim($id, '-') ?: 'ws'; $b0 = $id; $i = 2; while (isset($tn[$id])) $id = $b0 . '-' . $i++; }
