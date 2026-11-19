@@ -4256,3 +4256,21 @@ html.lb-hidden .ais-bot2{animation-play-state:paused}
 .aip-side.v88 .aip-undo{background:none!important;border:0!important;padding:4px!important;color:var(--lb-y,#f5b301)!important}
 .aip-side.v88 .aip-dev button{border:0!important;padding:0!important;background:transparent!important}
 .aip-side.v88 .aip-dev button.on{background:rgba(var(--lb-yr,245,179,1),.12)!important}
+/* v93 — voice chat that feels like a call */
+.vc-box.v93 .vc-orb{--lv:0}
+.vc-box.v93 .vc-orb span{transform:scale(calc(1 + var(--lv) * .14));transition:transform .08s linear}
+.vc-box.v93 .vc-orb.speaking span{box-shadow:0 0 calc(24px + var(--lv) * 50px) rgba(var(--lb-yr,245,179,1),calc(.35 + var(--lv) * .5)),inset 0 0 20px rgba(0,0,0,.4)}
+.vc-box.v93 .vc-orb.speaking .vc-bars em{animation-duration:.6s}
+.vc-box.v93 .vc-orb.listening i{animation-duration:1.4s}
+.vc-think{display:flex;gap:8px}
+.vc-think em{width:12px;height:12px;border-radius:50%;background:var(--lb-y,#f5b301);animation:vcDot 1.2s ease-in-out infinite}
+.vc-think em:nth-child(2){animation-delay:.18s}.vc-think em:nth-child(3){animation-delay:.36s}
+@keyframes vcDot{0%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-8px);opacity:1}}
+.vc-notes{position:relative;z-index:2;margin:8px 22px 0;padding:10px 14px;border-radius:16px;background:rgba(245,179,1,.1);border:1px dashed rgba(var(--lb-yr,245,179,1),.55);display:flex;flex-direction:column;gap:3px;font-size:13.5px;line-height:1.45}
+.vc-notes b{color:var(--lb-y,#f5b301);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.vc-notes span{color:#e3e7fb}
+.vc-box.v93 .vc-acts{align-items:center;gap:10px}
+.vc-vsel{height:46px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:rgba(10,14,50,.55);color:#fff;font:inherit;font-size:14px;padding:0 12px;max-width:170px;cursor:pointer}
+.vc-vsel option{color:#0d1324}
+.vc-box.v93 .vc-go{margin-left:auto}
+@media (max-width:560px){.vc-vsel{max-width:120px}}

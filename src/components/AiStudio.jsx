@@ -2,7 +2,7 @@
 // A full window for creating with AI: describe it (type or speak), add pictures and documents, then "Create page".
 // Opened from: Create new → Create with AI · the AI Consultant's plan · the editor's "Build with AI" button.
 import { useEffect, useRef, useState } from "react";
-import { aiWebsite, aiSection, aiEditPage, callAI, browserAi, serverAiReady, AI_PROVIDERS, pg } from "../lib.js";
+import { aiWebsite, aiSection, aiEditPage, callAI, browserAi, serverAiReady, AI_PROVIDERS, pg, aiTts, TTS_VOICES } from "../lib.js";
 import { BRAND } from "../brand.js";
 import Robot from "./Robot.jsx";
 
@@ -245,7 +245,7 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
         {!ready && srv === false && !err && <div className="ais-err soft">Connect an AI first — paste a free Gemini key in Integrations → AI builders. <button onClick={onSetupAI}>Connect an AI</button></div>}
 
         {mode === "new" && !busy && <div className="ais-ideas">{IDEAS.map((x) => <button key={x} onClick={() => setPrompt(x)}><span>✦</span>{x.length > 50 ? x.slice(0, 48) + "…" : x}</button>)}</div>}
-        {talk && <VoiceChat ai={ai} lang={lang} voiceOn={voiceOn} setVoice={setVoice} onClose={() => setTalk(false)} onBrief={(b) => { setTalk(false); setPrompt(b); go(b); }} />}
+        {talk && <VoiceChat ai={ai} integ={integ} lang={lang} voiceOn={voiceOn} setVoice={setVoice} onClose={() => setTalk(false)} onBrief={(b) => { setTalk(false); setPrompt(b); go(b); }} />}
         <p className="ais-foot"><i>⬡</i>Pictures go into your page · documents give AI your real details (prices, services, dates) · Ctrl+Enter to create</p>
       </main>
     </div>
@@ -313,81 +313,136 @@ function StudioPreview({ res, setRes, ai, lang, mic, listen, stopMic, err, setEr
   );
 }
 
-/* ---------- voice conversation: AI asks a few questions out loud, you answer by speaking, then it builds ---------- */
+/* ---------- voice conversation, like ChatGPT voice: hands-free, a natural human voice, and an AI that thinks and advises ---------- */
 const GREET = {
-  en: "Hi! I'll help you make your page. Tell me — what is your business, and what should this page do?",
-  hi: "नमस्ते! मैं आपका पेज बनाने में मदद करूँगा। बताइए — आपका बिज़नेस क्या है, और यह पेज किस लिए है?",
+  en: "Hi! I'm your website consultant. Tell me about your business — what you do and who your customers are — and we'll plan the perfect page together.",
+  hi: "नमस्ते! मैं आपका वेबसाइट कंसल्टेंट हूँ। अपने बिज़नेस के बारे में बताइए — आप क्या करते हैं और आपके ग्राहक कौन हैं — फिर हम साथ मिलकर बढ़िया पेज प्लान करेंगे।",
 };
-const VSYS = (ln) => `You are a friendly website consultant talking BY VOICE with a small-business owner in India. Speak ${ln} (if they mix English words, that's fine — answer naturally the same way). Ask ONE short question at a time, at most 2 short sentences, no lists, no markdown, no emojis. Learn: what the business is and what the page is for, who it's for and the city, the offer / price / dates, what visitors should do (call, WhatsApp, form, buy), and preferred colours or style. After 3 to 6 answers — or as soon as the owner says to build / start / bas / ho gaya — reply with ONE short sentence in ${ln} saying you are building it now, then the word READY: and after it a complete, detailed brief in English for a web designer, starting with "Business name: <name>."  (business name, purpose, audience, sections, offer, prices, contact/CTA, colours, language for the page text). Never write READY: before that.`;
+const VSYS = (ln) => `You are a warm, smart, experienced website and marketing consultant having a natural VOICE conversation with a small-business owner in India — like a real expert on a phone call, not a form.
+How to talk: speak ${ln} (if they mix English words, mix naturally too). Sound human: short natural sentences, contractions, a little warmth ("Got it", "That's a great idea", "Hmm, I'd suggest…"). No lists, no markdown, no emojis, no headings — it is read aloud. Usually 2 to 4 sentences; never more than 6.
+How to think: actually THINK about what they said before answering. React to it, give your expert view — what will work for their customers, ideas they haven't thought of (offers, trust proof, the best main button, WhatsApp vs form, pricing display, sections), and gently point out problems. Answer any question they ask fully, then, only if needed, ask ONE useful follow-up question. Don't fire a checklist of questions; let the conversation flow.
+Understand over the conversation: the business and what the page is for, audience and city, the offer / price / dates, what visitors should do, and the style. Fill gaps with smart suggestions instead of asking everything.
+After your spoken reply, on a NEW line, write NOTES: followed by a one-line summary of everything you know so far (this is shown, not spoken).
+Build: when the owner says to build / create / start / "bana do" / ho gaya — or after you have suggested a full plan and they agree — reply with ONE short sentence in ${ln} saying you're building it now, then the word READY: and after it a complete, detailed brief in English for a web designer, starting with "Business name: <name>." (purpose, audience, sections in order, offer, prices, main button / contact, colours and style, language for the page text, and your best ideas from the talk). Never write READY: before that.`;
+const THINK = ["Thinking…", "Understanding your business…", "Thinking about ideas…", "Planning the best answer…"];
+/* the most natural voice this computer has (Edge "Natural", Google, Apple "Enhanced"…) */
+const bestVoice = (lang) => {
+  const vs = (window.speechSynthesis && window.speechSynthesis.getVoices()) || [], base = lang.split("-")[0];
+  const ok = vs.filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith(base));
+  const score = (v) => (/natural|neural/i.test(v.name) ? 40 : 0) + (/online/i.test(v.name) ? 15 : 0) + (/google/i.test(v.name) ? 20 : 0) + (/enhanced|premium/i.test(v.name) ? 25 : 0) + (v.lang.replace("_", "-") === lang ? 10 : 0) + (/female|aria|jenny|neerja|swara|kore/i.test(v.name) ? 3 : 0);
+  return ok.sort((a, b) => score(b) - score(a))[0] || null;
+};
 /* ask(hist) → the reply text (used by the AI Consultant) · greet = first line · onClose(hist) gets the conversation */
-export function VoiceChat({ ai, lang, voiceOn = true, setVoice = () => {}, onBrief, onClose, ask, greet }) {
-  const [msgs, setMsgs] = useState([]), [st, setSt] = useState("thinking"), [live, setLive] = useState(""), [err, setErr] = useState("");
+export function VoiceChat({ ai, integ = {}, lang, voiceOn = true, setVoice = () => {}, onBrief, onClose, ask, greet }) {
+  const [msgs, setMsgs] = useState([]), [st, setSt] = useState("thinking"), [live, setLive] = useState(""), [err, setErr] = useState(""), [notes, setNotes] = useState(""), [tk, setTk] = useState(0);
+  const [vname, setVname0] = useState(() => { try { return localStorage.getItem("lb_ai_vname") || "Kore"; } catch { return "Kore"; } }), [natural, setNatural] = useState(true);
+  const setVname = (v) => { setVname0(v); try { localStorage.setItem("lb_ai_vname", v); } catch { /* ignore */ } };
   const mute = !voiceOn;
-  const rec = useRef(null), alive = useRef(true), hist = useRef([]), muteRef = useRef(false), endRef = useRef(null);
+  const rec = useRef(null), alive = useRef(true), hist = useRef([]), muteRef = useRef(false), endRef = useRef(null), audio = useRef(null), orb = useRef(null), raf = useRef(0), misses = useRef(0), vref = useRef(vname);
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition, ln = langName(lang);
-  muteRef.current = mute;
+  muteRef.current = mute; vref.current = vname;
   useEffect(() => { endRef.current && endRef.current.scrollIntoView({ block: "end" }); }, [msgs, live]);
+  useEffect(() => { if (st !== "thinking") return; const t = setInterval(() => setTk((k) => k + 1), 1800); return () => clearInterval(t); }, [st]);
+  /* made right after your click, so the browser lets it play sound */
+  const actx = useRef(null);
+  useEffect(() => { if (window.speechSynthesis) window.speechSynthesis.getVoices(); try { const C = window.AudioContext || window.webkitAudioContext; if (C) { actx.current = new C(); actx.current.resume().catch(() => {}); } } catch { /* ignore */ } return () => { try { actx.current && actx.current.close(); } catch { /* ignore */ } }; }, []);
   const push = (who, t) => { hist.current = [...hist.current, { who, t }]; setMsgs(hist.current); };
-  const say = (t) => new Promise((ok) => {
-    const S = window.speechSynthesis; if (muteRef.current || !S || !alive.current) return ok();
-    S.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = lang;
-    const vs = S.getVoices(), base = lang.split("-")[0], v = vs.find((x) => x.lang.replace("_", "-") === lang) || vs.find((x) => x.lang.toLowerCase().startsWith(base));
-    if (v) u.voice = v; u.onend = ok; u.onerror = ok; setSt("speaking"); S.speak(u);
-    setTimeout(ok, 3000 + t.length * 150);   /* some browsers never fire "end" */
-  });
+  /* the orb moves with the voice */
+  const pulse = (el) => {
+    cancelAnimationFrame(raf.current);
+    let an = null; try { const cx = actx.current; if (el && cx && cx.state === "running") { const src = cx.createMediaElementSource(el); an = cx.createAnalyser(); an.fftSize = 256; src.connect(an); an.connect(cx.destination); } } catch { an = null; }
+    const d = new Uint8Array(128);
+    const tick = () => { let lv = 0.35 + Math.sin(Date.now() / 160) * 0.15; if (an) { an.getByteFrequencyData(d); lv = Math.min(1, d.reduce((a, b) => a + b, 0) / d.length / 90); } if (orb.current) orb.current.style.setProperty("--lv", lv.toFixed(2)); raf.current = requestAnimationFrame(tick); };
+    tick();
+  };
+  const calm = () => { cancelAnimationFrame(raf.current); if (orb.current) orb.current.style.setProperty("--lv", "0"); };
+  const stopTalk = () => { try { audio.current && audio.current.pause(); } catch { /* ignore */ } audio.current = null; try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ } calm(); };
+  const say = async (t) => {
+    if (muteRef.current || !alive.current || !t) return;
+    setSt("speaking");
+    /* 1) natural AI voice */
+    const url = await aiTts(integ, t, vref.current, "Say this in a warm, natural, friendly conversational voice" + (lang.startsWith("en") ? " with an Indian English accent" : " in " + ln));
+    if (!alive.current) return;
+    if (url) {
+      setNatural(true);
+      await new Promise((ok) => { const a = new Audio(url); audio.current = a; a.onended = ok; a.onerror = ok; a.onpause = ok; pulse(a); a.play().catch(ok); });
+      calm(); URL.revokeObjectURL(url); return;
+    }
+    /* 2) the best voice this browser has */
+    setNatural(false);
+    await new Promise((ok) => {
+      const S = window.speechSynthesis; if (!S) return ok();
+      S.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = lang; u.rate = 1.02; u.pitch = 1;
+      const v = bestVoice(lang); if (v) u.voice = v; u.onend = ok; u.onerror = ok; pulse(null); S.speak(u);
+      setTimeout(ok, 3000 + t.length * 150);   /* some browsers never fire "end" */
+    });
+    calm();
+  };
   const listen = () => {
     if (!alive.current) return;
-    if (!SR) { setErr("Voice needs Chrome or Edge. You can still type your answer below."); setSt("idle"); return; }
-    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    if (!SR) { setErr("Voice needs Chrome or Edge. You can still type below."); setSt("idle"); return; }
+    stopTalk();
     const r = new SR(); r.lang = lang; r.interimResults = true; r.continuous = false; rec.current = r; let fin = "";
     r.onresult = (e) => { let it = ""; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) fin += t + " "; else it += t; } setLive(fin + it); };
-    r.onerror = (e) => { if (e.error === "not-allowed") setErr("Allow the microphone for this site (lock icon in the address bar)."); };
-    r.onend = () => { if (rec.current !== r) return; rec.current = null; setLive(""); if (!alive.current) return; if (fin.trim()) send(fin.trim()); else setSt("idle"); };
+    r.onerror = (e) => { if (e.error === "not-allowed") { setErr("Allow the microphone for this site (lock icon in the address bar)."); misses.current = 9; } };
+    r.onend = () => {
+      if (rec.current !== r) return; rec.current = null; setLive(""); if (!alive.current) return;
+      if (fin.trim()) { misses.current = 0; send(fin.trim()); }
+      else if (++misses.current <= 2) setTimeout(listen, 250);   /* hands-free: keep listening a little longer */
+      else setSt("idle");
+    };
     try { r.start(); setSt("listening"); setErr(""); } catch { setSt("idle"); }
   };
   const halt = () => { const r = rec.current; rec.current = null; setLive(""); try { r && r.abort(); } catch { /* ignore */ } };
+  const split = (out) => { const k = out.search(/\n?\s*NOTES:/i); return k >= 0 ? [out.slice(0, k).trim(), out.slice(k).replace(/^\s*NOTES:\s*/i, "").trim()] : [out.trim(), ""]; };
   const send = async (text, first = false) => {
     if (!first) push("me", text);
-    setSt("thinking");
+    setSt("thinking"); setTk(0);
     try {
-      const tr = hist.current.map((x) => (x.who === "ai" ? "Consultant: " : "Owner: ") + x.t).join("\n");
       if (ask) { const a = String(await ask(hist.current)).replace(/[*#_`]/g, "").replace(/\n{2,}/g, "\n").trim(); if (!alive.current) return; push("ai", a); await say(a); listen(); return; }
-      const out = (await callAI(ai || {}, VSYS(ln), (first ? "(Start the conversation: greet in one line and ask the first question.)" : tr) + "\nConsultant:", 1200)).replace(/^\s*Consultant:\s*/i, "").replace(/[*#_`]/g, "").trim();
+      const tr = hist.current.map((x) => (x.who === "ai" ? "Consultant: " : "Owner: ") + x.t).join("\n");
+      const out = (await callAI(ai || {}, VSYS(ln), (first ? "(Start the conversation: greet warmly in one or two lines and invite them to tell you about their business.)" : tr) + "\nConsultant:", 2500)).replace(/^\s*Consultant:\s*/i, "").replace(/[*#_`]/g, "").trim();
       if (!alive.current) return;
       const k = out.search(/READY:/i);
-      if (k >= 0 && onBrief) { const bye = out.slice(0, k).trim(), brief = out.slice(k + 6).trim(); if (bye) { push("ai", bye); await say(bye); } if (alive.current) onBrief(brief + "\n\nConversation:\n" + hist.current.filter((x) => x.who === "me").map((x) => "- " + x.t).join("\n")); return; }
-      push("ai", out); await say(out); listen();
+      if (k >= 0 && onBrief) { const bye = split(out.slice(0, k))[0], brief = out.slice(k + 6).trim(); if (bye) { push("ai", bye); await say(bye); } if (alive.current) onBrief(brief + (notes ? "\n\nSummary: " + notes : "") + "\n\nConversation:\n" + hist.current.filter((x) => x.who === "me").map((x) => "- " + x.t).join("\n")); return; }
+      const [spoken, n] = split(out); if (n) setNotes(n);
+      push("ai", spoken); await say(spoken); listen();
     } catch (e) { if (alive.current) { setErr(e.message === "NO_AI_KEY" ? "Connect an AI first." : e.message); setSt("idle"); } }
   };
   useEffect(() => {
     const g = greet || GREET[lang.split("-")[0]];
     if (g) { push("ai", g); say(g).then(listen); } else send("", true);
-    return () => { alive.current = false; halt(); try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ } };
+    return () => { alive.current = false; halt(); stopTalk(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [typed, setTyped] = useState("");
-  const LBL = { speaking: "AI is speaking…", listening: "Listening — speak now", thinking: "Thinking…", idle: "Tap the mic to answer" };
+  const LBL = { speaking: "AI is speaking… tap to interrupt", listening: "Listening — just talk", thinking: THINK[tk % THINK.length], idle: "Tap the circle to talk" };
+  const tapOrb = () => { if (st === "listening") { rec.current && rec.current.stop(); } else if (st === "speaking") { stopTalk(); misses.current = 0; listen(); } else if (st === "idle") { misses.current = 0; listen(); } };
   const ROBO = <svg width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M16 4v4M16 3.5h.01" /><rect x="5" y="9" width="22" height="17" rx="7" /><path d="M11 16.5c1-1.4 2.6-1.4 3.4 0M17.6 16.5c1-1.4 2.6-1.4 3.4 0M12 21c2.4 1.8 5.6 1.8 8 0" /><path d="M3 15v5M29 15v5" /></svg>;
   const USER = <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4.2" /><path d="M3.5 21c.8-4.6 4.3-7 8.5-7s7.7 2.4 8.5 7z" /></svg>;
   return (
     <div className="vc-ov" onClick={(e) => e.target === e.currentTarget && onClose(hist.current)}>
-      <div className="vc-box v87">
+      <div className="vc-box v87 v93">
         <i className="vc-wave w1" /><i className="vc-wave w2" /><i className="vc-wave w3" />
         <button className="vc-x" onClick={() => onClose(hist.current)} title="End">✕</button>
         <div className="vc-top">
           <div className="vc-bot"><Robot mood={st === "thinking" ? "alert" : "happy"} /></div>
-          <div className={"vc-orb " + st} onClick={() => (st === "listening" ? rec.current && rec.current.stop() : st === "idle" ? listen() : st === "speaking" ? window.speechSynthesis.cancel() : null)} title={st === "idle" ? "Tap to answer" : ""}>
-            <i /><i /><span>{st === "listening" ? <Ico d={I_MIC} s={34} /> : <b className="vc-bars">{[0, 1, 2, 3, 4, 5, 6].map((k) => <em key={k} style={{ "--k": k }} />)}</b>}</span></div>
-          <b className="vc-st">{LBL[st]}</b><small className="vc-lang">Talking in {ln}</small>
+          <div ref={orb} className={"vc-orb " + st} onClick={tapOrb} title={LBL[st]}>
+            <i /><i /><span>{st === "listening" ? <Ico d={I_MIC} s={34} /> : st === "thinking" ? <b className="vc-think"><em /><em /><em /></b> : <b className="vc-bars">{[0, 1, 2, 3, 4, 5, 6].map((k) => <em key={k} style={{ "--k": k }} />)}</b>}</span></div>
+          <b className="vc-st">{LBL[st]}</b>
+          <small className="vc-lang">Talking in {ln} · {voiceOn ? (natural ? "natural AI voice" : "browser voice") : "voice off"}</small>
           <div className="vc-dots">{["speaking", "listening", "thinking"].map((x) => <i key={x} className={st === x ? "on" : ""} />)}</div>
         </div>
+        {notes && <div className="vc-notes"><b>✦ What I understood</b><span>{notes}</span></div>}
         <div className="vc-log">{msgs.map((m, k) => <div key={k} className={"vc-m " + m.who}><span className="vc-av">{m.who === "ai" ? ROBO : USER}</span><p>{m.t}</p></div>)}
           {live && <div className="vc-m me live"><span className="vc-av">{USER}</span><p>{live}</p></div>}<i ref={endRef} /></div>
         {err && <div className="aip-err">{err}</div>}
-        <form className="vc-type" onSubmit={(e) => { e.preventDefault(); if (typed.trim() && st !== "thinking") { halt(); send(typed.trim()); setTyped(""); } }}>
+        <form className="vc-type" onSubmit={(e) => { e.preventDefault(); if (typed.trim() && st !== "thinking") { halt(); stopTalk(); send(typed.trim()); setTyped(""); } }}>
           <label><span>✦</span><input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="…or type your answer" /></label>
           <button disabled={!typed.trim() || st === "thinking"}><Ico d={I_SEND} s={18} />Send</button></form>
-        <div className="vc-acts"><button className={"vc-voice" + (voiceOn ? " on" : "")} onClick={() => { if (voiceOn) try { window.speechSynthesis.cancel(); } catch { /* ignore */ } setVoice(!voiceOn); }}><Ico d={voiceOn ? I_SPK : I_MUTE} s={20} />Voice {voiceOn ? "on" : "off"}<i /></button>
-          {onBrief && <button className="vc-go" disabled={st === "thinking" || hist.current.filter((x) => x.who === "me").length < 1} onClick={() => { halt(); send("That's enough — please build it now."); }}><span>✦</span>Build it now <Ico d={I_ARROW} s={18} /></button>}</div>
+        <div className="vc-acts">
+          <button className={"vc-voice" + (voiceOn ? " on" : "")} onClick={() => { if (voiceOn) stopTalk(); setVoice(!voiceOn); }}><Ico d={voiceOn ? I_SPK : I_MUTE} s={20} />Voice {voiceOn ? "on" : "off"}<i /></button>
+          {voiceOn && <select className="vc-vsel" value={vname} onChange={(e) => setVname(e.target.value)} title="AI voice">{TTS_VOICES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>}
+          {onBrief && <button className="vc-go" disabled={st === "thinking" || hist.current.filter((x) => x.who === "me").length < 1} onClick={() => { halt(); stopTalk(); send("That's enough — please build it now."); }}><span>✦</span>Build it now <Ico d={I_ARROW} s={18} /></button>}</div>
       </div>
     </div>
   );

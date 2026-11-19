@@ -505,6 +505,35 @@ export async function askAI(integ, system, messages, max = 1500) {
   throw srvErr;
 }
 askAI.via = "";
+
+/* ---- natural AI voice (Gemini speech): returns a playable audio URL, or null → use the browser's voice ---- */
+export const TTS_VOICES = [["Kore", "Kore · calm woman"], ["Aoede", "Aoede · warm woman"], ["Leda", "Leda · young woman"], ["Puck", "Puck · friendly man"], ["Charon", "Charon · deep man"], ["Orus", "Orus · steady man"]];
+const pcmWav = (b64, rate = 24000) => {
+  const raw = atob(b64), n = raw.length, buf = new ArrayBuffer(44 + n), v = new DataView(buf), w = (o, t) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+  w(0, "RIFF"); v.setUint32(4, 36 + n, true); w(8, "WAVE"); w(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n, true);
+  const u = new Uint8Array(buf, 44); for (let i = 0; i < n; i++) u[i] = raw.charCodeAt(i);
+  return new Blob([buf], { type: "audio/wav" });
+};
+let ttsOff = 0;   /* after a failure, use the browser voice for a while (free keys have a small voice limit) */
+export async function aiTts(integ, text, voice = "Kore", style = "") {
+  if (Date.now() < ttsOff) return null;
+  const toUrl = (b64, mime = "") => { const r = +((mime.match(/rate=(\d+)/) || [])[1] || 24000); return URL.createObjectURL(/wav|mpeg|mp3|ogg/.test(mime) ? new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], { type: mime.split(";")[0] }) : pcmWav(b64, r)); };
+  const ai = browserAi(integ), key = ai && (ai.keys || {}).gemini;
+  try {
+    if (key) {
+      for (const m of ["gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"]) {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+          body: JSON.stringify({ contents: [{ parts: [{ text: (style ? style + ": " : "") + text }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } }) });
+        const j = await r.json().catch(() => ({})); const part = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).find((x) => x.inlineData || x.inline_data);
+        if (part) { const d = part.inlineData || part.inline_data; return toUrl(d.data, d.mimeType || d.mime_type || ""); }
+        if (r.status === 429) break;
+      }
+    }
+    const j = await phpCall(srvFor(integ), { action: "tts", text, voice, style });
+    return toUrl(j.b64, j.mime);
+  } catch { /* fall through */ }
+  ttsOff = Date.now() + 5 * 60e3; return null;
+}
 export const aiAvailable = async () => !!browserAi() || (await serverAiReady());
 export const aiStatus = (integ) => phpCall(srvFor(integ), { action: "aistatus" });
 /* is AI available without a browser key? (cached for the session) */

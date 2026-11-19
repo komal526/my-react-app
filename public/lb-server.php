@@ -144,7 +144,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 18, 'accounts' => (bool)lb_saas(), 'http' => extension_loaded('curl') ? 'curl' : 'php', 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 19, 'accounts' => (bool)lb_saas(), 'http' => extension_loaded('curl') ? 'curl' : 'php', 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
 
 /* ---------- Google Sheets + email alerts (one Apps Script web app per account) ---------- */
 function lb_hook_file($DATA, $uid) { $d = $DATA . '/hooks'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . substr(hash('sha256', 'u:' . $uid), 0, 24) . '.json'; }
@@ -492,6 +492,44 @@ if ($act === 'ai') {
   }
   if (trim($txt) === '') fail('The AI returned an empty answer. Try again.');
   out(array('ok' => true, 'text' => $txt, 'source' => $src));
+}
+
+/* ---------------- natural (human-sounding) AI voice for voice chat — Gemini speech ---------------- */
+function ai_tts_models($key) {
+  global $DATA; $cf = $DATA . '/ai-tts-models.json'; $c = jread($cf, array());
+  if (!empty($c['ids']) && isset($c['ts']) && $c['ts'] > time() - 86400) return $c['ids'];
+  $ids = array();
+  list($code, $b) = array(0, '');
+  $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200');
+  curl_setopt_array($ch, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_HTTPHEADER => array('x-goog-api-key: ' . $key)));
+  $j = json_decode((string)curl_exec($ch), true); curl_close($ch);
+  if (isset($j['models'])) foreach ($j['models'] as $m) { $id = preg_replace('#^models/#', '', isset($m['name']) ? $m['name'] : ''); if (strpos($id, 'tts') !== false) $ids[] = $id; }
+  usort($ids, function ($a, $b) { $fa = strpos($a, 'flash') !== false ? 0 : 1; $fb = strpos($b, 'flash') !== false ? 0 : 1; return $fa !== $fb ? $fa - $fb : strcmp($b, $a); });
+  if (!$ids) $ids = array('gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts');
+  jwrite($cf, array('ids' => $ids, 'ts' => time())); return $ids;
+}
+if ($act === 'tts') {
+  @set_time_limit(60);
+  $text = clean_str(isset($d['text']) ? $d['text'] : '', 1800); if (trim($text) === '') fail('Nothing to say.');
+  $voice = preg_replace('/[^A-Za-z]/', '', isset($d['voice']) ? (string)$d['voice'] : 'Kore') ?: 'Kore';
+  $style = clean_str(isset($d['style']) ? $d['style'] : '', 200);
+  $mine = jread($AIF, array()); $key = '';
+  if (!empty($mine['enc']) && $mine['provider'] === 'gemini') $key = ai_dec($mine['enc'], $DATA);
+  if ($key === '') { $pl = ai_platform(); if ($pl && $pl['provider'] === 'gemini') $key = $pl['key']; }
+  if ($key === '') fail('NO_TTS');
+  $body = array('contents' => array(array('parts' => array(array('text' => ($style !== '' ? $style . ': ' : '') . $text)))),
+    'generationConfig' => array('responseModalities' => array('AUDIO'), 'speechConfig' => array('voiceConfig' => array('prebuiltVoiceConfig' => array('voiceName' => $voice)))));
+  $last = '';
+  foreach (array_slice(ai_tts_models($key), 0, 3) as $m) {
+    list($code, $j, $err) = ai_post_raw('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($m) . ':generateContent', array('x-goog-api-key: ' . $key), $body);
+    if (isset($j['candidates'][0]['content']['parts'])) foreach ($j['candidates'][0]['content']['parts'] as $pt) if (isset($pt['inlineData']['data'])) {
+      $mt = isset($pt['inlineData']['mimeType']) ? $pt['inlineData']['mimeType'] : 'audio/L16;rate=24000';
+      out(array('ok' => true, 'b64' => $pt['inlineData']['data'], 'mime' => $mt, 'model' => $m));
+    }
+    $last = $err !== '' ? $err : (isset($j['error']['message']) ? $j['error']['message'] : 'no audio');
+    if ($code === 429) break;
+  }
+  fail('Voice: ' . $last);
 }
 
 /* ---------------- voice notes on leads (recorded in the pipeline) ---------------- */
