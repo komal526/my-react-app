@@ -1,4 +1,4 @@
-// LaunchBuilder v100 — LeadFinder.jsx
+// LaunchBuilder v101 — LeadFinder.jsx
 // Find local businesses on Google (city + business type), filter them, save them in groups, add them to Leads,
 // and broadcast on WhatsApp. Google key lives on the server only (admin sets it once).
 import { useEffect, useMemo, useState } from "react";
@@ -39,20 +39,22 @@ export default function LeadFinder({ user, integ, me, onLeads }) {
     try {
       const r = await phpCall(srv, { action: "lf_search", city: city.trim(), q: q.trim(), n });
       const list = r.results || []; setRes({ city: city.trim(), q: q.trim(), list });
+      /* every search is saved as a group automatically: "Dentist · Indore" */
+      if (list.length) { const gn = q.trim().replace(/^./, (c) => c.toUpperCase()) + " · " + city.trim().replace(/^./, (c) => c.toUpperCase()); addToGroup(list, gn, true); }
       setSt((s) => (s ? { ...s, left: r.left, used: (s.used || 0) + 1 } : s));
       setData((d) => ({ ...d, history: [{ id: uid(), city: city.trim(), q: q.trim(), n, ts: Date.now(), count: list.length, list }, ...d.history].slice(0, 25) }));
     } catch (x) { setErr(x.message === "NO_PLACES_KEY" ? "Lead Finder isn't switched on yet." : x.message); }
     setBusy(false);
   };
   /* groups */
-  const addToGroup = (rows, gname) => {
+  const addToGroup = (rows, gname, auto) => {
     const name = (gname || "").trim(); if (!name || !rows.length) return;
     setData((d) => {
       const g = d.groups.find((x) => x.name.toLowerCase() === name.toLowerCase());
       if (g) return { ...d, groups: d.groups.map((x) => (x === g ? { ...x, updated: Date.now(), leads: [...x.leads, ...rows.filter((r) => !x.leads.some((l) => l.id === r.id))] } : x)) };
       return { ...d, groups: [{ id: uid(), name, desc: "", tags: [], updated: Date.now(), leads: rows }, ...d.groups] };
     });
-    setToast(`✓ ${rows.length} saved to “${name}”`);
+    setToast(auto ? `✓ Saved in the group “${name}” — find it under Groups` : `✓ ${rows.length} saved to “${name}”`);
   };
   const toLeads = (rows, form) => {
     let k = 0; rows.forEach((r) => { if (!r.name) return; k++; addLead(E, { form: form || "Lead Finder", projectId: "", projectName: "Lead Finder", page: r.city || "", source: "lead-finder",
@@ -63,7 +65,7 @@ export default function LeadFinder({ user, integ, me, onLeads }) {
     const t = (tag || "").trim(); if (!t) return; const ids = new Set(rows.map((r) => r.id));
     const add = (l) => (ids.has(l.id) ? { ...l, tags: [...new Set([...(l.tags || []), t])] } : l);
     if (inGroup) setData((d) => ({ ...d, groups: d.groups.map((g) => (g.id === inGroup ? { ...g, leads: g.leads.map(add) } : g)) }));
-    else setRes((r) => r && { ...r, list: r.list.map(add) });
+    else { setRes((r) => r && { ...r, list: r.list.map(add) }); setData((d) => ({ ...d, groups: d.groups.map((g) => (g.leads.some((l) => ids.has(l.id)) ? { ...g, leads: g.leads.map(add) } : g)) })); }
     setToast(`🏷 Tagged ${rows.length} with “${t}”`);
   };
 
@@ -109,8 +111,10 @@ export default function LeadFinder({ user, integ, me, onLeads }) {
 
 function Head({ tab, setTab, groups = 0, hist = 0 }) {
   return (<>
-    <div className="lf-head"><div><h1>Lead Finder</h1><p className="mut">Find local businesses on Google, tag them, keep them in groups and message them on WhatsApp.</p></div></div>
+    <div className="lf-hero"><i className="lf-w1" /><i className="lf-w2" />
+      <div className="lf-ht"><span className="lf-hb">🔍 Lead Finder</span><h1>Find customers on Google</h1><p>Search any business type in any city — get phone numbers, websites and ratings, then save, tag and message them on WhatsApp.</p></div>
     <div className="lf-tabs">{[["search", "Search"], ["groups", "Groups" + (groups ? ` (${groups})` : "")], ["history", "History" + (hist ? ` (${hist})` : "")]].map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</div>
+    </div>
   </>);
 }
 
@@ -139,19 +143,27 @@ function Setup({ st, srv, small, onDone }) {
 
 /* the results table: search, filters, sort, select, save / tag / leads / CSV */
 function Results({ rows, title, savedIn, groups, onGroup, onLeads, onTag, csvName, extra, onRemove, inGroup }) {
-  const [s, setS] = useState(""), [cat, setCat] = useState(""), [hp, setHp] = useState(""), [hw, setHw] = useState(""), [rt, setRt] = useState(""), [sort, setSort] = useState(["", 1]), [page, setPage] = useState(0), [sel, setSel] = useState(new Set());
+  const [s, setS] = useState(""), [cat, setCat] = useState(""), [hp, setHp] = useState(""), [hw, setHw] = useState(""), [rt, setRt] = useState(""), [ct, setCt] = useState(""), [wa, setWa] = useState(""), [rv, setRv] = useState(""), [stt, setStt] = useState(""), [tg, setTg] = useState(""), [sort, setSort] = useState(["", 1]), [page, setPage] = useState(0), [sel, setSel] = useState(new Set());
   const [gname, setGname] = useState(""), [tag, setTag] = useState("");
   const cats = useMemo(() => [...new Set(rows.map((r) => r.category).filter(Boolean))].sort(), [rows]);
+  const citiesL = useMemo(() => [...new Set(rows.map((r) => r.city).filter(Boolean))].sort(), [rows]);
+  const tagsL = useMemo(() => [...new Set(rows.flatMap((r) => r.tags || []))].sort(), [rows]);
+  const stats = useMemo(() => { const rated = rows.filter((r) => r.rating); return { all: rows.length, phone: rows.filter((r) => r.phone).length, wa: rows.filter((r) => mobileOf(r.phone)).length, web: rows.filter((r) => r.website).length, noweb: rows.filter((r) => !r.website).length, avg: rated.length ? (rated.reduce((a, r) => a + r.rating, 0) / rated.length).toFixed(1) : "—" }; }, [rows]);
   const dupPhones = useMemo(() => { const c = {}; rows.forEach((r) => { const m = mobileOf(r.phone) || String(r.phone || "").replace(/\D/g, ""); if (m) c[m] = (c[m] || 0) + 1; }); return c; }, [rows]);
   const list = useMemo(() => {
     const t = s.trim().toLowerCase();
     let l = rows.filter((r) => (!t || (r.name + " " + r.address + " " + r.phone).toLowerCase().includes(t)) && (!cat || r.category === cat)
-      && (!hp || (hp === "yes" ? !!r.phone : !r.phone)) && (!hw || (hw === "yes" ? !!r.website : !r.website)) && (!rt || (r.rating || 0) >= +rt));
+      && (!hp || (hp === "yes" ? !!r.phone : !r.phone)) && (!hw || (hw === "yes" ? !!r.website : !r.website)) && (!rt || (r.rating || 0) >= +rt)
+      && (!ct || r.city === ct) && (!wa || (wa === "yes" ? !!mobileOf(r.phone) : !mobileOf(r.phone))) && (!rv || (r.reviews || 0) >= +rv)
+      && (!stt || (() => { const k = mobileOf(r.phone) || String(r.phone || "").replace(/\D/g, ""), d = !!k && (dupPhones[k] || 0) > 1; return stt === "dup" ? d : stt === "uniq" ? !d : stt === "open" ? !!r.open : !r.open; })()) && (!tg || (r.tags || []).includes(tg)));
     if (sort[0]) l = [...l].sort((a, b) => { const x = a[sort[0]], y = b[sort[0]]; return (typeof x === "number" ? x - y : String(x || "").localeCompare(String(y || ""))) * sort[1]; });
     return l;
-  }, [rows, s, cat, hp, hw, rt, sort]);
+  }, [rows, s, cat, hp, hw, rt, ct, wa, rv, stt, tg, sort, dupPhones]);
   const PER = 25, pages = Math.max(1, Math.ceil(list.length / PER)), shown = list.slice(page * PER, page * PER + PER);
-  useEffect(() => { setPage(0); }, [s, cat, hp, hw, rt]);
+  useEffect(() => { setPage(0); }, [s, cat, hp, hw, rt, ct, wa, rv, stt, tg]);
+  const nf = [cat, hp, hw, rt, ct, wa, rv, stt, tg, s.trim()].filter(Boolean).length;
+  const reset = () => { [setS, setCat, setHp, setHw, setRt, setCt, setWa, setRv, setStt, setTg].forEach((f) => f("")); };
+  const quick = (k) => { reset(); if (k === "wa") setWa("yes"); if (k === "phone") setHp("yes"); if (k === "web") setHw("yes"); if (k === "noweb") setHw("no"); if (k === "top") setRt("4.5"); };
   const chosen = rows.filter((r) => sel.has(r.id)), allOn = shown.length && shown.every((r) => sel.has(r.id));
   const tog = (id) => setSel((x) => { const y = new Set(x); if (y.has(id)) y.delete(id); else y.add(id); return y; });
   const S = (k, l) => <th className="lf-sort" onClick={() => setSort(([a, d]) => [k, a === k ? -d : k === "name" || k === "city" ? 1 : -1])}>{l} {sort[0] === k ? (sort[1] > 0 ? "↑" : "↓") : "⇅"}</th>;
@@ -159,13 +171,23 @@ function Results({ rows, title, savedIn, groups, onGroup, onLeads, onTag, csvNam
   return (
     <div className="lf-res">
       <div className="lf-rt"><b>{title}</b>{extra}</div>
+      {/* quick view chips — click one to filter */}
+      <div className="lf-stats">{[["all", "All businesses", stats.all, "🏢"], ["wa", "WhatsApp ready", stats.wa, "💬"], ["phone", "With phone", stats.phone, "📞"], ["web", "With website", stats.web, "🌐"], ["noweb", "No website", stats.noweb, "🎯"], ["top", "Avg rating", "★ " + stats.avg, "⭐"]].map(([k, l, v, ic]) => (
+        <button key={k} className={"lf-stat" + ((k === "wa" && wa === "yes" && nf === 1) || (k === "phone" && hp === "yes" && nf === 1) || (k === "web" && hw === "yes" && nf === 1) || (k === "noweb" && hw === "no" && nf === 1) || (k === "top" && rt === "4.5" && nf === 1) || (k === "all" && !nf) ? " on" : "")} onClick={() => quick(k)} title={k === "top" ? "Show 4.5★ and up" : k === "noweb" ? "Businesses without a website — great leads for a website offer" : ""}>
+          <span>{ic}</span><div><b>{v}</b><small>{k === "top" ? "Avg rating · tap for 4.5+" : l}</small></div></button>))}</div>
       <div className="lf-card lf-tbl">
         <div className="lf-tools">
           <input className="lf-s" value={s} onChange={(e) => setS(e.target.value)} placeholder="🔍 Search name, address or phone" />
           {F(cat, setCat, "Category", cats.map((c) => [c, c]))}
-          {F(hp, setHp, "Has phone", [["yes", "Yes"], ["no", "No"]])}
-          {F(hw, setHw, "Has website", [["yes", "Yes"], ["no", "No"]])}
-          {F(rt, setRt, "Rating", [["4", "4+ ★"], ["4.5", "4.5+ ★"], ["3", "3+ ★"]])}
+          {citiesL.length > 1 && F(ct, setCt, "City", citiesL.map((c) => [c, c]))}
+          {F(hp, setHp, "Phone", [["yes", "Has phone"], ["no", "No phone"]])}
+          {F(wa, setWa, "WhatsApp", [["yes", "Mobile number"], ["no", "Landline / none"]])}
+          {F(hw, setHw, "Website", [["yes", "Has website"], ["no", "No website"]])}
+          {F(rt, setRt, "Rating", [["3", "3+ ★"], ["4", "4+ ★"], ["4.5", "4.5+ ★"]])}
+          {F(rv, setRv, "Reviews", [["20", "20+"], ["50", "50+"], ["100", "100+"], ["500", "500+"]])}
+          {F(stt, setStt, "Status", [["open", "Open now (in business)"], ["closed", "Closed"], ["uniq", "No duplicates"], ["dup", "Duplicates only"]])}
+          {tagsL.length > 0 && F(tg, setTg, "Tag", tagsL.map((t) => [t, t]))}
+          {nf > 0 && <button className="lf-b lf-reset" onClick={reset}>✕ Clear filters ({nf})</button>}
           <button className="lf-b" onClick={() => toCsv(chosen.length ? chosen : list, csvName)}>⬇ Export CSV{chosen.length ? ` (${chosen.length})` : ""}</button>
         </div>
         {chosen.length > 0 && <div className="lf-selbar"><b>{chosen.length} selected</b>
@@ -175,22 +197,22 @@ function Results({ rows, title, savedIn, groups, onGroup, onLeads, onTag, csvNam
           <button onClick={() => { onLeads(chosen); setSel(new Set()); }}>👥 Add to Leads</button>
           {onRemove && <button className="lf-del" onClick={() => { onRemove(chosen); setSel(new Set()); }}>Remove from group</button>}
           <button className="lf-clr" onClick={() => setSel(new Set())}>Clear</button></div>}
-        <div className="lf-scroll"><table>
+        <div className="lf-scroll"><table className="lf-rtable">
           <thead><tr><th><input type="checkbox" checked={!!allOn} onChange={() => setSel((x) => { const y = new Set(x); shown.forEach((r) => (allOn ? y.delete(r.id) : y.add(r.id))); return y; })} /></th>
             {S("name", "Business name")}<th>Phone</th><th>Category</th><th>Address</th>{S("city", "City")}<th>Website</th>{S("rating", "Rating")}{S("reviews", "Reviews")}<th>Tags</th><th>Status</th></tr></thead>
           <tbody>{shown.map((r) => { const m = mobileOf(r.phone), dup = (dupPhones[m || String(r.phone || "").replace(/\D/g, "")] || 0) > 1, sv = savedIn[r.id];
             return (<tr key={r.id} className={sel.has(r.id) ? "on" : ""}>
               <td><input type="checkbox" checked={sel.has(r.id)} onChange={() => tog(r.id)} /></td>
               <td className="lf-name"><b>{r.name}</b>{r.maps && <a href={r.maps} target="_blank" rel="noopener" title="Open on Google Maps">↗</a>}{!r.open && <em className="lf-closed">Closed</em>}</td>
-              <td className="lf-ph">{r.phone ? <>{r.phone}{m && <a className="lf-wa" href={`https://wa.me/91${m}`} target="_blank" rel="noopener" title="Chat on WhatsApp">WA</a>}{dup && <em className="lf-dup">Possible duplicate</em>}</> : <span className="mut">—</span>}</td>
-              <td>{r.category || <span className="mut">—</span>}</td>
-              <td className="lf-addr" title={r.address}>{r.address}</td>
-              <td>{r.city || <span className="mut">—</span>}</td>
-              <td>{r.website ? <a className="lf-web" href={r.website} target="_blank" rel="noopener">{host(r.website)}</a> : <span className="lf-nows">Not available</span>}</td>
-              <td>{r.rating ? <b className="lf-rt-v">★ {r.rating}</b> : "—"}</td>
-              <td>{r.reviews ? r.reviews.toLocaleString("en-IN") : "—"}</td>
-              <td>{(r.tags || []).map((t) => <span key={t} className="lf-tag">{t}</span>)}{!(r.tags || []).length && <span className="mut">—</span>}</td>
-              <td>{sv ? <span className="lf-st on" title={sv.join(", ")}>● Saved: {sv[0]}{sv.length > 1 ? ` +${sv.length - 1}` : ""}</span> : <span className="lf-st">New</span>}</td>
+              <td className="lf-ph" data-l="Phone">{r.phone ? <>{r.phone}{m && <a className="lf-wa" href={`https://wa.me/91${m}`} target="_blank" rel="noopener" title="Chat on WhatsApp">WA</a>}{dup && <em className="lf-dup">Possible duplicate</em>}</> : <span className="mut">—</span>}</td>
+              <td data-l="Category">{r.category || <span className="mut">—</span>}</td>
+              <td className="lf-addr" data-l="Address" title={r.address}>{r.address}</td>
+              <td data-l="City">{r.city || <span className="mut">—</span>}</td>
+              <td data-l="Website">{r.website ? <a className="lf-web" href={r.website} target="_blank" rel="noopener">{host(r.website)}</a> : <span className="lf-nows">Not available</span>}</td>
+              <td data-l="Rating">{r.rating ? <b className="lf-rt-v">★ {r.rating}</b> : "—"}</td>
+              <td data-l="Reviews">{r.reviews ? r.reviews.toLocaleString("en-IN") : "—"}</td>
+              <td data-l="Tags">{(r.tags || []).map((t) => <span key={t} className="lf-tag">{t}</span>)}{!(r.tags || []).length && <span className="mut">—</span>}</td>
+              <td data-l="Status">{sv ? <span className="lf-st on" title={sv.join(", ")}>● Saved: {sv[0]}{sv.length > 1 ? ` +${sv.length - 1}` : ""}</span> : <span className="lf-st">New</span>}</td>
             </tr>); })}
             {!shown.length && <tr><td colSpan="11" className="lf-empty">{rows.length ? "Nothing matches these filters." : inGroup ? "No leads in this group yet." : "No businesses found."}</td></tr>}
           </tbody></table></div>

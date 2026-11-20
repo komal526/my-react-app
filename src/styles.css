@@ -4473,3 +4473,75 @@ html.lb-hidden .ais-bot2{animation-play-state:paused}
 .lf td.lf-addr{min-width:220px;max-width:320px}
 .lf td.lf-addr{display:table-cell;-webkit-line-clamp:unset}
 .lf-addr{font-size:13px;line-height:1.35}
+
+/* ===== v101 — Lead Finder hero, stat chips, mobile cards ===== */
+.dash .lf-hero{position:relative;overflow:hidden;border-radius:24px;padding:24px 28px 0;background:linear-gradient(165deg,#1a2170 0%,#121852 55%,#0c1142 100%);color:#fff;box-shadow:0 24px 50px -30px rgba(13,19,60,.8)}
+.lf-hero .lf-w1,.lf-hero .lf-w2{position:absolute;border-radius:50%;pointer-events:none}
+.lf-hero .lf-w1{width:340px;height:340px;right:-90px;top:-150px;background:radial-gradient(circle,rgba(245,179,1,.35),transparent 65%)}
+.lf-hero .lf-w2{width:260px;height:260px;left:30%;bottom:-170px;background:radial-gradient(circle,rgba(99,102,241,.45),transparent 65%)}
+.lf-hero>*{position:relative}
+.lf-hb{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.03em;color:#0d1340;background:var(--lb-y,#f5b301);border-radius:999px;padding:4px 11px}
+.dash .lf-hero h1{margin:10px 0 4px;font-size:30px;color:#fff;line-height:1.15}
+.lf-hero p{margin:0;max-width:640px;color:#c7cbef;line-height:1.5}
+.dash .lf-hero .lf-tabs{border:0;margin-top:18px;gap:6px;flex-wrap:wrap;padding-bottom:14px}
+.dash .lf-hero .lf-tabs button{border:0!important;margin:0;border-radius:999px;padding:9px 16px;background:rgba(255,255,255,.1)!important;color:#dfe2ff!important;font-weight:700}
+.dash .lf-hero .lf-tabs button:hover{background:rgba(255,255,255,.18)!important}
+.dash .lf-hero .lf-tabs button.on{background:var(--lb-y,#f5b301)!important;color:#0d1340!important;box-shadow:0 8px 18px -10px rgba(245,179,1,.9)}
+.lf-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.dash .lf .lf-stat{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid #e6e9f2!important;background:#fff!important;color:#0d1324!important;border-radius:16px;padding:12px 14px;cursor:pointer;font:inherit;transition:transform .15s,box-shadow .15s}
+.dash .lf .lf-stat:hover{transform:translateY(-2px);box-shadow:0 12px 24px -18px rgba(13,19,60,.5)}
+.dash .lf .lf-stat.on{border-color:var(--lb-y,#f5b301)!important;background:#fffbeb!important;box-shadow:0 0 0 2px rgba(245,179,1,.25)}
+.lf-stat>span{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:18px;background:#f1f3fb}
+.lf-stat:nth-child(2)>span{background:#e8f8ef}.lf-stat:nth-child(3)>span{background:#e0f2fe}.lf-stat:nth-child(4)>span{background:#eef2ff}.lf-stat:nth-child(5)>span{background:#fef3c7}.lf-stat:nth-child(6)>span{background:#fff7ed}
+.lf-stat b{display:block;font-size:20px;line-height:1.1}.lf-stat small{color:#64748b;font-size:12px;font-weight:600}
+.dash .lf .lf-reset{color:#b91c1c!important;border-color:#fecaca!important;background:#fef2f2!important}
+.lf th{position:sticky;top:0;z-index:1}
+.lf tbody tr:hover td{background:#fafbff}
+@media (max-width:760px){
+  .dash .lf-hero{padding:18px 16px 0;border-radius:18px}.dash .lf-hero h1{font-size:23px}.lf-hero p{font-size:13.5px}
+  .dash .lf-hero .lf-tabs{flex-wrap:nowrap;overflow-x:auto;margin-right:-16px;padding-right:16px}.dash .lf-hero .lf-tabs button{flex:none}
+  .lf-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dash .lf .lf-stat{padding:10px}.lf-stat b{font-size:17px}
+  .lf-tools{padding:10px}.lf-tools .lf-s{flex:1 1 100%}.lf-tools .lf-f{flex:1 1 calc(50% - 4px);min-width:0}.lf-tools .lf-b{flex:1 1 100%}
+  .lf-selbar{padding:10px}.lf-in{flex:1 1 100%}.lf-in input{flex:1;width:auto}
+  /* table → cards */
+  .lf table.lf-rtable{min-width:0}
+  .lf table.lf-rtable thead{display:none}
+  .lf table.lf-rtable,.lf table.lf-rtable tbody{display:block}
+  .lf table.lf-rtable tr{display:grid;grid-template-columns:28px 1fr;gap:2px 8px;padding:12px;border-bottom:1px solid #eef0f5}
+  .lf table.lf-rtable td{display:flex;gap:8px;padding:3px 0;border:0;min-width:0;max-width:none;grid-column:2;font-size:13px}
+  .lf table.lf-rtable td:first-child{grid-column:1;grid-row:1 / span 3;padding-top:2px}
+  .lf table.lf-rtable td.lf-name{font-size:15px;min-width:0;flex-wrap:wrap}
+  .lf table.lf-rtable td[data-l]::before{content:attr(data-l);flex:none;width:72px;color:#94a3b8;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding-top:1px}
+  .lf table.lf-rtable td.lf-addr{display:flex}
+  .lf table.lf-rtable td.lf-ph{flex-wrap:wrap;white-space:normal}
+  .lf table.lf-rtable td.lf-empty{grid-column:1 / -1;justify-content:center}
+  .lf-pg{flex-wrap:wrap}
+  .lf-gh h2{font-size:19px}
+  .lf-acts{text-align:left}
+}
+
+/* ===== v101 — whole app responsive pass (phones + tablets) ===== */
+@media (max-width:900px){
+  .dash .tb2{flex-wrap:wrap!important;row-gap:10px!important}
+  .dash .tb2 .tb2-hi{flex:1 1 auto;min-width:0;order:1}
+  .dash .tb2 .tb2-crumb{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
+  .dash .tb2 .tb2-crumb b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .dash .tb2 .tb2-bell{order:2}.dash .tb2 .tb2-me{order:3}
+  .dash .tb2 .sx{order:4!important;width:100%!important;flex:1 1 100%}
+  .dash .tb2 .sx-dd{left:0;right:0;width:auto!important}
+}
+@media (max-width:760px){
+  .lf-row>label{flex:none!important;width:100%}
+  .lf-row .lf-go{width:100%}
+  .dash .tb2 .tb2-home span{display:none}
+  .dash .tb2-hi h1{font-size:20px!important}
+  .dash img,.dash video{max-width:100%}
+  .dash .adm-hero{padding:18px 16px!important;border-radius:18px!important}
+  .dash .adm-hero .adm-head{padding-right:0!important;flex-wrap:wrap}
+  .dash .adm-page .adm-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media (max-width:900px){.dash .tb2:not(.slim) .tb2-hi{flex:1 1 0!important}.dash .tb2:not(.slim) .tb2-hi h1{white-space:normal;line-height:1.2}}
+/* touch screens have no hover — keep Preview / Use visible on template cards */
+@media (hover:none){.tg-hover{opacity:1;background:linear-gradient(180deg,transparent 45%,rgba(6,10,20,.55));align-items:flex-end;padding-bottom:12px}}
+/* editor on phones/tablets: the canvas keeps its column while the panel floats over it */
+@media (max-width:900px){.app:not(.collapsed)>.stage{grid-column:2;grid-row:2}.app:not(.collapsed)>.lp{width:min(360px,calc(100vw - 20px))}}
