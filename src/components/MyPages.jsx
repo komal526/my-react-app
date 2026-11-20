@@ -305,7 +305,7 @@ function DashFooter({ onNew, onGo, onTemplates, onLeads, onAnalytics, onConsult 
 
 /* hovering a project card starts loading the editor, so Edit opens at once */
 let warmed = false; const warm = () => { if (!warmed) { warmed = true; import("./Editor.jsx"); } };
-export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl, onDomain, onView, onSaveDraft, onDiscardDraft, drafts = [], kind0, onAiEdit }) {
+export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl, onDomain, onView, onSaveDraft, onDiscardDraft, drafts = [], kind0, onAiEdit, onToDraft }) {
   /* free subdomains (slug → name.crecapo.tech) so each card shows its real live address */
   const [subs, setSubs] = useState(subsCache);
   useEffect(() => {
@@ -379,7 +379,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
             {!p.unsaved && <button className="dots" onClick={(e) => { e.stopPropagation(); setMenu(menu === p.id ? null : p.id); }}>⋯</button>}
             {menu === p.id && (
               <div className="menu" onClick={(e) => e.stopPropagation()}>
-                <div onClick={() => onOpen(p.id)}>Edit</div>{onPreview && <div onClick={act(onPreview, p)}>↗ Open in new tab</div>}<div onClick={act(onRename, p)}>Rename</div><div onClick={act(onDuplicate, p)}>Duplicate</div>{onSaveTpl && <div onClick={act(onSaveTpl, p)}>★ Save as template</div>}
+                <div onClick={() => onOpen(p.id)}>Edit</div>{onPreview && <div onClick={act(onPreview, p)}>↗ Open in new tab</div>}<div onClick={act(onRename, p)}>Rename</div><div onClick={act(onDuplicate, p)}>Duplicate</div>{onToDraft && <div onClick={act(onToDraft, p)}>📝 Move to Drafts</div>}{onSaveTpl && <div onClick={act(onSaveTpl, p)}>★ Save as template</div>}
                 <div onClick={act(onPublish, p)}>{p.status === "published" ? "Change address / republish" : "Publish"}</div>
                 {onDomain && p.status === "published" && <div onClick={act(onDomain, p)}>🌐 Connect domain</div>}
                 {p.status === "published" && <div onClick={act(onUnpublish, p)}>Unpublish</div>}

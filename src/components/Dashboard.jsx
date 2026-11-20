@@ -25,6 +25,7 @@ const Consultant = lazy(() => import("./Consultant.jsx"));
 /* AI Studio: one loader for both screens · opened as #/studio in a new tab → start loading it right away (no dashboard flash) */
 const loadStudio = () => import("./AiStudio.jsx");
 const AiStudio = lazy(loadStudio);
+const AdminPanel = lazy(() => import("./Admin.jsx"));
 const AiEditor = lazy(() => loadStudio().then((m) => ({ default: m.AiEditor })));
 if (/^#\/studio/.test(location.hash)) { loadStudio(); }
 
@@ -127,7 +128,7 @@ export default function Dashboard({ user, onLogout }) {
   const [projects, setProjects] = useState(() => { let d = []; try { d = JSON.parse(localStorage.getItem(DK) || "[]"); } catch { d = []; } return [...d.filter((p) => p.kept || pagesHash(p.pages) !== p.orig).map((p) => ({ ...p, recovered: true })), ...loadProjects(E)]; });
   const [toast, setToast] = useState(""); useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 3500); return () => clearTimeout(t); }, [toast]);
   const [forms, setForms] = useState(() => loadForms(E)), [leads, setLeads] = useState(() => loadLeads(E)), [events, setEvents] = useState(() => loadEvents(E));
-  const [view, setView] = useState("pages"), [openId, setOpenId] = useState(null), [modal, setModal] = useState(null);
+  const [view, setView] = useState(() => (/\/admin\/?$/.test(location.pathname) || /^#\/admin/.test(location.hash) ? "admin" : "pages")), [openId, setOpenId] = useState(null), [modal, setModal] = useState(null);
   const syncT = useRef(0);
   const [integ, setInteg] = useState(() => loadInteg(E));
   const onInteg = (v) => { setInteg(v); saveInteg(E, v); };
@@ -140,8 +141,13 @@ export default function Dashboard({ user, onLogout }) {
   const [ai, setAi] = useState(null);
   const consultOpen = (o = {}) => setAi({ ...o, nonce: Date.now() });
   /* AI Studio opens in its own browser tab: #/studio (the brief is handed over through this browser's storage) */
-  /* "Admin panel" in the menu → Domains page, scrolled to the panel */
-  useEffect(() => { if (view !== "admin") return; setView("domains"); let n = 0; const t = setInterval(() => { const el = document.querySelector(".adm-embed"); if (el || ++n > 40) { clearInterval(t); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); } }, 150); }, [view]);
+  /* Admin panel has its own address: crecapo.tech/admin */
+  useEffect(() => {
+    const base = location.pathname.replace(/\/admin\/?$/, "/") || "/";
+    if (view === "admin") { if (!/\/admin\/?$/.test(location.pathname)) history.replaceState(null, "", base.replace(/\/$/, "") + "/admin"); }
+    else if (/\/admin\/?$/.test(location.pathname) || /^#\/admin/.test(location.hash)) history.replaceState(null, "", base);
+  }, [view]);
+  useEffect(() => { const h = () => { if (/^#\/admin/.test(location.hash)) setView("admin"); }; window.addEventListener("hashchange", h); return () => window.removeEventListener("hashchange", h); }, []);
   const [studio, setStudio] = useState(() => { if (!/^#\/studio/.test(location.hash)) return null; let o = {}; try { o = JSON.parse(localStorage.getItem("lb_studio_go") || "{}"); localStorage.removeItem("lb_studio_go"); } catch { o = {}; } return { type: o.type || "landing", name: o.name || "", prompt: o.prompt || "", tab: true }; });
   const studioTab = (o = {}) => { try { localStorage.setItem("lb_studio_go", JSON.stringify(o)); } catch { /* ignore */ } const w = window.open(location.origin + location.pathname + "#/studio", "_blank"); if (!w) setStudio(o); };
   /* the studio finished: save → your projects · editor → opens it (kept in Drafts until saved) · draft → Drafts */
@@ -246,6 +252,12 @@ export default function Dashboard({ user, onLogout }) {
     const p = { id: uid(), name, type, status: "draft", slug: slugify(name), domain: "", pages, updated: Date.now(), created: Date.now(), versions: [], ...(tpl ? { tpl } : {}), ...(save ? {} : { unsaved: true, orig: pagesHash(pages), ...(kept ? { kept: true } : {}) }) };
     setProjects((ps) => [p, ...ps]); setModal(!save && open && ask ? { type: "askSave", id: p.id } : null); if (open) { setOpenId(p.id); setView("pages"); }
     return p;
+  };
+  /* a saved project can go back to Drafts (not counted as a project; save it again any time) */
+  const toDraft = (p) => {
+    if (p.status === "published" && !window.confirm(`"${p.name}" is live. Move it to Drafts? The live website stays online — unpublish it first if you want it offline.`)) return;
+    setProjects((ps) => ps.map((x) => (x.id === p.id ? { ...x, unsaved: true, kept: true, orig: pagesHash(x.pages) } : x)));
+    setToast("📝 “" + p.name + "” moved to Drafts — open Drafts to save it back");
   };
   const keepDraft = (id) => { setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, kept: true } : p))); setToast("📝 Kept in Drafts — save it to your projects any time"); };
   const saveDraft = (id) => { if (projects.filter((p) => !p.unsaved).length >= LIMIT) return alert(`Free plan allows ${LIMIT} projects. Delete one to save this one.`), false; setProjects((ps) => ps.map(({ recovered, ...p }) => (p.id === id ? { ...p, unsaved: false, orig: undefined, kept: undefined, updated: Date.now() } : { ...p, ...(recovered ? { recovered } : {}) }))); setToast("✓ Saved to your projects"); return true; };
@@ -372,7 +384,7 @@ export default function Dashboard({ user, onLogout }) {
           {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
         <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses"})[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={listed} forms={forms} cal={cal} onOpenProject={setOpenId} />
-        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
+        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onToDraft={toDraft} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
           onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} onConsult={consultOpen} onUseTpl={applyTpl} onDomain={(p) => { setDomFocus({ id: p.id, ts: Date.now() }); setView("domains"); }} />}
@@ -384,6 +396,8 @@ export default function Dashboard({ user, onLogout }) {
         {view === "followups" && <FollowUps leads={leads} setLeads={(list) => { setLeads(list); saveLeads(E, list); }} onPipeline={() => { localStorage.setItem("lb_leads_view", "pipeline"); setView("leads"); }} />}
         {view === "leads" && <Leads user={user} projects={listed} forms={forms} leads={leads} setLeads={setLeads} integ={integ} />}
         {view === "analytics" && <Analytics projects={listed} events={evs} leads={leads} onOpenProject={setOpenId} />}
+        {view === "admin" && (me && (me.role === "admin" || me.role === "owner") ? <Suspense fallback={<div className="lazy-load"><span className="pub-spin" /></div>}><AdminPanel me={me} page /></Suspense>
+          : <div className="panel adm-locked"><b>🔒 Admin panel</b><p className="mut">{me ? "Only the admin can open this page." : "Loading…"}</p></div>)}
         {view === "domains" && <Domains projects={listed} onPatch={patch} onPatchPage={patchPage} onInteg={onInteg} onOpen={setOpenId} integ={integ} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onPublish={(p) => setModal({ type: "publish", id: p.id })} me={me} focus={domFocus} />}
         {view === "lms" && <LMS user={user} />}
         {view === "pixels" && <Pixels integ={integ} onChange={onInteg} projects={listed} />}

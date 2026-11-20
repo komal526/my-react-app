@@ -439,7 +439,10 @@ const docColors = (doc) => {
 };
 
 export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
-  const top = useRef(), bot = useRef(), rz = useRef(), [pop, setPop] = useState(""), [more, setMore] = useState(false);
+  const top = useRef(), bot = useRef(), rz = useRef(), rzs = useRef(), [pop, setPop] = useState(""), [more, setMore] = useState(false);
+  /* the tool strip can be folded away to a small button (remembered) */
+  const [fold, setFold0] = useState(() => { try { return localStorage.getItem("lb_qb_fold") === "1"; } catch { return false; } });
+  const setFold = (v) => { setFold0(v); setPop(""); try { localStorage.setItem("lb_qb_fold", v ? "1" : "0"); } catch { /* ignore */ } requestAnimationFrame(() => requestAnimationFrame(place)); };
   const [aiQ, setAiQ] = useState(""), [aiBusy, setAiBusy] = useState(false), [aiErr, setAiErr] = useState("");
   const a = A.current, doc = el.ownerDocument, w = doc.defaultView, cs = w.getComputedStyle(el), tag = el.tagName;
   const st = (k) => a.getStyle(el, k) || "";
@@ -463,6 +466,7 @@ export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
     if (off) return;
     const cx = x + wd / 2, tw = t.offsetWidth, bw = b.offsetWidth;
     if (rz.current) { rz.current.style.left = Math.min(W - 12, x + wd - 8) + "px"; rz.current.style.top = Math.min(H - 12, y + h - 8) + "px"; }
+    if (rzs.current) { rzs.current.style.left = Math.min(W - 8, x + wd - 4) + "px"; rzs.current.style.top = (y + h / 2 - 11) + "px"; }
     t.style.left = Math.max(8, Math.min(W - tw - 8, cx - tw / 2)) + "px";
     t.style.top = (y - t.offsetHeight - 12 >= 6 ? y - t.offsetHeight - 12 : Math.max(6, Math.min(H - 110, y + 10))) + "px";
     b.style.left = Math.max(8, Math.min(W - bw - 8, cx - bw / 2)) + "px";
@@ -485,19 +489,21 @@ export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
   const keep = (e) => e.preventDefault(); // don't steal focus from text being edited
   /* Canva-style resize: drag the round handle at the corner */
   const sect = a.sectionish(el), RZ = useRef(null);
-  const rzDown = (e) => {
-    e.preventDefault(); e.stopPropagation(); rz.current.setPointerCapture(e.pointerId);
-    const r = el.getBoundingClientRect(); RZ.current = { x: e.clientX, y: e.clientY, w: r.width, h: r.height, o: null };
+  const rzDown = (e, side = false) => {
+    e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId);
+    const r = el.getBoundingClientRect(); RZ.current = { x: e.clientX, y: e.clientY, w: r.width, h: r.height, o: null, side, fs: parseFloat(cs.fontSize) || 16, t: e.currentTarget };
   };
   const rzMove = (e) => {
     const R0 = RZ.current; if (!R0) return;
     const nw = Math.max(24, Math.round(R0.w + (e.clientX - R0.x) / sc)), nh = Math.max(16, Math.round(R0.h + (e.clientY - R0.y) / sc));
-    const o = sect ? { minHeight: nh + "px" } : isImg ? { width: nw + "px", height: "auto", maxWidth: "100%" } : isText ? { width: nw + "px", maxWidth: "100%" } : { width: nw + "px", maxWidth: "100%", minHeight: nh + "px" };
+    /* text: corner = bigger / smaller text (like Canva), side bar = only the width. Sizes stay responsive (smaller on phones). */
+    const fsz = Math.max(8, Math.round(R0.fs * nw / R0.w)), rf = (n) => `clamp(${Math.max(8, Math.round(n * 0.62))}px, ${(n / 12.8 * 1.3).toFixed(2)}vw, ${n}px)`;
+    const o = sect ? { minHeight: nh + "px" } : R0.side ? { width: nw + "px", maxWidth: "100%" } : isImg ? { width: nw + "px", height: "auto", maxWidth: "100%" } : isText ? { fontSize: a.dev() === "desktop" ? rf(fsz) : fsz + "px", width: Math.round(nw) + "px", maxWidth: "100%" } : { width: nw + "px", maxWidth: "100%", minHeight: nh + "px" };
     Object.entries(o).forEach(([k, v]) => el.style.setProperty(k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase()), v, "important"));
-    R0.o = o; R0.label = sect ? `height ${nh}` : isImg || isText ? `width ${nw}` : `${nw} × ${nh}`; rz.current.setAttribute("data-size", R0.label); place();
+    R0.o = o; R0.label = sect ? `height ${nh}` : R0.side || isImg ? `width ${nw}` : isText ? `text ${fsz}px` : `${nw} × ${nh}`; R0.t.setAttribute("data-size", R0.label); place();
   };
   const rzUp = () => {
-    const R0 = RZ.current; RZ.current = null; if (!R0 || !R0.o) return; rz.current.removeAttribute("data-size");
+    const R0 = RZ.current; RZ.current = null; if (!R0 || !R0.o) return; R0.t.removeAttribute("data-size");
     Object.keys(R0.o).forEach((k) => el.style.removeProperty(k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())));
     a.setStyle(el, R0.o); a.commit(); requestAnimationFrame(place);
   };
@@ -617,13 +623,16 @@ export function QuickBar({ el, A, ifr, wrapEl, sc, posRef, editing, onOpen }) {
   };
 
   return <>
-    <div ref={top} className={"qb" + (locked ? " locked" : "")} onMouseDown={(e) => e.stopPropagation()}>
+    <div ref={top} className={"qb" + (locked ? " locked" : "") + (fold ? " folded" : "")} onMouseDown={(e) => e.stopPropagation()}>
+      {fold ? <button className="qb-b qb-unfold" onClick={() => setFold(false)} title="Show the editing tools"><Icon n="pen" s={14} /><span>Edit tools</span><b>›</b></button> : <>
       {locked ? <><Icon n="lock" s={14} /><span className="qb-lk">Locked — unlock to edit</span><B ic="lock" label="Unlock" onClick={() => a.toggleLock(el)} /></> : bars[kind]}
       <span className="qb-sep" /><B label="✨ AI" title="Change this with AI" on={pop === "ai"} cls="qb-aib" onClick={() => setPop(pop === "ai" ? "" : "ai")} />
       <B ic="sparkle" label="Style" title="All style options" onClick={() => onOpen("style")} />
-      {pop && !locked && pops[pop] && <div className="qb-popwrap">{pops[pop]()}</div>}
+      <button className="qb-b qb-fold" onClick={() => setFold(true)} title="Fold this bar away">‹</button>
+      {pop && !locked && pops[pop] && <div className="qb-popwrap">{pops[pop]()}</div>}</>}
     </div>
-    {!locked && el.tagName !== "BODY" && <span ref={rz} className={"qb-rz" + (sect ? " v" : "")} title={sect ? "Drag to change the height" : "Drag to resize"} onPointerDown={rzDown} onPointerMove={rzMove} onPointerUp={rzUp} onPointerCancel={rzUp} />}
+    {!locked && el.tagName !== "BODY" && <span ref={rz} className={"qb-rz" + (sect ? " v" : "")} title={sect ? "Drag to change the height" : "Drag to resize"} onPointerDown={(e) => rzDown(e)} onPointerMove={rzMove} onPointerUp={rzUp} onPointerCancel={rzUp} />}
+    {!locked && !sect && (isText || isBtn) && el.tagName !== "BODY" && <span ref={rzs} className="qb-rz side" title="Drag to change the width (the text wraps)" onPointerDown={(e) => rzDown(e, true)} onPointerMove={rzMove} onPointerUp={rzUp} onPointerCancel={rzUp} />}
     <div ref={bot} className="qb-mini" onMouseDown={(e) => e.stopPropagation()}>
       <span className="qb-name" title={sect ? "Drag a section to move it up or down" : "Press and drag the element to move it anywhere"}>{!sect && !locked && <em className="qb-grip">✥</em>}{nameOf(el)}</span>
       {a.isMoved(el) && <B label="⟲" title="Put it back where it was" onClick={() => a.resetPos(el)} />}

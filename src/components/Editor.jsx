@@ -290,15 +290,21 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
      Saved as CSS "translate" (so the page stays a real, responsive website). Desktop moves don't touch the phone
      layout; moves made in Mobile / Tablet view are kept only for that device. Pink guides snap to centres and edges. */
   const SECTIONISH = (el) => !el || el.tagName === "BODY" || el.parentElement === el.ownerDocument.body || /^(SECTION|HEADER|FOOTER|MAIN|NAV)$/.test(el.tagName) && el.parentElement && el.parentElement.parentElement === el.ownerDocument.body;
-  const offOf = (el) => { const v = (getStyle(el, "translate") || "").trim(); if (!v || v === "none") return [0, 0]; const [x, y = "0px"] = v.split(/\s+/); return [parseFloat(x) || 0, parseFloat(y) || 0]; };
+  /* desktop moves are saved so they shrink with the screen: 1px on a 1280px desktop → about 0.3px on a phone */
+  const K = "min(1px, 0.078125vw)", fmtT = (x, y) => `calc(${x} * ${K}) calc(${y} * ${K})`;
+  const offOf = (el) => { const v = (getStyle(el, "translate") || "").trim(); if (!v || v === "none") return [0, 0];
+    const c = [...v.matchAll(/calc\((-?[\d.]+)\s*\*/g)].map((m) => +m[1]); if (c.length) return [c[0] || 0, c[1] || 0];
+    const [x, y = "0px"] = v.split(/\s+/); return [parseFloat(x) || 0, parseFloat(y) || 0]; };
   const isMoved = (el) => { const [x, y] = offOf(el); return !!(x || y); };
-  const resetPos = (el) => { setStyle(el, { translate: "" }); if (devRef.current === "desktop" && resp.get(el, "mobile", "translate") === "none") resp.set(el, "mobile", { translate: "" }); commit(true); requestAnimationFrame(placeTools); say("Position reset"); };
+  const resetPos = (el) => { setStyle(el, { translate: "" }); if (devRef.current === "desktop") ["mobile", "tablet"].forEach((dv) => { if (resp.get(el, dv, "translate") === "none") resp.set(el, dv, { translate: "" }); }); commit(true); requestAnimationFrame(placeTools); say("Position reset"); };
   const nudge = (el, dx, dy) => { const [x, y] = offOf(el); placeAt(el, x + dx, y + dy); commit(false); requestAnimationFrame(placeTools); };
   const placeAt = (el, x, y) => {
-    const v = Math.round(x) || Math.round(y) ? `${Math.round(x)}px ${Math.round(y)}px` : "";
+    const desk = devRef.current === "desktop", X = Math.round(x), Y = Math.round(y);
+    const v = X || Y ? (desk ? fmtT(X, Y) : `${X}px ${Y}px`) : "";
     const w = el.ownerDocument.defaultView; if (v && w.getComputedStyle(el).position === "static") el.style.position = "relative";
     setStyle(el, { translate: v });
-    if (devRef.current === "desktop" && v && resp.get(el, "mobile", "translate") === "") resp.set(el, "mobile", { translate: "none" });   /* phone layout stays tidy */
+    /* responsive: tablet and phone follow the desktop move, scaled down (unless you moved it there yourself) */
+    if (desk) ["mobile", "tablet"].forEach((dv) => { if (resp.get(el, dv, "translate") === "none") resp.set(el, dv, { translate: "" }); });
   };
   const freeMove = (d) => {
     const win = d.defaultView; let P = null;
@@ -350,7 +356,7 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
     d.addEventListener("pointerup", end, true); d.addEventListener("pointercancel", end, true);
   };
   const moved = useRef(0);
-  Object.assign(A.current, { isMoved, resetPos, sectionish: SECTIONISH, place: placeTools });
+  Object.assign(A.current, { isMoved, resetPos, sectionish: SECTIONISH, place: placeTools, dev: () => devRef.current });
 
   /* ---------------- wire up the page iframe ---------------- */
   const setup = () => {

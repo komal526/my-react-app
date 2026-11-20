@@ -1,8 +1,7 @@
 // LaunchBuilder v67 — Domains.jsx (free subdomains · your own domains · admin panel at the bottom)
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS, defaultServerUrl, subUrl, subList, subClaim, subDelete, subsCache, liveAddr, domainState } from "../lib.js";
 import { BRAND } from "../brand.js";
-const AdminPanel = lazy(() => import("./Admin.jsx"));
 
 /* ================= Domains: connect a custom domain (DNS records or nameservers) and verify ================= */
 const copy = (t) => (navigator.clipboard ? navigator.clipboard.writeText(t).catch(() => window.prompt("Copy:", t)) : window.prompt("Copy:", t));
@@ -506,7 +505,7 @@ export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ,
             <span className={"dm-tag " + st(p)}>{st(p) === "connected" ? "● Connected · " + liveAddr(p, subs).replace(/^https?:\/\//, "").replace(/\/$/, "") : st(p) === "needs" ? "Needs a domain" : "Not published"}</span>
             {p.host ? <ServerCard p={p} onPatch={onPatch} onPatchPage={onPatchPage} onOpen={onOpen} integ={integ} onSetup={onSetup} vps={vps} subs={subs} /> : p.netlify ? <DomainCard p={p} onPatch={onPatch} onOpen={onOpen} integ={integ} onSetup={onSetup} onPublish={onPublish} /> : <PublishFirst p={p} onPublish={onPublish} />}</div>; })}
       </>}
-      {isAdmin && <Suspense fallback={<div className="lazy-load"><span className="pub-spin" /></div>}><AdminPanel me={me} ip={vps.ip} /></Suspense>}
+      {isAdmin && <a className="adm-jump" href="#/admin"><span>🔒</span><div><b>{me.role === "owner" ? "My clients" : "Admin panel"}</b><small>Accounts, all domains, white-label clients — now on its own page: {location.host}/admin</small></div><em>Open →</em></a>}
     </>
   );
 }

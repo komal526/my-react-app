@@ -3,6 +3,8 @@
 // and white-label clients — your software on THEIR domain (app.abc.com) with their name, logo and colours. No code leaves your server.
 // A white-label owner sees the same page as "My clients", limited to their own workspace.
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
+import Robot from "./Robot.jsx";
 import { admin, ago, rootDomain } from "../lib.js";
 
 const day = (t) => (t ? new Date(t * 1000).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—");
@@ -12,19 +14,32 @@ const Copy = ({ v }) => <button className="xs" onClick={() => copy(v)}>Copy</but
 const C = ({ v }) => <><code>{v}</code> <Copy v={v} /></>;
 const EMPTY = { name: "", product: "", logo: "", color: "#f5b301", color2: "#ffd35c", app_domain: "", sites_domain: "", owner_email: "", max_users: "", sub_limit: 5, support_email: "", whatsapp: "", active: true };
 
-export default function Admin({ me, ip = "" }) {
+const TI = {
+  users: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6" /><circle cx="17" cy="9" r="2.6" /><path d="M16 14.6c2.8.2 4.8 2 5.3 5" /></>,
+  doms: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.8 3.9 5.8 3.9 9s-1.3 6.2-3.9 9c-2.6-2.8-3.9-5.8-3.9-9S9.4 5.8 12 3z" /></>,
+  wl: <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />,
+  dns: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z" /></>,
+};
+const Ti = ({ d, s = 18 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>;
+
+/* page = the full-page panel at /admin */
+export default function Admin({ me, ip = "", page = false }) {
   const owner = me.role === "owner";
   const [tab, setTab] = useState("users");
   return (
-    <div className="adm adm-embed">
-      <div className="adm-head"><span className="adm-badge">🔒 {owner ? "Workspace owner" : "Admin"}</span>
-        <div><h2>{owner ? "My clients" : "Admin panel"}</h2>
-          <p className="mut">{owner ? "Everyone using your workspace — sign-ups, logins and what they've published. Only you see this." : "Only you see this. Users have every feature — here you control the users, and give your software to other businesses on their own domain."}</p></div></div>
-      <div className="adm-tabs">
-        <button className={tab === "users" ? "on" : ""} onClick={() => setTab("users")}>👥 Accounts</button>
-        <button className={tab === "doms" ? "on" : ""} onClick={() => setTab("doms")}>🌐 All domains</button>
-        <button className={tab === "wl" ? "on" : ""} onClick={() => setTab("wl")}>{owner ? "🎨 My brand" : "🏷 Give software to a client"}</button>
-        {!owner && <button className={tab === "dns" ? "on" : ""} onClick={() => setTab("dns")}>⚙ Free-subdomain DNS</button>}
+    <div className={"adm" + (page ? " adm-page" : " adm-embed")}>
+      <div className="adm-hero">
+        <i className="adm-w1" /><i className="adm-w2" />
+        <div className="adm-head"><span className="adm-badge">🔒 {owner ? "Workspace owner" : "Admin"}</span>
+          <div><h2>{owner ? "My clients" : "Admin panel"}</h2>
+            <p>{owner ? "Everyone using your workspace — sign-ups, logins and what they've published. Only you see this." : "Only you see this. Users have every feature — here you control the users, and give your software to other businesses on their own domain."}</p></div></div>
+        <div className="adm-tabs">
+          <button className={tab === "users" ? "on" : ""} onClick={() => setTab("users")}><Ti d={TI.users} />Accounts</button>
+          <button className={tab === "doms" ? "on" : ""} onClick={() => setTab("doms")}><Ti d={TI.doms} />All domains</button>
+          <button className={tab === "wl" ? "on" : ""} onClick={() => setTab("wl")}><Ti d={TI.wl} />{owner ? "My brand" : "Give software to a client"}</button>
+          {!owner && <button className={tab === "dns" ? "on" : ""} onClick={() => setTab("dns")}><Ti d={TI.dns} />Free-subdomain DNS</button>}
+        </div>
+        <div className="adm-bot"><Robot mood="happy" /></div>
       </div>
       {tab === "users" ? <Users me={me} /> : tab === "doms" ? <AllDomains me={me} /> : tab === "wl" ? <WhiteLabel me={me} /> : <div className="panel adm-dns">
         <b>One DNS record makes every free subdomain work</b>
@@ -94,18 +109,20 @@ function Users({ me }) {
       {!me.accounts && <div className="ver-warn"><b>⚠ Accounts aren't switched on on the server yet.</b><span>On the VPS run <code>bash /opt/launchbuilder/vps/lb-saas-setup.sh</code> once — until then only your own sites are separated.</span></div>}
       {d.warn && <div className="ver-warn"><b>⚠ {d.warn}</b></div>}
       <div className="adm-stats">
-        {[["Accounts", t.users], ["Active · 7 days", t.active7], ["Websites", t.sites], ["Custom domains", t.domains], ["Free subdomains", t.subs], ...(me.role === "admin" ? [["White-label clients", t.tenants]] : [])].map(([l, v]) => <div key={l} className="adm-stat"><span>{l}</span><b>{v}</b></div>)}
+        {[["Accounts", t.users, "👥", "all"], ["Active · 7 days", t.active7, "🕒", "active"], ["Websites", t.sites, "🌐", "all"], ["Custom domains", t.domains, "🧩", ""], ["Free subdomains", t.subs, "⚡", ""], ...(me.role === "admin" ? [["White-label clients", t.tenants, "🏷", ""]] : [])].map(([l, v, ic, flt], i) => (
+          <button key={l} className={"adm-stat c" + i} onClick={() => flt && setF(flt)} title={flt ? "Show these accounts" : l}><span className="adm-si">{ic}</span><span className="adm-st"><span>{l}</span><b>{v}</b></span><em>→</em></button>))}
       </div>
       <div className="adm-bar">
         <input className="adm-q" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search email or name…" />
         <select value={f} onChange={(e) => setF(e.target.value)}><option value="all">All accounts</option><option value="active">Active in 7 days</option><option value="never">Nothing published</option><option value="paused">Paused</option></select>
         {me.role === "admin" && wsList.length > 0 && <select value={ws} onChange={(e) => setWs(e.target.value)}><option value="">Every workspace</option><option value="_main">Main (yours)</option>{wsList.map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select>}
-        <div className="grow" /><button onClick={load}>↻ Refresh</button><button onClick={csv}>⬇ Export CSV</button><button className="adm-go" onClick={() => setNew(!nw)}>＋ Create account</button>
+        <div className="grow" /><button onClick={load}>↻ Refresh</button><button onClick={csv}>⬇ Export CSV</button><button className="adm-go" onClick={() => setNew(true)}>＋ Create account</button>
       </div>
-      {nw && <NewAccount me={me} tenants={wsList} onDone={() => { setNew(false); load(); }} />}
+      {nw && createPortal(<div className="adm-modal" onMouseDown={(e) => e.target === e.currentTarget && setNew(false)}><div className="adm-mbox"><button className="adm-mx" onClick={() => setNew(false)} title="Close">✕</button>
+        <NewAccount me={me} tenants={wsList} onDone={() => { setNew(false); load(); }} /></div></div>, document.querySelector(".dash") || document.body)}
       <p className="mut sm adm-hint">Limits: type a number in the boxes (empty = default, 0 = unlimited). Websites = live websites · Own domains = connected domains · Subdomains = free name.{me.subBase || "domain"}.</p>
       {!d.serviceKey && me.role === "admin" && <p className="mut sm adm-hint">Shows accounts that opened the builder. To also list accounts that only signed up, add the Supabase secret key when running <code>lb-saas-setup.sh</code>.</p>}
-      <div className="adm-table"><table>
+      <div className="adm-table"><div className="adm-th"><b>Accounts</b><span>Total: {list.length} account{list.length === 1 ? "" : "s"}</span></div><table>
         <thead><tr><th>Account</th>{me.role === "admin" && <th>Workspace</th>}<th>Signed up</th><th>Last login</th><th>Last active</th><th title="used / allowed">Websites</th><th title="used / allowed">Own domains</th><th title="used / allowed">Subdomains</th><th>Status</th></tr></thead>
         <tbody>{list.map((u) => (
           <tr key={u.uid} className={u.disabled ? "off" : ""}>
@@ -116,7 +133,7 @@ function Users({ me }) {
             <td>{since(u.last_seen)}{u.dev && <small className="mut"> · {u.dev}</small>}{u.ip && <small className="mut adm-ip">{u.ip}</small>}</td>
             {[["sites", "site_limit", "∞", "Live websites"], ["domains", "dom_limit", "∞", "Own domains"], ["subs", "sub_limit", "5", "Free subdomains"]].map(([n, lk, ph, t]) => (
               <td key={lk}><b>{u[n]}</b> / {!u.admin ? <input key={u.uid + lk + (u[lk] ?? "")} className="adm-lim" type="number" min="0" defaultValue={u[lk] ?? ""} placeholder={ph} title={t + " allowed for this account (empty = default, 0 = unlimited)"} onBlur={(e) => { const v = e.target.value; if (String(v) !== String(u[lk] ?? "")) set(u, { [lk]: v === "" ? null : +v }); }} /> : "∞"}</td>))}
-            <td>{u.admin || u.never || u.email === me.email ? <span className="badge published">Active</span> : <button className={"xs " + (u.disabled ? "pri" : "red")} disabled={busy === u.uid} onClick={() => { if (u.disabled || window.confirm(`Pause ${u.email}? They can't publish or change anything until you switch them back on. Their live websites keep working.`)) set(u, { disabled: !u.disabled }); }}>{u.disabled ? "▶ Switch on" : "⏸ Pause"}</button>}</td>
+            <td>{u.disabled ? <span className="adm-pill off">● Paused</span> : <span className="adm-pill">● Active</span>}{!(u.admin || u.never || u.email === me.email) && <> <button className={"xs " + (u.disabled ? "pri" : "red")} disabled={busy === u.uid} onClick={() => { if (u.disabled || window.confirm(`Pause ${u.email}? They can't publish or change anything until you switch them back on. Their live websites keep working.`)) set(u, { disabled: !u.disabled }); }}>{u.disabled ? "▶ Switch on" : "⏸ Pause"}</button></>}</td>
           </tr>))}
           {!list.length && <tr><td colSpan="9" className="mut adm-none">No accounts match.</td></tr>}
         </tbody></table></div>
@@ -135,18 +152,18 @@ function NewAccount({ me, tenants = [], onDone }) {
     return <div className="panel na"><b>✓ Account created</b><pre>{msg}</pre><div className="row"><button className="adm-go" onClick={() => { navigator.clipboard.writeText(msg); setCp(true); }}>{cp ? "✓ Copied" : "Copy login details"}</button><a className="btn" href={"https://wa.me/?text=" + encodeURIComponent(msg)} target="_blank" rel="noopener">Send on WhatsApp</a><button onClick={onDone}>Done</button></div></div>; }
   return (
     <div className="panel na">
-      <b>Create a login for a client</b><span className="mut sm">They log in with this email and password and build their own pages — only inside the limits you set.</span>
+      <b className="na-t">Create a login for a client</b><span className="mut sm">They log in with this email and password and build their own pages — only inside the limits you set.</span>
       <div className="na-g">
-        <label>Name<input value={v.name} onChange={set("name")} placeholder="Client name" /></label>
-        <label>Email<input value={v.email} onChange={set("email")} placeholder="client@gmail.com" /></label>
-        <label>Password<div className="na-pw"><input value={v.password} onChange={set("password")} /><button type="button" onClick={() => setV({ ...v, password: gen() })} title="New password">↻</button></div></label>
+        <label><span>👤 Name</span><input value={v.name} onChange={set("name")} placeholder="Client name" /></label>
+        <label><span>✉️ Email</span><input value={v.email} onChange={set("email")} placeholder="client@gmail.com" /></label>
+        <label><span>🔒 Password</span><div className="na-pw"><input value={v.password} onChange={set("password")} /><button type="button" onClick={() => setV({ ...v, password: gen() })} title="New password">↻</button></div></label>
         {me.role === "admin" && tenants.length > 0 && <label>Workspace<select value={v.tenant} onChange={set("tenant")}><option value="">Main ({me.subBase || "your domain"})</option>{tenants.map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select></label>}
-        <label>Websites<input type="number" min="0" value={v.site_limit} onChange={set("site_limit")} /><small>0 = unlimited</small></label>
-        <label>Free subdomains<input type="number" min="0" value={v.sub_limit} onChange={set("sub_limit")} /></label>
-        <label>Own domains<input type="number" min="0" value={v.dom_limit} onChange={set("dom_limit")} /><small>0 = unlimited</small></label>
+        <label><span>🌐 Websites</span><input type="number" min="0" value={v.site_limit} onChange={set("site_limit")} /><small>0 = unlimited</small></label>
+        <label><span>⭐ Free subdomains</span><input type="number" min="0" value={v.sub_limit} onChange={set("sub_limit")} /><small>0 = unlimited</small></label>
+        <label><span>🔗 Own domains</span><input type="number" min="0" value={v.dom_limit} onChange={set("dom_limit")} /><small>0 = unlimited</small></label>
       </div>
       {err && <div className="cw-st bad">{err}</div>}
-      <div className="row"><button className="adm-go" disabled={busy} onClick={go}>{busy ? "Creating…" : "Create account"}</button></div>
+      <div className="row"><button className="adm-go" disabled={busy} onClick={go}>{busy ? "Creating…" : "Create account →"}</button></div>
     </div>
   );
 }
