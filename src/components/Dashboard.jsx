@@ -26,6 +26,7 @@ const Consultant = lazy(() => import("./Consultant.jsx"));
 const loadStudio = () => import("./AiStudio.jsx");
 const AiStudio = lazy(loadStudio);
 const AdminPanel = lazy(() => import("./Admin.jsx"));
+const LeadFinder = lazy(() => import("./LeadFinder.jsx"));
 const AiEditor = lazy(() => loadStudio().then((m) => ({ default: m.AiEditor })));
 if (/^#\/studio/.test(location.hash)) { loadStudio(); }
 
@@ -382,7 +383,7 @@ export default function Dashboard({ user, onLogout }) {
         <div className="mbar"><button className="mbar-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
           <div className="mbar-brand">{BRAND.logo ? <img className="mbar-img" src={BRAND.logo} alt="" /> : <span className="mbar-logo">⬡</span>}{BRAND.product}</div>
           {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
-        <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses"})[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
+        <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses", finder: "Lead Finder", admin: "Admin panel" })[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={listed} forms={forms} cal={cal} onOpenProject={setOpenId} />
         {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onToDraft={toDraft} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
@@ -394,6 +395,7 @@ export default function Dashboard({ user, onLogout }) {
         {view === "calendar" && <Calendar events={cal} onSave={onSaveCal} leads={leads} projects={listed} integ={integ} onInteg={onInteg} onAddToPage={addHtmlToPage} onPatchLead={patchLead} onDeleteLead={deleteLead} />}
         {view === "integrations" && <Integrations key={igTile} initial={igTile} integ={integ} onChange={onInteg} />}
         {view === "followups" && <FollowUps leads={leads} setLeads={(list) => { setLeads(list); saveLeads(E, list); }} onPipeline={() => { localStorage.setItem("lb_leads_view", "pipeline"); setView("leads"); }} />}
+        {view === "finder" && <Suspense fallback={<div className="lazy-load"><span className="pub-spin" /></div>}><LeadFinder user={user} integ={integ} me={me} onLeads={() => setLeads(loadLeads(E))} /></Suspense>}
         {view === "leads" && <Leads user={user} projects={listed} forms={forms} leads={leads} setLeads={setLeads} integ={integ} />}
         {view === "analytics" && <Analytics projects={listed} events={evs} leads={leads} onOpenProject={setOpenId} />}
         {view === "admin" && (me && (me.role === "admin" || me.role === "owner") ? <Suspense fallback={<div className="lazy-load"><span className="pub-spin" /></div>}><AdminPanel me={me} page /></Suspense>

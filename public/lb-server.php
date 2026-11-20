@@ -494,6 +494,60 @@ if ($act === 'ai') {
   out(array('ok' => true, 'text' => $txt, 'source' => $src));
 }
 
+/* ---------------- Lead Finder: find local businesses on Google (Places API) ----------------
+   The Google key is saved on this server only (encrypted). Every account gets a monthly number of searches. */
+function lf_url() { return getenv('LB_PLACES_URL') ?: 'https://places.googleapis.com/v1/places:searchText'; }   /* the env var is only for testing */
+function lf_cfg() { global $DATA; return jread($DATA . '/places.json', array()); }
+function lf_month() { return gmdate('Y-m'); }
+function lf_used($kid) { global $DATA; $u = jread($DATA . '/places-usage.json', array()); return (isset($u[$kid]) && $u[$kid]['m'] === lf_month()) ? (int)$u[$kid]['n'] : 0; }
+function lf_limit() { global $IS_ADMIN; $c = lf_cfg(); if ($IS_ADMIN) return 0; return isset($c['limit']) ? (int)$c['limit'] : 100; }
+if ($act === 'lf_status') {
+  $c = lf_cfg(); $lim = lf_limit(); $used = lf_used($KID);
+  out(array('ok' => true, 'ready' => !empty($c['enc']), 'limit' => $lim, 'used' => $used, 'left' => $lim ? max(0, $lim - $used) : -1, 'admin' => $IS_ADMIN, 'perUser' => isset($c['limit']) ? (int)$c['limit'] : 100));
+}
+if ($act === 'lf_setup') {
+  if (!$IS_ADMIN) fail('Only the admin can set the Google key.');
+  $c = lf_cfg(); $k = trim(isset($d['gkey']) ? (string)$d['gkey'] : '');
+  if ($k !== '') {
+    if (!preg_match('/^[A-Za-z0-9_\-]{20,80}$/', $k)) fail('That does not look like a Google API key (it starts with AIza…).');
+    list($code, $j, $err) = ai_post_raw(lf_url(), array('X-Goog-Api-Key: ' . $k, 'X-Goog-FieldMask: places.id'), array('textQuery' => 'cafe in Delhi', 'pageSize' => 1));
+    if ($code !== 200) fail('Google did not accept the key: ' . ($err ?: 'HTTP ' . $code) . ' — turn on "Places API (New)" for this key in Google Cloud.');
+    $c['enc'] = ai_enc($k, $DATA); $c['tail'] = substr($k, -4);
+  }
+  if (isset($d['limit'])) $c['limit'] = max(0, (int)$d['limit']);
+  if (!empty($d['remove'])) unset($c['enc'], $c['tail']);
+  jwrite($DATA . '/places.json', $c); out(array('ok' => true, 'ready' => !empty($c['enc']), 'tail' => isset($c['tail']) ? $c['tail'] : ''));
+}
+if ($act === 'lf_search') {
+  @set_time_limit(90);
+  $c = lf_cfg(); if (empty($c['enc'])) fail('NO_PLACES_KEY');
+  $city = clean_str(trim(isset($d['city']) ? $d['city'] : ''), 80); $q = clean_str(trim(isset($d['q']) ? $d['q'] : ''), 120);
+  if ($city === '' || $q === '') fail('Type a city and a business type.');
+  $n = max(20, min(60, (int)(isset($d['n']) ? $d['n'] : 20)));
+  $lim = lf_limit(); $used = lf_used($KID); if ($lim && $used >= $lim) fail('You have used all ' . $lim . ' searches for this month.');
+  $key = ai_dec($c['enc'], $DATA);
+  $mask = 'places.id,places.displayName,places.formattedAddress,places.addressComponents,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.primaryTypeDisplayName,places.googleMapsUri,places.businessStatus,nextPageToken';
+  $out = array(); $tok = '';
+  for ($page = 0; $page < $n / 20; $page++) {
+    $body = array('textQuery' => $q . ' in ' . $city, 'pageSize' => 20, 'languageCode' => 'en', 'regionCode' => 'IN');
+    if ($tok !== '') $body['pageToken'] = $tok;
+    list($code, $j, $err) = ai_post_raw(lf_url(), array('X-Goog-Api-Key: ' . $key, 'X-Goog-FieldMask: ' . $mask), $body);
+    if ($code !== 200) { if ($out) break; fail('Google search failed: ' . ($err ?: 'HTTP ' . $code)); }
+    foreach ((isset($j['places']) ? $j['places'] : array()) as $p) {
+      $loc = ''; foreach ((isset($p['addressComponents']) ? $p['addressComponents'] : array()) as $ac) if (in_array('locality', isset($ac['types']) ? $ac['types'] : array(), true)) { $loc = isset($ac['longText']) ? $ac['longText'] : ''; break; }
+      $out[] = array('id' => $p['id'], 'name' => isset($p['displayName']['text']) ? $p['displayName']['text'] : '', 'address' => isset($p['formattedAddress']) ? $p['formattedAddress'] : '',
+        'city' => $loc, 'phone' => isset($p['nationalPhoneNumber']) ? $p['nationalPhoneNumber'] : '', 'intl' => isset($p['internationalPhoneNumber']) ? $p['internationalPhoneNumber'] : '',
+        'website' => isset($p['websiteUri']) ? $p['websiteUri'] : '', 'rating' => isset($p['rating']) ? $p['rating'] : 0, 'reviews' => isset($p['userRatingCount']) ? (int)$p['userRatingCount'] : 0,
+        'category' => isset($p['primaryTypeDisplayName']['text']) ? $p['primaryTypeDisplayName']['text'] : '', 'maps' => isset($p['googleMapsUri']) ? $p['googleMapsUri'] : '',
+        'open' => !isset($p['businessStatus']) || $p['businessStatus'] === 'OPERATIONAL');
+    }
+    $tok = isset($j['nextPageToken']) ? $j['nextPageToken'] : ''; if ($tok === '') break;
+    usleep(400000);
+  }
+  $u = jread($DATA . '/places-usage.json', array()); $u[$KID] = array('m' => lf_month(), 'n' => $used + 1); jwrite($DATA . '/places-usage.json', $u);
+  out(array('ok' => true, 'results' => $out, 'left' => $lim ? max(0, $lim - $used - 1) : -1, 'limit' => $lim));
+}
+
 /* ---------------- natural (human-sounding) AI voice for voice chat — Gemini speech ---------------- */
 function ai_tts_models($key) {
   global $DATA; $cf = $DATA . '/ai-tts-models.json'; $c = jread($cf, array());

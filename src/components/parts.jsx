@@ -90,7 +90,7 @@ const SHORT = { build: "Build", collect: "Collect", grow: "Grow", reports: "Repo
 const MINI = { followups: "Follow-ups", projects: "Projects", templates: "Templates", landings: "Landing", lms: "Courses", leads: "Leads", forms: "Forms", calendar: "Calendar", domains: "Domains", integrations: "Apps", analytics: "Analytics", pixels: "Pixels", settings: "Settings" };
 const GROUPS = [
   ["build", "layers", "Build & Manage", [["projects", "globe", "Projects"], ["templates", "card", "Templates"]]],
-  ["collect", "form", "Create & Collect", [["leads", "users", "Leads"], ["followups", "clock", "Follow-ups"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"]]],
+  ["collect", "form", "Create & Collect", [["leads", "users", "Leads"], ["finder", "search", "Lead Finder"], ["followups", "clock", "Follow-ups"], ["forms", "form", "Forms"], ["calendar", "calendar", "Calendar"]]],
   ["academy", "star", "Academy", [["lms", "pages", "Courses"]]],
   ["grow", "share", "Connect & Grow", [["domains", "share", "Domains"], ["integrations", "apps", "Integrations"]]],
   ["reports", "gear", "Reports & Settings", [["analytics", "chart", "Analytics"], ["pixels", "eye", "Tracking Pixels"], ["settings", "gear", "Settings"]]],
