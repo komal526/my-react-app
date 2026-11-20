@@ -99,7 +99,7 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
   /* the collapsed menu stays short: the main pages only */
   const HIDE_MINI = ["followups", "analytics", "pixels", "lms"];
   /* admin (you) and white-label owners get an "Admin panel" link — it opens the panel at the bottom of Domains */
-  const groups = role === "admin" || role === "owner" ? GROUPS.map((g) => (g[0] === "reports" ? [g[0], g[1], g[2], [...g[3], ["admin", "users", role === "owner" ? "My clients" : "Admin panel"]]] : g)) : GROUPS;
+  const groups = GROUPS;   /* Admin panel: only on the Domains page (and at /admin) — not in the menu */
   const [shut, setShut] = useState(() => { try { return JSON.parse(localStorage.getItem("lb_nav_shut") || "[]"); } catch { return []; } }), [fly, setFly] = useState("");
   const toggle = (g) => { const n = shut.includes(g) ? shut.filter((x) => x !== g) : [...shut, g]; setShut(n); localStorage.setItem("lb_nav_shut", JSON.stringify(n)); };
   const go = (k) => { onView(k); onClose(); };
@@ -334,14 +334,19 @@ export function Preview({ token, file: initFile }) {
   const [ver, setVer] = useState(0), [file, setFile] = useState(initFile || "index.html"), [hash, setHash] = useState(""), [dev, setDev] = useState("desktop");
   const [html, setHtml] = useState(""), [note, setNote] = useState(""), [pulse, setPulse] = useState(false);
   const ifr = useRef();
-  const proj = useMemo(() => (info && !info.expired ? loadProjects(info.email).find((p) => p.id === info.pid) : null), [info, ver]);
+  /* saved projects first, then drafts (drafts live in this browser only) */
+  const proj = useMemo(() => {
+    if (!info || info.expired) return null;
+    const p = loadProjects(info.email).find((x) => x.id === info.pid); if (p) return p;
+    try { return (JSON.parse(localStorage.getItem("lb_drafts_" + info.email) || "[]") || []).find((x) => x.id === info.pid) || null; } catch { return null; }
+  }, [info, ver]);
   const pg = proj && proj.pages.find((p) => p.file === file);
   const flash = (t) => { setNote(t); setTimeout(() => setNote(""), 3200); };
 
   /* live: re-render when the editor saves (other tab) */
   useEffect(() => {
     if (!info) return;
-    const f = (e) => { if (e.key === "lb_pages_" + info.email) { setVer((v) => v + 1); setPulse(true); setTimeout(() => setPulse(false), 900); } };
+    const f = (e) => { if (e.key === "lb_pages_" + info.email || e.key === "lb_drafts_" + info.email) { setVer((v) => v + 1); setPulse(true); setTimeout(() => setPulse(false), 900); } };
     window.addEventListener("storage", f); return () => window.removeEventListener("storage", f);
   }, [info]);
   useEffect(() => {

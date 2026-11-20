@@ -131,7 +131,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
       {(() => {
         const aiOn = AI_PROVIDERS.some((p) => (ai.keys || {})[p.id]), hostOn = !!(serverUrl(integ) && pub.key && pub.ok);
         const APPS = [
-          { id: "host", cat: "Hosting & domains", ic: "▲", name: "Netlify", desc: "Publish sites to a live link, link existing Netlify sites, connect domains (DNS or nameservers).", on: hostOn, extra: pub.user },
+          /* Netlify removed from the list — websites publish to your own server */
           { id: "sheets", cat: "Automation", ic: "▦", name: "Google Sheets & email alerts", desc: "Every new lead goes into your Google Sheet and your inbox — one 3-minute setup.", on: !!(integ.sheets && integ.sheets.url && integ.sheets.ok) },
           { id: "email", cat: "Automation", ic: "✉", name: "Email automation", desc: "Auto-reply to every lead and get new-lead alerts — from your own Gmail.", on: emOk },
           { id: "wa", cat: "Automation", ic: "💬", name: "WhatsApp automation", desc: "Send an automatic WhatsApp message through AiSensy, WATI, Interakt, Pabbly or Make.", on: !!wa.webhook },
