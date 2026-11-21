@@ -1,204 +1,193 @@
 <?php
-// LaunchBuilder v102 — lb-connect.php  (included by lb-server.php)
-// 1) Google Sheets with just a link: the admin adds ONE Google "robot" (service account) once.
-//    Every user then shares their sheet with the robot's email and pastes the sheet link — no code.
-// 2) Email with email + password: leads' thank-you emails and new-lead alerts go out through the
-//    user's own mailbox (Gmail / Zoho / Hostinger / Yahoo / Titan / any SMTP). Passwords are stored encrypted.
+// LaunchBuilder v66 — lb-accounts.php  (included by lb-server.php and lb-router.php)
+// Accounts on the server: who is calling (Supabase login), who owns which website / domain / subdomain,
+// white-label workspaces (tenants), and limits (5 free subdomains per user).
+// Settings live OUTSIDE the web folder in /etc/launchbuilder/saas.json (created by vps/lb-saas-setup.sh).
 
-/* ================= Google Sheets ================= */
-function gs_file($DATA) { return $DATA . '/gsheets.json'; }
-function gs_cfg($DATA) { return jread(gs_file($DATA), array()); }
-function gs_base() { $b = getenv('LB_GS_BASE'); return $b ? rtrim($b, '/') : ''; }           /* testing only */
-function gs_token_url() { $b = gs_base(); return $b ? $b . '/token' : 'https://oauth2.googleapis.com/token'; }
-function gs_api() { $b = gs_base(); return ($b ? $b : 'https://sheets.googleapis.com') . '/v4/spreadsheets/'; }
-function gs_b64u($s) { return rtrim(strtr(base64_encode($s), '+/', '-_'), '='); }
-function gs_robot($DATA) { $c = gs_cfg($DATA); return isset($c['robot']) ? $c['robot'] : ''; }
+/* Some servers have PHP without the "curl" add-on (error: Call to undefined function curl_init).
+   This small stand-in does the same web requests with PHP's built-in streams, so everything still works. */
+if (!function_exists('curl_init')) {
+  foreach (array('CURLOPT_URL' => 10002, 'CURLOPT_RETURNTRANSFER' => 19913, 'CURLOPT_TIMEOUT' => 13, 'CURLOPT_CONNECTTIMEOUT' => 78, 'CURLOPT_HTTPHEADER' => 10023,
+    'CURLOPT_POST' => 47, 'CURLOPT_POSTFIELDS' => 10015, 'CURLOPT_FOLLOWLOCATION' => 52, 'CURLOPT_MAXREDIRS' => 68, 'CURLOPT_SSL_VERIFYPEER' => 64,
+    'CURLOPT_SSL_VERIFYHOST' => 81, 'CURLOPT_USERAGENT' => 10018, 'CURLOPT_NOBODY' => 44, 'CURLOPT_CUSTOMREQUEST' => 10036, 'CURLINFO_HTTP_CODE' => 2097154) as $k => $v)
+    if (!defined($k)) define($k, $v);
+  function curl_init($url = null) { $h = new stdClass(); $h->o = array(CURLOPT_URL => $url); $h->code = 0; $h->err = ''; return $h; }
+  function curl_setopt($h, $k, $v) { $h->o[$k] = $v; return true; }
+  function curl_setopt_array($h, $a) { foreach ($a as $k => $v) $h->o[$k] = $v; return true; }
+  function curl_getinfo($h, $k = null) { return $k === CURLINFO_HTTP_CODE ? $h->code : array('http_code' => $h->code); }
+  function curl_error($h) { return $h->err; }
+  function curl_close($h) { }
+  function curl_exec($h) {
+    $o = $h->o; $g = function ($k, $d) use ($o) { return isset($o[$k]) ? $o[$k] : $d; };
+    if (!ini_get('allow_url_fopen')) { $h->err = 'PHP setting allow_url_fopen is off and the curl add-on is missing'; return false; }
+    $body = $g(CURLOPT_POSTFIELDS, null); if (is_array($body)) $body = http_build_query($body);
+    $method = $g(CURLOPT_CUSTOMREQUEST, '') ?: ($g(CURLOPT_NOBODY, false) ? 'HEAD' : (($g(CURLOPT_POST, false) || $body !== null) ? 'POST' : 'GET'));
+    $hd = (array)$g(CURLOPT_HTTPHEADER, array()); $hasCT = false;
+    foreach ($hd as $x) if (stripos($x, 'content-type:') === 0) $hasCT = true;
+    if ($body !== null && !$hasCT) $hd[] = 'Content-Type: application/x-www-form-urlencoded';
+    $hd[] = 'User-Agent: ' . $g(CURLOPT_USERAGENT, 'LaunchBuilder');
+    $follow = (bool)$g(CURLOPT_FOLLOWLOCATION, false);
+    $http = array('method' => $method, 'header' => implode("\r\n", $hd), 'ignore_errors' => true, 'protocol_version' => 1.1,
+      'timeout' => (float)$g(CURLOPT_TIMEOUT, 30), 'follow_location' => $follow ? 1 : 0, 'max_redirects' => $follow ? max(1, (int)$g(CURLOPT_MAXREDIRS, 5)) : 1);
+    if ($body !== null) $http['content'] = (string)$body;
+    $vp = (bool)$g(CURLOPT_SSL_VERIFYPEER, true);
+    $ctx = stream_context_create(array('http' => $http, 'ssl' => array('verify_peer' => $vp, 'verify_peer_name' => $vp && $g(CURLOPT_SSL_VERIFYHOST, 2) ? true : false)));
+    $res = @file_get_contents((string)$o[CURLOPT_URL], false, $ctx);
+    $lines = function_exists('http_get_last_response_headers') ? (array)http_get_last_response_headers() : (isset($http_response_header) ? $http_response_header : array());
+    foreach ($lines as $l) if (preg_match('#^HTTP/\S+\s+(\d{3})#', $l, $m)) $h->code = (int)$m[1];   /* last status line wins (after redirects) */
+    if ($res === false && $h->code === 0) { $e = error_get_last(); $h->err = $e ? preg_replace('/^.*?\):\s*/', '', $e['message']) : 'Could not connect'; return false; }
+    $res = (string)$res;
+    return $g(CURLOPT_RETURNTRANSFER, false) ? $res : (print($res) ? true : true);
+  }
+}
 
-function gs_http($method, $url, $token, $body = null) {
+if (!function_exists('lb_saas')) {
+
+function lb_j($f, $def) { if (!file_exists($f)) return $def; $j = json_decode((string)@file_get_contents($f), true); return is_array($j) ? $j : $def; }
+function lb_w($f, $v) {
+  $fp = @fopen($f, 'c+'); if (!$fp) return false;
+  flock($fp, LOCK_EX); ftruncate($fp, 0); rewind($fp);
+  fwrite($fp, json_encode($v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+  fflush($fp); flock($fp, LOCK_UN); fclose($fp); return true;
+}
+/* /etc/launchbuilder/saas.json → { supabase_url, anon_key, service_key?, admins:[emails], main_domain, sub_limit } */
+function lb_saas() {
+  static $s = null; if ($s !== null) return $s;
+  $f = getenv('LB_SAAS_FILE') ?: '/etc/launchbuilder/saas.json';
+  $s = lb_j($f, array());
+  if (empty($s['supabase_url']) || empty($s['anon_key'])) $s = array();
+  return $s;
+}
+function lb_host() { return preg_replace('/^www\./', '', strtolower(preg_replace('/:\d+$/', '', isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : ''))); }
+function lb_main_domain($DATA) {
+  $s = lb_saas(); if (!empty($s['main_domain'])) return strtolower($s['main_domain']);
+  $v = lb_j($DATA . '/vps.json', array()); return !empty($v['domain']) ? strtolower($v['domain']) : '';
+}
+function lb_valid_domain($d) { return is_string($d) && preg_match('/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/', $d); }
+
+/* ---------- white-label workspaces ---------- */
+function lb_tenants($DATA) { return lb_j($DATA . '/tenants.json', array()); }
+function lb_tenant_for_host($DATA, $host) {
+  foreach (lb_tenants($DATA) as $id => $t) if (!empty($t['app_domain']) && strtolower($t['app_domain']) === $host) return $id;
+  return '';
+}
+/* what the browser may see about a workspace (never the owner's private settings) */
+function lb_tenant_public($id, $t) {
+  if (!$t) return null;
+  return array('id' => $id, 'name' => isset($t['name']) ? $t['name'] : '', 'product' => !empty($t['product']) ? $t['product'] : (isset($t['name']) ? $t['name'] : ''),
+    'logo' => isset($t['logo']) ? $t['logo'] : '', 'color' => isset($t['color']) ? $t['color'] : '', 'color2' => isset($t['color2']) ? $t['color2'] : '',
+    'support_email' => isset($t['support_email']) ? $t['support_email'] : '', 'whatsapp' => isset($t['whatsapp']) ? $t['whatsapp'] : '',
+    'app_domain' => isset($t['app_domain']) ? $t['app_domain'] : '', 'sites_domain' => isset($t['sites_domain']) ? $t['sites_domain'] : '', 'active' => !isset($t['active']) || !empty($t['active']));
+}
+
+/* ---------- who is calling: check the Supabase login token with Supabase itself (cached 10 min) ---------- */
+function lb_http($url, $headers, $timeout = 8) {
   $c = curl_init($url);
-  $h = array('Accept: application/json'); if ($token !== '') $h[] = 'Authorization: Bearer ' . $token;
-  $o = array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 25, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_CUSTOMREQUEST => $method);
-  if ($body !== null) { $h[] = 'Content-Type: ' . (is_string($body) ? 'application/x-www-form-urlencoded' : 'application/json'); $o[CURLOPT_POSTFIELDS] = is_string($body) ? $body : json_encode($body); }
-  $o[CURLOPT_HTTPHEADER] = $h; curl_setopt_array($c, $o);
-  $r = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); $err = curl_error($c); curl_close($c);
-  $j = json_decode((string)$r, true); if (!is_array($j)) $j = array();
-  return array($code, $j, $r === false ? ($err ? $err : 'no answer') : '');
+  curl_setopt_array($c, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => $timeout, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_HTTPHEADER => $headers));
+  $b = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); curl_close($c);
+  return array($code, $b === false ? '' : (string)$b);
 }
+/* returns the user array, null (no token sent / accounts not set up) or false (token rejected) */
+function lb_token_user($tok, $DATA) {
+  $s = lb_saas(); if (!$s || !is_string($tok) || strlen($tok) < 10) return null;
+  $dir = $DATA . '/tok'; if (!is_dir($dir)) @mkdir($dir, 0700, true);
+  $cf = $dir . '/' . substr(hash('sha256', $tok), 0, 40) . '.json';
+  if (file_exists($cf) && filemtime($cf) > time() - 600) { $u = lb_j($cf, null); if ($u && !empty($u['id'])) return $u; }
+  list($code, $b) = lb_http(rtrim($s['supabase_url'], '/') . '/auth/v1/user', array('apikey: ' . $s['anon_key'], 'Authorization: Bearer ' . $tok));
+  if ($code === 0) { if (file_exists($cf)) { $u = lb_j($cf, null); if ($u && !empty($u['id'])) return $u; } $GLOBALS['LB_SB_DOWN'] = true; return null; }   /* Supabase not reachable: use the last answer */
+  $j = json_decode($b, true);
+  if ($code !== 200 || !is_array($j) || empty($j['id'])) return false;
+  $u = array('id' => (string)$j['id'], 'email' => strtolower(isset($j['email']) ? $j['email'] : ''),
+    'name' => isset($j['user_metadata']['name']) ? (string)$j['user_metadata']['name'] : (isset($j['user_metadata']['full_name']) ? (string)$j['user_metadata']['full_name'] : ''),   /* full_name = Google sign-in */
+    'created' => isset($j['created_at']) ? (int)strtotime($j['created_at']) : 0, 'last_login' => isset($j['last_sign_in_at']) ? (int)strtotime($j['last_sign_in_at']) : 0);
+  @file_put_contents($cf, json_encode($u)); @chmod($cf, 0600);
+  if (mt_rand(1, 200) === 1) foreach (glob($dir . '/*.json') as $o) if (filemtime($o) < time() - 7200) @unlink($o);
+  return $u;
+}
+function lb_is_admin_email($e) { $s = lb_saas(); foreach ((isset($s['admins']) ? $s['admins'] : array()) as $a) if (strtolower(trim($a)) === strtolower($e) && $e !== '') return true; return false; }
+function lb_device() { $ua = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''; return preg_match('/iPad|Tablet/i', $ua) ? 'tablet' : (preg_match('/Mobi|Android|iPhone/i', $ua) ? 'mobile' : 'desktop'); }
+function lb_ip() { return isset($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_REAL_IP'] : (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : ''); }
 
-/* a short-lived access token for the robot (cached ~1 hour) */
-function gs_token($DATA, $keyJson = null) {
-  $c = gs_cfg($DATA); $stored = $keyJson === null;
-  if ($stored) {
-    if (empty($c['enc'])) return array('', 'Google Sheets is not switched on for this server yet — ask the admin to add the Google robot (Integrations → Google Sheets).');
-    if (!empty($c['tok']) && isset($c['exp']) && $c['exp'] > time() + 90) { $t = ai_dec($c['tok'], $DATA); if ($t !== '') return array($t, ''); }
-    $keyJson = ai_dec($c['enc'], $DATA);
-  }
-  $k = json_decode((string)$keyJson, true);
-  if (!is_array($k) || empty($k['client_email']) || empty($k['private_key'])) return array('', 'The robot key could not be read — paste the whole JSON file again.');
-  $now = time();
-  $jwt = gs_b64u(json_encode(array('alg' => 'RS256', 'typ' => 'JWT'))) . '.' . gs_b64u(json_encode(array('iss' => $k['client_email'], 'scope' => 'https://www.googleapis.com/auth/spreadsheets', 'aud' => 'https://oauth2.googleapis.com/token', 'iat' => $now, 'exp' => $now + 3600)));
-  $sig = '';
-  if (!@openssl_sign($jwt, $sig, $k['private_key'], OPENSSL_ALGO_SHA256)) return array('', 'The private key inside the JSON file is not valid — download a new key file and paste it again.');
-  list($code, $j, $err) = gs_http('POST', gs_token_url(), '', http_build_query(array('grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer', 'assertion' => $jwt . '.' . gs_b64u($sig))));
-  if ($code !== 200 || empty($j['access_token'])) return array('', 'Google did not accept the robot key: ' . ($err !== '' ? $err : (isset($j['error_description']) ? $j['error_description'] : (isset($j['error']) && is_string($j['error']) ? $j['error'] : 'HTTP ' . $code))));
-  if ($stored) { $c['tok'] = ai_enc($j['access_token'], $DATA); $c['exp'] = $now + (isset($j['expires_in']) ? (int)$j['expires_in'] : 3600); jwrite(gs_file($DATA), $c); @chmod(gs_file($DATA), 0600); }
-  return array($j['access_token'], '');
-}
-
-/* "https://docs.google.com/spreadsheets/d/<ID>/edit#gid=123" → [ID, 123] */
-function gs_parse($s) {
-  $s = trim((string)$s); $id = ''; $gid = null;
-  if (preg_match('#/spreadsheets/d/([A-Za-z0-9_-]{20,})#', $s, $m)) $id = $m[1]; elseif (preg_match('#^[A-Za-z0-9_-]{25,}$#', $s)) $id = $s;
-  if (preg_match('#[\#&?]gid=(\d+)#', $s, $m)) $gid = (int)$m[1];
-  return array($id, $gid);
-}
-function gs_why($code, $j, $err, $DATA) {
-  if ($err !== '') return 'Could not reach Google: ' . $err;
-  if ($code === 403 || $code === 401) return 'No permission yet — open your sheet → Share → add ' . gs_robot($DATA) . ' as Editor, then try again.';
-  if ($code === 404) return 'This sheet was not found — copy the link again from the address bar of your Google Sheet.';
-  return isset($j['error']['message']) ? 'Google: ' . $j['error']['message'] : 'Google answered HTTP ' . $code;
-}
-/* look at the sheet: its title and tabs, and which tab the leads will go into */
-function gs_check($DATA, $link, $tab) {
-  list($id, $gid) = gs_parse($link);
-  if ($id === '') return array('error' => 'Paste the link of your Google Sheet (it looks like docs.google.com/spreadsheets/d/…).');
-  list($tok, $e) = gs_token($DATA); if ($e !== '') return array('error' => $e);
-  list($code, $j, $err) = gs_http('GET', gs_api() . $id . '?fields=' . rawurlencode('properties.title,sheets.properties(sheetId,title)'), $tok);
-  if ($code !== 200) return array('error' => gs_why($code, $j, $err, $DATA));
-  $tabs = array(); foreach ((isset($j['sheets']) ? $j['sheets'] : array()) as $s) $tabs[] = array('id' => (int)$s['properties']['sheetId'], 'title' => (string)$s['properties']['title']);
-  $tab = trim((string)$tab); $pick = null;
-  if ($tab !== '') { foreach ($tabs as $t) if (strcasecmp($t['title'], $tab) === 0) $pick = $t; if (!$pick) $pick = array('id' => null, 'title' => $tab); }
-  elseif ($gid !== null) { foreach ($tabs as $t) if ($t['id'] === $gid) $pick = $t; }
-  if (!$pick) $pick = $tabs ? $tabs[0] : array('id' => null, 'title' => 'Leads');
-  return array('id' => $id, 'title' => isset($j['properties']['title']) ? $j['properties']['title'] : 'Sheet', 'tabs' => $tabs, 'tab' => $pick['title'], 'tabId' => $pick['id'], 'token' => $tok);
-}
-function gs_rng($tab, $r) { return rawurlencode("'" . str_replace("'", "''", $tab) . "'!" . $r); }
-/* add one lead as a row; the first row holds the column names (new form fields get new columns) */
-function gs_append($DATA, $h, $lead) {
-  list($tok, $e) = gs_token($DATA); if ($e !== '') return array('', $e);
-  $sid = $h['sid']; $tab = $h['tab']; $tabId = isset($h['tabId']) ? $h['tabId'] : null;
-  list($code, $j, $err) = gs_http('GET', gs_api() . $sid . '/values/' . gs_rng($tab, '1:1'), $tok);
-  if ($code === 400 && $err === '') {   /* the tab does not exist yet → make it */
-    list($c2, $j2, $e2) = gs_http('POST', gs_api() . $sid . ':batchUpdate', $tok, array('requests' => array(array('addSheet' => array('properties' => array('title' => $tab))))));
-    if ($c2 !== 200) return array('', gs_why($c2, $j2, $e2, $DATA));
-    $tabId = isset($j2['replies'][0]['addSheet']['properties']['sheetId']) ? (int)$j2['replies'][0]['addSheet']['properties']['sheetId'] : null; $j = array();
-  } elseif ($code !== 200) return array('', gs_why($code, $j, $err, $DATA));
-  $old = isset($j['values'][0]) ? array_map('strval', $j['values'][0]) : array();
-  $head = $old ? $old : array('Date', 'Form', 'Page', 'Website');
-  $data = isset($lead['data']) && is_array($lead['data']) ? $lead['data'] : array();
-  foreach ($data as $k => $v) if (!in_array((string)$k, $head, true)) $head[] = (string)$k;
-  if ($head !== $old) {
-    list($c3, $j3, $e3) = gs_http('PUT', gs_api() . $sid . '/values/' . gs_rng($tab, 'A1') . '?valueInputOption=RAW', $tok, array('values' => array($head)));
-    if ($c3 !== 200) return array('', gs_why($c3, $j3, $e3, $DATA));
-    if (!$old && $tabId !== null) gs_http('POST', gs_api() . $sid . ':batchUpdate', $tok, array('requests' => array(
-      array('repeatCell' => array('range' => array('sheetId' => $tabId, 'startRowIndex' => 0, 'endRowIndex' => 1), 'cell' => array('userEnteredFormat' => array('textFormat' => array('bold' => true), 'backgroundColor' => array('red' => 1, 'green' => 0.96, 'blue' => 0.8))), 'fields' => 'userEnteredFormat(textFormat,backgroundColor)')),
-      array('updateSheetProperties' => array('properties' => array('sheetId' => $tabId, 'gridProperties' => array('frozenRowCount' => 1)), 'fields' => 'gridProperties.frozenRowCount')))));
-  }
-  $ts = isset($lead['ts']) ? (int)($lead['ts'] / 1000) : time();
-  $dt = new DateTime('@' . $ts); try { $dt->setTimezone(new DateTimeZone('Asia/Kolkata')); } catch (Exception $x) { /* keep UTC */ }
-  $row = array();
-  foreach ($head as $c) {
-    if ($c === 'Date') $row[] = $dt->format('d M Y, h:i A'); elseif ($c === 'Form') $row[] = isset($lead['form']) ? $lead['form'] : '';
-    elseif ($c === 'Page') $row[] = isset($lead['page']) && $lead['page'] !== '' ? $lead['page'] : (isset($lead['url']) ? $lead['url'] : '');
-    elseif ($c === 'Website') $row[] = isset($lead['site']) ? $lead['site'] : ''; else $row[] = isset($data[$c]) ? (string)$data[$c] : '';
-  }
-  list($c4, $j4, $e4) = gs_http('POST', gs_api() . $sid . '/values/' . gs_rng($tab, 'A1') . ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', $tok, array('values' => array($row)));
-  if ($c4 !== 200) return array('', gs_why($c4, $j4, $e4, $DATA));
-  return array('https://docs.google.com/spreadsheets/d/' . $sid . '/edit' . ($tabId !== null ? '#gid=' . $tabId : ''), '');
-}
-
-/* many rows at once into a tab (made if missing). $rows = list of [column name => value]; new columns are added to row 1 */
-function gs_put_rows($DATA, $sid, $tab, $rows) {
-  list($tok, $e) = gs_token($DATA); if ($e !== '') return array('', $e);
-  $tab = trim(preg_replace('/[\[\]\*\?\/\\:]+/', ' ', (string)$tab)); $tab = $tab === '' ? 'Leads' : mb_substr($tab, 0, 90);
-  list($code, $j, $err) = gs_http('GET', gs_api() . $sid . '?fields=' . rawurlencode('sheets.properties(sheetId,title)'), $tok);
-  if ($code !== 200) return array('', gs_why($code, $j, $err, $DATA));
-  $tabId = null; foreach ((isset($j['sheets']) ? $j['sheets'] : array()) as $x) if (strcasecmp($x['properties']['title'], $tab) === 0) { $tabId = (int)$x['properties']['sheetId']; $tab = $x['properties']['title']; }
-  if ($tabId === null) {
-    list($c2, $j2, $e2) = gs_http('POST', gs_api() . $sid . ':batchUpdate', $tok, array('requests' => array(array('addSheet' => array('properties' => array('title' => $tab))))));
-    if ($c2 !== 200) return array('', gs_why($c2, $j2, $e2, $DATA));
-    $tabId = (int)$j2['replies'][0]['addSheet']['properties']['sheetId']; $old = array();
-  } else {
-    list($c1, $j1, $e1) = gs_http('GET', gs_api() . $sid . '/values/' . gs_rng($tab, '1:1'), $tok);
-    if ($c1 !== 200) return array('', gs_why($c1, $j1, $e1, $DATA));
-    $old = isset($j1['values'][0]) ? array_map('strval', $j1['values'][0]) : array();
-  }
-  $head = $old; foreach ($rows as $r) foreach ($r as $k => $v) if (!in_array((string)$k, $head, true)) $head[] = (string)$k;
-  if ($head !== $old) {
-    list($c3, $j3, $e3) = gs_http('PUT', gs_api() . $sid . '/values/' . gs_rng($tab, 'A1') . '?valueInputOption=RAW', $tok, array('values' => array($head)));
-    if ($c3 !== 200) return array('', gs_why($c3, $j3, $e3, $DATA));
-    if (!$old) gs_http('POST', gs_api() . $sid . ':batchUpdate', $tok, array('requests' => array(
-      array('repeatCell' => array('range' => array('sheetId' => $tabId, 'startRowIndex' => 0, 'endRowIndex' => 1), 'cell' => array('userEnteredFormat' => array('textFormat' => array('bold' => true), 'backgroundColor' => array('red' => 1, 'green' => 0.96, 'blue' => 0.8))), 'fields' => 'userEnteredFormat(textFormat,backgroundColor)')),
-      array('updateSheetProperties' => array('properties' => array('sheetId' => $tabId, 'gridProperties' => array('frozenRowCount' => 1)), 'fields' => 'gridProperties.frozenRowCount')))));
-  }
-  $vals = array(); foreach ($rows as $r) { $row = array(); foreach ($head as $c) $row[] = isset($r[$c]) ? (string)$r[$c] : ''; $vals[] = $row; }
-  list($c4, $j4, $e4) = gs_http('POST', gs_api() . $sid . '/values/' . gs_rng($tab, 'A1') . ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', $tok, array('values' => $vals));
-  if ($c4 !== 200) return array('', gs_why($c4, $j4, $e4, $DATA));
-  return array('https://docs.google.com/spreadsheets/d/' . $sid . '/edit#gid=' . $tabId, '');
-}
-
-/* ================= Email with email + password (SMTP) ================= */
-function mail_presets() {
-  return array(
-    'gmail' => array('smtp.gmail.com', 465, 'ssl'), 'zoho' => array('smtp.zoho.in', 465, 'ssl'), 'zohocom' => array('smtp.zoho.com', 465, 'ssl'),
-    'hostinger' => array('smtp.hostinger.com', 465, 'ssl'), 'yahoo' => array('smtp.mail.yahoo.com', 465, 'ssl'), 'titan' => array('smtp.titan.email', 465, 'ssl'),
-  );
-}
-function mail_file($DATA, $uid) { $d = $DATA . '/mail'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . substr(hash('sha256', 'm:' . $uid), 0, 24) . '.json'; }
-function mail_public($m) { if (!$m) return null; $o = $m; unset($o['enc']); return $o; }
-function mail_clean($s) { return trim(str_replace(array("\r", "\n", "\0"), ' ', (string)$s)); }
-function mail_hdr($s) { $s = mail_clean($s); return preg_match('/[^\x20-\x7e]/', $s) ? '=?UTF-8?B?' . base64_encode($s) . '?=' : $s; }
-
-/* send one HTML email; returns '' when sent, otherwise a plain-English reason */
-function smtp_send($m, $pass, $to, $subject, $html, $replyTo = '') {
-  $host = $m['host']; $port = (int)$m['port']; $sec = $m['sec']; $user = $m['user'];
-  if (!filter_var($to, FILTER_VALIDATE_EMAIL)) return 'Not a valid email address: ' . $to;
-  if ($sec === 'none' && !getenv('LB_SMTP_PLAIN')) return 'An encrypted connection is required (use SSL 465 or STARTTLS 587).';
-  $ctx = stream_context_create(array('ssl' => array('verify_peer' => true, 'verify_peer_name' => true, 'peer_name' => $host, 'SNI_enabled' => true)));
-  $fp = @stream_socket_client(($sec === 'ssl' ? 'ssl://' : 'tcp://') . $host . ':' . $port, $en, $es, 15, STREAM_CLIENT_CONNECT, $ctx);
-  if (!$fp) return 'Could not connect to ' . $host . ':' . $port . ($es ? ' (' . $es . ')' : '') . ' — check the server name and port, or your VPS may block outgoing email ports.';
-  stream_set_timeout($fp, 25);
-  $read = function () use ($fp) { $s = ''; while (($l = fgets($fp, 4096)) !== false) { $s .= $l; if (strlen($l) < 4 || $l[3] === ' ') break; } return $s; };
-  $cmd = function ($c, $ok) use ($fp, $read) { if ($c !== null) fwrite($fp, $c . "\r\n"); $r = $read(); if (!in_array((int)substr($r, 0, 3), (array)$ok, true)) throw new Exception(trim($r) !== '' ? trim($r) : 'The mail server stopped answering'); return $r; };
-  try {
-    $me = 'EHLO ' . (preg_replace('/[^a-z0-9.-]/i', '', (string)gethostname()) ?: 'launchbuilder');
-    $cmd(null, 220); $cmd($me, 250);
-    if ($sec === 'tls') {
-      $cmd('STARTTLS', 220);
-      $meth = STREAM_CRYPTO_METHOD_TLS_CLIENT; if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) $meth |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT; if (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT')) $meth |= STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT;
-      if (!@stream_socket_enable_crypto($fp, true, $meth)) throw new Exception('Could not start an encrypted connection (STARTTLS)');
-      $cmd($me, 250);
+/* remembers every account the first time it opens the builder, and when it was last active */
+function lb_register($u, $DATA, $hostTenant) {
+  $f = $DATA . '/users.json'; $all = lb_j($f, array()); $id = $u['id']; $now = time();
+  $admin = lb_is_admin_email($u['email']);
+  $r = isset($all[$id]) ? $all[$id] : null; $isNew = !$r; $tenants = lb_tenants($DATA);
+  if ($isNew) {
+    if ($hostTenant !== '' && !$admin) {
+      $t = $tenants[$hostTenant]; $max = isset($t['max_users']) ? (int)$t['max_users'] : 0;
+      if ($max > 0) { $n = 0; foreach ($all as $x) if (isset($x['tenant']) && $x['tenant'] === $hostTenant) $n++; if ($n >= $max) return array('error' => 'WORKSPACE_FULL: This workspace has reached its account limit. Please contact the owner.'); }
     }
-    $cmd('AUTH LOGIN', 334); $cmd(base64_encode($user), 334); $cmd(base64_encode($pass), 235);
-    $cmd('MAIL FROM:<' . $user . '>', 250); $cmd('RCPT TO:<' . $to . '>', array(250, 251)); $cmd('DATA', 354);
-    $from = isset($m['from']) && $m['from'] !== '' ? mail_hdr($m['from']) . ' <' . $user . '>' : $user;
-    $dom = substr(strrchr($user, '@'), 1);
-    $hd = array('Date: ' . date('r'), 'From: ' . $from, 'To: <' . mail_clean($to) . '>', 'Subject: ' . mail_hdr($subject), 'Message-ID: <' . bin2hex(random_bytes(10)) . '@' . $dom . '>',
-      'MIME-Version: 1.0', 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64');
-    if ($replyTo !== '' && filter_var($replyTo, FILTER_VALIDATE_EMAIL)) $hd[] = 'Reply-To: <' . mail_clean($replyTo) . '>';
-    $body = '<!doctype html><html><body style="margin:0;padding:18px;font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f2937">' . $html . '</body></html>';
-    $cmd(implode("\r\n", $hd) . "\r\n\r\n" . rtrim(chunk_split(base64_encode($body), 76, "\r\n")) . "\r\n.", 250);
-    try { $cmd('QUIT', 221); } catch (Exception $x) { /* already sent */ }
-    fclose($fp); return '';
-  } catch (Exception $x) {
-    @fclose($fp); $r = $x->getMessage();
-    if (preg_match('/^535|^534|Username and Password not accepted|authentication failed|Invalid login/i', $r)) {
-      return strpos($host, 'gmail') !== false ? 'Gmail did not accept the password. Gmail needs an "App password" (16 letters) — not your normal password. Turn on 2-Step Verification, then create one at myaccount.google.com/apppasswords.'
-        : (strpos($host, 'yahoo') !== false ? 'Yahoo did not accept the password — create an "App password" in Yahoo Account Security and use that.' : 'The email or password was not accepted by ' . $host . '.');
-    }
-    return 'The mail server said: ' . substr($r, 0, 220);
+    $r = array('email' => $u['email'], 'name' => $u['name'], 'tenant' => $admin ? '' : $hostTenant, 'created' => $u['created'] ?: $now, 'first_seen' => $now, 'seen' => 0, 'disabled' => false);
   }
+  $tn = isset($r['tenant']) ? $r['tenant'] : '';
+  /* an account belongs to one workspace: it logs in on that workspace's address */
+  if (!$admin && $tn !== $hostTenant) {
+    $where = $tn !== '' && isset($tenants[$tn]['app_domain']) ? $tenants[$tn]['app_domain'] : lb_main_domain($DATA);
+    return array('error' => 'WRONG_WORKSPACE: This account belongs to another workspace. Log in at https://' . $where);
+  }
+  $r['email'] = $u['email']; if ($u['name'] !== '') $r['name'] = $u['name']; if ($u['last_login']) $r['last_login'] = $u['last_login'];
+  if ($isNew || $now - (isset($r['last_seen']) ? (int)$r['last_seen'] : 0) > 60) {
+    $r['last_seen'] = $now; $r['seen'] = (isset($r['seen']) ? (int)$r['seen'] : 0) + 1; $r['ip'] = lb_ip(); $r['dev'] = lb_device();
+    $all[$id] = $r; lb_w($f, $all); @chmod($f, 0600);
+  }
+  $role = $admin ? 'admin' : ($tn !== '' && isset($tenants[$tn]['owner_email']) && strtolower($tenants[$tn]['owner_email']) === $u['email'] ? 'owner' : 'user');
+  return array('uid' => $id, 'email' => $u['email'], 'name' => isset($r['name']) ? $r['name'] : '', 'role' => $role, 'tenant' => $tn,
+    'disabled' => !empty($r['disabled']), 'sub_limit' => isset($r['sub_limit']) ? $r['sub_limit'] : null,
+    'site_limit' => isset($r['site_limit']) ? $r['site_limit'] : null, 'dom_limit' => isset($r['dom_limit']) ? $r['dom_limit'] : null);
 }
-/* send with the saved mailbox of this account ($uid). returns '' when sent */
-function mail_send_as($DATA, $uid, $to, $subject, $html, $replyTo = '') {
-  $f = mail_file($DATA, $uid); $m = jread($f, array()); if (empty($m['enc'])) return 'Email is not connected.';
-  $e = smtp_send($m, ai_dec($m['enc'], $DATA), $to, $subject, $html, $replyTo);
-  $m['last'] = array('t' => time(), 'err' => $e); jwrite($f, $m); @chmod($f, 0600);
-  return $e;
+
+/* ---------- ownership: website (slug) → account, domain → account ---------- */
+function lb_owners($DATA) { return lb_j($DATA . '/owners.json', array()); }
+function lb_downers($DATA) { return lb_j($DATA . '/downers.json', array()); }
+/* is this owner id "me"? Websites made before accounts existed (no owner / 'owner') belong to the admins */
+function lb_is_me($o, $ME) { return $o === $ME['uid'] || ($ME['role'] === 'admin' && ($o === '' || $o === 'owner')); }
+function lb_site_mine($slug, $ME, $DATA, $SITES) {
+  $own = lb_owners($DATA); $o = isset($own[$slug]) ? $own[$slug] : '';
+  if ($o === '' && !is_dir($SITES . '/' . $slug)) return true;   /* free name */
+  return lb_is_me($o, $ME);
 }
-function mail_esc($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
-function mail_lead_table($lead) {
-  $rows = ''; foreach ((isset($lead['data']) ? $lead['data'] : array()) as $k => $v) $rows .= '<tr><td style="padding:6px 12px;color:#5d6785;border-bottom:1px solid #eee">' . mail_esc($k) . '</td><td style="padding:6px 12px;border-bottom:1px solid #eee"><b>' . mail_esc($v) . '</b></td></tr>';
-  return '<table style="border-collapse:collapse">' . $rows . '</table>';
+function lb_claim_site($slug, $ME, $DATA) { $own = lb_owners($DATA); $own[$slug] = $ME['uid']; lb_w($DATA . '/owners.json', $own); }
+function lb_my_slugs($ME, $DATA, $SITES) {
+  $own = lb_owners($DATA); $res = array();
+  foreach ($own as $sl => $o) if (lb_is_me($o, $ME)) $res[$sl] = 1;
+  if ($ME['role'] === 'admin') foreach ((array)@scandir($SITES) as $x) if ($x !== '' && $x[0] !== '.' && is_dir($SITES . '/' . $x) && !isset($own[$x])) $res[$x] = 1;
+  return $res;
 }
-function mail_lead_get($lead, $re) { foreach ((isset($lead['data']) ? $lead['data'] : array()) as $k => $v) if (preg_match($re, (string)$k)) return trim((string)$v); return ''; }
+function lb_dom_mine($host, $ME, $DATA) { $dw = lb_downers($DATA); return lb_is_me(isset($dw[$host]['uid']) ? $dw[$host]['uid'] : '', $ME); }
+
+/* the domain a user's free subdomains live under: crecapo.tech, or the white-label workspace's domain */
+function lb_sub_base($ME, $DATA) {
+  if ($ME['tenant'] !== '') { $t = lb_tenants($DATA); return isset($t[$ME['tenant']]['sites_domain']) ? strtolower($t[$ME['tenant']]['sites_domain']) : ''; }
+  return lb_main_domain($DATA);
+}
+/* limits per account: websites (published), custom domains — 0 = unlimited. Account setting → workspace default → server default */
+function lb_limit($ME, $DATA, $k) {
+  if ($ME['role'] === 'admin') return 0;
+  if (isset($ME[$k]) && $ME[$k] !== null && $ME[$k] !== '') return (int)$ME[$k];
+  if ($ME['tenant'] !== '') { $t = lb_tenants($DATA); if (isset($t[$ME['tenant']][$k]) && $t[$ME['tenant']][$k] !== '') return (int)$t[$ME['tenant']][$k]; }
+  $s = lb_saas(); return isset($s[$k]) ? (int)$s[$k] : 0;
+}
+function lb_count_owned($ME, $DATA, $kind) {
+  if ($kind === 'site') { $n = 0; foreach (lb_owners($DATA) as $o) if ($o === $ME['uid']) $n++; return $n; }
+  $n = 0; foreach (lb_downers($DATA) as $o) if ($o['uid'] === $ME['uid'] && $o['kind'] === $kind) $n++; return $n;
+}
+function lb_sub_limit($ME, $DATA) {
+  if ($ME['role'] === 'admin') return 1000;
+  if ($ME['sub_limit'] !== null && $ME['sub_limit'] !== '') return (int)$ME['sub_limit'];
+  if ($ME['tenant'] !== '') { $t = lb_tenants($DATA); if (isset($t[$ME['tenant']]['sub_limit']) && $t[$ME['tenant']]['sub_limit'] !== '') return (int)$t[$ME['tenant']]['sub_limit']; }
+  $s = lb_saas(); return isset($s['sub_limit']) ? (int)$s['sub_limit'] : 5;
+}
+/* addresses that belong to the platform itself (builder, white-label apps, free-subdomain domains) */
+function lb_platform_host($host, $DATA) {
+  $m = lb_main_domain($DATA);
+  if ($m && $host === $m) return 'app';
+  $bases = $m ? array($m) : array();
+  foreach (lb_tenants($DATA) as $t) { if (!empty($t['app_domain']) && $host === strtolower($t['app_domain'])) return 'app'; if (!empty($t['sites_domain'])) $bases[] = strtolower($t['sites_domain']); }
+  /* name.<base> is a free subdomain; the base itself (abc.com) can still be connected to a website */
+  foreach ($bases as $b) if (substr($host, -strlen('.' . $b)) === '.' . $b) return 'sub';
+  return '';
+}
+function lb_reserved($label) { return in_array($label, array('www', 'app', 'admin', 'api', 'mail', 'smtp', 'imap', 'pop', 'webmail', 'ftp', 'cpanel', 'whm', 'ns1', 'ns2', 'ns3', 'mx', 'sites', 'static', 'cdn', 'assets', 'support', 'help', 'login', 'auth', 'billing', 'dashboard', 'builder', 'status', 'dev', 'test', 'staging', 'root', 'server', 'vps', 'email'), true); }
+
+}
