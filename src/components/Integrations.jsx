@@ -1,8 +1,9 @@
-// LaunchBuilder v10 — Integrations.jsx
+// LaunchBuilder v102 — Integrations.jsx
 import { BRAND } from "../brand.js";
 import { useState } from "react";
 import SheetsCard from "./SheetsCard.jsx";
-import { WA_PROVIDERS, AI_PROVIDERS, callAI, detectAI, listModels, serverCall, serverUrl, phpCall, defaultServerUrl, lovableUrl, boltText } from "../lib.js";
+import { EmailEasy } from "./EasyConnect.jsx";
+import { WA_PROVIDERS, AI_PROVIDERS, callAI, detectAI, listModels, serverCall, serverUrl, phpCall, defaultServerUrl, lovableUrl, boltText, mailReady } from "../lib.js";
 
 /* ================= Integrations: WhatsApp automation, payments, AI providers ================= */
 const WA_HELP = {
@@ -73,7 +74,8 @@ export default function Integrations({ integ, onChange, initial = "" }) {
   const set = (k, o) => onChange({ ...integ, [k]: { ...integ[k], ...o } });
   const flash = (t) => { setNote(t); setTimeout(() => setNote(""), 3000); };
   const wa = integ.wa, pay = integ.pay, ai = integ.ai, em = integ.email || {};
-  const emOk = em.provider === "emailjs" ? !!(em.serviceId && em.templateId && em.publicKey) : !!em.webhook;
+  const emOk = mailReady(em);
+  const [emWay, setEmWay] = useState(null), emP = emWay || (em.provider === "gmail" && !em.webhook ? "smtp" : em.provider || "smtp");
   const pub = integ.publish || {}, [pubTest, setPubTest] = useState("");
   const genKey = () => set("publish", { key: "lb_" + Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, "0")).join("") });
   const testPub = async () => { setPubTest("Testing…"); try { const r = await serverCall(integ, { event: "ping" }); setPubTest("✓ Connected to Netlify" + (r.user ? " as " + r.user : "")); set("publish", { ok: true, user: r.user || "" }); } catch (e) { setPubTest("✕ " + e.message); } };
@@ -132,8 +134,8 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         const aiOn = AI_PROVIDERS.some((p) => (ai.keys || {})[p.id]), hostOn = !!(serverUrl(integ) && pub.key && pub.ok);
         const APPS = [
           /* Netlify removed from the list — websites publish to your own server */
-          { id: "sheets", cat: "Automation", ic: "▦", name: "Google Sheets & email alerts", desc: "Every new lead goes into your Google Sheet and your inbox — one 3-minute setup.", on: !!(integ.sheets && integ.sheets.url && integ.sheets.ok) },
-          { id: "email", cat: "Automation", ic: "✉", name: "Email automation", desc: "Auto-reply to every lead and get new-lead alerts — from your own Gmail.", on: emOk },
+          { id: "sheets", cat: "Automation", ic: "▦", name: "Google Sheets & email alerts", desc: "Every new lead goes into your Google Sheet — just paste the sheet link.", on: !!(integ.sheets && (integ.sheets.url || integ.sheets.link) && integ.sheets.ok) },
+          { id: "email", cat: "Automation", ic: "✉", name: "Email automation", desc: "Auto-reply to every lead and get new-lead alerts — connect your email with just email + password.", on: emOk },
           { id: "wa", cat: "Automation", ic: "💬", name: "WhatsApp automation", desc: "Send an automatic WhatsApp message through AiSensy, WATI, Interakt, Pabbly or Make.", on: !!wa.webhook },
           { id: "pay", cat: "Payments", ic: "₹", name: "Razorpay & UPI", desc: "Collect payments before registration — cards, UPI, GPay, PhonePe, Paytm.", on: keyOk || upiOk, extra: pay.razorpayKey && pay.razorpayKey.includes("_test_") ? "Test mode" : "" },
           { id: "ai", cat: "AI", ic: "✦", name: "AI builders", desc: "Claude, ChatGPT, Gemini, DeepSeek — plus Lovable and Bolt.new.", on: aiOn, extra: aiOn ? (AI_PROVIDERS.find((p) => p.id === ai.provider) || {}).name : "" },
@@ -176,15 +178,17 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         <details className="ig-d"><summary>How payment confirmation works</summary><p className="mut sm"><b>Razorpay:</b> the lead is marked <b>Paid</b> with the payment ID as soon as checkout succeeds. For full security (verifying the payment signature) you'd later add a small server — until then, cross-check payments in your Razorpay dashboard.<br /><b>UPI / payment link:</b> the visitor taps “I have paid” and can enter the UTR; the lead is marked <b>Payment claimed</b> so you can confirm it in your bank app.</p></details>
       </Card>
 
-      <Card id="sheets" sel={sel} onClose={close} ic="▦" t="Google Sheets & email alerts" sub="Every new lead lands in your Google Sheet and your inbox. Optional thank-you email to the person." on={!!(integ.sheets && integ.sheets.url && integ.sheets.ok)}>
-        <SheetsCard value={integ.sheets || {}} userEmail={(() => { try { return JSON.parse(localStorage.getItem("lb_session") || "{}").email || ""; } catch { return ""; } })()} onSave={(o) => onChange({ ...integ, sheets: o })} />
+      <Card id="sheets" sel={sel} onClose={close} ic="▦" t="Google Sheets & email alerts" sub="Every new lead lands in your Google Sheet and your inbox. Optional thank-you email to the person." on={!!(integ.sheets && (integ.sheets.url || integ.sheets.link) && integ.sheets.ok)}>
+        <SheetsCard value={integ.sheets || {}} userEmail={(() => { try { return JSON.parse(localStorage.getItem("lb_session") || "{}").email || ""; } catch { return ""; } })()} onSave={(o) => onChange({ ...integ, sheets: o })} mailOn={!!(em.provider === "smtp" && em.smtpOk)} />
       </Card>
       <Card id="email" sel={sel} onClose={close} ic="✉" t="Email automation" sub="Send an automatic email to everyone who fills a form, and get notified of new leads." on={emOk}>
         <div className="chips" style={{ margin: "0 0 12px" }}>
-          <button className={em.provider === "gmail" ? "on" : ""} onClick={() => set("email", { provider: "gmail" })}>Your Gmail (free, recommended)</button>
-          <button className={em.provider === "emailjs" ? "on" : ""} onClick={() => set("email", { provider: "emailjs" })}>EmailJS</button>
-          <button className={em.provider === "webhook" ? "on" : ""} onClick={() => set("email", { provider: "webhook" })}>Webhook (Pabbly, Make, Zapier)</button></div>
-        {em.provider === "gmail" && <>
+          <button className={emP === "smtp" ? "on" : ""} onClick={() => setEmWay("smtp")}>Email + password (easiest)</button>
+          <button className={emP === "gmail" ? "on" : ""} onClick={() => { setEmWay("gmail"); set("email", { provider: "gmail" }); }}>Gmail script</button>
+          <button className={emP === "emailjs" ? "on" : ""} onClick={() => { setEmWay("emailjs"); set("email", { provider: "emailjs" }); }}>EmailJS</button>
+          <button className={emP === "webhook" ? "on" : ""} onClick={() => { setEmWay("webhook"); set("email", { provider: "webhook" }); }}>Webhook (Pabbly, Make, Zapier)</button></div>
+        {emP === "smtp" && <EmailEasy em={em} userEmail={(() => { try { return JSON.parse(localStorage.getItem("lb_session") || "{}").email || ""; } catch { return ""; } })()} onSave={(o) => { setEmWay(null); onChange({ ...integ, email: { ...em, ...o } }); }} />}
+        {emP === "gmail" && <>
           <ol className="ig-steps">
             <li>Open <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener">script.google.com → New project</a> (signed in with the Gmail you want to send from).</li>
             <li>Delete everything in the editor and paste this code: <button className="xs" onClick={() => { navigator.clipboard.writeText(GAS).then(() => flash("Script copied"), () => window.prompt("Copy:", GAS)); }}>Copy script</button></li>
@@ -199,8 +203,8 @@ export default function Integrations({ integ, onChange, initial = "" }) {
           {em.webhook && !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(em.webhook) && <p className="red sm">This should look like https://script.google.com/macros/s/…/exec</p>}
           <p className="mut sm">Emails come from your own Gmail address. Free Gmail accounts can send about 100 emails per day (Google Workspace: 1,500).</p>
         </>}
-        {em.provider === "webhook" && <label className="ig-l">Webhook URL<input value={em.webhook} onChange={(e) => set("email", { webhook: e.target.value.trim() })} placeholder="https://hooks.zapier.com/…" /></label>}
-        {em.provider === "emailjs" && <>
+        {emP === "webhook" && <label className="ig-l">Webhook URL<input value={em.webhook} onChange={(e) => set("email", { webhook: e.target.value.trim() })} placeholder="https://hooks.zapier.com/…" /></label>}
+        {emP === "emailjs" && <>
           <div className="ig-g">
             <label>Service ID<input value={em.serviceId} onChange={(e) => set("email", { serviceId: e.target.value.trim() })} placeholder="service_xxxxxxx" /></label>
             <label>Template ID<input value={em.templateId} onChange={(e) => set("email", { templateId: e.target.value.trim() })} placeholder="template_xxxxxxx" /></label>
@@ -214,11 +218,11 @@ export default function Integrations({ integ, onChange, initial = "" }) {
             <li>Paste all three above, add your email below, click <b>Send test email</b>.</li></ol>
             <p className="mut sm">You write the actual email text per form (Forms → your form → Settings → Email automation). This one template just carries it. In EmailJS → Account → Security you can allow only your domain.</p></details>
         </>}
-        <div className="ig-g">
+        {emP !== "smtp" && <><div className="ig-g">
           <label>Your email (for new-lead alerts & replies)<input value={em.ownerEmail} onChange={(e) => set("email", { ownerEmail: e.target.value.trim() })} placeholder="you@yourbrand.com" /></label>
           <label>Sender name<input value={em.fromName} onChange={(e) => set("email", { fromName: e.target.value })} placeholder="BYB Academy" /></label>
         </div>
-        <div className="row"><button onClick={testMail}>Send test email</button><span className="mut sm">Then turn it on per form: Forms → your form → Settings → Email automation.</span></div>
+        <div className="row"><button onClick={testMail}>Send test email</button><span className="mut sm">Then turn it on per form: Forms → your form → Settings → Email automation.</span></div></>}
       </Card>
 
       <Card id="host" sel={sel} onClose={close} ic="▲" t="Netlify — hosting & domains" sub="Publish to a live link, use your existing Netlify sites, and connect custom domains." on={!!(serverUrl(integ) && pub.key && pub.ok)}>

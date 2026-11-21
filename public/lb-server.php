@@ -1,5 +1,5 @@
 <?php
-// LaunchBuilder server v14 — accounts (each login sees only its own sites, leads and domains), admin panel,
+// LaunchBuilder server v20 — accounts (each login sees only its own sites, leads and domains), admin panel, Google Sheets by link + email by password (lb-connect.php),
 // white-label workspaces and free subdomains (name.crecapo.tech, 5 per account). Needs lb-accounts.php next to it.
 // • Publishes your pages to a public link:  https://your-site/sites/<name>/
 // • Collects form submissions from live sites into your CRM
@@ -27,6 +27,8 @@ register_shutdown_function(function () {
 });
 if (!file_exists(__DIR__ . '/lb-accounts.php')) { echo json_encode(array('ok' => false, 'error' => 'lb-accounts.php is missing next to lb-server.php — push all files to GitHub and run lb-deploy again.')); exit; }
 require_once __DIR__ . '/lb-accounts.php';
+if (!file_exists(__DIR__ . '/lb-connect.php')) { echo json_encode(array('ok' => false, 'error' => 'lb-connect.php is missing next to lb-server.php — push all files to GitHub and run lb-deploy again.')); exit; }
+require_once __DIR__ . '/lb-connect.php';
 
 $ROOT  = __DIR__;
 $DATA  = $ROOT . '/lb-data';
@@ -144,7 +146,7 @@ $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['act
 $cfg = jread($DATA . '/config.json', array());
 
 /* ---------------- public actions (used by your live websites) ---------------- */
-if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 19, 'accounts' => (bool)lb_saas(), 'http' => extension_loaded('curl') ? 'curl' : 'php', 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
+if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 20, 'accounts' => (bool)lb_saas(), 'http' => extension_loaded('curl') ? 'curl' : 'php', 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
 
 /* ---------- Google Sheets + email alerts (one Apps Script web app per account) ---------- */
 function lb_hook_file($DATA, $uid) { $d = $DATA . '/hooks'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . substr(hash('sha256', 'u:' . $uid), 0, 24) . '.json'; }
@@ -164,9 +166,31 @@ function lb_hook_post($url, $payload, $follow) {
 function lb_hook_payload($lead, $h) {
   return array('lead' => $lead, 'options' => array('notify' => !empty($h['notify']) ? $h['email'] : '', 'autoreply' => !empty($h['autoreply']), 'subject' => isset($h['subject']) ? $h['subject'] : '', 'reply' => isset($h['reply']) ? $h['reply'] : '', 'from' => isset($h['from']) ? $h['from'] : ''));
 }
+/* sheet connected with a link → new-lead alert + thank-you email go out from the user's connected mailbox */
+function lb_hook_mails($DATA, $u, $h, $lead, $sheetUrl) {
+  $m = jread(mail_file($DATA, $u), array()); if (empty($m['enc'])) return array(false, (!empty($h['notify']) || !empty($h['autoreply'])) ? 'connect your email (Integrations → Email automation) to get email alerts' : '');
+  $name = mail_lead_get($lead, '/^(name|full.?name|your.?name)$/i'); if ($name === '') $name = mail_lead_get($lead, '/name/i');
+  $em = mail_lead_get($lead, '/e-?mail/i'); $sent = false; $err = '';
+  $pg = isset($lead['page']) && $lead['page'] !== '' ? $lead['page'] : (isset($lead['url']) ? $lead['url'] : '');
+  if (!empty($h['notify']) && !empty($h['email'])) {
+    $err = mail_send_as($DATA, $u, $h['email'], 'New lead: ' . ($name !== '' ? $name : ($em !== '' ? $em : 'someone')) . ' — ' . (isset($lead['form']) ? $lead['form'] : 'Form'),
+      '<h2 style="margin:0 0 10px">New lead 🎉</h2>' . mail_lead_table($lead) . '<p style="color:#5d6785">' . mail_esc(isset($lead['form']) ? $lead['form'] : '') . ' · ' . mail_esc($pg) . '</p>' . ($sheetUrl ? '<p><a href="' . mail_esc($sheetUrl) . '">Open the sheet</a></p>' : ''), $em);
+    $sent = $err === '';
+  }
+  if (!empty($h['autoreply']) && filter_var($em, FILTER_VALIDATE_EMAIL)) {
+    $body = str_replace('{{name}}', mail_esc($name !== '' ? $name : 'there'), nl2br(mail_esc(!empty($h['reply']) ? $h['reply'] : 'Hi {{name}}, thank you — we received your details and will contact you soon.')));
+    $e2 = mail_send_as($DATA, $u, $em, !empty($h['subject']) ? $h['subject'] : 'Thank you!', $body, isset($h['email']) ? $h['email'] : ''); if ($err === '') $err = $e2;
+  }
+  return array($sent, $err);
+}
 function lb_forward_lead($lead, $DATA) {
   $u = lb_lead_owner($lead, $DATA); if ($u === '') return;
-  $hf = lb_hook_file($DATA, $u); $h = jread($hf, array()); if (empty($h['url'])) return;
+  $hf = lb_hook_file($DATA, $u); $h = jread($hf, array());
+  if (!empty($h['sid'])) {
+    list($url, $e) = gs_append($DATA, $h, $lead); list($ok, $e2) = lb_hook_mails($DATA, $u, $h, $lead, $url);
+    $h = jread($hf, $h); $h['last'] = array('t' => time(), 'code' => $e === '' ? 200 : 0, 'err' => $e !== '' ? $e : $e2); jwrite($hf, $h); return;
+  }
+  if (empty($h['url'])) return;
   list($code, $b, $err) = lb_hook_post($h['url'], lb_hook_payload($lead, $h), false);
   $h['last'] = array('t' => time(), 'code' => $code, 'err' => $err); jwrite($hf, $h);
 }
@@ -223,6 +247,30 @@ if ($act === 'leadpay') {
   }
   jwrite($DATA . '/leads.json', $all);
   out(array('ok' => true));
+}
+
+/* email automation through the owner's connected mailbox (email + password).
+   Only two kinds of email, once per lead: the thank-you to the email typed IN that lead, and the alert to the owner's own address. */
+if ($act === 'leadmail') {
+  $lid = preg_replace('/[^A-Za-z0-9]/', '', clean_str(isset($d['lid']) ? $d['lid'] : '', 40)); $kind = isset($d['kind']) && $d['kind'] === 'owner' ? 'owner' : 'auto';
+  if ($lid === '') fail('No lead');
+  $lead = null;
+  for ($i = 0; $i < 5 && !$lead; $i++) { if ($i) usleep(800000); foreach (array_reverse(array_slice(jread($DATA . '/leads.json', array()), -1500)) as $l) if (isset($l['lid']) && $l['lid'] === $lid) { $lead = $l; break; } }
+  if (!$lead) fail('Lead not found');
+  if ($lead['ts'] < (time() - 3 * 3600) * 1000) fail('Too late for this lead');
+  $sf = $DATA . '/mail-sent.json'; $sent = jread($sf, array()); $now = time();
+  foreach ($sent as $sk => $st) if ($st < $now - 86400) unset($sent[$sk]);
+  if (isset($sent[$lid . ':' . $kind])) out(array('ok' => true, 'dup' => true));
+  $u = lb_lead_owner($lead, $DATA); if ($u === '') fail('No owner');
+  $m = jread(mail_file($DATA, $u), array()); if (empty($m['enc'])) fail('Email is not connected');
+  $lem = mail_lead_get($lead, '/e-?mail/i');
+  $to = $kind === 'owner' ? (!empty($m['owner']) ? $m['owner'] : $m['user']) : $lem;
+  if (!filter_var($to, FILTER_VALIDATE_EMAIL)) fail('No email address in this lead');
+  $sent[$lid . ':' . $kind] = $now; jwrite($sf, $sent);
+  $html = preg_replace('#<(script|iframe|object|embed|form)\b.*?</\1>#is', '', clean_str(isset($d['html']) ? $d['html'] : '', 20000));
+  $subj = clean_str(isset($d['subject']) ? $d['subject'] : '', 200); if (trim($subj) === '') $subj = $kind === 'owner' ? 'New lead' : 'Thank you!';
+  $e = mail_send_as($DATA, $u, $to, $subj, $html, $kind === 'owner' ? $lem : (!empty($m['owner']) ? $m['owner'] : $m['user']));
+  out($e === '' ? array('ok' => true) : array('ok' => false, 'error' => $e));
 }
 
 /* Smart Insights — page views, CTA clicks and form starts from your live sites.
@@ -804,9 +852,59 @@ function lb_remember_forms($ME, $DATA, $ids) {
   foreach (array_slice($ids, 0, 2000) as $fid) if (is_string($fid) && preg_match('/^[\w-]{3,40}$/', $fid) && !isset($fo[$fid])) { $fo[$fid] = $ME['uid']; $ch = true; }
   if ($ch) jwrite($f, $fo);
 }
+if ($act === 'gs_status') { $c = gs_cfg($DATA); out(array('ok' => true, 'ready' => !empty($c['enc']), 'robot' => isset($c['robot']) ? $c['robot'] : '', 'admin' => $IS_ADMIN)); }
+if ($act === 'gs_setup') {
+  if (!$IS_ADMIN) fail('Only the admin can add the Google robot.');
+  if (!empty($d['remove'])) { @unlink(gs_file($DATA)); out(array('ok' => true, 'ready' => false)); }
+  $raw = trim(isset($d['json']) ? (string)$d['json'] : ''); $k = json_decode($raw, true);
+  if (!is_array($k) || empty($k['client_email']) || empty($k['private_key'])) fail('Paste the whole JSON key file (it has "type": "service_account", "client_email" and "private_key").');
+  list($tok, $e) = gs_token($DATA, json_encode(array('client_email' => $k['client_email'], 'private_key' => $k['private_key']))); if ($e !== '') fail($e);
+  jwrite(gs_file($DATA), array('enc' => ai_enc(json_encode(array('client_email' => $k['client_email'], 'private_key' => $k['private_key'])), $DATA), 'robot' => (string)$k['client_email'], 'project' => isset($k['project_id']) ? (string)$k['project_id'] : '', 'saved' => time())); @chmod(gs_file($DATA), 0600);
+  out(array('ok' => true, 'ready' => true, 'robot' => (string)$k['client_email']));
+}
+if ($act === 'gs_check') {
+  $r = gs_check($DATA, isset($d['link']) ? $d['link'] : '', isset($d['tab']) ? $d['tab'] : ''); if (isset($r['error'])) fail($r['error']);
+  unset($r['token']); out(array('ok' => true) + $r);
+}
+/* email with email + password */
+if ($act === 'mail_get') { $m = jread(mail_file($DATA, $ME['uid']), array()); out(array('ok' => true, 'mail' => !empty($m['enc']) ? mail_public($m) : null)); }
+if ($act === 'mail_off') { @unlink(mail_file($DATA, $ME['uid'])); if ($IS_ADMIN) @unlink(mail_file($DATA, 'admin')); out(array('ok' => true, 'mail' => null)); }
+if ($act === 'mail_save') {
+  $f = mail_file($DATA, $ME['uid']); $old = jread($f, array()); $P = mail_presets();
+  $prov = isset($d['provider']) && (isset($P[$d['provider']]) || $d['provider'] === 'custom') ? $d['provider'] : 'gmail';
+  $user = strtolower(mail_clean(isset($d['user']) ? $d['user'] : '')); if (!filter_var($user, FILTER_VALIDATE_EMAIL)) fail('Type your full email address.');
+  $pass = str_replace(' ', '', (string)(isset($d['pass']) ? $d['pass'] : '')); if ($prov !== 'gmail' && $prov !== 'yahoo') $pass = (string)(isset($d['pass']) ? $d['pass'] : '');
+  if ($pass === '' && !empty($old['enc']) && $old['user'] === $user) $pass = ai_dec($old['enc'], $DATA);
+  if ($pass === '') fail($prov === 'gmail' ? 'Paste your Gmail App password (16 letters).' : 'Type the password of this email.');
+  if ($prov === 'custom') {
+    $host = strtolower(preg_replace('/[^a-z0-9.-]/i', '', isset($d['host']) ? $d['host'] : '')); $port = (int)(isset($d['port']) ? $d['port'] : 465);
+    $sec = isset($d['sec']) && in_array($d['sec'], array('ssl', 'tls', 'none'), true) ? $d['sec'] : 'ssl';
+    if ($host === '' || strpos($host, '.') === false) fail('Type the SMTP server (for example smtp.yourdomain.com).');
+    if ($port < 1 || $port > 65535) fail('Type the port (usually 465 or 587).');
+  } else list($host, $port, $sec) = $P[$prov];
+  $owner = strtolower(mail_clean(isset($d['owner']) ? $d['owner'] : '')); if ($owner === '') $owner = $user; if (!filter_var($owner, FILTER_VALIDATE_EMAIL)) fail('Type a valid email for new-lead alerts.');
+  $m = array('provider' => $prov, 'host' => $host, 'port' => $port, 'sec' => $sec, 'user' => $user, 'from' => clean_str(mail_clean(isset($d['from']) ? $d['from'] : ''), 80), 'owner' => $owner);
+  $e = smtp_send($m, $pass, $owner, '✓ Your email is connected', '<h2 style="margin:0 0 8px">It works! 🎉</h2><p>Thank-you emails and new-lead alerts will now be sent from <b>' . mail_esc($user) . '</b>.</p>');
+  if ($e !== '') fail($e);
+  $m['enc'] = ai_enc($pass, $DATA); $m['saved'] = time(); $m['last'] = array('t' => time(), 'err' => '');
+  jwrite($f, $m); @chmod($f, 0600);
+  if ($IS_ADMIN) { jwrite(mail_file($DATA, 'admin'), $m); @chmod(mail_file($DATA, 'admin'), 0600); }   /* websites made before accounts send as the admin */
+  out(array('ok' => true, 'mail' => mail_public($m)));
+}
+
 if ($act === 'hooks') {
   $hf = lb_hook_file($DATA, $ME['uid']); $h = jread($hf, array());
   if (!empty($d['get'])) out(array('ok' => true, 'hooks' => $h ? $h : null));
+  if (isset($d['link']) && trim((string)$d['link']) !== '') {   /* connect with the sheet's link (Google robot) */
+    $r = gs_check($DATA, $d['link'], isset($d['tab']) ? $d['tab'] : ''); if (isset($r['error'])) fail($r['error']);
+    $em = strtolower(trim(isset($d['email']) ? (string)$d['email'] : $ME['email'])); if ($em !== '' && !filter_var($em, FILTER_VALIDATE_EMAIL)) fail('Type a valid email for the alerts.');
+    $h = array('mode' => 'link', 'sid' => $r['id'], 'link' => clean_str($d['link'], 400), 'tab' => $r['tab'], 'tabId' => $r['tabId'], 'title' => clean_str($r['title'], 120), 'email' => $em, 'notify' => !empty($d['notify']), 'autoreply' => !empty($d['autoreply']),
+      'subject' => clean_str(isset($d['subject']) ? $d['subject'] : '', 150), 'reply' => clean_str(isset($d['reply']) ? $d['reply'] : '', 3000), 'from' => clean_str(isset($d['from']) ? $d['from'] : '', 80), 'saved' => time());
+    jwrite($hf, $h); @chmod($hf, 0600);
+    if ($IS_ADMIN) jwrite(lb_hook_file($DATA, 'admin'), $h);
+    if (isset($d['forms']) && is_array($d['forms'])) lb_remember_forms($ME, $DATA, $d['forms']);
+    out(array('ok' => true, 'hooks' => $h));
+  }
   $url = trim(isset($d['url']) ? (string)$d['url'] : '');
   if ($url !== '' && preg_match('#script\.google\.com/.*/edit#', $url)) fail('That is the editor link. Use Deploy → New deployment → Web app, and copy the "Web app URL" (it ends with /exec).');
   if ($url !== '' && (strlen($url) > 500 || !preg_match('#^https://[^\s"<>]+$#', $url))) fail('Paste the Web app URL from Apps Script (it starts with https://script.google.com/macros/s/… and ends with /exec).');
@@ -819,9 +917,14 @@ if ($act === 'hooks') {
   out(array('ok' => true, 'hooks' => $h));
 }
 if ($act === 'hooktest') {
-  $h = jread(lb_hook_file($DATA, $ME['uid']), array()); if (empty($h['url'])) fail('Save the Web app URL first.');
+  $h = jread(lb_hook_file($DATA, $ME['uid']), array()); if (empty($h['url']) && empty($h['sid'])) fail('Connect your sheet first.');
   $lead = array('lid' => 'TEST' . time(), 'form' => 'Test form', 'site' => '', 'page' => 'Test from ' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'builder'), 'url' => '', 'ts' => round(microtime(true) * 1000),
     'data' => array('Name' => 'Test Lead', 'Email' => $h['email'] ? $h['email'] : 'test@example.com', 'Phone' => '9876543210', 'Message' => 'This is a test — your sheet and email alerts work'));
+  if (!empty($h['sid'])) {
+    list($url, $e) = gs_append($DATA, $h, $lead); if ($e !== '') fail($e);
+    list($mailed, $e2) = lb_hook_mails($DATA, $ME['uid'], $h, $lead, $url);
+    out(array('ok' => true, 'sheet' => $url, 'mailed' => $mailed, 'mailNote' => $e2));
+  }
   list($code, $b, $err) = lb_hook_post($h['url'], lb_hook_payload($lead, $h), true);
   if ($err !== '') fail('Could not reach the Web app: ' . $err);
   $j = json_decode($b, true);

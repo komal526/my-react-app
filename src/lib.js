@@ -193,7 +193,7 @@ export const INTEG_DEF = {
   ai: { provider: "claude", keys: {}, models: {} },
   publish: { url: "", key: "" },
   server: { url: "", key: "", ok: false, ip: "", base: "" },
-  email: { provider: "gmail", serviceId: "", templateId: "", publicKey: "", webhook: "", ownerEmail: "", fromName: "" },
+  email: { provider: "smtp", serviceId: "", templateId: "", publicKey: "", webhook: "", ownerEmail: "", fromName: "" },
 };
 export const loadInteg = (email) => { try { const v = JSON.parse(localStorage.getItem(IK(email)) || "{}"); return { wa: { ...INTEG_DEF.wa, ...v.wa }, pay: { ...INTEG_DEF.pay, ...v.pay }, ai: { ...INTEG_DEF.ai, ...v.ai }, email: { ...INTEG_DEF.email, ...v.email }, publish: { ...INTEG_DEF.publish, ...v.publish }, server: { ...INTEG_DEF.server, ...v.server } }; } catch { return JSON.parse(JSON.stringify(INTEG_DEF)); } };
 export const saveInteg = (email, v) => localStorage.setItem(IK(email), JSON.stringify(v));
@@ -441,6 +441,15 @@ export const admin = (action, o = {}) => phpCall(acctSrv(), { action: "adm_" + a
 export const hooksSave = (o) => { let forms = []; try { const E = JSON.parse(localStorage.getItem("lb_session") || "{}").email; forms = [...loadForms(E).map((f) => f.id), ...loadCal(E).map((e) => e.id)]; } catch { /* ignore */ } return phpCall(acctSrv(), { action: "hooks", ...o, forms }); };
 export const hooksGet = () => phpCall(acctSrv(), { action: "hooks", get: 1 });
 export const hooksTest = () => phpCall(acctSrv(), { action: "hooktest" });
+/* v102 — Google Sheets by link (server "robot") + email by email & password (SMTP) */
+export const gsStatus = () => phpCall(acctSrv(), { action: "gs_status" });
+export const gsSetup = (o) => phpCall(acctSrv(), { action: "gs_setup", ...o });
+export const gsCheck = (link, tab) => phpCall(acctSrv(), { action: "gs_check", link, tab });
+export const mailGet = () => phpCall(acctSrv(), { action: "mail_get" });
+export const mailSave = (o) => phpCall(acctSrv(), { action: "mail_save", ...o });
+export const mailOff = () => phpCall(acctSrv(), { action: "mail_off" });
+/* is email automation ready to send? (used by forms, calendar and the Integrations page) */
+export const mailReady = (ge = {}) => ge.provider === "smtp" ? !!ge.smtpOk : ge.provider === "emailjs" ? !!(ge.serviceId && ge.templateId && ge.publicKey) : !!ge.webhook;
 const bytes64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 export const filesForServer = (files) => files.map((f) => ({ name: f.name, b64: bytes64(typeof f.data === "string" ? new TextEncoder().encode(f.data) : f.data) }));
 /* pull leads collected by live sites into the CRM (merged by lead id) */

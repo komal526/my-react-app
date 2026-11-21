@@ -1,7 +1,7 @@
 // LaunchBuilder v48 — FormBuilder.jsx
 // Drag & drop form builder: element panel · live canvas (the real form) · Styles & Options (Customize · Themes · Advanced)
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { FIELD_TYPES, newField, uid, formUrl, ago } from "../lib.js";
+import { FIELD_TYPES, newField, uid, formUrl, ago, mailReady as mailIsReady } from "../lib.js";
 import { formHtml, formPageHtml, FORM_STYLE_DEF, FORM_FONTS } from "./tools.js";
 import { Icon } from "./icons.jsx";
 
@@ -69,7 +69,7 @@ export default function Builder({ form, onChange, onBack, projects, onAddToPage,
   const s = { ...FORM_STYLE_DEF, ...form.settings }, f = form.fields.find((x) => x.id === sel);
   const bt = { full: true, align: "center", size: "md", bg: "", fg: "#ffffff", note: true, extra: false, extraText: "Chat on WhatsApp", extraUrl: "", grad: "", ...(s.btn || {}) };
   const em = s.email || {}, gem = (integ && integ.email) || {}, pay = s.pay || {}, wa = s.wa || {}, gpay = (integ && integ.pay) || {}, gwa = (integ && integ.wa) || {};
-  const mailReady = gem.provider === "emailjs" ? !!(gem.serviceId && gem.templateId && gem.publicKey) : !!gem.webhook;
+  const mailReady = mailIsReady(gem);
   const VARS = ["name", ...form.fields.filter((x) => !/heading|utm/.test(x.type) && x.name !== "name").map((x) => x.name), "form", "all_fields", ...(pay.enabled ? ["amount", "payment_id"] : [])];
   const flash = (t) => { setNote(t); setTimeout(() => setNote(""), 2200); };
 

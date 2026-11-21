@@ -1,7 +1,8 @@
-// LaunchBuilder v78 — SheetsCard.jsx
+// LaunchBuilder v102 — SheetsCard.jsx (two ways: 🔗 sheet link — no code, via the server robot — or 🧩 Apps Script)
 // Google Sheets + email alerts in one easy setup: a small Apps Script in YOUR Google Sheet receives every new lead,
 // adds it as a row, emails you, and (optional) sends the person a thank-you email. The server forwards each lead to it.
 import { useEffect, useState } from "react";
+import { RobotSetup, SheetLink, useRobot } from "./EasyConnect.jsx";
 import { hooksSave, hooksGet, hooksTest, ago } from "../lib.js";
 import { BRAND } from "../brand.js";
 
@@ -39,7 +40,23 @@ function out(o) { return ContentService.createTextOutput(JSON.stringify(o)).setM
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 `;
 
-export default function SheetsCard({ value = {}, onSave, userEmail = "" }) {
+export default function SheetsCard(props) {
+  const [st, reload] = useRobot(), [srv, setSrv] = useState(undefined), [way, setWay] = useState(null);
+  useEffect(() => { hooksGet().then((r) => setSrv(r.hooks || null)).catch(() => setSrv(null)); }, []);
+  const w = way || (srv && srv.url && !srv.sid ? "script" : st.loaded && !st.ready && !st.admin ? "script" : "link");
+  return (
+    <div className="gs-wrap">
+      {st.admin && st.loaded && <RobotSetup st={st} onDone={reload} />}
+      <div className="ec-ways">
+        <button className={w === "link" ? "on" : ""} onClick={() => setWay("link")}><b>🔗 Sheet link</b><small>Easy — no code</small></button>
+        <button className={w === "script" ? "on" : ""} onClick={() => setWay("script")}><b>🧩 Apps Script</b><small>Advanced — paste a script</small></button>
+      </div>
+      {w === "link" ? <SheetLink value={props.value || {}} onSave={props.onSave} userEmail={props.userEmail || ""} st={st} srv={srv} setSrv={setSrv} mailOn={props.mailOn} /> : <ScriptWay {...props} />}
+    </div>
+  );
+}
+
+function ScriptWay({ value = {}, onSave, userEmail = "" }) {
   const [v, setV] = useState({ url: "", email: userEmail, notify: true, autoreply: false, subject: "Thank you!", reply: "Hi {{name}},\nthank you — we received your details and will contact you soon.", from: BRAND.product, ...value });
   const [busy, setBusy] = useState(false), [msg, setMsg] = useState(null), [copied, setCopied] = useState(false), [srv, setSrv] = useState(null);
   useEffect(() => { hooksGet().then((r) => { setSrv(r.hooks); if (r.hooks) setV((x) => ({ ...x, ...Object.fromEntries(Object.entries(r.hooks).filter(([k, val]) => val !== "" && k !== "last" && k !== "saved")) })); }).catch(() => setSrv(null)); }, []); // eslint-disable-line react-hooks/exhaustive-deps

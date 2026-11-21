@@ -338,7 +338,7 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
   if(pay)lead.payment={status:'pending',amount:+pay.amount,mode:pay.mode,currency:'INR'};
   if(wa&&wa.hook){var ph=phoneOf(data).replace(/\\D/g,'');if(ph.length===10)ph=String(wa.cc||'91')+ph;lead.whatsapp={to:ph,message:fillT(wa.msg,data)}}
   if(W.LB_PREVIEW)parent.postMessage({lb:'lead',lead:lead},'*');
-  if(W.LB_LEAD_URL)post(W.LB_LEAD_URL,{action:'lead',lead:Object.assign({site:W.LB_SITE||''},lead)});
+  if(W.LB_LEAD_URL)f.__lp=post(W.LB_LEAD_URL,{action:'lead',lead:Object.assign({site:W.LB_SITE||''},lead)});
   try{if(W.fbq)fbq('track','Lead');if(W.gtag){gtag('event','generate_lead');if(W.LB_ADS)gtag('event','conversion',{send_to:W.LB_ADS})}if(W.dataLayer)W.dataLayer.push({event:'lb_lead'})}catch(_){}
   post(hook,{event:'lead.created',lead:lead});
   if(pay)f.__lead=lead}
@@ -347,11 +347,12 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
   var vars={};for(var k2 in dt)vars[k2]=esc(dt[k2]);vars.form=esc(lead.form);vars.page=esc(lead.page);vars.all_fields='<table style="border-collapse:collapse">'+rows+'</table>';
   vars.amount=lead.payment?lead.payment.amount:'';vars.payment_id=lead.payment?(lead.payment.id||lead.payment.ref||''):'';
   var nl=String.fromCharCode(10),html=function(t){return fillT(t,vars).split(nl).join('<br>')};
-  var send=function(toAddr,subj,body){if(!toAddr)return;var msg={to_email:toAddr,subject:fillT(subj,vars),message:html(body),from_name:mail.from||'',reply_to:mail.reply||''};
+  var send=function(toAddr,subj,body,kind){if(!toAddr)return;var msg={to_email:toAddr,subject:fillT(subj,vars),message:html(body),from_name:mail.from||'',reply_to:mail.reply||''};
+   if(mail.p==='smtp'){if(W.LB_LEAD_URL&&!W.LB_PREVIEW)(f.__lp||Promise.resolve()).then(function(){post(W.LB_LEAD_URL,{action:'leadmail',lid:lead.lid,kind:kind,subject:msg.subject,html:msg.message})});return}
    if(mail.p==='emailjs'&&mail.s&&mail.t&&mail.k&&W.fetch)fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_id:mail.s,template_id:mail.t,user_id:mail.k,template_params:msg})}).catch(function(){});
    else if(mail.hook)post(mail.hook,{event:'email.send',to:msg.to_email,subject:msg.subject,html:msg.message,from:msg.from_name,replyTo:msg.reply_to,lead:lead})};
-  if(mail.auto)send(to,mail.subj,mail.body);
-  if(mail.owner)send(mail.owner,mail.osubj||'New lead: {{name}}','New submission on <b>{{form}}</b>'+nl+nl+'{{all_fields}}')};
+  if(mail.auto)send(to,mail.subj,mail.body,'auto');
+  if(mail.owner)send(mail.owner,mail.osubj||'New lead: {{name}}','New submission on <b>{{form}}</b>'+nl+nl+'{{all_fields}}','owner')};
  var sendWA=function(){if(wa&&wa.hook&&lead.whatsapp)post(wa.hook,{event:'whatsapp.send',to:lead.whatsapp.to,message:lead.whatsapp.message,name:lead.data.name||'',lead:lead})};
  var done=function(){if(btn)btn.disabled=false;var r=f.getAttribute('data-lb-redirect');if(r){if(W.LB_PREVIEW&&!/^(https?:)?\\/\\//i.test(r))parent.postMessage({lb:'nav',href:r},'*');else location.href=r;return}
   var m=d.createElement('div');m.className='lbw-ok';m.textContent=f.getAttribute('data-lb-success')||'Thank you! We will be in touch soon.';f.reset();f.style.display='none';
@@ -501,7 +502,7 @@ export function bookingWidget(ev = {}, integ = null) {
   const ig = integ || {}, gp = ig.pay || {}, p = e.pay || {}, amt = +p.amount || 0, payOn = p.enabled && amt > 0;
   const payCfg = payOn ? { amount: amt, mode: p.mode || "razorpay", key: p.key || gp.razorpayKey || "", upi: p.upi || gp.upiId || "", payee: p.payee || gp.payee || e.org || e.name, link: p.link || "", desc: e.name, color: e.color || "#3d6bff" } : null;
   const gw = ig.wa || {}, waCfg = e.wa && e.wa.enabled && (e.wa.hook || gw.webhook) ? { hook: e.wa.hook || gw.webhook, msg: e.wa.msg || "Hi {{name}}, your booking for {{date}} at {{time}} is confirmed!", cc: gw.country || "91" } : null;
-  const ge = ig.email || {}, mailOk = ge.provider === "emailjs" ? !!(ge.serviceId && ge.templateId && ge.publicKey) : !!ge.webhook;
+  const ge = ig.email || {}, mailOk = ge.provider === "smtp" ? !!ge.smtpOk : ge.provider === "emailjs" ? !!(ge.serviceId && ge.templateId && ge.publicKey) : !!ge.webhook;
   const mailCfg = e.email && e.email.enabled && mailOk ? { p: ge.provider, s: ge.serviceId, t: ge.templateId, k: ge.publicKey, hook: ge.webhook, from: ge.fromName || e.org || e.name, reply: ge.ownerEmail || "", auto: true,
     subj: e.email.subject || "Confirmed: " + e.name + " on {{date}} at {{time}}", body: e.email.body || "Hi {{name}},\n\nYour booking is confirmed for {{date}} at {{time}} (" + (e.duration || 30) + " min).\n\nSee you then!\n" + (ge.fromName || e.org || ""), owner: e.email.notify ? ge.ownerEmail || "" : "", osubj: "New booking: {{name}} — {{date}} {{time}}" } : null;
   const attrs = (e.redirect ? ` data-lb-redirect="${esc(e.redirect)}"` : "") + (payCfg ? ` data-lb-pay="${esc(JSON.stringify(payCfg))}"` : "") + (waCfg ? ` data-lb-wa="${esc(JSON.stringify(waCfg))}"` : "") + (mailCfg ? ` data-lb-mail="${esc(JSON.stringify(mailCfg))}"` : "");
@@ -680,7 +681,7 @@ export const formHtml = (form, integ) => {
   const w = s.wa || {}, waHook = w.enabled ? w.hook || gwa.webhook || "" : "";
   const waCfg = waHook ? { hook: waHook, msg: w.msg || gwa.template || "", cc: gwa.country || "91" } : null;
   const ge = ig.email || {}, em = s.email || {};
-  const mailOk = ge.provider === "emailjs" ? !!(ge.serviceId && ge.templateId && ge.publicKey) : !!ge.webhook;
+  const mailOk = ge.provider === "smtp" ? !!ge.smtpOk : ge.provider === "emailjs" ? !!(ge.serviceId && ge.templateId && ge.publicKey) : !!ge.webhook;
   const mailCfg = em.enabled && mailOk && (em.auto !== false || em.notify) ? { p: ge.provider, s: ge.serviceId, t: ge.templateId, k: ge.publicKey, hook: ge.webhook, from: ge.fromName || form.name, reply: ge.ownerEmail || "",
     auto: em.auto !== false, subj: em.subject || "Thanks for registering, {{name}}!", body: em.body || "Hi {{name}},\n\nThank you! We received your details and will contact you soon.\n\nTeam " + (ge.fromName || form.name),
     owner: em.notify ? em.ownerEmail || ge.ownerEmail || "" : "", osubj: em.ownerSubject || "" } : null;

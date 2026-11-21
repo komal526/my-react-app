@@ -89,7 +89,7 @@ function SmartInsights({ events, leads, onAsk, onAnalytics, onGo }) {
 /* ---------- AI Consultant: a robot that keeps checking your pages and live numbers, and tells you what to fix ---------- */
 /* AI Consultant robot — your reference image, split into layers so each part moves on its own (pictures live in styles.css) */
 const tipKey = (t) => t.p.id + "|" + t.title.replace(/\d+/g, "#");
-function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
+function AiCard({ projects, events, leads, onConsult, onOpen, onNew, user = {} }) {
   /* the robot's trip (Web Animations API, one 24 s loop):
      home → hops up to the free space above the AI CORE (big, clearly visible) → says hi → hops home
      → hops to the space beside the score → says hi → hops home. Restarts from the beginning each time the card scrolls into view. */
@@ -202,7 +202,16 @@ function AiCard({ projects, events, leads, onConsult, onOpen, user = {} }) {
           {due > 0 && <button className="ai-due" onClick={() => onConsult({ go: "followups" })}><Icon n="clock" s={13} />{due} follow-up{due > 1 ? "s" : ""} due</button>}
         </div>
         <div className="ai-tips">
-          {!res.length ? <p className="mut ai-empty">I'll check headline, buttons, form, mobile view, speed and conversions — then tell you exactly what to fix.</p>
+          {!res.length ? <div className="ai-start">
+            <b className="ai-st-h">What I'll check on every page you make</b>
+            <div className="ai-checks">{[["🎯", "Headline", "Clear offer in 5 seconds"], ["👆", "Buttons", "One clear call-to-action"], ["📝", "Form", "Short and easy to fill"], ["📱", "Mobile view", "Looks right on phones"], ["⚡", "Speed", "Loads fast everywhere"], ["📈", "Conversions", "Visitors → leads"]].map(([ic, t, d], i) => (
+              <div key={t} className="ai-chk" style={{ "--d": i * 0.35 + "s" }}><span>{ic}</span><div><b>{t}</b><small>{d}</small></div><i>✓</i></div>))}</div>
+            <div className="ai-go">
+              <button className="ai-go1" onClick={() => (onNew ? onNew("landing") : onConsult({ tab: "plan" }))}>✨ Create my first page</button>
+              <button onClick={() => onConsult({ go: "templates" })}>📄 Browse templates</button>
+              <button onClick={() => onConsult({ go: "finder" })}>🔍 Find customers</button>
+            </div>
+          </div>
             : !top.length ? <div className="ai-good"><b>Your pages look great 🎉</b><p className="mut">Ask me how to get more visitors or test a new headline.</p></div>
             : top.map((t, i) => (
               <div key={i} className={"ai-tip s" + t.sev} style={{ "--d": i * 0.08 + "s" }}>
@@ -464,7 +473,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
 
       {/* AI Consultant suggestions · featured templates */}
       <div className="db-row2">
-        <AiCard projects={projects} events={events} leads={leads} onConsult={(o) => (o && o.go ? onViewAll && onViewAll(o.go) : onConsult(o))} onOpen={onOpen} user={user} />
+        <AiCard projects={projects} events={events} leads={leads} onNew={onNew} onConsult={(o) => (o && o.go ? onViewAll && onViewAll(o.go) : onConsult(o))} onOpen={onOpen} user={user} />
         <AiLink />
         <FeaturedTpl onUse={onUseTpl} onAll={onTemplates} />
       </div>
