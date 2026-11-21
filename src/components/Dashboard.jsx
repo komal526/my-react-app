@@ -148,6 +148,7 @@ export default function Dashboard({ user, onLogout }) {
     if (view === "admin") { if (!/\/admin\/?$/.test(location.pathname)) history.replaceState(null, "", base.replace(/\/$/, "") + "/admin"); }
     else if (/\/admin\/?$/.test(location.pathname) || /^#\/admin/.test(location.hash)) history.replaceState(null, "", base);
   }, [view]);
+  useEffect(() => { const g = (e) => setView(e.detail); window.addEventListener("lb-go", g); return () => window.removeEventListener("lb-go", g); }, []);   /* other screens can jump to a view */
   useEffect(() => { const h = () => { if (/^#\/admin/.test(location.hash)) setView("admin"); }; window.addEventListener("hashchange", h); return () => window.removeEventListener("hashchange", h); }, []);
   const [studio, setStudio] = useState(() => { if (!/^#\/studio/.test(location.hash)) return null; let o = {}; try { o = JSON.parse(localStorage.getItem("lb_studio_go") || "{}"); localStorage.removeItem("lb_studio_go"); } catch { o = {}; } return { type: o.type || "landing", name: o.name || "", prompt: o.prompt || "", tab: true }; });
   const studioTab = (o = {}) => { try { localStorage.setItem("lb_studio_go", JSON.stringify(o)); } catch { /* ignore */ } const w = window.open(location.origin + location.pathname + "#/studio", "_blank"); if (!w) setStudio(o); };

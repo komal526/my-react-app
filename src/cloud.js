@@ -65,6 +65,42 @@ export async function cloudLogout() {
 }
 export const cloudUser = () => { const s = getSession(); return s && s.user ? s.user : null; };
 
+/* ---------------- v103: forgot password · Google sign-in · links that come back with a login ---------------- */
+const back = () => location.origin + location.pathname;
+/* which sign-in methods are switched on in Supabase (Authentication → Providers) */
+export async function cloudSettings() {
+  try { const r = await tfetch(BASE + "/auth/v1/settings", { headers: H() }, 6000); return r.ok ? await r.json() : {}; } catch { return {}; }
+}
+export const cloudGoogleUrl = () => BASE + "/auth/v1/authorize?provider=google&redirect_to=" + encodeURIComponent(back());
+/* sends the "reset your password" email (Supabase) */
+export async function cloudRecover(email) { await authFetch("recover", { email }, "?redirect_to=" + encodeURIComponent(back())); }
+/* after Google sign-in, an email link or a reset link, Supabase puts the login in the address bar (#access_token=…).
+   Read it once, then clean the address bar. */
+export function cloudFromHash() {
+  const h = location.hash || ""; if (!/access_token=|error_description=/.test(h)) return null;
+  const p = new URLSearchParams(h.replace(/^#\/?/, ""));
+  try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignore */ }
+  if (p.get("error_description") || p.get("error")) return { error: (p.get("error_description") || p.get("error") || "").replace(/\+/g, " ") };
+  return { access_token: p.get("access_token"), refresh_token: p.get("refresh_token") || "", expires_in: +p.get("expires_in") || 3600, type: p.get("type") || "" };
+}
+/* turn those tokens into a normal login */
+export async function cloudAdopt(t) {
+  const r = await tfetch(BASE + "/auth/v1/user", { headers: H(t.access_token) });
+  const u = await r.json().catch(() => ({}));
+  if (!r.ok || !u.id) throw new Error(errMsg(u, "This link has expired — please try again."));
+  setSession({ access_token: t.access_token, refresh_token: t.refresh_token, expires_at: Date.now() + t.expires_in * 1000, user: u });
+  return u;
+}
+/* set a new password for the logged-in account (used by the reset link) */
+export async function cloudSetPassword(password) {
+  const t = await token(); if (!t) throw new Error("This reset link has expired — ask for a new one.");
+  const r = await tfetch(BASE + "/auth/v1/user", { method: "PUT", headers: H(t), body: JSON.stringify({ password }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(errMsg(j, "Could not save the new password"));
+  const s = getSession(); if (s && j.id) setSession({ ...s, user: j });
+  return j;
+}
+
 /* ---------------- sync ---------------- */
 const _set = Storage.prototype.setItem, _rem = Storage.prototype.removeItem;
 let uid = null, email = null, patched = false;

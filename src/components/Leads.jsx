@@ -2,6 +2,7 @@
 // LaunchBuilder v41 — Leads.jsx
 import { useMemo, useState } from "react";
 import Pipeline from "./Pipeline.jsx";
+import { SheetBtn } from "./EasyConnect.jsx";
 import { saveLeads, LEAD_STATUS, ago, serverOn, phpCall, syncServerLeads, loadLeads } from "../lib.js";
 
 /* ================= Leads / Form CRM: table + pipeline board, status, notes, CSV export ================= */
@@ -43,7 +44,7 @@ export default function Leads({ user, projects = [], forms = [], leads, setLeads
   return (
     <>
       {(() => { const views = <div className="chips ld-views" style={{ margin: 0 }}><button className={view === "table" ? "on" : ""} onClick={() => setView("table")}>Table</button><button className={view === "board" ? "on" : ""} onClick={() => setView("board")}>Pipeline</button></div>;
-        const acts = <>{serverOn(integ) && <button className="ld-act" onClick={syncNow} title="Fetch leads from your live sites">{syncing || "⟳ Sync live sites"}</button>}{leads.length > 0 && <button className="ld-act" onClick={exportCsv}>Export CSV</button>}</>;
+        const acts = <>{serverOn(integ) && <button className="ld-act" onClick={syncNow} title="Fetch leads from your live sites">{syncing || "⟳ Sync live sites"}</button>}{leads.length > 0 && <SheetBtn cls="ld-act" label={"▦ Save to Google Sheet" + (shown.length !== leads.length ? ` (${shown.length})` : "")} tab="Leads (from LaunchBuilder)" rows={shown.map((l) => ({ Date: new Date(l.ts).toLocaleString("en-IN"), Status: l.status || "", Form: l.form || "", Source: l.projectName || "", Page: l.page || "", ...Object.fromEntries(cols.map((c) => [c, String((l.data || {})[c] ?? "")])), Note: l.note || "" }))} />}{leads.length > 0 && <button className="ld-act" onClick={exportCsv}>Export CSV</button>}</>;
         return view === "board" ? <Pipeline user={user} leads={leads} update={update} forms={forms} onOpen={setOpen} onBack={() => setView("table")} toolbar={<div className="ld-tools">{views}{acts}</div>} /> : <>
       <div className="top"><div><h1>Leads</h1><p className="mut">Your form CRM — every submission from every page and form link.</p></div>
         <div className="row">{views}{acts}<button className={"ld-act ld-mask" + (masked ? " on" : "")} onClick={() => setMasked(!masked)} title={masked ? "Show contact details" : "Hide contact details"}>{masked ? "🙈 Masked" : "👁 Visible"}</button></div></div>

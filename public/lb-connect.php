@@ -107,6 +107,36 @@ function gs_append($DATA, $h, $lead) {
   return array('https://docs.google.com/spreadsheets/d/' . $sid . '/edit' . ($tabId !== null ? '#gid=' . $tabId : ''), '');
 }
 
+/* many rows at once into a tab (made if missing). $rows = list of [column name => value]; new columns are added to row 1 */
+function gs_put_rows($DATA, $sid, $tab, $rows) {
+  list($tok, $e) = gs_token($DATA); if ($e !== '') return array('', $e);
+  $tab = trim(preg_replace('/[\[\]\*\?\/\\:]+/', ' ', (string)$tab)); $tab = $tab === '' ? 'Leads' : mb_substr($tab, 0, 90);
+  list($code, $j, $err) = gs_http('GET', gs_api() . $sid . '?fields=' . rawurlencode('sheets.properties(sheetId,title)'), $tok);
+  if ($code !== 200) return array('', gs_why($code, $j, $err, $DATA));
+  $tabId = null; foreach ((isset($j['sheets']) ? $j['sheets'] : array()) as $x) if (strcasecmp($x['properties']['title'], $tab) === 0) { $tabId = (int)$x['properties']['sheetId']; $tab = $x['properties']['title']; }
+  if ($tabId === null) {
+    list($c2, $j2, $e2) = gs_http('POST', gs_api() . $sid . ':batchUpdate', $tok, array('requests' => array(array('addSheet' => array('properties' => array('title' => $tab))))));
+    if ($c2 !== 200) return array('', gs_why($c2, $j2, $e2, $DATA));
+    $tabId = (int)$j2['replies'][0]['addSheet']['properties']['sheetId']; $old = array();
+  } else {
+    list($c1, $j1, $e1) = gs_http('GET', gs_api() . $sid . '/values/' . gs_rng($tab, '1:1'), $tok);
+    if ($c1 !== 200) return array('', gs_why($c1, $j1, $e1, $DATA));
+    $old = isset($j1['values'][0]) ? array_map('strval', $j1['values'][0]) : array();
+  }
+  $head = $old; foreach ($rows as $r) foreach ($r as $k => $v) if (!in_array((string)$k, $head, true)) $head[] = (string)$k;
+  if ($head !== $old) {
+    list($c3, $j3, $e3) = gs_http('PUT', gs_api() . $sid . '/values/' . gs_rng($tab, 'A1') . '?valueInputOption=RAW', $tok, array('values' => array($head)));
+    if ($c3 !== 200) return array('', gs_why($c3, $j3, $e3, $DATA));
+    if (!$old) gs_http('POST', gs_api() . $sid . ':batchUpdate', $tok, array('requests' => array(
+      array('repeatCell' => array('range' => array('sheetId' => $tabId, 'startRowIndex' => 0, 'endRowIndex' => 1), 'cell' => array('userEnteredFormat' => array('textFormat' => array('bold' => true), 'backgroundColor' => array('red' => 1, 'green' => 0.96, 'blue' => 0.8))), 'fields' => 'userEnteredFormat(textFormat,backgroundColor)')),
+      array('updateSheetProperties' => array('properties' => array('sheetId' => $tabId, 'gridProperties' => array('frozenRowCount' => 1)), 'fields' => 'gridProperties.frozenRowCount')))));
+  }
+  $vals = array(); foreach ($rows as $r) { $row = array(); foreach ($head as $c) $row[] = isset($r[$c]) ? (string)$r[$c] : ''; $vals[] = $row; }
+  list($c4, $j4, $e4) = gs_http('POST', gs_api() . $sid . '/values/' . gs_rng($tab, 'A1') . ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', $tok, array('values' => $vals));
+  if ($c4 !== 200) return array('', gs_why($c4, $j4, $e4, $DATA));
+  return array('https://docs.google.com/spreadsheets/d/' . $sid . '/edit#gid=' . $tabId, '');
+}
+
 /* ================= Email with email + password (SMTP) ================= */
 function mail_presets() {
   return array(

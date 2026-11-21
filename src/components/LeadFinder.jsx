@@ -1,9 +1,10 @@
-// LaunchBuilder v101 — LeadFinder.jsx
+// LaunchBuilder v103 — LeadFinder.jsx
 // Find local businesses on Google (city + business type), filter them, save them in groups, add them to Leads,
-// and broadcast on WhatsApp. Google key lives on the server only (admin sets it once).
+// and broadcast on WhatsApp. Each account connects its own Google Places key (saved encrypted on the server).
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { phpCall, defaultServerUrl, addLead, uid } from "../lib.js";
+import { PlacesConnect, SheetBtn } from "./EasyConnect.jsx";
 
 const CITIES = ["Agra", "Ahmedabad", "Ajmer", "Amritsar", "Bengaluru", "Bhopal", "Bhubaneswar", "Chandigarh", "Chennai", "Coimbatore", "Dehradun", "Delhi", "Dharamshala", "Faridabad", "Ghaziabad", "Goa",
   "Gurugram", "Guwahati", "Hamirpur", "Hyderabad", "Indore", "Jaipur", "Jalandhar", "Jammu", "Jodhpur", "Kanpur", "Kochi", "Kolkata", "Kota", "Lucknow", "Ludhiana", "Madurai", "Mandi", "Mohali", "Mumbai",
@@ -20,6 +21,8 @@ const toCsv = (rows, name) => {
   const body = rows.map((r) => [r.name, r.phone, mobileOf(r.phone) ? "91" + mobileOf(r.phone) : "", r.category, r.address, r.city, r.website, r.rating, r.reviews, (r.tags || []).join(" "), r.maps].map(csvCell).join(","));
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + [head.join(","), ...body].join("\n")], { type: "text/csv" })); a.download = (name || "leads").replace(/[^\w-]+/g, "-") + ".csv"; a.click();
 };
+/* the same columns as the CSV, for Google Sheets */
+const sheetRows = (rows) => rows.map((r) => ({ "Business name": r.name || "", Phone: r.phone || "", "WhatsApp number": mobileOf(r.phone) ? "91" + mobileOf(r.phone) : "", Category: r.category || "", Address: r.address || "", City: r.city || "", Website: r.website || "", Rating: r.rating ? String(r.rating) : "", Reviews: r.reviews ? String(r.reviews) : "", Tags: (r.tags || []).join(" "), "Google Maps": r.maps || "" }));
 const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } };
 const fmtDate = (t) => new Date(t).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -28,7 +31,7 @@ export default function LeadFinder({ user, integ, me, onLeads }) {
   const [tab, setTab] = useState("search"), [st, setSt] = useState(null), [data, setData0] = useState(() => loadLF(E));
   const setData = (f) => setData0((d) => { const v = typeof f === "function" ? f(d) : f; saveLF(E, v); return v; });
   const [city, setCity] = useState(() => localStorage.getItem("lb_lf_city") || ""), [q, setQ] = useState(""), [n, setN] = useState(20);
-  const [res, setRes] = useState(null), [busy, setBusy] = useState(false), [err, setErr] = useState(""), [toast, setToast] = useState(""), [openG, setOpenG] = useState(null);
+  const [keyOpen, setKeyOpen] = useState(false), [res, setRes] = useState(null), [busy, setBusy] = useState(false), [err, setErr] = useState(""), [toast, setToast] = useState(""), [openG, setOpenG] = useState(null);
   useEffect(() => { phpCall(srv, { action: "lf_status" }).then(setSt).catch((e) => setSt({ ok: false, error: e.message })); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 3500); return () => clearTimeout(t); }, [toast]);
   const savedIn = useMemo(() => { const m = {}; data.groups.forEach((g) => g.leads.forEach((l) => { (m[l.id] = m[l.id] || []).push(g.name); })); return m; }, [data]);
@@ -43,7 +46,7 @@ export default function LeadFinder({ user, integ, me, onLeads }) {
       if (list.length) { const gn = q.trim().replace(/^./, (c) => c.toUpperCase()) + " · " + city.trim().replace(/^./, (c) => c.toUpperCase()); addToGroup(list, gn, true); }
       setSt((s) => (s ? { ...s, left: r.left, used: (s.used || 0) + 1 } : s));
       setData((d) => ({ ...d, history: [{ id: uid(), city: city.trim(), q: q.trim(), n, ts: Date.now(), count: list.length, list }, ...d.history].slice(0, 25) }));
-    } catch (x) { setErr(x.message === "NO_PLACES_KEY" ? "Lead Finder isn't switched on yet." : x.message); }
+    } catch (x) { if (x.message === "NO_PLACES_KEY") { setSt((s0) => ({ ...s0, ready: false })); setErr(""); } else setErr(x.message); }
     setBusy(false);
   };
   /* groups */
@@ -74,8 +77,9 @@ export default function LeadFinder({ user, integ, me, onLeads }) {
   return (
     <div className="lf">
       <Head tab={tab} setTab={(t) => { setTab(t); setOpenG(null); }} groups={data.groups.length} hist={data.history.length} />
-      {!st.ready && <Setup st={st} srv={srv} onDone={(r) => setSt((s) => ({ ...s, ready: r.ready }))} />}
-      {st.ready && st.admin && <Setup st={st} srv={srv} small onDone={(r) => setSt((s) => ({ ...s, ready: r.ready }))} />}
+      {!st.ready && <div className="lf-card lf-connect"><div className="lf-fh"><b>🔑 Connect your Google key to start finding customers</b></div><p className="mut sm">One time, about 3 minutes. Your key works only for your account and is saved encrypted on the server.</p><PlacesConnect srv={srv} onDone={setSt} /></div>}
+      {st.ready && <div className="lf-keybar"><span>{st.using === "own" ? "🔑 Your Google key ••••" + (st.own ? st.own.tail : "") : st.admin ? "🔑 Server key (admin)" : "🔑 Shared key — " + (st.left === -1 ? "unlimited" : st.left + " searches left this month")}</span><button className="lf-adm" onClick={() => setKeyOpen(!keyOpen)}>{keyOpen ? "Close" : st.using === "own" ? "Manage key" : "Connect my own key"}</button></div>}
+      {st.ready && keyOpen && <div className="lf-card lf-connect"><PlacesConnect srv={srv} onDone={setSt} compact /></div>}
 
       {tab === "search" && st.ready && <>
         <form className="lf-card lf-find" onSubmit={search}>
@@ -89,7 +93,7 @@ export default function LeadFinder({ user, integ, me, onLeads }) {
           {err && <div className="lf-err">{err}</div>}
         </form>
         {!res && !busy && <p className="lf-hint">Type a city and a business type to search Google. Tag the results, save them to a group, add them to your Leads, or export them as CSV.</p>}
-        {res && <Results key={res.city + res.q + res.list.length} rows={res.list} title={`${res.list.length} businesses found for “${res.q}” in ${res.city}`} savedIn={savedIn} groups={data.groups}
+        {res && <Results key={res.city + res.q + res.list.length} rows={res.list} sheetTab={res.q + " · " + res.city} title={`${res.list.length} businesses found for “${res.q}” in ${res.city}`} savedIn={savedIn} groups={data.groups}
           onGroup={addToGroup} onLeads={toLeads} onTag={(rows, t) => tagRows(rows, t)} csvName={`${res.q}-${res.city}`} />}
       </>}
 
@@ -119,30 +123,8 @@ function Head({ tab, setTab, groups = 0, hist = 0 }) {
 }
 
 /* admin: switch Lead Finder on with a Google key (kept on the server, never in the browser) */
-function Setup({ st, srv, small, onDone }) {
-  const [k, setK] = useState(""), [lim, setLim] = useState(st.perUser ?? 100), [busy, setBusy] = useState(false), [msg, setMsg] = useState(""), [open, setOpen] = useState(!small);
-  if (!st.admin) return <div className="lf-card lf-off"><b>🔍 Lead Finder isn't switched on yet</b><p className="mut">Ask your admin to switch it on — then you can search businesses here.</p></div>;
-  const save = async () => { setBusy(true); setMsg(""); try { const r = await phpCall(srv, { action: "lf_setup", gkey: k.trim(), limit: +lim || 0 }); setMsg(r.ready ? "✓ Saved — Lead Finder is on" : "Saved"); setK(""); onDone(r); } catch (e) { setMsg("✕ " + e.message); } setBusy(false); };
-  if (small && !open) return <button className="lf-adm" onClick={() => setOpen(true)}>⚙ Lead Finder settings (admin)</button>;
-  return (
-    <div className="lf-card lf-setup">
-      <div className="lf-fh"><b>{st.ready ? "⚙ Lead Finder settings (admin only)" : "Switch on Lead Finder (one time, admin only)"}</b>{small && <button className="lf-x" onClick={() => setOpen(false)}>✕</button>}</div>
-      {!st.ready && <ol className="lf-steps">
-        <li>Open <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" rel="noopener">Google Cloud → Places API (New)</a> and press <b>Enable</b> (a billing account is needed; Google gives a free monthly amount).</li>
-        <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Credentials</a> → <b>Create credentials → API key</b>. Copy it (starts with <code>AIza…</code>).</li>
-        <li>Paste it below. It is saved only on your server — your users never see it.</li></ol>}
-      <div className="lf-row">
-        <label className="lf-kw"><span>Google API key {st.ready && <em>(leave empty to keep the current one)</em>}</span><input type="password" value={k} onChange={(e) => setK(e.target.value)} placeholder="AIza…" autoComplete="off" /></label>
-        <label className="lf-n"><span>Searches per account / month</span><input type="number" min="0" value={lim} onChange={(e) => setLim(e.target.value)} /><small>0 = unlimited · you (admin) are always unlimited</small></label>
-        <button className="lf-go" onClick={save} disabled={busy || (!st.ready && !k.trim())}>{busy ? "Checking…" : "Save"}</button>
-      </div>
-      {msg && <div className={msg.startsWith("✓") ? "lf-ok" : "lf-err"}>{msg}</div>}
-    </div>
-  );
-}
-
 /* the results table: search, filters, sort, select, save / tag / leads / CSV */
-function Results({ rows, title, savedIn, groups, onGroup, onLeads, onTag, csvName, extra, onRemove, inGroup }) {
+function Results({ rows, title, sheetTab, savedIn, groups, onGroup, onLeads, onTag, csvName, extra, onRemove, inGroup }) {
   const [s, setS] = useState(""), [cat, setCat] = useState(""), [hp, setHp] = useState(""), [hw, setHw] = useState(""), [rt, setRt] = useState(""), [ct, setCt] = useState(""), [wa, setWa] = useState(""), [rv, setRv] = useState(""), [stt, setStt] = useState(""), [tg, setTg] = useState(""), [sort, setSort] = useState(["", 1]), [page, setPage] = useState(0), [sel, setSel] = useState(new Set());
   const [gname, setGname] = useState(""), [tag, setTag] = useState("");
   const cats = useMemo(() => [...new Set(rows.map((r) => r.category).filter(Boolean))].sort(), [rows]);
@@ -188,6 +170,7 @@ function Results({ rows, title, savedIn, groups, onGroup, onLeads, onTag, csvNam
           {F(stt, setStt, "Status", [["open", "Open now (in business)"], ["closed", "Closed"], ["uniq", "No duplicates"], ["dup", "Duplicates only"]])}
           {tagsL.length > 0 && F(tg, setTg, "Tag", tagsL.map((t) => [t, t]))}
           {nf > 0 && <button className="lf-b lf-reset" onClick={reset}>✕ Clear filters ({nf})</button>}
+          <SheetBtn rows={sheetRows(chosen.length ? chosen : list)} tab={"Lead Finder · " + (sheetTab || csvName || "Results")} label={"▦ Save to Google Sheet" + (chosen.length ? ` (${chosen.length})` : "")} />
           <button className="lf-b" onClick={() => toCsv(chosen.length ? chosen : list, csvName)}>⬇ Export CSV{chosen.length ? ` (${chosen.length})` : ""}</button>
         </div>
         {chosen.length > 0 && <div className="lf-selbar"><b>{chosen.length} selected</b>
@@ -246,7 +229,7 @@ function GroupView({ g, integ, onBack, onLeads, onTag, onRemove, onEdit, onAdd, 
   return (<>
     <div className="lf-gh"><button className="lf-back" onClick={onBack}>‹ Groups</button><h2>{g.name}</h2>{g.desc && <span className="mut">{g.desc}</span>}
       <div className="grow" /><button className="lf-b" onClick={onEdit}>✎ Edit</button><button className="lf-b" onClick={onAdd}>＋ Add leads</button><button className="lf-go sm" onClick={() => setBc(true)} disabled={!g.leads.length}>📣 Broadcast</button></div>
-    <Results rows={g.leads} title={`${g.leads.length} leads in “${g.name}”`} savedIn={savedIn} groups={groups} onGroup={onGroup} onLeads={onLeads} onTag={onTag} onRemove={onRemove} csvName={g.name} inGroup />
+    <Results rows={g.leads} sheetTab={g.name} title={`${g.leads.length} leads in “${g.name}”`} savedIn={savedIn} groups={groups} onGroup={onGroup} onLeads={onLeads} onTag={onTag} onRemove={onRemove} csvName={g.name} inGroup />
     {bc && <Broadcast g={g} integ={integ} onClose={() => setBc(false)} toast={toast} />}
   </>);
 }

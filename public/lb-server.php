@@ -251,6 +251,25 @@ if ($act === 'leadpay') {
 
 /* email automation through the owner's connected mailbox (email + password).
    Only two kinds of email, once per lead: the thank-you to the email typed IN that lead, and the alert to the owner's own address. */
+/* sign up without the confirmation email: the account is created ready to use (needs the Supabase secret key on the server).
+   Without the secret key the app falls back to Supabase's normal sign-up. Max 5 new accounts per hour from one internet address. */
+if ($act === 'signup') {
+  $S = lb_saas(); if (!$S || empty($S['service_key'])) out(array('ok' => false, 'fallback' => true));
+  $em = strtolower(trim(isset($d['email']) ? (string)$d['email'] : '')); $pw = (string)(isset($d['password']) ? $d['password'] : ''); $nm = clean_str(isset($d['name']) ? $d['name'] : '', 80);
+  if (!filter_var($em, FILTER_VALIDATE_EMAIL)) fail('Type a valid email.'); if (strlen($pw) < 6) fail('Password must be at least 6 characters.');
+  $rf = $DATA . '/signup-ip.json'; $rl = jread($rf, array()); $ip = substr(hash('sha256', lb_ip() . '|su'), 0, 20); $now = time();
+  foreach ($rl as $k => $ts) { $rl[$k] = array_values(array_filter((array)$ts, function ($t) use ($now) { return $t > $now - 3600; })); if (!$rl[$k]) unset($rl[$k]); }
+  if (isset($rl[$ip]) && count($rl[$ip]) >= 5) fail('Too many new accounts from this internet connection. Please try again in an hour.');
+  $rl[$ip][] = $now; jwrite($rf, $rl);
+  $sk = $S['service_key']; $h = array('apikey: ' . $sk, 'Content-Type: application/json'); if (strpos($sk, 'sb_') !== 0) $h[] = 'Authorization: Bearer ' . $sk;
+  $c = curl_init(rtrim($S['supabase_url'], '/') . '/auth/v1/admin/users');
+  curl_setopt_array($c, array(CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_HTTPHEADER => $h, CURLOPT_POSTFIELDS => json_encode(array('email' => $em, 'password' => $pw, 'email_confirm' => true, 'user_metadata' => array('name' => $nm !== '' ? $nm : explode('@', $em)[0])))));
+  $b = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); curl_close($c); $j = json_decode((string)$b, true);
+  if ($code === 0) out(array('ok' => false, 'fallback' => true));
+  if ($code >= 300 || empty($j['id'])) { $m = isset($j['msg']) ? $j['msg'] : (isset($j['message']) ? $j['message'] : (isset($j['error_description']) ? $j['error_description'] : 'HTTP ' . $code)); fail(preg_match('/already|exists|registered/i', $m) ? 'An account with this email already exists — log in instead (or use “Forgot password?”).' : 'Could not create the account: ' . $m); }
+  out(array('ok' => true));
+}
+
 if ($act === 'leadmail') {
   $lid = preg_replace('/[^A-Za-z0-9]/', '', clean_str(isset($d['lid']) ? $d['lid'] : '', 40)); $kind = isset($d['kind']) && $d['kind'] === 'owner' ? 'owner' : 'auto';
   if ($lid === '') fail('No lead');
@@ -549,31 +568,47 @@ function lf_cfg() { global $DATA; return jread($DATA . '/places.json', array());
 function lf_month() { return gmdate('Y-m'); }
 function lf_used($kid) { global $DATA; $u = jread($DATA . '/places-usage.json', array()); return (isset($u[$kid]) && $u[$kid]['m'] === lf_month()) ? (int)$u[$kid]['n'] : 0; }
 function lf_limit() { global $IS_ADMIN; $c = lf_cfg(); if ($IS_ADMIN) return 0; return isset($c['limit']) ? (int)$c['limit'] : 100; }
+/* v103 — every account connects its OWN Google key (saved encrypted, per account).
+   The admin's server key is only used by the admin — and by everyone else only if the admin switches on "share". */
+function lf_kfile() { global $DATA, $KID; $d = $DATA . '/places-keys'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . $KID . '.json'; }
+function lf_mine() { return jread(lf_kfile(), array()); }
+function lf_shared() { global $IS_ADMIN; $c = lf_cfg(); return !empty($c['enc']) && ($IS_ADMIN || !empty($c['share'])); }
+function lf_test_key($k) {
+  if (!preg_match('/^[A-Za-z0-9_\-]{20,80}$/', $k)) fail('That does not look like a Google API key (it starts with AIza…).');
+  list($code, $j, $err) = ai_post_raw(lf_url(), array('X-Goog-Api-Key: ' . $k, 'X-Goog-FieldMask: places.id'), array('textQuery' => 'cafe in Delhi', 'pageSize' => 1));
+  if ($code !== 200) fail('Google did not accept the key: ' . ($err ?: (isset($j['error']['message']) ? $j['error']['message'] : 'HTTP ' . $code)) . ' — make sure "Places API (New)" is enabled for this key and billing is on.');
+}
 if ($act === 'lf_status') {
-  $c = lf_cfg(); $lim = lf_limit(); $used = lf_used($KID);
-  out(array('ok' => true, 'ready' => !empty($c['enc']), 'limit' => $lim, 'used' => $used, 'left' => $lim ? max(0, $lim - $used) : -1, 'admin' => $IS_ADMIN, 'perUser' => isset($c['limit']) ? (int)$c['limit'] : 100));
+  $c = lf_cfg(); $m = lf_mine(); $own = !empty($m['enc']); $sh = lf_shared();
+  $lim = $own || $IS_ADMIN ? 0 : lf_limit(); $used = lf_used($KID);
+  out(array('ok' => true, 'ready' => $own || $sh, 'own' => $own ? array('tail' => $m['tail'], 'saved' => $m['saved']) : null, 'using' => $own ? 'own' : ($sh ? 'shared' : ''),
+    'limit' => $lim, 'used' => $used, 'left' => $lim ? max(0, $lim - $used) : -1, 'admin' => $IS_ADMIN, 'perUser' => isset($c['limit']) ? (int)$c['limit'] : 100,
+    'server' => $IS_ADMIN ? array('on' => !empty($c['enc']), 'tail' => isset($c['tail']) ? $c['tail'] : '', 'share' => !empty($c['share'])) : null));
+}
+if ($act === 'lf_key') {   /* any account: connect / remove its own key */
+  if (!empty($d['remove'])) { @unlink(lf_kfile()); out(array('ok' => true)); }
+  $k = trim(isset($d['gkey']) ? (string)$d['gkey'] : ''); lf_test_key($k);
+  jwrite(lf_kfile(), array('enc' => ai_enc($k, $DATA), 'tail' => substr($k, -4), 'saved' => time())); @chmod(lf_kfile(), 0600);
+  out(array('ok' => true, 'tail' => substr($k, -4)));
 }
 if ($act === 'lf_setup') {
   if (!$IS_ADMIN) fail('Only the admin can set the Google key.');
   $c = lf_cfg(); $k = trim(isset($d['gkey']) ? (string)$d['gkey'] : '');
-  if ($k !== '') {
-    if (!preg_match('/^[A-Za-z0-9_\-]{20,80}$/', $k)) fail('That does not look like a Google API key (it starts with AIza…).');
-    list($code, $j, $err) = ai_post_raw(lf_url(), array('X-Goog-Api-Key: ' . $k, 'X-Goog-FieldMask: places.id'), array('textQuery' => 'cafe in Delhi', 'pageSize' => 1));
-    if ($code !== 200) fail('Google did not accept the key: ' . ($err ?: 'HTTP ' . $code) . ' — turn on "Places API (New)" for this key in Google Cloud.');
-    $c['enc'] = ai_enc($k, $DATA); $c['tail'] = substr($k, -4);
-  }
+  if ($k !== '') { lf_test_key($k); $c['enc'] = ai_enc($k, $DATA); $c['tail'] = substr($k, -4); }
   if (isset($d['limit'])) $c['limit'] = max(0, (int)$d['limit']);
+  if (isset($d['share'])) $c['share'] = !empty($d['share']);
   if (!empty($d['remove'])) unset($c['enc'], $c['tail']);
   jwrite($DATA . '/places.json', $c); out(array('ok' => true, 'ready' => !empty($c['enc']), 'tail' => isset($c['tail']) ? $c['tail'] : ''));
 }
 if ($act === 'lf_search') {
   @set_time_limit(90);
-  $c = lf_cfg(); if (empty($c['enc'])) fail('NO_PLACES_KEY');
+  $c = lf_cfg(); $m = lf_mine(); $own = !empty($m['enc']);
+  if (!$own && !lf_shared()) fail('NO_PLACES_KEY');
   $city = clean_str(trim(isset($d['city']) ? $d['city'] : ''), 80); $q = clean_str(trim(isset($d['q']) ? $d['q'] : ''), 120);
   if ($city === '' || $q === '') fail('Type a city and a business type.');
   $n = max(20, min(60, (int)(isset($d['n']) ? $d['n'] : 20)));
-  $lim = lf_limit(); $used = lf_used($KID); if ($lim && $used >= $lim) fail('You have used all ' . $lim . ' searches for this month.');
-  $key = ai_dec($c['enc'], $DATA);
+  $lim = $own ? 0 : lf_limit(); $used = lf_used($KID); if ($lim && $used >= $lim) fail('You have used all ' . $lim . ' free searches for this month — connect your own Google key for unlimited searches.');
+  $key = ai_dec($own ? $m['enc'] : $c['enc'], $DATA);
   $mask = 'places.id,places.displayName,places.formattedAddress,places.addressComponents,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.primaryTypeDisplayName,places.googleMapsUri,places.businessStatus,nextPageToken';
   $out = array(); $tok = '';
   for ($page = 0; $page < $n / 20; $page++) {
@@ -890,6 +925,23 @@ if ($act === 'mail_save') {
   jwrite($f, $m); @chmod($f, 0600);
   if ($IS_ADMIN) { jwrite(mail_file($DATA, 'admin'), $m); @chmod(mail_file($DATA, 'admin'), 0600); }   /* websites made before accounts send as the admin */
   out(array('ok' => true, 'mail' => mail_public($m)));
+}
+
+/* v103 — "Save to Google Sheet": send many rows (Lead Finder results, leads) to the account's connected sheet */
+if ($act === 'gs_rows') {
+  @set_time_limit(180);
+  $h = jread(lb_hook_file($DATA, $ME['uid']), array());
+  $rows = isset($d['rows']) && is_array($d['rows']) ? array_slice($d['rows'], 0, 2000) : array(); if (!$rows) fail('Nothing to save.');
+  $clean = array(); foreach ($rows as $r) { if (!is_array($r)) continue; $o = array(); foreach ($r as $k => $v) { $k = clean_str((string)$k, 60); if ($k !== '') $o[$k] = clean_str(is_scalar($v) ? (string)$v : '', 2000); } if ($o) $clean[] = $o; }
+  $tab = clean_str(isset($d['tab']) ? $d['tab'] : 'Leads', 90);
+  if (!empty($h['sid'])) { list($url, $e) = gs_put_rows($DATA, $h['sid'], $tab, $clean); if ($e !== '') fail($e); out(array('ok' => true, 'n' => count($clean), 'sheet' => $url, 'tab' => $tab)); }
+  if (!empty($h['url'])) {   /* connected with Apps Script: each row goes in as one entry */
+    if (count($clean) > 150) fail('With the Apps Script connection you can send up to 150 rows at a time. Select fewer rows — or connect the sheet with its link (Integrations → Google Sheets → Sheet link) for big lists.');
+    $n = 0; foreach ($clean as $r) { $lead = array('lid' => 'S' . bin2hex(random_bytes(5)), 'ts' => (int)(microtime(true) * 1000), 'form' => $tab, 'page' => '', 'url' => '', 'site' => '', 'data' => $r);
+      list($code, $b, $err) = lb_hook_post($h['url'], lb_hook_payload($lead, array('notify' => false, 'autoreply' => false) + $h), true); if ($err !== '' || $code >= 400) { if (!$n) fail('Could not reach your Apps Script: ' . ($err !== '' ? $err : 'HTTP ' . $code)); break; } $n++; }
+    out(array('ok' => true, 'n' => $n, 'sheet' => '', 'tab' => 'Leads'));
+  }
+  fail('NO_SHEET');
 }
 
 if ($act === 'hooks') {

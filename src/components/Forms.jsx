@@ -1,5 +1,6 @@
-// LaunchBuilder v48 — Forms.jsx
-import { useMemo, useState } from "react";
+// LaunchBuilder v103 — Forms.jsx
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import ScratchCard from "./Scratch.jsx";
 import Builder from "./FormBuilder.jsx";
 import { FORM_TEMPLATES as FT0, newForm, uid, ago, formUrl } from "../lib.js";
@@ -32,8 +33,10 @@ function Gallery({ onPick, onClose, integ, initial = null }) {
   const forms = useMemo(() => Object.fromEntries(FORM_TEMPLATES.map((t) => [t.key, formPageHtml(newForm(t), integ)])), [integ]);
   const [view, setView] = useState(initial), [dev, setDev] = useState("desktop");
   const cur = view && FORM_TEMPLATES.find((t) => t.key === view);
-  return (
-    <div className="ov" onClick={onClose}><div className="md fm-gal" onClick={(e) => e.stopPropagation()}>
+  useEffect(() => { const k = (e) => { if (e.key === "Escape") { if (view) setView(null); else onClose(); } }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [view, onClose]);
+  /* portal: a moved/animated parent would otherwise push the window down and leave a gap at the top */
+  return createPortal(
+    <div className="ov fm-ov" onClick={onClose}><div className={"md fm-gal" + (cur ? " pv" : "")} onClick={(e) => e.stopPropagation()}>
       {!cur ? <>
         <div className="fm-gh"><div><h3>Start a new form</h3><p className="mut">{FORM_TEMPLATES.length} templates · hover to preview, change every field afterwards.</p></div><button onClick={onClose}>✕</button></div>
         <div className="fm-tpls">{FORM_TEMPLATES.map((t) => (
@@ -45,11 +48,12 @@ function Gallery({ onPick, onClose, integ, initial = null }) {
       </> : <div className="fm-prev">
         <div className="fm-pbar"><button onClick={() => setView(null)}>← All templates</button><b>{cur.name}</b><div className="grow" />
           <div className="seg2" style={{ width: 210 }}>{[["desktop", "Desktop"], ["mobile", "Mobile"]].map(([k, l]) => <button key={k} className={dev === k ? "on" : ""} onClick={() => setDev(k)}>{l}</button>)}</div>
-          <button className="pri" onClick={() => onPick(cur)}>Use this template</button></div>
+          <button className="pri" onClick={() => onPick(cur)}>Use this template</button>
+          <button className="fm-x" onClick={onClose} title="Close (Esc)" aria-label="Close">✕</button></div>
         <div className="fm-pstage"><iframe title={cur.name} srcDoc={forms[cur.key]} sandbox="" style={{ width: dev === "mobile" ? 390 : "100%" }} /></div>
         <p className="mut sm">{cur.note}. After choosing it you can add/remove fields, change colours, button text, payment, WhatsApp and email automation.</p>
       </div>}
-    </div></div>
+    </div></div>, document.querySelector(".dash") || document.body
   );
 }
 

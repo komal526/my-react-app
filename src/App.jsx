@@ -1,7 +1,7 @@
-// LaunchBuilder v41 — App.jsx
+// LaunchBuilder v103 — App.jsx (also reads the login handed back by Google sign-in / reset links)
 import { useEffect, useState } from "react";
 import Auth from "./components/Auth.jsx";
-import { cloudOn, cloudUser, cloudLogout, startCloud } from "./cloud.js";
+import { cloudOn, cloudUser, cloudLogout, startCloud, cloudFromHash } from "./cloud.js";
 import Dashboard from "./components/Dashboard.jsx";
 import { Preview, FormPage, BookPage } from "./components/parts.jsx";
 import { TplView } from "./components/Rail.jsx";
@@ -14,11 +14,15 @@ const route = () => {
   const m = location.hash.match(/^#\/preview\/([^/]+)\/?(.*)$/); return m ? { token: m[1], file: decodeURIComponent(m[2] || "") || "index.html" } : null;
 };
 
+/* read once, before anything else looks at the address bar */
+const INCOMING = cloudOn() ? cloudFromHash() : null;
+
 export default function App() {
-  const [user, setUser] = useState(() => { try { return JSON.parse(localStorage.getItem("lb_session")); } catch { return null; } });
+  const [user, setUser] = useState(() => { if (INCOMING) return null; try { return JSON.parse(localStorage.getItem("lb_session")); } catch { return null; } });
   const [pv, setPv] = useState(route);
-  useEffect(() => { const f = () => setPv(route()); window.addEventListener("hashchange", f); return () => window.removeEventListener("hashchange", f); }, []);
-  const login = (u) => { localStorage.setItem("lb_session", JSON.stringify(u)); setUser(u); };
+  useEffect(() => { const f = () => { if (/access_token=|error_description=/.test(location.hash)) { location.reload(); return; } setPv(route()); }; window.addEventListener("hashchange", f); return () => window.removeEventListener("hashchange", f); }, []);
+  const [incoming, setIncoming] = useState(INCOMING);   /* used once */
+  const login = (u) => { localStorage.setItem("lb_session", JSON.stringify(u)); setIncoming(null); setUser(u); };
   const logout = async () => { if (cloudOn()) await cloudLogout(); localStorage.removeItem("lb_session"); setUser(null); };
   /* Supabase: if this browser already has the data, open instantly and sync in the background */
   const hasLocal = () => { try { return !!(user && localStorage.getItem("lb_pages_" + user.email)); } catch { return false; } };
@@ -36,5 +40,5 @@ export default function App() {
   if (pv && pv.book) return <BookPage key={pv.book} id={pv.book} />;
   if (pv) return <Preview key={pv.token} token={pv.token} file={pv.file} />;
   if (!ready) return /^#\/studio/.test(location.hash) ? <div className="ais-boot"><span className="pub-spin" /></div> : <div className="boot"><span className="pub-spin" />Loading your workspace…</div>;
-  return user ? <Dashboard key={user.email} user={user} onLogout={logout} /> : <Auth onLogin={login} />;
+  return user ? <Dashboard key={user.email} user={user} onLogout={logout} /> : <Auth onLogin={login} incoming={incoming} />;
 }

@@ -12,20 +12,20 @@ const col = (v) => (v >= 80 ? "#22c55e" : v >= 55 ? "#f5b301" : "#ef4444");
 function Gauge({ v }) {
   const R0 = 52, C = 2 * Math.PI * R0, k = Math.max(0, Math.min(100, v)) / 100;
   return <svg className="cg-gauge" viewBox="0 0 130 130" aria-label={"Score " + v}>
-    <circle cx="65" cy="65" r={R0} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="12" />
+    <circle cx="65" cy="65" r={R0} fill="none" stroke="#e8ebf5" strokeWidth="12" />
     <circle cx="65" cy="65" r={R0} fill="none" stroke={col(v)} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${C * k} ${C}`} transform="rotate(-90 65 65)" style={{ filter: `drop-shadow(0 0 6px ${col(v)})` }} />
-    <text x="65" y="66" textAnchor="middle" fontSize="34" fontWeight="800" fill="#fff">{v}</text><text x="65" y="88" textAnchor="middle" fontSize="11" fill="#aab2dc">out of 100</text></svg>;
+    <text x="65" y="66" textAnchor="middle" fontSize="34" fontWeight="800" fill="#0f172a">{v}</text><text x="65" y="88" textAnchor="middle" fontSize="11" fill="#64748b">out of 100</text></svg>;
 }
 function Radar({ areas }) {
   const ks = Object.keys(areas), n = ks.length, c = 95, R0 = 62;
   const pt = (i, f) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / n; return [c + Math.cos(a) * R0 * f, c + Math.sin(a) * R0 * f]; };
   const poly = (f) => ks.map((_, i) => pt(i, typeof f === "function" ? f(i) : f).join(",")).join(" ");
   return <svg className="cg-radar" viewBox="-28 -4 246 198" aria-label="Scores by area">
-    {[0.25, 0.5, 0.75, 1].map((f) => <polygon key={f} points={poly(f)} fill="none" stroke="rgba(255,255,255,.12)" />)}
-    {ks.map((_, i) => <line key={i} x1={c} y1={c} x2={pt(i, 1)[0]} y2={pt(i, 1)[1]} stroke="rgba(255,255,255,.1)" />)}
+    {[0.25, 0.5, 0.75, 1].map((f) => <polygon key={f} points={poly(f)} fill="none" stroke="#e3e7f2" />)}
+    {ks.map((_, i) => <line key={i} x1={c} y1={c} x2={pt(i, 1)[0]} y2={pt(i, 1)[1]} stroke="#e8ebf5" />)}
     <polygon points={poly((i) => Math.max(0.04, areas[ks[i]] / 100))} fill="rgba(245,179,1,.28)" stroke="#f5b301" strokeWidth="2" />
     {ks.map((k, i) => { const [x, y] = pt(i, Math.max(0.04, areas[k] / 100)); return <circle key={k} cx={x} cy={y} r="3.5" fill={col(areas[k])} />; })}
-    {ks.map((k, i) => { const [x, y] = pt(i, 1.32); return <text key={k} x={x} y={y + 3} textAnchor="middle" fontSize="9.5" fill="#cfd5f5">{areaName(k).split(/[ &]/)[0]} {areas[k]}</text>; })}
+    {ks.map((k, i) => { const [x, y] = pt(i, 1.32); return <text key={k} x={x} y={y + 3} textAnchor="middle" fontSize="9.5" fill="#475569">{areaName(k).split(/[ &]/)[0]} {areas[k]}</text>; })}
   </svg>;
 }
 function Funnel({ m }) {
@@ -177,7 +177,7 @@ export default function Consultant({ open, onClose, initial = {}, projects, even
   const tips = r ? r.issues.filter((i) => i.sev > 0).slice(0, 3) : [];
   return (
     <div className="cn-wrap" onClick={onClose}>
-      <aside className="cn v88" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="AI Consultant">
+      <aside className="cn v88 lt" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="AI Consultant">
         <header className="cn-top">
           <span className="cn-bot"><Robot mood={busy ? "alert" : "happy"} /></span>
           <div className="grow"><b>AI Consultant</b><small className={"cn-stat " + (ready === null ? "" : ready ? "ok" : "off")}><i />{ready === null ? "Checking AI…" : ready ? "Online · " + ready : "Audit mode · add an AI key for full answers"}</small></div>

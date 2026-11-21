@@ -3,7 +3,7 @@
 // RobotSetup: the admin adds that robot once (a Google service-account JSON key, stored encrypted on the server).
 // EmailEasy: connect your mailbox with email + password (Gmail needs an App password) — emails go out from your own address.
 import { useEffect, useRef, useState } from "react";
-import { gsStatus, gsSetup, gsCheck, hooksSave, hooksTest, mailGet, mailSave, mailOff, ago } from "../lib.js";
+import { gsStatus, gsSetup, gsCheck, hooksSave, hooksTest, mailGet, mailSave, mailOff, ago, phpCall, gsRows } from "../lib.js";
 
 /* ---------------- admin: add the Google robot once ---------------- */
 export function RobotSetup({ st, onDone }) {
@@ -162,4 +162,68 @@ export function EmailEasy({ em, onSave, userEmail }) {
       <p className="mut sm">🔒 Your password is saved encrypted on the server and never shown again. Gmail sends ~500 emails a day; use a business mailbox for more.</p>
     </div>
   );
+}
+
+/* ---------------- Lead Finder: each account connects its own Google Places key ---------------- */
+export function PlacesConnect({ srv, onDone, compact }) {
+  const [st, setSt] = useState(null), [k, setK] = useState(""), [busy, setBusy] = useState(false), [msg, setMsg] = useState(null), [edit, setEdit] = useState(false);
+  const [adm, setAdm] = useState({ k: "", share: false, lim: 100 }), [amsg, setAmsg] = useState(null);
+  const load = () => phpCall(srv, { action: "lf_status" }).then((r) => { setSt(r); if (r.server) setAdm((a) => ({ ...a, share: !!r.server.share, lim: r.perUser ?? 100 })); onDone && onDone(r); return r; }).catch((e) => setSt({ error: e.message }));
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const save = async () => {
+    setBusy(true); setMsg(["wait", "Checking the key with Google…"]);
+    try { const r = await phpCall(srv, { action: "lf_key", gkey: k.trim() }); setK(""); setEdit(false); setMsg(["ok", "✓ Connected (key ending " + r.tail + ") — you can search now."]); await load(); } catch (e) { setMsg(["bad", e.message]); }
+    setBusy(false);
+  };
+  const remove = async () => { if (!window.confirm("Remove your Google key from Lead Finder?")) return; try { await phpCall(srv, { action: "lf_key", remove: 1 }); setMsg(["ok", "Removed."]); load(); } catch (e) { setMsg(["bad", e.message]); } };
+  const saveAdm = async () => {
+    setAmsg(["wait", "Saving…"]);
+    try { await phpCall(srv, { action: "lf_setup", gkey: adm.k.trim(), share: adm.share ? 1 : 0, limit: +adm.lim || 0 }); setAdm((a) => ({ ...a, k: "" })); setAmsg(["ok", "✓ Saved"]); load(); } catch (e) { setAmsg(["bad", e.message]); }
+  };
+  if (!st) return <div className="mut sm">Loading…</div>;
+  if (st.error) return <div className="gs-msg bad">{st.error}</div>;
+  const own = st.own, showForm = !own || edit;
+  return (
+    <div className={"ec pc" + (compact ? " compact" : "")}>
+      {own && <div className="ec-on">✓ Your Google key <code>••••{own.tail}</code> is connected — unlimited searches (billed to your own Google account).
+        <span className="pc-acts"><button className="xs" onClick={() => setEdit(!edit)}>{edit ? "Cancel" : "Replace"}</button><button className="xs red" onClick={remove}>Remove</button></span></div>}
+      {!own && st.using === "shared" && !st.admin && <div className="ec-note">You're using the shared key: <b>{st.left === -1 ? "unlimited" : st.left + " of " + st.limit}</b> searches left this month. Connect your own key below for unlimited searches.</div>}
+      {!own && st.admin && st.using === "shared" && <div className="ec-note">You're searching with the server key (admin). You can also connect a personal key below.</div>}
+      {showForm && <>
+        <ol className="ec-steps">
+          <li>Open <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> and create (or pick) a project.</li>
+          <li>Turn on <a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" rel="noopener"><b>Places API (New)</b></a> → <b>Enable</b>. Google asks for a billing account and gives a free monthly amount.</li>
+          <li><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Credentials</a> → <b>Create credentials → API key</b>. Under <b>API restrictions</b> choose only <b>Places API (New)</b>.</li>
+          <li>Paste the key here (it starts with <code>AIza</code>).</li>
+        </ol>
+        <div className="pc-row"><input type="password" value={k} onChange={(e) => setK(e.target.value)} placeholder="AIza…" autoComplete="off" />
+          <button className="gs-go" disabled={busy || k.trim().length < 20} onClick={save}>{busy ? "Checking…" : "Connect & test"}</button></div>
+        <p className="mut sm">🔒 Saved encrypted on the server for <b>your account only</b> — never shown again, never put in the website code.</p>
+      </>}
+      {msg && <div className={"gs-msg " + msg[0]}>{msg[1]}</div>}
+      {st.admin && st.server && <details className="ec-admin pc-adm">
+        <summary className="ec-admin-h"><span>🛡️ Admin · server key</span><b className={st.server.on ? "ok" : ""}>{st.server.on ? "● ••••" + st.server.tail : "Not set"}</b></summary>
+        <div className="ec-admin-b">
+          <p className="mut sm">Optional. The server key is used by you, and by other accounts only if you switch on sharing (with a monthly limit). Without sharing, every account connects its own key.</p>
+          <div className="pc-row"><input type="password" value={adm.k} onChange={(e) => setAdm({ ...adm, k: e.target.value })} placeholder={st.server.on ? "Leave empty to keep the current key" : "AIza…"} autoComplete="off" /></div>
+          <label className="gs-chk"><input type="checkbox" checked={adm.share} onChange={(e) => setAdm({ ...adm, share: e.target.checked })} /> Let accounts without their own key use the server key</label>
+          {adm.share && <label className="pc-lim">Free searches per account / month <input type="number" min="0" value={adm.lim} onChange={(e) => setAdm({ ...adm, lim: e.target.value })} /> <small className="mut">0 = unlimited</small></label>}
+          <div className="ec-row"><button className="ec-go" onClick={saveAdm}>Save server settings</button>{st.server.on && <button className="xs red" onClick={async () => { if (window.confirm("Remove the server key?")) { await phpCall(srv, { action: "lf_setup", remove: 1 }).catch(() => {}); load(); } }}>Remove server key</button>}</div>
+          {amsg && <div className={"gs-msg " + amsg[0]}>{amsg[1]}</div>}
+        </div>
+      </details>}
+    </div>
+  );
+}
+
+/* "Save to Google Sheet" — rows = [{ column: value }] */
+export function SheetBtn({ rows, tab, label = "▦ Save to Google Sheet", cls = "lf-b lf-sheet" }) {
+  const [st, setSt] = useState(null);
+  const go = async () => {
+    setSt(["wait", "Saving " + rows.length + " rows…"]);
+    try { const r = await gsRows(tab, rows); setSt(["ok", <>✓ {r.n} rows saved{r.tab ? <> in the tab “{r.tab}”</> : ""}{r.sheet ? <> — <a href={r.sheet} target="_blank" rel="noopener">open the sheet ↗</a></> : ""}</>]); }
+    catch (e) { setSt(["bad", e.message === "NO_SHEET" ? <>Connect your Google Sheet first: <a href="#/integrations" onClick={(ev) => { ev.preventDefault(); window.dispatchEvent(new CustomEvent("lb-go", { detail: "integrations" })); }}>Integrations → Google Sheets</a></> : e.message]); }
+  };
+  useEffect(() => { if (!st || st[0] === "wait") return; const t = setTimeout(() => setSt(null), 9000); return () => clearTimeout(t); }, [st]);
+  return <span className="lf-sheetw"><button className={cls} disabled={!rows.length || (st && st[0] === "wait")} onClick={go}>{st && st[0] === "wait" ? "Saving…" : label}</button>{st && <span className={"lf-sheetmsg " + st[0]}>{st[1]}</span>}</span>;
 }
