@@ -206,8 +206,7 @@ function AiCard({ projects, events, leads, onConsult, onOpen, onNew, user = {} }
             <b className="ai-st-h">Once you make a page, I'll check:</b>
             <div className="ai-pills">{[["🎯", "Headline"], ["👆", "Buttons"], ["📝", "Form"], ["📱", "Mobile"], ["⚡", "Speed"], ["📈", "Conversions"]].map(([ic, t], i) => <span key={t} style={{ "--d": i * 0.12 + "s" }}><i>{ic}</i>{t}</span>)}</div>
             <div className="ai-go">
-              <button className="ai-go1" onClick={() => (onNew ? onNew("landing") : onConsult({ tab: "plan" }))}>✨ Create my first page</button>
-              <button onClick={() => onConsult({ go: "templates" })}>Browse templates</button>
+              <button className="ai-cta" onClick={() => (onNew ? onNew("landing") : onConsult({ tab: "plan" }))}><span>✨</span>Create my first page<i>→</i></button>
             </div>
           </div>
             : !top.length ? <div className="ai-good"><b>Your pages look great 🎉</b><p className="mut">Ask me how to get more visitors or test a new headline.</p></div>

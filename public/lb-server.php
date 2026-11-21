@@ -898,7 +898,7 @@ if ($act === 'gs_setup') {
   out(array('ok' => true, 'ready' => true, 'robot' => (string)$k['client_email']));
 }
 if ($act === 'gs_check') {
-  $r = gs_check($DATA, isset($d['link']) ? $d['link'] : '', isset($d['tab']) ? $d['tab'] : ''); if (isset($r['error'])) fail($r['error']);
+  $r = gs_check($DATA, isset($d['link']) ? $d['link'] : '', isset($d['tab']) ? $d['tab'] : '', isset($d['gid']) ? $d['gid'] : null); if (isset($r['error'])) fail($r['error']);
   unset($r['token']); out(array('ok' => true) + $r);
 }
 /* email with email + password */
@@ -948,10 +948,17 @@ if ($act === 'hooks') {
   $hf = lb_hook_file($DATA, $ME['uid']); $h = jread($hf, array());
   if (!empty($d['get'])) out(array('ok' => true, 'hooks' => $h ? $h : null));
   if (isset($d['link']) && trim((string)$d['link']) !== '') {   /* connect with the sheet's link (Google robot) */
-    $r = gs_check($DATA, $d['link'], isset($d['tab']) ? $d['tab'] : ''); if (isset($r['error'])) fail($r['error']);
+    $r = gs_check($DATA, $d['link'], isset($d['tab']) ? $d['tab'] : '', isset($d['gid']) ? $d['gid'] : null); if (isset($r['error'])) fail($r['error']);
     $em = strtolower(trim(isset($d['email']) ? (string)$d['email'] : $ME['email'])); if ($em !== '' && !filter_var($em, FILTER_VALIDATE_EMAIL)) fail('Type a valid email for the alerts.');
     $h = array('mode' => 'link', 'sid' => $r['id'], 'link' => clean_str($d['link'], 400), 'tab' => $r['tab'], 'tabId' => $r['tabId'], 'title' => clean_str($r['title'], 120), 'email' => $em, 'notify' => !empty($d['notify']), 'autoreply' => !empty($d['autoreply']),
       'subject' => clean_str(isset($d['subject']) ? $d['subject'] : '', 150), 'reply' => clean_str(isset($d['reply']) ? $d['reply'] : '', 3000), 'from' => clean_str(isset($d['from']) ? $d['from'] : '', 80), 'saved' => time());
+    /* form field → column maps: { formId: { name, cols: { fieldKey: "Column" } } } */
+    $h['maps'] = array();
+    if (isset($d['maps']) && is_array($d['maps'])) foreach (array_slice($d['maps'], 0, 100, true) as $fid => $m) {
+      $fid = preg_replace('/[^A-Za-z0-9_-]/', '', (string)$fid); if ($fid === '' || !is_array($m) || !isset($m['cols']) || !is_array($m['cols'])) continue;
+      $cols = array(); foreach (array_slice($m['cols'], 0, 60, true) as $k => $c) { $k = clean_str((string)$k, 60); $c = clean_str((string)$c, 60); if ($k !== '' && trim($c) !== '') $cols[$k] = $c; }
+      if ($cols) $h['maps'][$fid] = array('name' => clean_str(isset($m['name']) ? $m['name'] : '', 80), 'cols' => $cols);
+    }
     jwrite($hf, $h); @chmod($hf, 0600);
     if ($IS_ADMIN) jwrite(lb_hook_file($DATA, 'admin'), $h);
     if (isset($d['forms']) && is_array($d['forms'])) lb_remember_forms($ME, $DATA, $d['forms']);
@@ -970,8 +977,10 @@ if ($act === 'hooks') {
 }
 if ($act === 'hooktest') {
   $h = jread(lb_hook_file($DATA, $ME['uid']), array()); if (empty($h['url']) && empty($h['sid'])) fail('Connect your sheet first.');
-  $lead = array('lid' => 'TEST' . time(), 'form' => 'Test form', 'site' => '', 'page' => 'Test from ' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'builder'), 'url' => '', 'ts' => round(microtime(true) * 1000),
+  $tf = isset($d['form']) ? (string)$d['form'] : ''; if ($tf === '' && !empty($h['maps'])) { $ks = array_keys($h['maps']); $tf = $ks[0]; }
+  $lead = array('lid' => 'TEST' . time(), 'form' => $tf !== '' && isset($h['maps'][$tf]) ? $h['maps'][$tf]['name'] : 'Test form', 'formId' => $tf, 'site' => '', 'page' => 'Test from ' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'builder'), 'url' => '', 'ts' => round(microtime(true) * 1000),
     'data' => array('Name' => 'Test Lead', 'Email' => $h['email'] ? $h['email'] : 'test@example.com', 'Phone' => '9876543210', 'Message' => 'This is a test — your sheet and email alerts work'));
+  if ($tf !== '' && isset($h['maps'][$tf])) { $td = array(); foreach ($h['maps'][$tf]['cols'] as $k => $c) $td[$k] = preg_match('/mail/i', $k . $c) ? ($h['email'] ? $h['email'] : 'test@example.com') : (preg_match('/phone|mobile|whats|tel/i', $k . $c) ? '9876543210' : 'Test ' . $c); $lead['data'] = $td; }
   if (!empty($h['sid'])) {
     list($url, $e) = gs_append($DATA, $h, $lead); if ($e !== '') fail($e);
     list($mailed, $e2) = lb_hook_mails($DATA, $ME['uid'], $h, $lead, $url);

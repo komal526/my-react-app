@@ -59,8 +59,8 @@ function gs_why($code, $j, $err, $DATA) {
   return isset($j['error']['message']) ? 'Google: ' . $j['error']['message'] : 'Google answered HTTP ' . $code;
 }
 /* look at the sheet: its title and tabs, and which tab the leads will go into */
-function gs_check($DATA, $link, $tab) {
-  list($id, $gid) = gs_parse($link);
+function gs_check($DATA, $link, $tab, $gidIn = null) {
+  list($id, $gid) = gs_parse($link); if ($gidIn !== null && $gidIn !== '' && preg_match('/^\d+$/', (string)$gidIn)) $gid = (int)$gidIn;   /* Grid ID typed by hand wins */
   if ($id === '') return array('error' => 'Paste the link of your Google Sheet (it looks like docs.google.com/spreadsheets/d/…).');
   list($tok, $e) = gs_token($DATA); if ($e !== '') return array('error' => $e);
   list($code, $j, $err) = gs_http('GET', gs_api() . $id . '?fields=' . rawurlencode('properties.title,sheets.properties(sheetId,title)'), $tok);
@@ -86,6 +86,12 @@ function gs_append($DATA, $h, $lead) {
   $old = isset($j['values'][0]) ? array_map('strval', $j['values'][0]) : array();
   $head = $old ? $old : array('Date', 'Form', 'Page', 'Website');
   $data = isset($lead['data']) && is_array($lead['data']) ? $lead['data'] : array();
+  /* form field → sheet column (set in Integrations → Google Sheets → Form fields) */
+  $fid = isset($lead['formId']) ? (string)$lead['formId'] : ''; $mapped = $fid !== '' && isset($h['maps'][$fid]['cols']) && is_array($h['maps'][$fid]['cols']) && $h['maps'][$fid]['cols'];
+  if ($mapped) {
+    $nd = array(); foreach ($h['maps'][$fid]['cols'] as $k => $col) { $col = trim((string)$col); if ($col !== '') $nd[$col] = isset($data[$k]) ? $data[$k] : ''; }
+    $data = $nd; if (!$old) $head = array('Date');
+  }
   foreach ($data as $k => $v) if (!in_array((string)$k, $head, true)) $head[] = (string)$k;
   if ($head !== $old) {
     list($c3, $j3, $e3) = gs_http('PUT', gs_api() . $sid . '/values/' . gs_rng($tab, 'A1') . '?valueInputOption=RAW', $tok, array('values' => array($head)));

@@ -41,21 +41,19 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function 
 `;
 
 export default function SheetsCard(props) {
-  const [st, reload] = useRobot(), [srv, setSrv] = useState(undefined), [way, setWay] = useState(null);
+  const [st, reload] = useRobot(), [srv, setSrv] = useState(undefined);
   useEffect(() => { hooksGet().then((r) => setSrv(r.hooks || null)).catch(() => setSrv(null)); }, []);
-  const w = way || (srv && srv.url && !srv.sid ? "script" : st.loaded && !st.ready && !st.admin ? "script" : "link");
   return (
     <div className="gs-wrap">
       {st.admin && st.loaded && <RobotSetup st={st} onDone={reload} />}
-      <div className="ec-ways">
-        <button className={w === "link" ? "on" : ""} onClick={() => setWay("link")}><b>🔗 Sheet link</b><small>Easy — no code</small></button>
-        <button className={w === "script" ? "on" : ""} onClick={() => setWay("script")}><b>🧩 Apps Script</b><small>Advanced — paste a script</small></button>
-      </div>
-      {w === "link" ? <SheetLink value={props.value || {}} onSave={props.onSave} userEmail={props.userEmail || ""} st={st} srv={srv} setSrv={setSrv} mailOn={props.mailOn} /> : <ScriptWay {...props} />}
+      {srv && srv.url && !srv.sid && <p className="ec-note">You're connected with the older Apps Script method — it keeps working. Connect with the sheet link below to switch to the simple way.</p>}
+      <SheetLink value={props.value || {}} onSave={props.onSave} userEmail={props.userEmail || ""} st={st} srv={srv} setSrv={setSrv} mailOn={props.mailOn} />
     </div>
   );
 }
 
+/* the older Apps Script way (kept for reference, no longer shown) */
+// eslint-disable-next-line no-unused-vars
 function ScriptWay({ value = {}, onSave, userEmail = "" }) {
   const [v, setV] = useState({ url: "", email: userEmail, notify: true, autoreply: false, subject: "Thank you!", reply: "Hi {{name}},\nthank you — we received your details and will contact you soon.", from: BRAND.product, ...value });
   const [busy, setBusy] = useState(false), [msg, setMsg] = useState(null), [copied, setCopied] = useState(false), [srv, setSrv] = useState(null);

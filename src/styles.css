@@ -4851,3 +4851,65 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
   .au.v2 .au-btn{padding:clamp(12px,1.8vh,16px)}
   .au.v2 .au-in{margin-top:clamp(4px,.8vh,8px)}
 }
+
+/* ===== v106 — AI Consultant empty state, like the reference ===== */
+.dash .ai-body.empty .ai-start{align-items:center;text-align:center;gap:16px}
+.dash .ai-body.empty .ai-st-h{text-align:center;font-size:15px;font-weight:800;color:#1e2a4a}
+.dash .ai-body.empty .ai-pills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%;max-width:460px}
+.dash .ai-body.empty .ai-pills span{justify-content:flex-start;padding:8px 12px 8px 8px;font-size:13px;border:1px solid #e6e9f5;box-shadow:0 6px 14px -12px rgba(30,40,90,.5);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash .ai-body.empty .ai-pills span:nth-child(1){background:linear-gradient(90deg,#f6f3ff,#fff)}
+.dash .ai-body.empty .ai-pills span:nth-child(2){background:linear-gradient(90deg,#fff7e2,#fff)}
+.dash .ai-body.empty .ai-pills span:nth-child(3){background:linear-gradient(90deg,#eef4ff,#fff)}
+.dash .ai-body.empty .ai-pills span:nth-child(4){background:linear-gradient(90deg,#eaf3ff,#fff)}
+.dash .ai-body.empty .ai-pills span:nth-child(5){background:linear-gradient(90deg,#fff1e8,#fff)}
+.dash .ai-body.empty .ai-pills span:nth-child(6){background:linear-gradient(90deg,#f0eefe,#fff)}
+.dash .ai-body.empty .ai-pills i{width:28px;height:28px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.8)}
+.dash .ai-body.empty .ai-pills span:nth-child(3) i{background:#e2ecff}.dash .ai-body.empty .ai-pills span:nth-child(6) i{background:#e8e5ff}
+.dash .ai-body.empty .ai-go{justify-content:center}
+.dash .ai-body.empty .ai-go .ai-cta{display:inline-flex!important;align-items:center;gap:10px;padding:13px 26px!important;border-radius:999px!important;border:0!important;background:linear-gradient(180deg,#1c2370,#11163f)!important;color:#ffd35c!important;font-size:15px!important;font-weight:800;cursor:pointer;box-shadow:0 12px 26px -12px rgba(17,22,63,.9),0 0 0 4px rgba(255,211,92,.12);transition:transform .2s ease,box-shadow .2s ease}
+.dash .ai-body.empty .ai-go .ai-cta i{font-style:normal;transition:transform .2s ease}
+.dash .ai-body.empty .ai-go .ai-cta span{display:inline-block;transition:transform .3s ease}
+.dash .ai-body.empty .ai-go .ai-cta:hover{background:linear-gradient(180deg,#1c2370,#11163f)!important;color:#ffd35c!important;transform:translateY(-2px);box-shadow:0 18px 34px -12px rgba(17,22,63,.95),0 0 0 6px rgba(255,211,92,.22),0 0 26px rgba(255,211,92,.35)}
+.dash .ai-body.empty .ai-go .ai-cta:hover i{transform:translateX(4px)}
+.dash .ai-body.empty .ai-go .ai-cta:hover span{transform:rotate(-12deg) scale(1.15)}
+.dash .ai-body.empty .ai-go .ai-cta:active{transform:translateY(0)}
+@media (max-width:1280px){.dash .ai-body.empty .ai-pills{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.dash .ai-body.empty .ai-pills{grid-template-columns:repeat(2,minmax(0,1fr))}.dash .ai-body.empty .ai-go .ai-cta{width:100%;justify-content:center}}
+
+/* ===== v106 — Google Sheets card: link + tab + grid + form field mapping ===== */
+.gsx{gap:14px}
+.gsx-s{border:1px solid #e8ebf3;border-radius:16px;background:#fff;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.gsx-s h4{margin:0;display:flex;align-items:center;gap:10px;font-size:15px;color:#0f172a}
+.gsx-s h4 span{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#11163f;color:#ffd35c;font-size:12.5px}
+.gsx-s>p{margin:0;font-size:13px;color:#5b6477}
+.gsx-g{display:grid;grid-template-columns:1.3fr 1fr .7fr;gap:10px}
+.gsx-f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:700;color:#334155;min-width:0}
+.gsx-f em{font-style:normal;font-weight:600;color:#94a3b8}
+.gsx-f input,.gsx-f select{border:1px solid #d9deea;border-radius:11px;padding:10px 11px;font:inherit;font-weight:500;font-size:13.5px;color:#0f172a;background:#fff;min-width:0;width:100%;box-sizing:border-box}
+.gsx-f input[readonly]{background:#f6f7fb;color:#334155}
+.gsx-map{display:flex;flex-direction:column;gap:6px}
+.gsx-mh,.gsx-mr{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);gap:8px;align-items:center}
+.gsx-mh span{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8}
+.gsx-mr b{font-size:13px;font-weight:700;color:#1e293b;padding:9px 11px;border-radius:10px;background:#f6f7fb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gsx-mr i{font-style:normal;color:#94a3b8;text-align:center}
+.gsx-mr input{border:1px solid #d9deea;border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;min-width:0}
+.gsx-mr.fixed input{background:#f6f7fb;color:#64748b}
+.gsx-mr.off b{opacity:.5;text-decoration:line-through}.gsx-mr.off input{border-style:dashed}
+.gsx-em{border:1px solid #d9deea;border-radius:9px;padding:5px 8px;font:inherit;font-size:13px;margin-left:4px;min-width:0;width:220px;max-width:100%}
+@media (max-width:640px){.gsx-g{grid-template-columns:1fr 1fr}.gsx-g .gsx-f:first-child{grid-column:1/-1}}
+/* pills keep their full words: they wrap centred (3 + 3 when there's room) */
+.dash .ai-body.empty .ai-pills{display:flex!important;flex-wrap:wrap;justify-content:center;gap:8px;max-width:480px}
+.dash .ai-body.empty .ai-pills span{flex:0 0 auto;padding:6px 11px 6px 6px;font-size:12.5px;gap:6px;overflow:visible}
+.dash .ai-body.empty .ai-pills i{width:24px;height:24px;font-size:12px}
+.dash .ai-body.empty{grid-template-columns:150px minmax(0,1fr)!important}
+@media (max-width:640px){.dash .ai-body.empty{grid-template-columns:1fr!important}}
+.dash .ai-body.empty .ai-pills{gap:6px}
+.dash .ai-body.empty .ai-pills span{padding:5px 10px 5px 5px;font-size:12px;gap:5px}
+.dash .ai-body.empty .ai-pills i{width:22px;height:22px;font-size:11px}
+.dash .ai-body.empty{grid-template-columns:140px minmax(0,1fr)!important;gap:14px!important}
+@media (max-width:640px){.dash .ai-body.empty{grid-template-columns:1fr!important}}
+.gsx-g{align-items:end}
+.gsx-notify{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border:1px solid #e8ebf3;border-radius:14px;background:#fff}
+.gsx-notify label{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#1e293b;cursor:pointer}
+.gsx-notify .gsx-em{flex:1 1 220px;margin:0;padding:9px 11px;border-radius:10px}
+.gsx-notify label{flex:0 0 auto;white-space:nowrap}

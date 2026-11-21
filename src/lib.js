@@ -440,7 +440,7 @@ export const admin = (action, o = {}) => phpCall(acctSrv(), { action: "adm_" + a
 /* Google Sheets + email alerts: the server sends each new lead to your Apps Script web app */
 export const hooksSave = (o) => { let forms = []; try { const E = JSON.parse(localStorage.getItem("lb_session") || "{}").email; forms = [...loadForms(E).map((f) => f.id), ...loadCal(E).map((e) => e.id)]; } catch { /* ignore */ } return phpCall(acctSrv(), { action: "hooks", ...o, forms }); };
 export const hooksGet = () => phpCall(acctSrv(), { action: "hooks", get: 1 });
-export const hooksTest = () => phpCall(acctSrv(), { action: "hooktest" });
+export const hooksTest = (o = {}) => phpCall(acctSrv(), { action: "hooktest", ...o });
 /* v103 — "Save to Google Sheet": many rows into the connected sheet (tab is created if missing) */
 export const gsRows = (tab, rows) => phpCall(acctSrv(), { action: "gs_rows", tab, rows });
 /* v103 — sign up without the confirmation email (server creates a ready account). {fallback:true} = use Supabase's normal sign-up */
@@ -451,7 +451,7 @@ export async function serverSignup(email, password, name) {
 /* v102 — Google Sheets by link (server "robot") + email by email & password (SMTP) */
 export const gsStatus = () => phpCall(acctSrv(), { action: "gs_status" });
 export const gsSetup = (o) => phpCall(acctSrv(), { action: "gs_setup", ...o });
-export const gsCheck = (link, tab) => phpCall(acctSrv(), { action: "gs_check", link, tab });
+export const gsCheck = (link, tab, gid) => phpCall(acctSrv(), { action: "gs_check", link, tab, gid });
 export const mailGet = () => phpCall(acctSrv(), { action: "mail_get" });
 export const mailSave = (o) => phpCall(acctSrv(), { action: "mail_save", ...o });
 export const mailOff = () => phpCall(acctSrv(), { action: "mail_off" });

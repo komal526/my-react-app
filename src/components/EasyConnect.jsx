@@ -2,8 +2,8 @@
 // SheetLink: connect a Google Sheet by pasting its link (the server's Google "robot" writes the rows — no code).
 // RobotSetup: the admin adds that robot once (a Google service-account JSON key, stored encrypted on the server).
 // EmailEasy: connect your mailbox with email + password (Gmail needs an App password) — emails go out from your own address.
-import { useEffect, useRef, useState } from "react";
-import { gsStatus, gsSetup, gsCheck, hooksSave, hooksTest, mailGet, mailSave, mailOff, ago, phpCall, gsRows } from "../lib.js";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { gsStatus, gsSetup, gsCheck, hooksSave, hooksTest, mailGet, mailSave, mailOff, ago, phpCall, gsRows, loadForms } from "../lib.js";
 
 /* ---------------- admin: add the Google robot once ---------------- */
 export function RobotSetup({ st, onDone }) {
@@ -41,63 +41,80 @@ export function RobotSetup({ st, onDone }) {
 
 /* ---------------- connect a sheet with its link ---------------- */
 export function SheetLink({ value, onSave, userEmail, st, srv, setSrv, mailOn }) {
-  const [v, setV] = useState({ link: "", tab: "", email: userEmail, notify: true, autoreply: false, subject: "Thank you!", reply: "Hi {{name}},\nthank you — we received your details and will contact you soon.", ...value });
-  const [info, setInfo] = useState(null), [checking, setChecking] = useState(false), [busy, setBusy] = useState(false), [msg, setMsg] = useState(null), [copied, setCopied] = useState(false);
+  const E = userEmail || "";
+  const forms = useMemo(() => loadForms(E).map((f) => ({ id: f.id, name: f.name || "Form", fields: (f.fields || []).filter((x) => !/^(heading|utm)$/.test(x.type)).map((x) => ({ key: x.name || x.id, label: x.label || x.name || "Field" })) })), [E]);
+  const [v, setV] = useState({ link: "", tab: "", gid: "", email: E, notify: true, ...value });
+  const [maps, setMaps] = useState({}), [fsel, setFsel] = useState(forms[0] ? forms[0].id : "");
+  const [info, setInfo] = useState(null), [checking, setChecking] = useState(false), [busy, setBusy] = useState(false), [msg, setMsg] = useState(null), [copied, setCopied] = useState(false), [newTab, setNewTab] = useState(false);
   const set = (k) => (e) => setV({ ...v, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
-  useEffect(() => { if (srv && srv.sid) setV((x) => ({ ...x, link: x.link || srv.link || "", tab: srv.tab || x.tab, email: srv.email || x.email, notify: !!srv.notify, autoreply: !!srv.autoreply, subject: srv.subject || x.subject, reply: srv.reply || x.reply })); }, [srv]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* fill in what is already saved on the server */
+  useEffect(() => { if (srv && srv.sid) { setV((x) => ({ ...x, link: srv.link || x.link, tab: srv.tab || x.tab, email: srv.email || x.email, notify: !!srv.notify })); setMaps(srv.maps || {}); if (srv.maps && Object.keys(srv.maps)[0] && forms.some((f) => f.id === Object.keys(srv.maps)[0])) setFsel(Object.keys(srv.maps)[0]); } }, [srv]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* the Grid ID comes from the link (#gid=…) unless typed */
+  useEffect(() => { const m = v.link.match(/[#&?]gid=(\d+)/); if (m && !v.gid) setV((x) => ({ ...x, gid: m[1] })); }, [v.link]); // eslint-disable-line react-hooks/exhaustive-deps
   /* look at the sheet as soon as a link is pasted */
   useEffect(() => {
     if (!st.ready || !/spreadsheets\/d\/[\w-]{20,}/.test(v.link)) { setInfo(null); return; }
     let live = true; setChecking(true);
-    const t = setTimeout(() => gsCheck(v.link, "").then((r) => { if (live) { setInfo(r); setMsg(null); } }).catch((e) => { if (live) { setInfo({ error: e.message }); } }).finally(() => live && setChecking(false)), 450);
+    const t = setTimeout(() => gsCheck(v.link, "", v.gid).then((r) => { if (live) { setInfo(r); setMsg(null); if (!v.tab || !newTab) setV((x) => ({ ...x, tab: x.tab && (r.tabs || []).some((tt) => tt.title === x.tab) ? x.tab : r.tab })); } }).catch((e) => { if (live) setInfo({ error: e.message }); }).finally(() => live && setChecking(false)), 450);
     return () => { live = false; clearTimeout(t); };
-  }, [v.link, st.ready]);
+  }, [v.link, v.gid, st.ready]); // eslint-disable-line react-hooks/exhaustive-deps
   const copyRobot = () => navigator.clipboard.writeText(st.robot).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); }, () => window.prompt("Copy this email:", st.robot));
-  const tabs = info && info.tabs ? info.tabs : [], tabNow = v.tab || (info && info.tab) || "";
+  const form = forms.find((f) => f.id === fsel), fm = (maps[fsel] && maps[fsel].cols) || null;
+  const colOf = (k, label) => (fm ? (fm[k] !== undefined ? fm[k] : "") : label);   /* not mapped yet → column = field label */
+  const setCol = (k, c) => { const base = fm || Object.fromEntries(form.fields.map((x) => [x.key, x.label])); setMaps({ ...maps, [fsel]: { name: form.name, cols: { ...base, [k]: c } } }); };
+  const allMaps = () => { const m = { ...maps }; if (form && !m[fsel]) m[fsel] = { name: form.name, cols: Object.fromEntries(form.fields.map((x) => [x.key, x.label])) }; return m; };
+  const tabs = info && info.tabs ? info.tabs : [];
   const save = async () => {
     setBusy(true); setMsg(["wait", "Connecting and adding a test row…"]);
     try {
-      const r = await hooksSave({ link: v.link.trim(), tab: tabNow, email: v.email, notify: v.notify, autoreply: v.autoreply, subject: v.subject, reply: v.reply });
+      const m = allMaps(); setMaps(m);
+      const r = await hooksSave({ link: v.link.trim(), tab: v.tab, gid: v.gid, email: v.email, notify: v.notify, maps: m });
       setSrv(r.hooks);
-      const t = await hooksTest();
+      const t = await hooksTest({ form: fsel });
       onSave({ link: v.link.trim(), tab: r.hooks.tab, title: r.hooks.title, ok: true, mode: "link" });
-      setMsg(["ok", <>✓ Connected! A test row was added to <a href={t.sheet} target="_blank" rel="noopener">“{r.hooks.title}” → {r.hooks.tab} ↗</a>{t.mailed ? <> and an alert email went to <b>{v.email}</b></> : ""}. Every new lead will arrive the same way.{t.mailNote ? <><br /><small>Email: {t.mailNote}</small></> : ""}</>]);
+      setMsg(["ok", <>✓ Connected! A test row was added to <a href={t.sheet} target="_blank" rel="noopener">“{r.hooks.title}” → {r.hooks.tab} ↗</a>. Every new form submission will be saved as a new row.{t.mailNote ? <><br /><small>Email: {t.mailNote}</small></> : ""}</>]);
     } catch (e) { setMsg(["bad", e.message]); }
     setBusy(false);
   };
-  const remove = async () => { if (!window.confirm("Stop sending leads to this sheet?")) return; try { await hooksSave({ url: "" }); } catch { /* ignore */ } setSrv(null); onSave({}); setInfo(null); setV({ ...v, link: "", tab: "" }); setMsg(["ok", "Disconnected."]); };
-  if (!st.ready) return <div className="ec-wait">⏳ Easy connect isn't switched on for this server yet. {st.admin ? "Add the Google robot above (one time)." : "Ask your admin to add the Google robot — or use “Apps Script” instead."}</div>;
+  const remove = async () => { if (!window.confirm("Stop sending form submissions to this sheet?")) return; try { await hooksSave({ url: "" }); } catch { /* ignore */ } setSrv(null); onSave({}); setInfo(null); setMaps({}); setV({ ...v, link: "", tab: "", gid: "" }); setMsg(["ok", "Disconnected."]); };
+  if (!st.ready) return <div className="ec-wait">⏳ Google Sheets isn't switched on for this server yet. {st.admin ? "Add the Google robot above (one time) — then this card is ready for everyone." : "Ask your admin to switch it on (one time)."}</div>;
   const linked = srv && srv.sid;
   return (
-    <div className="ec">
-      <ol className="ec-steps big">
-        <li><span>1</span><div><b>Share your sheet with our robot</b><small>In your Google Sheet click <b>Share</b> → paste this email → choose <b>Editor</b> → <b>Send</b>.</small>
-          <div className="ec-robot"><code>{st.robot}</code><button onClick={copyRobot}>{copied ? "✓ Copied" : "Copy"}</button></div>
-          <a className="ec-mini" href="https://sheets.new" target="_blank" rel="noopener">No sheet yet? Create one ↗</a></div></li>
-        <li><span>2</span><div><b>Paste the sheet link</b><small>Copy it from the address bar of your sheet (the tab you're on is picked automatically).</small>
-          <input className="gs-url" value={v.link} onChange={(e) => setV({ ...v, link: e.target.value.trim(), tab: "" })} placeholder="https://docs.google.com/spreadsheets/d/…/edit#gid=0" />
-          {checking && <div className="ec-chk mut sm">Checking your sheet…</div>}
-          {info && info.error && <div className="ec-chk bad">✕ {info.error}</div>}
-          {info && !info.error && <div className="ec-chk ok">✓ Found <b>“{info.title}”</b> — leads go into the tab
-            <select value={tabNow} onChange={(e) => setV({ ...v, tab: e.target.value === "__new" ? "Leads" : e.target.value })}>
-              {tabs.map((t) => <option key={t.id} value={t.title}>{t.title}</option>)}
-              {!tabs.some((t) => t.title === tabNow) && tabNow && <option value={tabNow}>{tabNow} (new tab)</option>}
-              {!tabs.some((t) => t.title === "Leads") && tabNow !== "Leads" && <option value="__new">➕ New tab “Leads”</option>}
-            </select></div>}
-          {v.link && !/spreadsheets\/d\//.test(v.link) && <div className="ec-chk bad">That doesn't look like a Google Sheet link.</div>}</div></li>
-      </ol>
-      <div className="gs-opts">
-        <label className="gs-chk"><input type="checkbox" checked={!!v.notify} onChange={set("notify")} /> Email me every new lead at</label>
-        <input className="gs-em" value={v.email} onChange={set("email")} placeholder="you@gmail.com" disabled={!v.notify} />
-        <label className="gs-chk"><input type="checkbox" checked={!!v.autoreply} onChange={set("autoreply")} /> Send a thank-you email to the person (when the form has an email field)</label>
-        {v.autoreply && <div className="gs-reply"><input value={v.subject} onChange={set("subject")} placeholder="Subject" /><textarea rows={3} value={v.reply} onChange={set("reply")} /><small className="mut">{"{{name}}"} becomes the person's name.</small></div>}
-        {(v.notify || v.autoreply) && !mailOn && <p className="ec-note">✉ Emails are sent from your own mailbox — connect it once in <b>Email automation</b> (email + password). The sheet works without it.</p>}
-      </div>
-      <div className="gs-row">
-        <button className="gs-go" disabled={busy || !info || !!info.error} onClick={save}>{busy ? "Connecting…" : linked ? "Save & send a test" : "Connect & send a test"}</button>
-        {linked && <button className="xs red" onClick={remove}>Disconnect</button>}
-        {linked && srv.last && <span className="mut sm">Last lead {ago(srv.last.t * 1000)}{srv.last.err ? " — " + srv.last.err : " ✓"}</span>}
-      </div>
+    <div className="ec gsx">
+      {linked && <div className="ec-on">✓ Connected to <b>“{srv.title}” → {srv.tab}</b>{srv.last ? <span className="mut sm"> · last row {ago(srv.last.t * 1000)}{srv.last.err ? " — " + srv.last.err : ""}</span> : null}<button className="xs red" onClick={remove}>Disconnect</button></div>}
+      <section className="gsx-s"><h4><span>1</span>Give access</h4>
+        <p>In your Google Sheet click <b>Share</b>, paste this email, choose <b>Editor</b> and press <b>Send</b>.</p>
+        <div className="ec-robot"><code>{st.robot}</code><button onClick={copyRobot}>{copied ? "✓ Copied" : "Copy"}</button></div>
+      </section>
+      <section className="gsx-s"><h4><span>2</span>Google Sheet</h4>
+        <label className="gsx-f full">Google Sheet URL<input value={v.link} onChange={(e) => setV({ ...v, link: e.target.value.trim(), gid: "", tab: "" })} placeholder="https://docs.google.com/spreadsheets/d/…/edit#gid=0" /></label>
+        <div className="gsx-g">
+          <label className="gsx-f">Sheet name<input value={info && info.title ? info.title : ""} readOnly placeholder={checking ? "Checking…" : "Found from the link"} /></label>
+          <label className="gsx-f">Tab name
+            {!newTab && tabs.length ? <select value={v.tab} onChange={(e) => { if (e.target.value === "__new") { setNewTab(true); setV({ ...v, tab: "Leads" }); } else setV({ ...v, tab: e.target.value }); }}>
+              {tabs.map((t) => <option key={t.id} value={t.title}>{t.title}</option>)}<option value="__new">➕ New tab…</option></select>
+              : <input value={v.tab} onChange={set("tab")} placeholder="Leads" />}</label>
+          <label className="gsx-f"><span>Grid ID <em>(optional)</em></span><input value={v.gid} onChange={(e) => { setNewTab(false); setV({ ...v, gid: e.target.value.replace(/\D/g, ""), tab: "" }); }} placeholder="0" inputMode="numeric" /></label>
+        </div>
+        {info && info.error && <div className="ec-chk bad">✕ {info.error}</div>}
+        {info && !info.error && <div className="ec-chk ok">✓ Sheet found — rows will go into the tab <b>“{v.tab || info.tab}”</b>{newTab ? " (made automatically)" : ""}</div>}
+        {v.link && !/spreadsheets\/d\//.test(v.link) && <div className="ec-chk bad">That doesn't look like a Google Sheet link.</div>}
+      </section>
+      <section className="gsx-s"><h4><span>3</span>Form fields → Sheet columns</h4>
+        {!forms.length ? <p className="mut sm">You have no forms yet. Make one in <b>Forms</b> — until then every submission is saved with all its fields.</p> : <>
+          <label className="gsx-f">Form<select value={fsel} onChange={(e) => setFsel(e.target.value)}>{forms.map((f) => <option key={f.id} value={f.id}>{f.name}{maps[f.id] ? " ✓" : ""}</option>)}</select></label>
+          {form && <div className="gsx-map">
+            <div className="gsx-mh"><span>Form field</span><span /><span>Sheet column</span></div>
+            <div className="gsx-mr fixed"><b>Date &amp; time</b><i>→</i><input value="Date" readOnly /></div>
+            {form.fields.map((x) => <div key={x.key} className={"gsx-mr" + (colOf(x.key, x.label) === "" ? " off" : "")}><b title={x.key}>{x.label}</b><i>→</i>
+              <input value={colOf(x.key, x.label)} onChange={(e) => setCol(x.key, e.target.value)} placeholder="Don't save" /></div>)}
+            <small className="mut">Rename a column or clear it to leave that field out. Forms you don't map save every field with its own name.</small>
+          </div>}
+        </>}
+      </section>
+      <div className="gsx-notify"><label><input type="checkbox" checked={!!v.notify} onChange={set("notify")} /> Also email me every new submission</label>{v.notify && <input className="gsx-em" type="email" value={v.email} onChange={set("email")} placeholder="you@gmail.com" />}</div>
+      {v.notify && !mailOn && <p className="ec-note">✉ Emails go out from your own mailbox — connect it once in <b>Email automation</b>. The sheet works without it.</p>}
+      <div className="gs-row"><button className="gs-go" disabled={busy || !info || !!info.error || !v.tab} onClick={save}>{busy ? "Connecting…" : linked ? "Save & test" : "Connect & test"}</button></div>
       {msg && <div className={"gs-msg " + msg[0]}>{msg[1]}</div>}
     </div>
   );

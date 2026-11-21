@@ -136,7 +136,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         const aiOn = AI_PROVIDERS.some((p) => (ai.keys || {})[p.id]), hostOn = !!(serverUrl(integ) && pub.key && pub.ok);
         const APPS = [
           /* Netlify removed from the list — websites publish to your own server */
-          { id: "sheets", cat: "Automation", ic: "▦", name: "Google Sheets & email alerts", desc: "Every new lead goes into your Google Sheet — just paste the sheet link.", on: !!(integ.sheets && (integ.sheets.url || integ.sheets.link) && integ.sheets.ok) },
+          { id: "sheets", cat: "Automation", ic: "▦", name: "Google Sheets", desc: "Paste your sheet link, match your form fields — every submission becomes a new row.", on: !!(integ.sheets && (integ.sheets.url || integ.sheets.link) && integ.sheets.ok) },
           { id: "email", cat: "Automation", ic: "✉", name: "Email automation", desc: "Auto-reply to every lead and get new-lead alerts — connect your email with just email + password.", on: emOk },
           { id: "places", cat: "Lead Finder", ic: "🔍", name: "Google Places (Lead Finder)", desc: "Connect your own Google key to find local businesses with phone numbers and websites.", on: !!(integ.places && integ.places.ok), extra: integ.places && integ.places.own ? "Your key" : "" },
           { id: "wa", cat: "Automation", ic: "💬", name: "WhatsApp automation", desc: "Send an automatic WhatsApp message through AiSensy, WATI, Interakt, Pabbly or Make.", on: !!wa.webhook },
@@ -185,7 +185,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         <details className="ig-d"><summary>How payment confirmation works</summary><p className="mut sm"><b>Razorpay:</b> the lead is marked <b>Paid</b> with the payment ID as soon as checkout succeeds. For full security (verifying the payment signature) you'd later add a small server — until then, cross-check payments in your Razorpay dashboard.<br /><b>UPI / payment link:</b> the visitor taps “I have paid” and can enter the UTR; the lead is marked <b>Payment claimed</b> so you can confirm it in your bank app.</p></details>
       </Card>
 
-      <Card id="sheets" sel={sel} onClose={close} ic="▦" t="Google Sheets & email alerts" sub="Every new lead lands in your Google Sheet and your inbox. Optional thank-you email to the person." on={!!(integ.sheets && (integ.sheets.url || integ.sheets.link) && integ.sheets.ok)}>
+      <Card id="sheets" sel={sel} onClose={close} ic="▦" t="Google Sheets" sub="Paste your Google Sheet link, match your form fields to columns, then Connect & test. Every new form submission is saved as a new row." on={!!(integ.sheets && (integ.sheets.url || integ.sheets.link) && integ.sheets.ok)}>
         <SheetsCard value={integ.sheets || {}} userEmail={(() => { try { return JSON.parse(localStorage.getItem("lb_session") || "{}").email || ""; } catch { return ""; } })()} onSave={(o) => onChange({ ...integ, sheets: o })} mailOn={!!(em.provider === "smtp" && em.smtpOk)} />
       </Card>
       <Card id="email" sel={sel} onClose={close} ic="✉" t="Email automation" sub="Send an automatic email to everyone who fills a form, and get notified of new leads." on={emOk}>
