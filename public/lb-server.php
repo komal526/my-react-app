@@ -572,7 +572,7 @@ function lf_limit() { global $IS_ADMIN; $c = lf_cfg(); if ($IS_ADMIN) return 0; 
    The admin's server key is only used by the admin — and by everyone else only if the admin switches on "share". */
 function lf_kfile() { global $DATA, $KID; $d = $DATA . '/places-keys'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . $KID . '.json'; }
 function lf_mine() { return jread(lf_kfile(), array()); }
-function lf_shared() { global $IS_ADMIN; $c = lf_cfg(); return !empty($c['enc']) && ($IS_ADMIN || !empty($c['share'])); }
+function lf_shared() { $c = lf_cfg(); return !empty($c['enc']) && !empty($c['share']); }   /* v104: the server key is used only when the admin shares it — otherwise everyone (admin too) connects a key first */
 function lf_test_key($k) {
   if (!preg_match('/^[A-Za-z0-9_\-]{20,80}$/', $k)) fail('That does not look like a Google API key (it starts with AIza…).');
   list($code, $j, $err) = ai_post_raw(lf_url(), array('X-Goog-Api-Key: ' . $k, 'X-Goog-FieldMask: places.id'), array('textQuery' => 'cafe in Delhi', 'pageSize' => 1));

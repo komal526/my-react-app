@@ -1,6 +1,6 @@
 // LaunchBuilder v102 — Integrations.jsx
 import { BRAND } from "../brand.js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SheetsCard from "./SheetsCard.jsx";
 import { EmailEasy, PlacesConnect } from "./EasyConnect.jsx";
 import { WA_PROVIDERS, AI_PROVIDERS, callAI, detectAI, listModels, serverCall, serverUrl, phpCall, defaultServerUrl, lovableUrl, boltText, mailReady } from "../lib.js";
@@ -75,6 +75,8 @@ export default function Integrations({ integ, onChange, initial = "" }) {
   const flash = (t) => { setNote(t); setTimeout(() => setNote(""), 3000); };
   const wa = integ.wa, pay = integ.pay, ai = integ.ai, em = integ.email || {};
   const emOk = mailReady(em);
+  /* the Lead Finder tile shows the real state from the server */
+  useEffect(() => { phpCall(srv, { action: "lf_status" }).then((r) => { const ok = !!r.ready, own = !!r.own; if (ok !== !!(integ.places && integ.places.ok) || own !== !!(integ.places && integ.places.own)) onChange({ ...integ, places: { ok, own } }); }).catch(() => {}); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [emWay, setEmWay] = useState(null), emP = emWay || (em.provider === "gmail" && !em.webhook ? "smtp" : em.provider || "smtp");
   const pub = integ.publish || {}, [pubTest, setPubTest] = useState("");
   const genKey = () => set("publish", { key: "lb_" + Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, "0")).join("") });

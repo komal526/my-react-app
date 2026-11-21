@@ -77,8 +77,14 @@ export default function LeadFinder({ user, integ, me, onLeads }) {
   return (
     <div className="lf">
       <Head tab={tab} setTab={(t) => { setTab(t); setOpenG(null); }} groups={data.groups.length} hist={data.history.length} />
-      {!st.ready && <div className="lf-card lf-connect"><div className="lf-fh"><b>🔑 Connect your Google key to start finding customers</b></div><p className="mut sm">One time, about 3 minutes. Your key works only for your account and is saved encrypted on the server.</p><PlacesConnect srv={srv} onDone={setSt} /></div>}
-      {st.ready && <div className="lf-keybar"><span>{st.using === "own" ? "🔑 Your Google key ••••" + (st.own ? st.own.tail : "") : st.admin ? "🔑 Server key (admin)" : "🔑 Shared key — " + (st.left === -1 ? "unlimited" : st.left + " searches left this month")}</span><button className="lf-adm" onClick={() => setKeyOpen(!keyOpen)}>{keyOpen ? "Close" : st.using === "own" ? "Manage key" : "Connect my own key"}</button></div>}
+      {!st.ready && <div className="lf-card lf-first">
+        <span className="lf-first-ic">🔑</span>
+        <div className="lf-first-t"><b>Connect Google Places first</b><p>Lead Finder searches Google with <b>your own</b> Google key. Connect it once in Integrations (about 3 minutes) — then come back and search.</p></div>
+        <div className="lf-first-a"><button className="lf-go" onClick={() => window.dispatchEvent(new CustomEvent("lb-go", { detail: { view: "integrations", card: "places" } }))}>Connect in Integrations →</button>
+          <button className="lf-adm" onClick={() => setKeyOpen(!keyOpen)}>{keyOpen ? "Close" : "Or connect here"}</button></div>
+      </div>}
+      {!st.ready && keyOpen && <div className="lf-card lf-connect"><PlacesConnect srv={srv} onDone={setSt} /></div>}
+      {st.ready && <div className="lf-keybar"><span><i className="lf-dot" />{st.using === "own" ? "Google Places connected · your key ••••" + (st.own ? st.own.tail : "") : "Shared key — " + (st.left === -1 ? "unlimited" : st.left + " searches left this month")}</span><button className="lf-adm" onClick={() => setKeyOpen(!keyOpen)}>{keyOpen ? "Close" : st.using === "own" ? "Manage key" : "Connect my own key"}</button></div>}
       {st.ready && keyOpen && <div className="lf-card lf-connect"><PlacesConnect srv={srv} onDone={setSt} compact /></div>}
 
       {tab === "search" && st.ready && <>

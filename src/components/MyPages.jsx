@@ -193,7 +193,7 @@ function AiCard({ projects, events, leads, onConsult, onOpen, onNew, user = {} }
     <div ref={card} className={"db-card ai-card" + (scan ? " scanning" : "")}>
       <div className="ai-h"><span className="ai-av"><Icon n="sparkle" s={18} /></span><div className="grow"><h3>AI Consultant</h3><small><span className="ai-dot" />Watching your pages live{fresh ? <b className="ai-new">{fresh} new</b> : null}</small></div>
         {res.length > 0 && <div className="ai-score" title="Average page score"><b>{avg}</b><small>/100</small></div>}</div>
-      <div className="ai-body">
+      <div className={"ai-body" + (!res.length ? " empty" : "")}>
         <div className="ai-bot">
           <div className="rb-walk" ref={walk}><Robot mood={urgent ? "alert" : top.length ? "ok" : "happy"} /></div>
           <div className="ai-say">{daily ? <><b>Today's tip</b><span>{daily}</span></> : <><b>{!res.length ? "Hi, I'm your AI Consultant!" : "Your AI Consultant is here!"}</b>
@@ -203,13 +203,11 @@ function AiCard({ projects, events, leads, onConsult, onOpen, onNew, user = {} }
         </div>
         <div className="ai-tips">
           {!res.length ? <div className="ai-start">
-            <b className="ai-st-h">What I'll check on every page you make</b>
-            <div className="ai-checks">{[["🎯", "Headline", "Clear offer in 5 seconds"], ["👆", "Buttons", "One clear call-to-action"], ["📝", "Form", "Short and easy to fill"], ["📱", "Mobile view", "Looks right on phones"], ["⚡", "Speed", "Loads fast everywhere"], ["📈", "Conversions", "Visitors → leads"]].map(([ic, t, d], i) => (
-              <div key={t} className="ai-chk" style={{ "--d": i * 0.35 + "s" }}><span>{ic}</span><div><b>{t}</b><small>{d}</small></div><i>✓</i></div>))}</div>
+            <b className="ai-st-h">Once you make a page, I'll check:</b>
+            <div className="ai-pills">{[["🎯", "Headline"], ["👆", "Buttons"], ["📝", "Form"], ["📱", "Mobile"], ["⚡", "Speed"], ["📈", "Conversions"]].map(([ic, t], i) => <span key={t} style={{ "--d": i * 0.12 + "s" }}><i>{ic}</i>{t}</span>)}</div>
             <div className="ai-go">
               <button className="ai-go1" onClick={() => (onNew ? onNew("landing") : onConsult({ tab: "plan" }))}>✨ Create my first page</button>
-              <button onClick={() => onConsult({ go: "templates" })}>📄 Browse templates</button>
-              <button onClick={() => onConsult({ go: "finder" })}>🔍 Find customers</button>
+              <button onClick={() => onConsult({ go: "templates" })}>Browse templates</button>
             </div>
           </div>
             : !top.length ? <div className="ai-good"><b>Your pages look great 🎉</b><p className="mut">Ask me how to get more visitors or test a new headline.</p></div>
