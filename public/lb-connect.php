@@ -77,6 +77,11 @@ function gs_rng($tab, $r) { return rawurlencode("'" . str_replace("'", "''", $ta
 function gs_append($DATA, $h, $lead) {
   list($tok, $e) = gs_token($DATA); if ($e !== '') return array('', $e);
   $sid = $h['sid']; $tab = $h['tab']; $tabId = isset($h['tabId']) ? $h['tabId'] : null;
+  /* a form can have its own sheet (or its own tab in the main sheet) */
+  $f0 = isset($lead['formId']) ? (string)$lead['formId'] : '';
+  if ($f0 !== '' && isset($h['maps'][$f0]) && is_array($h['maps'][$f0])) { $fm = $h['maps'][$f0];
+    if (!empty($fm['sid'])) { $sid = $fm['sid']; $tab = !empty($fm['tab']) ? $fm['tab'] : 'Leads'; $tabId = isset($fm['tabId']) ? $fm['tabId'] : null; }
+    elseif (!empty($fm['tab']) && $fm['tab'] !== $tab) { $tab = $fm['tab']; $tabId = null; } }
   list($code, $j, $err) = gs_http('GET', gs_api() . $sid . '/values/' . gs_rng($tab, '1:1'), $tok);
   if ($code === 400 && $err === '') {   /* the tab does not exist yet → make it */
     list($c2, $j2, $e2) = gs_http('POST', gs_api() . $sid . ':batchUpdate', $tok, array('requests' => array(array('addSheet' => array('properties' => array('title' => $tab))))));

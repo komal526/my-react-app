@@ -4913,3 +4913,9 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .gsx-notify label{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#1e293b;cursor:pointer}
 .gsx-notify .gsx-em{flex:1 1 220px;margin:0;padding:9px 11px;border-radius:10px}
 .gsx-notify label{flex:0 0 auto;white-space:nowrap}
+/* v107 — per-form destination */
+.gsx-dest{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:#f8f9fd;border:1px solid #eceff6}
+.gsx-dl{font-size:12.5px;font-weight:800;color:#334155}
+.gsx-seg{display:flex;flex-wrap:wrap;gap:6px}
+.gsx-seg button{border:1.5px solid #e2e6f0;background:#fff;color:#334155;border-radius:999px;padding:7px 13px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.gsx-seg button.on{border-color:#11163f;background:#11163f;color:#ffd35c}

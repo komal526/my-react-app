@@ -957,7 +957,15 @@ if ($act === 'hooks') {
     if (isset($d['maps']) && is_array($d['maps'])) foreach (array_slice($d['maps'], 0, 100, true) as $fid => $m) {
       $fid = preg_replace('/[^A-Za-z0-9_-]/', '', (string)$fid); if ($fid === '' || !is_array($m) || !isset($m['cols']) || !is_array($m['cols'])) continue;
       $cols = array(); foreach (array_slice($m['cols'], 0, 60, true) as $k => $c) { $k = clean_str((string)$k, 60); $c = clean_str((string)$c, 60); if ($k !== '' && trim($c) !== '') $cols[$k] = $c; }
-      if ($cols) $h['maps'][$fid] = array('name' => clean_str(isset($m['name']) ? $m['name'] : '', 80), 'cols' => $cols);
+      if (!$cols) continue;
+      $one = array('name' => clean_str(isset($m['name']) ? $m['name'] : '', 80), 'cols' => $cols);
+      $ft = trim(clean_str(isset($m['tab']) ? $m['tab'] : '', 90));
+      if (!empty($m['link']) && trim((string)$m['link']) !== '') {   /* this form has its own Google Sheet */
+        $fr = gs_check($DATA, $m['link'], $ft, isset($m['gid']) ? $m['gid'] : null);
+        if (isset($fr['error'])) fail('Form “' . $one['name'] . '”: ' . $fr['error']);
+        $one += array('link' => clean_str($m['link'], 400), 'sid' => $fr['id'], 'tab' => $fr['tab'], 'tabId' => $fr['tabId'], 'title' => clean_str($fr['title'], 120));
+      } elseif ($ft !== '') $one['tab'] = $ft;   /* own tab inside the main sheet */
+      $h['maps'][$fid] = $one;
     }
     jwrite($hf, $h); @chmod($hf, 0600);
     if ($IS_ADMIN) jwrite(lb_hook_file($DATA, 'admin'), $h);

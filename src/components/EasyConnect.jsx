@@ -61,7 +61,16 @@ export function SheetLink({ value, onSave, userEmail, st, srv, setSrv, mailOn })
   const copyRobot = () => navigator.clipboard.writeText(st.robot).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); }, () => window.prompt("Copy this email:", st.robot));
   const form = forms.find((f) => f.id === fsel), fm = (maps[fsel] && maps[fsel].cols) || null;
   const colOf = (k, label) => (fm ? (fm[k] !== undefined ? fm[k] : "") : label);   /* not mapped yet → column = field label */
-  const setCol = (k, c) => { const base = fm || Object.fromEntries(form.fields.map((x) => [x.key, x.label])); setMaps({ ...maps, [fsel]: { name: form.name, cols: { ...base, [k]: c } } }); };
+  const setCol = (k, c) => { const base = fm || Object.fromEntries(form.fields.map((x) => [x.key, x.label])); setMaps({ ...maps, [fsel]: { ...(maps[fsel] || {}), name: form.name, cols: { ...base, [k]: c } } }); };
+  /* where this form saves: "main" (the sheet above), "tab" (own tab in that sheet) or "own" (its own Google Sheet) */
+  const cur = maps[fsel] || {}, dest = cur.dest || (cur.link ? "own" : cur.tab && cur.tab !== v.tab ? "tab" : "main");
+  const setDest = (o) => { const base = (maps[fsel] && maps[fsel].cols) || Object.fromEntries(form.fields.map((x) => [x.key, x.label])); setMaps({ ...maps, [fsel]: { ...(maps[fsel] || {}), name: form.name, cols: base, ...o } }); };
+  const [fchk, setFchk] = useState(null);
+  useEffect(() => {   /* check the form's own sheet link */
+    setFchk(null); const l = cur.link || ""; if (dest !== "own" || !/spreadsheets\/d\/[\w-]{20,}/.test(l)) return;
+    let live = true; const t = setTimeout(() => gsCheck(l, cur.tab || "", "").then((r) => live && setFchk(r)).catch((e) => live && setFchk({ error: e.message })), 450);
+    return () => { live = false; clearTimeout(t); };
+  }, [fsel, cur.link, dest]); // eslint-disable-line react-hooks/exhaustive-deps
   const allMaps = () => { const m = { ...maps }; if (form && !m[fsel]) m[fsel] = { name: form.name, cols: Object.fromEntries(form.fields.map((x) => [x.key, x.label])) }; return m; };
   const tabs = info && info.tabs ? info.tabs : [];
   const save = async () => {
@@ -72,7 +81,7 @@ export function SheetLink({ value, onSave, userEmail, st, srv, setSrv, mailOn })
       setSrv(r.hooks);
       const t = await hooksTest({ form: fsel });
       onSave({ link: v.link.trim(), tab: r.hooks.tab, title: r.hooks.title, ok: true, mode: "link" });
-      setMsg(["ok", <>✓ Connected! A test row was added to <a href={t.sheet} target="_blank" rel="noopener">“{r.hooks.title}” → {r.hooks.tab} ↗</a>. Every new form submission will be saved as a new row.{t.mailNote ? <><br /><small>Email: {t.mailNote}</small></> : ""}</>]);
+      setMsg(["ok", <>✓ Connected! A test row for “{(form && form.name) || "your form"}” was added — <a href={t.sheet} target="_blank" rel="noopener">open the sheet ↗</a>. Every new form submission will be saved as a new row.{t.mailNote ? <><br /><small>Email: {t.mailNote}</small></> : ""}</>]);
     } catch (e) { setMsg(["bad", e.message]); }
     setBusy(false);
   };
@@ -103,6 +112,17 @@ export function SheetLink({ value, onSave, userEmail, st, srv, setSrv, mailOn })
       <section className="gsx-s"><h4><span>3</span>Form fields → Sheet columns</h4>
         {!forms.length ? <p className="mut sm">You have no forms yet. Make one in <b>Forms</b> — until then every submission is saved with all its fields.</p> : <>
           <label className="gsx-f">Form<select value={fsel} onChange={(e) => setFsel(e.target.value)}>{forms.map((f) => <option key={f.id} value={f.id}>{f.name}{maps[f.id] ? " ✓" : ""}</option>)}</select></label>
+          {form && <div className="gsx-dest">
+            <span className="gsx-dl">Save this form's rows in</span>
+            <div className="gsx-seg">{[["main", "The sheet above"], ["tab", "Its own tab"], ["own", "Its own Google Sheet"]].map(([k, l]) => <button key={k} type="button" className={dest === k ? "on" : ""} onClick={() => setDest(k === "main" ? { dest: k, link: "", tab: "" } : k === "tab" ? { dest: k, link: "", tab: cur.tab && cur.tab !== v.tab ? cur.tab : form.name } : { dest: k, tab: cur.tab || "Leads" })}>{l}</button>)}</div>
+            {dest === "tab" && <label className="gsx-f">Tab name (made automatically in “{(info && info.title) || "your sheet"}”)<input value={cur.tab || ""} onChange={(e) => setDest({ dest: "tab", tab: e.target.value })} placeholder={form.name} /></label>}
+            {dest === "own" && <>
+              <label className="gsx-f">Google Sheet URL for “{form.name}” <em>(share it with the robot email too)</em><input value={cur.link || ""} onChange={(e) => setDest({ dest: "own", link: e.target.value.trim() })} placeholder="https://docs.google.com/spreadsheets/d/…" /></label>
+              <label className="gsx-f">Tab name<input value={cur.tab || ""} onChange={(e) => setDest({ dest: "own", tab: e.target.value })} placeholder="Leads" /></label>
+              {fchk && fchk.error && <div className="ec-chk bad">✕ {fchk.error}</div>}
+              {fchk && !fchk.error && <div className="ec-chk ok">✓ Found “{fchk.title}” — this form's rows go there</div>}
+            </>}
+          </div>}
           {form && <div className="gsx-map">
             <div className="gsx-mh"><span>Form field</span><span /><span>Sheet column</span></div>
             <div className="gsx-mr fixed"><b>Date &amp; time</b><i>→</i><input value="Date" readOnly /></div>
