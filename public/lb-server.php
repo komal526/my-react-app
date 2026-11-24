@@ -186,7 +186,8 @@ function lb_hook_mails($DATA, $u, $h, $lead, $sheetUrl) {
 function lb_forward_lead($lead, $DATA) {
   $u = lb_lead_owner($lead, $DATA); if ($u === '') return;
   $hf = lb_hook_file($DATA, $u); $h = jread($hf, array());
-  if (!empty($h['sid'])) {
+  $fid = isset($lead['formId']) ? (string)$lead['formId'] : ''; $ownSheet = $fid !== '' && !empty($h['maps'][$fid]['sid']);   /* this form has its own sheet (set in the form's settings) */
+  if (!empty($h['sid']) || $ownSheet) {
     list($url, $e) = gs_append($DATA, $h, $lead); list($ok, $e2) = lb_hook_mails($DATA, $u, $h, $lead, $url);
     $h = jread($hf, $h); $h['last'] = array('t' => time(), 'code' => $e === '' ? 200 : 0, 'err' => $e !== '' ? $e : $e2); jwrite($hf, $h); return;
   }
@@ -268,6 +269,55 @@ if ($act === 'signup') {
   if ($code === 0) out(array('ok' => false, 'fallback' => true));
   if ($code >= 300 || empty($j['id'])) { $m = isset($j['msg']) ? $j['msg'] : (isset($j['message']) ? $j['message'] : (isset($j['error_description']) ? $j['error_description'] : 'HTTP ' . $code)); fail(preg_match('/already|exists|registered/i', $m) ? 'An account with this email already exists — log in instead (or use “Forgot password?”).' : 'Could not create the account: ' . $m); }
   out(array('ok' => true));
+}
+
+/* v108 — WhatsApp webhook WITH a secret key (e.g. apiautomation.live answers 401 without it).
+   The key is stored encrypted on the server and added as a header here; it never goes into published pages. */
+function wa_file($DATA, $uid) { $d = $DATA . '/wa'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . substr(hash('sha256', 'w:' . $uid), 0, 24) . '.json'; }
+function wa_post($url, $hdr, $key, $payload) {
+  $h = array('Content-Type: application/json', 'Accept: application/json');
+  if ($key !== '') { if ($hdr === 'bearer') $h[] = 'Authorization: Bearer ' . $key; elseif (preg_match('/^[A-Za-z0-9-]{2,40}$/', $hdr)) $h[] = $hdr . ': ' . $key; }
+  $c = curl_init($url); curl_setopt_array($c, array(CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_HTTPHEADER => $h, CURLOPT_POSTFIELDS => json_encode($payload)));
+  $b = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); $err = curl_error($c); curl_close($c);
+  return array($code, (string)$b, $b === false ? ($err ?: 'no answer') : '');
+}
+function wa_why($code, $body, $err) {
+  if ($err !== '') return 'Could not reach the webhook: ' . $err;
+  if ($code === 401 || $code === 403) return 'The webhook said "Unauthorized" (' . $code . ') — the secret key / header is missing or wrong. Copy the webhook secret from your WhatsApp tool and paste it here.';
+  if ($code === 404) return 'The webhook URL was not found (404) — copy it again from your WhatsApp tool.';
+  return 'The webhook answered HTTP ' . $code . ($body !== '' ? ': ' . substr(strip_tags($body), 0, 160) : '');
+}
+if ($act === 'wa_get') { $w = jread(wa_file($DATA, $ME['uid']), array()); out(array('ok' => true, 'wa' => $w ? array('url' => $w['url'], 'hdr' => $w['hdr'], 'tail' => $w['tail']) : null)); }
+if ($act === 'wa_save') {
+  $f = wa_file($DATA, $ME['uid']); $old = jread($f, array());
+  if (!empty($d['remove'])) { @unlink($f); out(array('ok' => true, 'wa' => null)); }
+  $url = trim((string)(isset($d['url']) ? $d['url'] : '')); if (!preg_match(getenv('LB_WA_HTTP') ? '#^https?://\S{8,500}$#' : '#^https://\S{8,500}$#', $url)) fail('Paste the webhook URL (it starts with https://).');
+  $hdr = isset($d['hdr']) ? (string)$d['hdr'] : 'bearer'; if ($hdr !== 'bearer' && !preg_match('/^[A-Za-z0-9-]{2,40}$/', $hdr)) fail('Header name can only use letters, numbers and -');
+  $key = trim((string)(isset($d['wkey']) ? $d['wkey'] : '')); if ($key === '' && !empty($old['enc']) && $old['url'] === $url) $key = ai_dec($old['enc'], $DATA);
+  if ($key === '') fail('Paste the secret key / API key of the webhook.');
+  $w = array('url' => $url, 'hdr' => $hdr, 'enc' => ai_enc($key, $DATA), 'tail' => substr($key, -4), 'saved' => time());
+  jwrite($f, $w); @chmod($f, 0600); if ($IS_ADMIN) { jwrite(wa_file($DATA, 'admin'), $w); @chmod(wa_file($DATA, 'admin'), 0600); }
+  out(array('ok' => true, 'wa' => array('url' => $url, 'hdr' => $hdr, 'tail' => $w['tail'])));
+}
+if ($act === 'wa_test') {
+  $w = jread(wa_file($DATA, $ME['uid']), array()); if (empty($w['url'])) fail('Save the webhook URL and secret first.');
+  $p = isset($d['payload']) && is_array($d['payload']) ? $d['payload'] : array(); $p['test'] = true;
+  list($code, $b, $err) = wa_post($w['url'], $w['hdr'], ai_dec($w['enc'], $DATA), $p);
+  if ($code >= 200 && $code < 300) out(array('ok' => true, 'code' => $code)); fail(wa_why($code, $b, $err));
+}
+/* a live page asks the server to send its WhatsApp (only for a real lead saved in the last 3 hours, once per lead) */
+if ($act === 'wasend') {
+  $lid = preg_replace('/[^A-Za-z0-9]/', '', clean_str(isset($d['lid']) ? $d['lid'] : '', 40)); if ($lid === '') fail('No lead');
+  $lead = null; for ($i = 0; $i < 5 && !$lead; $i++) { if ($i) usleep(800000); foreach (array_reverse(array_slice(jread($DATA . '/leads.json', array()), -1500)) as $l) if (isset($l['lid']) && $l['lid'] === $lid) { $lead = $l; break; } }
+  if (!$lead) fail('Lead not found'); if ($lead['ts'] < (time() - 3 * 3600) * 1000) fail('Too late for this lead');
+  $sf = $DATA . '/wa-sent.json'; $sent = jread($sf, array()); $now = time(); foreach ($sent as $k => $t) if ($t < $now - 86400) unset($sent[$k]);
+  if (isset($sent[$lid])) out(array('ok' => true, 'dup' => true)); $sent[$lid] = $now; jwrite($sf, $sent);
+  $u = lb_lead_owner($lead, $DATA); if ($u === '') fail('No owner');
+  $w = jread(wa_file($DATA, $u), array()); if (empty($w['url'])) fail('WhatsApp webhook is not saved on the server');
+  $to = preg_replace('/\D/', '', (string)(isset($d['to']) ? $d['to'] : '')); $msg = clean_str(isset($d['message']) ? $d['message'] : '', 2000);
+  $p = array('event' => 'whatsapp.send', 'to' => $to, 'message' => $msg, 'name' => clean_str(isset($d['name']) ? $d['name'] : '', 120), 'lead' => array('form' => isset($lead['form']) ? $lead['form'] : '', 'data' => isset($lead['data']) ? $lead['data'] : array(), 'page' => isset($lead['page']) ? $lead['page'] : ''));
+  list($code, $b, $err) = wa_post($w['url'], $w['hdr'], ai_dec($w['enc'], $DATA), $p);
+  out($code >= 200 && $code < 300 ? array('ok' => true) : array('ok' => false, 'error' => wa_why($code, $b, $err)));
 }
 
 if ($act === 'leadmail') {
@@ -942,6 +992,29 @@ if ($act === 'gs_rows') {
     out(array('ok' => true, 'n' => $n, 'sheet' => '', 'tab' => 'Leads'));
   }
   fail('NO_SHEET');
+}
+
+/* v109 — one form → its own Google Sheet, set from the form's Settings (link + tab + optional grid id) */
+if ($act === 'gs_form') {
+  $fid = preg_replace('/[^A-Za-z0-9_-]/', '', (string)(isset($d['form']) ? $d['form'] : '')); if ($fid === '') fail('No form');
+  $hf = lb_hook_file($DATA, $ME['uid']); $h = jread($hf, array()); if (!isset($h['maps']) || !is_array($h['maps'])) $h['maps'] = array();
+  $cur = isset($h['maps'][$fid]) ? $h['maps'][$fid] : null;
+  $pub = function ($m) { return $m ? array('link' => isset($m['link']) ? $m['link'] : '', 'tab' => isset($m['tab']) ? $m['tab'] : '', 'title' => isset($m['title']) ? $m['title'] : '', 'gid' => isset($m['tabId']) ? $m['tabId'] : null) : null; };
+  if (!empty($d['get'])) { $c = gs_cfg($DATA); out(array('ok' => true, 'sheet' => $cur && !empty($cur['sid']) ? $pub($cur) : null, 'ready' => !empty($c['enc']), 'robot' => isset($c['robot']) ? $c['robot'] : '')); }
+  if (!empty($d['remove'])) { if ($cur) { unset($h['maps'][$fid]['sid'], $h['maps'][$fid]['link'], $h['maps'][$fid]['tabId'], $h['maps'][$fid]['title']); if (empty($h['maps'][$fid]['cols'])) unset($h['maps'][$fid]); } jwrite($hf, $h); @chmod($hf, 0600); if ($IS_ADMIN) jwrite(lb_hook_file($DATA, 'admin'), $h); out(array('ok' => true, 'sheet' => null)); }
+  $r = gs_check($DATA, isset($d['link']) ? $d['link'] : '', isset($d['tab']) ? $d['tab'] : '', isset($d['gid']) ? $d['gid'] : null); if (isset($r['error'])) fail($r['error']);
+  $one = is_array($cur) ? $cur : array();
+  $one['name'] = clean_str(isset($d['name']) ? $d['name'] : (isset($one['name']) ? $one['name'] : 'Form'), 80);
+  $one += array(); $one['link'] = clean_str($d['link'], 400); $one['sid'] = $r['id']; $one['tab'] = $r['tab']; $one['tabId'] = $r['tabId']; $one['title'] = clean_str($r['title'], 120);
+  if (isset($d['cols']) && is_array($d['cols']) && empty($one['cols'])) { $cols = array(); foreach (array_slice($d['cols'], 0, 60, true) as $k => $c) { $k = clean_str((string)$k, 60); $c = clean_str((string)$c, 60); if ($k !== '' && trim($c) !== '') $cols[$k] = $c; } if ($cols) $one['cols'] = $cols; }
+  $h['maps'][$fid] = $one; if (empty($h['mode'])) $h['mode'] = 'link'; jwrite($hf, $h); @chmod($hf, 0600);
+  if ($IS_ADMIN) jwrite(lb_hook_file($DATA, 'admin'), $h);   /* websites made before accounts belong to the admin */
+  lb_remember_forms($ME, $DATA, array($fid));
+  /* a test row so they can see it worked */
+  $td = array(); foreach ((isset($one['cols']) ? $one['cols'] : array('name' => 'Name')) as $k => $c) $td[$k] = preg_match('/mail/i', $k . $c) ? 'test@example.com' : (preg_match('/phone|mobile|whats|tel/i', $k . $c) ? '9876543210' : 'Test ' . $c);
+  list($url, $e) = gs_append($DATA, $h, array('lid' => 'TEST' . time(), 'form' => $one['name'], 'formId' => $fid, 'ts' => (int)(microtime(true) * 1000), 'page' => 'Test', 'url' => '', 'site' => '', 'data' => $td));
+  if ($e !== '') fail($e);
+  out(array('ok' => true, 'sheet' => $pub($one), 'url' => $url));
 }
 
 if ($act === 'hooks') {

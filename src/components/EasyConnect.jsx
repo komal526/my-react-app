@@ -3,7 +3,7 @@
 // RobotSetup: the admin adds that robot once (a Google service-account JSON key, stored encrypted on the server).
 // EmailEasy: connect your mailbox with email + password (Gmail needs an App password) — emails go out from your own address.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { gsStatus, gsSetup, gsCheck, hooksSave, hooksTest, mailGet, mailSave, mailOff, ago, phpCall, gsRows, loadForms } from "../lib.js";
+import { gsStatus, gsSetup, gsCheck, hooksSave, hooksTest, mailGet, mailSave, mailOff, ago, phpCall, gsRows, loadForms, acctSrv } from "../lib.js";
 
 /* ---------------- admin: add the Google robot once ---------------- */
 export function RobotSetup({ st, onDone }) {
@@ -263,4 +263,47 @@ export function SheetBtn({ rows, tab, label = "▦ Save to Google Sheet", cls = 
   };
   useEffect(() => { if (!st || st[0] === "wait") return; const t = setTimeout(() => setSt(null), 9000); return () => clearTimeout(t); }, [st]);
   return <span className="lf-sheetw"><button className={cls} disabled={!rows.length || (st && st[0] === "wait")} onClick={go}>{st && st[0] === "wait" ? "Saving…" : label}</button>{st && <span className={"lf-sheetmsg " + st[0]}>{st[1]}</span>}</span>;
+}
+
+/* ---------------- one form → its own Google Sheet (shown inside the form's Settings) ---------------- */
+export function FormSheet({ form, onIntegrations }) {
+  const [st, setSt] = useState(null), [v, setV] = useState({ link: "", tab: "", gid: "" }), [info, setInfo] = useState(null), [busy, setBusy] = useState(false), [msg, setMsg] = useState(null), [copied, setCopied] = useState(false);
+  const load = () => phpCall(acctSrv(), { action: "gs_form", form: form.id, get: 1 }).then((r) => { setSt(r); if (r.sheet) setV({ link: r.sheet.link, tab: r.sheet.tab, gid: r.sheet.gid == null ? "" : String(r.sheet.gid) }); }).catch((e) => setSt({ error: e.message }));
+  useEffect(() => { load(); }, [form.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const m = v.link.match(/[#&?]gid=(\d+)/); if (m && v.gid === "") setV((x) => ({ ...x, gid: m[1] })); }, [v.link]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!st || !st.ready || !/spreadsheets\/d\/[\w-]{20,}/.test(v.link)) { setInfo(null); return; }
+    let live = true; const t = setTimeout(() => gsCheck(v.link, "", v.gid).then((r) => { if (live) { setInfo(r); setV((x) => ({ ...x, tab: x.tab && (r.tabs || []).some((y) => y.title === x.tab) ? x.tab : r.tab })); } }).catch((e) => live && setInfo({ error: e.message })), 450);
+    return () => { live = false; clearTimeout(t); };
+  }, [v.link, v.gid, st && st.ready]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cols = Object.fromEntries((form.fields || []).filter((x) => !/^(heading|utm)$/.test(x.type)).map((x) => [x.name || x.id, x.label || x.name || "Field"]));
+  const save = async () => {
+    setBusy(true); setMsg(["wait", "Connecting and adding a test row…"]);
+    try { const r = await phpCall(acctSrv(), { action: "gs_form", form: form.id, name: form.name, link: v.link.trim(), tab: v.tab, gid: v.gid, cols }); setSt((s) => ({ ...s, sheet: r.sheet })); setMsg(["ok", <>✓ Connected — a test row was added. <a href={r.url} target="_blank" rel="noopener">Open the sheet ↗</a></>]); }
+    catch (e) { setMsg(["bad", e.message]); }
+    setBusy(false);
+  };
+  const remove = async () => { try { await phpCall(acctSrv(), { action: "gs_form", form: form.id, remove: 1 }); } catch { /* ignore */ } setSt((s) => ({ ...s, sheet: null })); setV({ link: "", tab: "", gid: "" }); setInfo(null); setMsg(["ok", "Disconnected."]); };
+  if (!st) return <p className="fb2-help">Loading…</p>;
+  if (st.error) return <p className="fb2-warn">{st.error}</p>;
+  if (!st.ready) return <p className="fb2-warn">Google Sheets isn't switched on yet. Add the Google robot once in <a href="#" onClick={(e) => { e.preventDefault(); onIntegrations && onIntegrations(); }}>Integrations → Google Sheets</a>.</p>;
+  const tabs = info && info.tabs ? info.tabs : [];
+  return (
+    <div className="fsh">
+      {st.sheet && <div className="fsh-on">✓ Saving to <b>“{st.sheet.title}” → {st.sheet.tab}</b><button className="xs red" onClick={remove}>Disconnect</button></div>}
+      <p className="fb2-help">1. In your Google Sheet click <b>Share</b> → add this email as <b>Editor</b>:</p>
+      <div className="ec-robot"><code>{st.robot}</code><button onClick={() => navigator.clipboard.writeText(st.robot).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }, () => window.prompt("Copy", st.robot))}>{copied ? "✓" : "Copy"}</button></div>
+      <label>2. Google Sheet URL<input value={v.link} onChange={(e) => setV({ link: e.target.value.trim(), tab: "", gid: "" })} placeholder="https://docs.google.com/spreadsheets/d/…" /></label>
+      <div className="fsh-g">
+        <label>Sheet name<input readOnly value={(info && info.title) || ""} placeholder="from the link" /></label>
+        <label>Tab name{tabs.length ? <select value={v.tab} onChange={(e) => setV({ ...v, tab: e.target.value })}>{tabs.map((t) => <option key={t.id} value={t.title}>{t.title}</option>)}{!tabs.some((t) => t.title === form.name) && <option value={form.name}>➕ New tab “{form.name}”</option>}</select> : <input value={v.tab} onChange={(e) => setV({ ...v, tab: e.target.value })} placeholder="Sheet1" />}</label>
+        <label>Grid ID<input value={v.gid} onChange={(e) => setV({ ...v, gid: e.target.value.replace(/\D/g, ""), tab: "" })} placeholder="0" inputMode="numeric" /></label>
+      </div>
+      {info && info.error && <p className="fb2-warn">✕ {info.error}</p>}
+      {info && !info.error && <p className="fsh-ok">✓ Sheet found — rows go into “{v.tab || info.tab}”</p>}
+      <button className="fsh-go" disabled={busy || !info || !!info.error} onClick={save}>{busy ? "Connecting…" : st.sheet ? "Save & test" : "Connect & test"}</button>
+      {msg && <div className={"gs-msg " + msg[0]}>{msg[1]}</div>}
+      <p className="fb2-help">Every submission of this form becomes a new row (Date + each field). Publish/Update the page once after connecting.</p>
+    </div>
+  );
 }

@@ -33,7 +33,7 @@ export function Rail({ dev, setDev, pages, page, setPage, actions = [], onClose,
         {actions.length > 0 && <div className="pk2-g">{actions.filter(Boolean).map((a) => <B key={a.l} {...a} />)}</div>}
         {note && <small className="pk2-note">{note}</small>}
       </>}
-      {onClose && <button className="pk2-x" onClick={onClose} title="Close (Esc)"><Svg d={P.x} /></button>}
+      {onClose && <button className="pk2-b pk2-dash" onClick={onClose} title="Back to dashboard (Esc)"><span className="pk2-i"><Svg d={P.home} /></span><small>Dashboard</small></button>}
     </aside>
   );
 }

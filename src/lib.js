@@ -413,7 +413,7 @@ export async function phpCall(srv, body) {
 }
 
 /* ==================== accounts (v66): my account, free subdomains, admin panel ==================== */
-const acctSrv = () => ({ url: defaultServerUrl(), key: accountKey() });
+export const acctSrv = () => ({ url: defaultServerUrl(), key: accountKey() });
 let _me = null;
 export const myAccount = (fresh = false) => { if (fresh || !_me) _me = phpCall(acctSrv(), { action: "me" }).catch((e) => { _me = null; throw e; }); return _me; };
 /* free subdomains are remembered on this device too, so project cards show them instantly */

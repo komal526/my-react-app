@@ -392,7 +392,7 @@ export function Preview({ token, file: initFile }) {
     <>
       <RailView dev={dev} setDev={setDev} pages={[...proj.pages.map((p) => ({ v: p.file, l: p.name })), ...(!pg ? [{ v: file, l: file + " (missing)" }] : [])]} page={file}
         setPage={(v) => { setHash(""); setFile(v); window.history.pushState(null, "", `#/preview/${token}/${v}`); }}
-        actions={[{ ic: RI.link, l: "Copy link", cls: "k-pri", fn: copy }, { ic: RI.reload, l: "Reload", fn: () => setVer((v) => v + 1) }, { ic: RI.home, l: "Dashboard", fn: () => { location.href = location.pathname; } }]}
+        actions={[{ ic: RI.edit, l: "Edit", cls: "k-pri", fn: () => { try { localStorage.setItem("lb_edit_go", proj.id); } catch { /* ignore */ } location.href = location.pathname; } }, { ic: RI.link, l: "Copy link", fn: copy }, { ic: RI.reload, l: "Reload", fn: () => setVer((v) => v + 1) }, { ic: RI.home, l: "Dashboard", cls: "k-dash", fn: () => { location.href = location.pathname; } }]}
         note={<><i className={"pv-dot" + (pulse ? " pulse" : "")} />Live draft · link expires in {hrs} h</>}>
         <iframe ref={ifr} title="preview" srcDoc={html} sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals" allow="payment; autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; accelerometer; gyroscope; geolocation" />
       </RailView>

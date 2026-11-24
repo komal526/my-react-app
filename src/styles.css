@@ -4919,3 +4919,79 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .gsx-seg{display:flex;flex-wrap:wrap;gap:6px}
 .gsx-seg button{border:1.5px solid #e2e6f0;background:#fff;color:#334155;border-radius:999px;padding:7px 13px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 .gsx-seg button.on{border-color:#11163f;background:#11163f;color:#ffd35c}
+/* v108 — WhatsApp webhook secret key */
+.wa-key{border:1px solid #e3e1f5;border-radius:14px;background:#faf9ff;margin-top:10px;overflow:hidden}
+.dash .wa-key-h,.wa-key-h{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;border:0;background:none;cursor:pointer;font:inherit;text-align:left;color:#1e1b4b}
+.wa-key-h b{flex:0 0 auto}.wa-key-h span{flex:1;min-width:0}.wa-key-h i{font-style:normal;color:#64748b}
+.wa-key-b{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
+
+/* ===== v109 — Leads table: compact, professional type ===== */
+.dash .ltable{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;border-radius:12px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.dash .ltable th{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748b;padding:11px 16px;background:#f8fafc}
+.dash .ltable td{padding:11px 16px;font-size:13px;line-height:1.45;color:#1e293b}
+.dash .ltable td .mut,.dash .ltable td.mut{font-size:12px;color:#64748b}
+.dash .ltable .lname{gap:10px}
+.dash .ltable .lname b{font-size:13.5px;font-weight:600;color:#0f172a;letter-spacing:-.005em}
+.dash .ltable .lav{width:30px;height:30px;font-size:12.5px;font-weight:700;flex:none}
+.dash .ltable select.lst{font-size:12px;font-weight:600;padding:5px 26px 5px 10px;height:auto;min-height:0;border-radius:999px}
+.dash .ltable td .pay,.dash .ltable td [class*=pay]{font-size:11.5px}
+.dash .ltable tbody tr:hover{background:#f8fafc}.dash .ltable tr.on{background:#f1f5ff}
+/* follow-ups: remove from Done */
+.dash .fu-rm{color:#94a3b8}.dash .fu-rm:hover{color:#dc2626;border-color:#fecaca;background:#fef2f2}
+/* v109 — preview rail: "Dashboard" instead of ✕ */
+.pk2 .pk2-dash{margin-top:auto;background:#fff!important;color:#0d1324!important;border:0!important}
+.pk2 .pk2-dash:hover{background:#ffd35c!important}
+.pk2-rail.fold .pk2-dash small{display:none}
+
+/* ===== v109 — AI Studio side panel: calmer, professional (framed card, refined type) ===== */
+.aip{grid-template-columns:1fr 400px}
+.aip .aip-side.v88{margin:14px 14px 14px 0;border-radius:26px;border:1px solid rgba(var(--lb-yr,245,179,1),.55);border-left:1px solid rgba(var(--lb-yr,245,179,1),.55);
+  box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 0 26px -6px rgba(var(--lb-yr,245,179,1),.45),0 30px 60px -30px rgba(0,0,0,.7);
+  background:radial-gradient(420px 260px at 90% 0%,rgba(80,100,255,.18),transparent 60%),linear-gradient(170deg,#18206a 0%,#111754 52%,#0b1040 100%);
+  padding:20px 18px 22px;gap:14px;font-family:Inter,system-ui,sans-serif;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+.aip .aip-side.v88 .aip-wv.w1{width:460px;height:110px;left:-80px;top:150px;opacity:.9}
+.aip .aip-side.v88 .aip-wv.w2{width:500px;height:120px;left:-60px;top:160px}
+.aip .aip-side.v88 .aip-wv.w3{width:220px;height:150px;right:-120px;bottom:-90px;opacity:.55}
+.aip .aip-side.v88 .aip-hero{min-height:128px;padding-right:40px}
+.aip .aip-side.v88 .aip-bot,.aip .aip-side.v88 .aip-bot .rb4{width:112px}
+.aip .aip-side.v88 .aip-x{width:38px;height:38px;right:14px;top:14px;font-size:15px!important}
+.aip .aip-side.v88 .aip-ready{font-size:12px;padding:4px 11px 4px 4px;font-weight:600}
+.aip .aip-side.v88 .aip-ready i{width:18px;height:18px;font-size:10px}
+.aip .aip-side.v88 .aip-name{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+.aip .aip-side.v88 .aip-dev{padding:4px}
+.aip .aip-side.v88 .aip-dev button{width:48px;height:36px}
+.aip .aip-side.v88 .aip-ask{border-radius:18px;padding:14px;gap:11px;background:rgba(20,26,90,.55);border-color:rgba(255,255,255,.1);backdrop-filter:blur(4px)}
+.aip .aip-side.v88 .aip-ah b{font-size:14.5px;font-weight:700}
+.aip .aip-side.v88 .aip-ask textarea{min-height:88px;border-radius:14px;font-size:13.5px;line-height:1.5;padding:11px 12px;border-width:1px;border-color:rgba(var(--lb-yr,245,179,1),.4)}
+.aip .aip-side.v88 .aip-ask textarea:focus{outline:none;border-color:var(--lb-y,#f5b301);box-shadow:0 0 0 3px rgba(var(--lb-yr,245,179,1),.15)}
+.aip .aip-side.v88 .aip-askbar{gap:10px}
+.aip .aip-side.v88 .aip-mic{width:44px!important;height:44px!important}
+.aip .aip-side.v88 .aip-apply{height:44px;font-size:15px;font-weight:800;box-shadow:0 8px 22px -10px rgba(var(--lb-yr,245,179,1),.9)}
+.aip .aip-side.v88 .aip-apply:disabled{opacity:.55;box-shadow:none}
+.aip .aip-side.v88 .aip-qa{gap:7px}
+.aip .aip-side.v88 .aip-qa>b{font-size:14.5px;font-weight:700;margin:4px 0 2px}
+.aip .aip-side.v88 .aip-qa button{height:44px;padding:0 14px;gap:12px;font-size:13.5px;font-weight:500;border-radius:12px!important;background:rgba(255,255,255,.04)!important;border-color:rgba(255,255,255,.1)!important}
+.aip .aip-side.v88 .aip-qa button:hover:not(:disabled){background:rgba(255,255,255,.08)!important;border-color:rgba(var(--lb-yr,245,179,1),.45)!important}
+.aip .aip-side.v88 .aip-qa button i{font-size:18px;color:#9aa3d6}
+.aip .aip-side.v88 .aip-qi{width:22px;font-size:17px}
+.aip .aip-side.v88 .aip-acts{gap:8px;margin-top:4px}
+.aip .aip-side.v88 .aip-acts button{height:46px;font-size:14.5px;font-weight:700;gap:10px;border-radius:12px!important}
+.aip .aip-side.v88 .aip-acts button span{font-size:16px}
+.aip .aip-side.v88 .aip-save i{font-size:20px}
+.aip .aip-side.v88 .aip-edit{border-width:1.5px!important}
+@media (max-width:900px){.aip .aip-side.v88{margin:0;border-radius:22px 22px 0 0}}
+/* v109 — Google Sheet inside a form's settings */
+.fsh{display:flex;flex-direction:column;gap:9px}
+.fsh label{display:flex;flex-direction:column;gap:4px}
+.fsh-g{display:grid;grid-template-columns:1.2fr 1fr .6fr;gap:8px}
+.fsh-g input,.fsh-g select{min-width:0;width:100%;box-sizing:border-box}
+.fsh-g input[readonly]{background:#f6f7fb;color:#475569}
+.fsh-on{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 11px;border-radius:10px;background:#ecfdf3;border:1px solid #bbf0d0;color:#14532d;font-size:12.5px}
+.fsh-on button{margin-left:auto}
+.fsh-ok{margin:0;font-size:12.5px;color:#0f7a43}
+.fsh-go{align-self:flex-start;border:0;border-radius:10px;padding:9px 14px;background:#11163f;color:#ffd35c;font-weight:800;cursor:pointer}
+.fsh-go:disabled{opacity:.55;cursor:default}
+@media (max-width:640px){.fsh-g{grid-template-columns:1fr 1fr}.fsh-g label:first-child{grid-column:1/-1}}
+.fsh-g{grid-template-columns:1fr 84px!important}.fsh-g label:first-child{grid-column:1/-1}
+.dash .fsh .fsh-go,.fsh .fsh-go{background:#11163f!important;color:#ffd35c!important;border:0!important;border-radius:10px!important;padding:9px 16px!important;font-weight:800}
+.fsh .ec-robot code{font-size:11.5px}

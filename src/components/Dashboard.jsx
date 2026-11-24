@@ -330,6 +330,9 @@ export default function Dashboard({ user, onLogout }) {
     let k = "", ai = "", pid = ""; try { k = localStorage.getItem("lb_tpl_go") || ""; ai = localStorage.getItem("lb_tpl_ai") || ""; pid = localStorage.getItem("lb_ai_go") || ""; ["lb_tpl_go", "lb_tpl_ai", "lb_ai_go"].forEach((x) => localStorage.removeItem(x)); } catch { /* ignore */ }
     const t = k && FILE_TEMPLATES.find((x) => x.key === k); if (t) { if (ai) aiTpl(t); else if (!full()) applyTpl(t); }
     const p = pid && projects.find((x) => x.id === pid); if (p) aiProject(p);
+    /* "Edit" pressed in a project preview opened in its own tab */
+    let eg = ""; try { eg = localStorage.getItem("lb_edit_go") || ""; localStorage.removeItem("lb_edit_go"); } catch { /* ignore */ }
+    if (eg && projects.some((x) => x.id === eg)) setOpenId(eg);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const evs = useMemo(() => resolveEvents(events, projects), [events, projects]);
   const open = projects.find((p) => p.id === openId);
@@ -386,7 +389,7 @@ export default function Dashboard({ user, onLogout }) {
           {["pages", "websites", "landings", "projects"].includes(view) && <button className="mbar-new" onClick={() => startNew(view === "websites" ? "website" : "landing")} aria-label="Create new">＋</button>}</div>
         <TopBar full={view === "pages"} title={({ projects: "All projects", websites: "Websites", import: "Import HTML", lms: "Academy · Courses", finder: "Lead Finder", admin: "Admin panel" })[view] || (PAGES.find(([k]) => k === view) || [])[2] || ""} onHome={() => setView("pages")} user={user} newLeads={leads.filter((l) => l.status === "new").length}
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={listed} forms={forms} cal={cal} onOpenProject={setOpenId} />
-        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={setPeek} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onToDraft={toDraft} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
+        {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={(p) => (p.unsaved ? setPeek(p) : openPreview(p))} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onToDraft={toDraft} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
           onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
           onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} onConsult={consultOpen} onUseTpl={applyTpl} onDomain={(p) => { setDomFocus({ id: p.id, ts: Date.now() }); setView("domains"); }} />}

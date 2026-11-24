@@ -1,4 +1,4 @@
-// LaunchBuilder v50 — FollowUps.jsx (every lead you need to call back: overdue · today · upcoming · done)
+// LaunchBuilder v109 — FollowUps.jsx (every lead you need to call back: overdue · today · upcoming · done)
 import { useMemo, useState } from "react";
 import { Icon } from "./icons.jsx";
 import { fuState, fuLabel, FU_QUICK, toLocalInput, ago } from "../lib.js";
@@ -27,11 +27,13 @@ export function FuModal({ lead, onSave, onClose }) {
 }
 
 export default function FollowUps({ leads, setLeads, onPipeline }) {
-  const [tab, setTab] = useState("due"), [q, setQ] = useState(""), [md, setMd] = useState(null), [, tick] = useState(0);
+  const [tab, setTab] = useState("upcoming"), [q, setQ] = useState(""), [md, setMd] = useState(null), [, tick] = useState(0);
   const now = Date.now();
   const update = (id, fn) => setLeads(leads.map((l) => (l.id === id ? { ...fn(l), updated: Date.now() } : l)));
   const done = (l) => update(l.id, (x) => ({ ...x, fu: null, fuLog: [{ ...x.fu, done: Date.now() }, ...(x.fuLog || [])].slice(0, 30) }));
   const snooze = (l, ms) => update(l.id, (x) => ({ ...x, fu: { ...x.fu, at: Math.max(Date.now(), x.fu.at) + ms } }));
+  /* remove one finished follow-up from the Done list */
+  const unDone = (l, f) => update(l.id, (x) => ({ ...x, fuLog: (x.fuLog || []).filter((y) => !(y.done === f.done && y.at === f.at)) }));
   const save = (fu) => { update(md.id, (x) => ({ ...x, fu })); setMd(null); };
 
   const t = q.trim().toLowerCase(), match = (l) => !t || JSON.stringify(l.data || {}).toLowerCase().includes(t) || (l.form || "").toLowerCase().includes(t);
@@ -62,7 +64,7 @@ export default function FollowUps({ leads, setLeads, onPipeline }) {
   };
   const list = tab === "due" ? [...groups.overdue.filter(match).map((l) => row(l, "overdue")), ...groups.today.filter(match).map((l) => row(l, "today"))]
     : tab === "upcoming" ? groups.upcoming.filter(match).map((l) => row(l, "upcoming"))
-      : groups.done.filter((x) => match(x.l)).map(({ l, f }, i) => <div key={l.id + i} className="fu-row done"><span className="fu-when done"><Icon n="check" s={14} />{fuLabel(f.done, now)}</span><div className="fu-who"><b>{nameOf(l)}</b><small>{l.form || "Lead"} · was due {fuLabel(f.at, now)}</small>{f.note && <p>{f.note}</p>}</div><div className="fu-acts"><button className="fu-ib" onClick={() => setMd(l)}>Follow up again</button></div></div>);
+      : groups.done.filter((x) => match(x.l)).map(({ l, f }, i) => <div key={l.id + i} className="fu-row done"><span className="fu-when done"><Icon n="check" s={14} />{fuLabel(f.done, now)}</span><div className="fu-who"><b>{nameOf(l)}</b><small>{l.form || "Lead"} · was due {fuLabel(f.at, now)}</small>{f.note && <p>{f.note}</p>}</div><div className="fu-acts"><button className="fu-ib" onClick={() => setMd(l)}>Follow up again</button><button className="fu-ib fu-rm" title="Remove from Done" aria-label="Remove" onClick={() => { if (window.confirm("Remove this from Done?")) unDone(l, f); }}><Icon n="trash" s={14} /></button></div></div>);
 
   return (
     <div onMouseEnter={() => tick((n) => n + 1)}>
@@ -73,7 +75,7 @@ export default function FollowUps({ leads, setLeads, onPipeline }) {
           <div key={l} className={"fx-stat fx-" + c}><span className="fx-orb"><Icon n={ic} s={22} /></span><div className="fx-txt"><span className="fx-lbl">{l}</span><b className="fx-num">{v}</b></div></div>))}
       </div>
       <div className="fu-bar">
-        <div className="fu-tabs">{[["due", `Due now · ${groups.overdue.length + groups.today.length}`], ["upcoming", `Upcoming · ${groups.upcoming.length}`], ["done", `Done · ${groups.done.length}`]].map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</div>
+        <div className="fu-tabs">{[["upcoming", `Upcoming · ${groups.upcoming.length}`], ["due", `Due now · ${groups.overdue.length + groups.today.length}`], ["done", `Done · ${groups.done.length}`]].map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</div>
         <label className="pl-search"><Icon n="search" s={15} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, phone, form…" /></label>
       </div>
       {noDate > 0 && <div className="pl-hint">{noDate} lead{noDate > 1 ? "s are" : " is"} in the <b>Follow-up</b> stage without a date. Open the pipeline and click the clock on the card to set one.</div>}

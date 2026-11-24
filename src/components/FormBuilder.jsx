@@ -1,6 +1,7 @@
 // LaunchBuilder v48 — FormBuilder.jsx
 // Drag & drop form builder: element panel · live canvas (the real form) · Styles & Options (Customize · Themes · Advanced)
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { FormSheet } from "./EasyConnect.jsx";
 import { FIELD_TYPES, newField, uid, formUrl, ago, mailReady as mailIsReady } from "../lib.js";
 import { formHtml, formPageHtml, FORM_STYLE_DEF, FORM_FONTS } from "./tools.js";
 import { Icon } from "./icons.jsx";
@@ -225,6 +226,9 @@ export default function Builder({ form, onChange, onBack, projects, onAddToPage,
       <label>Redirect to <small>(optional, e.g. thank-you.html)</small><input value={s.redirect} onChange={(e) => setS({ redirect: e.target.value.trim() })} /></label>
       <label>Send to webhook / CRM <small>(optional)</small><input value={s.webhook} placeholder="https://hooks.zapier.com/…" onChange={(e) => setS({ webhook: e.target.value.trim() })} /></label>
       <p className="fb2-help">Every submission is always saved in <b>Leads</b>. The webhook also sends it to Google Sheets, Zapier, Make, Pabbly or another CRM.</p>
+    </Sec>
+    <Sec title="📊 Google Sheet" open={false}>
+      <FormSheet form={form} onIntegrations={onIntegrations} />
     </Sec>
     <Sec title="💬 WhatsApp message" open={!!wa.enabled}>
       <label className="fb2-tog"><input type="checkbox" checked={!!wa.enabled} onChange={(e) => setS({ wa: { ...wa, enabled: e.target.checked } })} /><i />Send an automatic WhatsApp</label>
