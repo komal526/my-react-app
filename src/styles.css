@@ -4995,3 +4995,14 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .fsh-g{grid-template-columns:1fr 84px!important}.fsh-g label:first-child{grid-column:1/-1}
 .dash .fsh .fsh-go,.fsh .fsh-go{background:#11163f!important;color:#ffd35c!important;border:0!important;border-radius:10px!important;padding:9px 16px!important;font-weight:800}
 .fsh .ec-robot code{font-size:11.5px}
+/* v111 — Lead API card */
+.la{gap:12px}
+.la-ep{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 12px;border:1px solid #e3e7f0;border-radius:12px;background:#f8f9fd;min-width:0}
+.la-ep span{font-size:12px;font-weight:800;color:#475569}.la-ep code{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;background:none}
+.dash .la-ep button,.la-ep button{border:0;border-radius:9px;padding:7px 12px;background:#11163f;color:#ffd35c;font-weight:700;cursor:pointer}
+.la-new{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:14px;background:#fffbeb;border:1px solid #fde68a;font-size:13px}
+.la-keys{display:flex;flex-direction:column;gap:6px}
+.la-k{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;border:1px solid #e8ebf3;border-radius:12px;background:#fff;font-size:13px}
+.la-k button{margin-left:auto}
+.la-doc summary{cursor:pointer;font-weight:700;font-size:13px}
+.la-doc pre{white-space:pre-wrap;word-break:break-all;font-size:11.5px;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:12px}

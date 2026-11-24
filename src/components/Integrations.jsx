@@ -2,7 +2,7 @@
 import { BRAND } from "../brand.js";
 import { useEffect, useState } from "react";
 import SheetsCard from "./SheetsCard.jsx";
-import { EmailEasy, PlacesConnect } from "./EasyConnect.jsx";
+import { EmailEasy, PlacesConnect, LeadApi } from "./EasyConnect.jsx";
 import { WA_PROVIDERS, AI_PROVIDERS, callAI, detectAI, listModels, serverCall, serverUrl, phpCall, defaultServerUrl, lovableUrl, boltText, mailReady } from "../lib.js";
 
 /* ================= Integrations: WhatsApp automation, payments, AI providers ================= */
@@ -90,8 +90,23 @@ export default function Integrations({ integ, onChange, initial = "" }) {
     } catch { flash("✕ Couldn't reach EmailJS — check your internet"); }
   };
   const keyOk = /^rzp_(test|live)_[A-Za-z0-9]{8,}$/.test(pay.razorpayKey), upiOk = /^[\w.-]{2,}@[a-zA-Z]{2,}$/.test(pay.upiId);
+  /* v108: webhooks that need a secret key (401 Unauthorized) are sent by the server, with the key added there */
+  const [waKey, setWaKey] = useState(""), [waHdr, setWaHdr] = useState("bearer"), [waSrv, setWaSrv] = useState(null), [waBusy, setWaBusy] = useState(false), [waMsg, setWaMsg] = useState(null), [waOpen, setWaOpen] = useState(false);
+  useEffect(() => { phpCall(srv, { action: "wa_get" }).then((r) => { setWaSrv(r.wa); if (r.wa) { setWaHdr(r.wa.hdr); setWaOpen(true); } }).catch(() => {}); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const waSave = async () => {
+    setWaBusy(true); setWaMsg(["wait", "Saving and sending a test…"]);
+    try {
+      const r = await phpCall(srv, { action: "wa_save", url: wa.webhook, hdr: waHdr, wkey: waKey.trim() }); setWaSrv(r.wa); setWaKey("");
+      set("wa", { srvKey: true });
+      await phpCall(srv, { action: "wa_test", payload: SAMPLE });
+      setWaMsg(["ok", "✓ Saved — the test reached your webhook. Publish/Update your pages once so forms use it."]);
+    } catch (e) { setWaMsg(["bad", e.message]); }
+    setWaBusy(false);
+  };
+  const waRemove = async () => { try { await phpCall(srv, { action: "wa_save", remove: 1 }); } catch { /* ignore */ } setWaSrv(null); set("wa", { srvKey: false }); setWaMsg(["ok", "Secret key removed."]); };
   const sendTest = async () => {
     if (!wa.webhook) return flash("Paste a webhook URL first");
+    if (waSrv && waSrv.url === wa.webhook) { try { await phpCall(srv, { action: "wa_test", payload: SAMPLE }); flash("✓ Test reached your webhook"); } catch (e) { flash("✕ " + e.message); } return; }
     try { await fetch(wa.webhook, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ ...SAMPLE, test: true }) }); flash("Test sent — check your automation's history"); }
     catch { flash("Couldn't send — check the URL"); }
   };
@@ -139,6 +154,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
           { id: "sheets", cat: "Automation", ic: "▦", name: "Google Sheets", desc: "Paste your sheet link, match your form fields — every submission becomes a new row.", on: !!(integ.sheets && (integ.sheets.url || integ.sheets.link) && integ.sheets.ok) },
           { id: "email", cat: "Automation", ic: "✉", name: "Email automation", desc: "Auto-reply to every lead and get new-lead alerts — connect your email with just email + password.", on: emOk },
           { id: "places", cat: "Lead Finder", ic: "🔍", name: "Google Places (Lead Finder)", desc: "Connect your own Google key to find local businesses with phone numbers and websites.", on: !!(integ.places && integ.places.ok), extra: integ.places && integ.places.own ? "Your key" : "" },
+          { id: "leadapi", cat: "Automation", ic: "🔑", name: "Lead API (for your CRM)", desc: "Let a CRM like apiautomation.live fetch your leads with a secret key.", on: false },
           { id: "wa", cat: "Automation", ic: "💬", name: "WhatsApp automation", desc: "Send an automatic WhatsApp message through AiSensy, WATI, Interakt, Pabbly or Make.", on: !!wa.webhook },
           { id: "pay", cat: "Payments", ic: "₹", name: "Razorpay & UPI", desc: "Collect payments before registration — cards, UPI, GPay, PhonePe, Paytm.", on: keyOk || upiOk, extra: pay.razorpayKey && pay.razorpayKey.includes("_test_") ? "Test mode" : "" },
           { id: "ai", cat: "AI", ic: "✦", name: "AI builders", desc: "Claude, ChatGPT, Gemini, DeepSeek — plus Lovable and Bolt.new.", on: aiOn, extra: aiOn ? (AI_PROVIDERS.find((p) => p.id === ai.provider) || {}).name : "" },
@@ -159,6 +175,10 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         <PlacesConnect srv={srv} onDone={(r) => { if (r && r.ok !== undefined && (!!r.ready !== !!(integ.places && integ.places.ok) || !!r.own !== !!(integ.places && integ.places.own))) onChange({ ...integ, places: { ok: !!r.ready, own: !!r.own } }); }} />
       </Card>
 
+      <Card id="leadapi" sel={sel} onClose={close} ic="🔑" t="Lead API" sub="Your CRM pulls your leads (name, phone, email, every form answer) with a secret key. Read-only, only your account." on={false}>
+        <LeadApi />
+      </Card>
+
       <Card id="wa" sel={sel} onClose={close} ic="💬" t="WhatsApp automation" sub="Send an automatic WhatsApp message to everyone who fills a form." on={!!wa.webhook}>
         <div className="ig-g">
           <label>Your WhatsApp tool<select value={wa.provider} onChange={(e) => set("wa", { provider: e.target.value })}>{WA_PROVIDERS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
@@ -168,6 +188,18 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         <label className="ig-l">Webhook URL<input value={wa.webhook} onChange={(e) => set("wa", { webhook: e.target.value.trim() })} placeholder="https://connect.pabbly.com/workflow/sendwebhookdata/…" /></label>
         <label className="ig-l">Default message <span className="mut sm">— use {"{{name}}"}, {"{{email}}"}, {"{{phone}}"} or any field key</span><textarea rows={3} value={wa.template} onChange={(e) => set("wa", { template: e.target.value })} /></label>
         <div className="row"><button onClick={sendTest}>Send test</button><span className="mut sm">Then turn it on per form: Forms → your form → Settings → WhatsApp automation.</span></div>
+        <div className="wa-key">
+          <button type="button" className="wa-key-h" onClick={() => setWaOpen(!waOpen)}><b>🔑 My webhook needs a secret key</b><span className="mut sm">{waSrv ? "On · ••••" + waSrv.tail : "Use this if Send test shows 401 / Unauthorized"}</span><i>{waOpen ? "▴" : "▾"}</i></button>
+          {waOpen && <div className="wa-key-b">
+            <p className="mut sm">Copy the <b>secret / API key</b> shown with the webhook in your WhatsApp tool. It's saved encrypted on your server and added to every request there — it never goes into your website.</p>
+            <div className="ig-g">
+              <label>Send the key as<select value={waHdr} onChange={(e) => setWaHdr(e.target.value)}><option value="bearer">Authorization: Bearer …</option><option value="x-api-key">x-api-key</option><option value="x-webhook-secret">x-webhook-secret</option><option value="x-webhook-token">x-webhook-token</option><option value="x-auth-token">x-auth-token</option></select></label>
+              <label>Secret key<input type="password" value={waKey} onChange={(e) => setWaKey(e.target.value)} placeholder={waSrv ? "•••• saved — type only to change" : "paste the key"} autoComplete="off" /></label>
+            </div>
+            <div className="row"><button className="pri" disabled={waBusy || !wa.webhook || (!waKey.trim() && !waSrv)} onClick={waSave}>{waBusy ? "Saving…" : "Save key & test"}</button>{waSrv && <button className="xs red" onClick={waRemove}>Remove key</button>}</div>
+            {waMsg && <div className={"gs-msg " + waMsg[0]}>{waMsg[1]}</div>}
+          </div>}
+        </div>
         <details className="ig-d"><summary>What your webhook receives</summary><pre>{JSON.stringify(SAMPLE, null, 2)}</pre><p className="mut sm">Phone numbers with 10 digits get the country code added. If a form collects payment, the message is sent after payment.</p></details>
         <p className="mut sm">🔒 Never paste a WhatsApp API key here — it would be visible inside your published website. The webhook keeps your keys safe inside your automation tool.</p>
       </Card>

@@ -307,3 +307,37 @@ export function FormSheet({ form, onIntegrations }) {
     </div>
   );
 }
+
+/* ---------------- Lead API: let your CRM pull this account's leads ---------------- */
+export function LeadApi() {
+  const [st, setSt] = useState(null), [name, setName] = useState("WhatsApp CRM"), [fresh, setFresh] = useState(""), [msg, setMsg] = useState(null), [copied, setCopied] = useState("");
+  const myForms = () => { try { const e = JSON.parse(localStorage.getItem("lb_session") || "{}").email || ""; return loadForms(e).map((f) => f.id); } catch { return []; } };
+  const call = (o = {}) => phpCall(acctSrv(), { action: "apikeys", forms: myForms(), ...o }).then((r) => { setSt(r); if (r.new) setFresh(r.new); return r; }).catch((e) => setMsg(["bad", e.message]));
+  useEffect(() => { call(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const cp = (t, k) => navigator.clipboard.writeText(t).then(() => { setCopied(k); setTimeout(() => setCopied(""), 1500); }, () => window.prompt("Copy", t));
+  if (!st) return <div className="mut sm">Loading…</div>;
+  const ep = st.endpoint + "?api=leads";
+  return (
+    <div className="ec la">
+      <p className="mut sm">Your CRM (for example apiautomation.live) can <b>fetch</b> your leads from here with a secret key. Each key only sees <b>your</b> account's leads, read-only.</p>
+      <div className="la-ep"><span>Endpoint</span><code>{ep}</code><button onClick={() => cp(ep, "ep")}>{copied === "ep" ? "✓" : "Copy"}</button></div>
+      {fresh && <div className="la-new"><b>Your new key — copy it now, it won't be shown again:</b><div className="ec-robot"><code>{fresh}</code><button onClick={() => cp(fresh, "k")}>{copied === "k" ? "✓ Copied" : "Copy"}</button></div>
+        <small>In your CRM send it as the header <code>Authorization: Bearer {fresh.slice(0, 8)}…</code></small></div>}
+      <div className="la-keys">{st.keys.length === 0 ? <p className="mut sm">No keys yet.</p> : st.keys.map((k) => (
+        <div key={k.id} className="la-k"><b>{k.name}</b><code>lbk_…{k.tail}</code><span className="mut sm">{k.last ? "used " + ago(k.last * 1000) : "never used"}</span>
+          <button className="xs red" onClick={() => { if (window.confirm("Delete this key? Anything using it stops working.")) { setFresh(""); call({ del: k.id }); } }}>Delete</button></div>))}</div>
+      <div className="pc-row"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Key name (e.g. WhatsApp CRM)" /><button className="gs-go" onClick={() => { setMsg(null); call({ create: 1, name }); }}>＋ Create key</button></div>
+      {msg && <div className={"gs-msg " + msg[0]}>{msg[1]}</div>}
+      <details className="la-doc"><summary>How your CRM calls it</summary>
+        <pre>{`GET ${st.endpoint}?api=ping
+GET ${st.endpoint}?api=leads&since=2026-11-24T00:00:00Z&limit=100
+GET ${st.endpoint}?api=leads&cursor=<next_cursor>
+GET ${st.endpoint}?api=leads&form_id=<form id>&from=2026-11-01&to=2026-11-30
+GET ${st.endpoint}?api=lead&id=<lead id>
+GET ${st.endpoint}?api=forms
+Header:  Authorization: Bearer lbk_…`}</pre>
+        <p className="mut sm">Each lead has: id, created_at, name, first_name, last_name, phone, whatsapp (with country code), email, city/state/country, form {"{id,name}"}, page {"{id,name,url}"}, utm, and <b>fields</b> — every question and answer exactly as submitted. Sync tip: save the last lead's <code>created_ms</code> and ask with <code>since=</code> it next time; use <code>id</code> to skip duplicates.</p>
+      </details>
+    </div>
+  );
+}

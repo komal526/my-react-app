@@ -144,6 +144,8 @@ $d = json_decode($raw ? $raw : '{}', true);
 if (!is_array($d)) $d = array();
 $act = isset($d['action']) ? $d['action'] : (isset($_GET['action']) ? $_GET['action'] : 'info');
 $cfg = jread($DATA . '/config.json', array());
+/* Lead API for outside apps (GET ?api=…, key-authenticated) */
+if (isset($_GET['api'])) { if (!file_exists(__DIR__ . '/lb-api.php')) { http_response_code(503); echo '{"ok":false,"error":"lb-api.php is missing"}'; exit; } require __DIR__ . '/lb-api.php'; }
 
 /* ---------------- public actions (used by your live websites) ---------------- */
 if ($act === 'info') out(array('ok' => true, 'app' => 'launchbuilder', 'version' => 20, 'accounts' => (bool)lb_saas(), 'http' => extension_loaded('curl') ? 'curl' : 'php', 'configured' => !empty($cfg['key']), 'sitesDomain' => isset($cfg['sites_domain']) ? $cfg['sites_domain'] : '') + vps_info());
@@ -392,6 +394,22 @@ if ($ME['tenant'] !== '' && $ME['role'] !== 'admin') { $t0 = lb_tenants($DATA); 
 /* private files (AI key, voice notes) per account; the owner keeps the files made with the old key */
 $KID = $LEGACY ? substr(hash('sha256', $key), 0, 16) : substr(hash('sha256', 'uid:' . $ME['uid']), 0, 16);
 $IS_ADMIN = $ME['role'] === 'admin';
+
+/* Lead API keys (Integrations → Lead API). Only a hash is stored; the key is shown once. */
+if ($act === 'apikeys') {
+  $kf = $DATA . '/api-keys.json'; $keys = jread($kf, array());
+  if (isset($d['forms']) && is_array($d['forms'])) lb_remember_forms($ME, $DATA, $d['forms']);   /* so leads of these forms belong to this account */
+  if (!empty($d['create'])) {
+    $mineN = 0; foreach ($keys as $k) if ($k['uid'] === $ME['uid']) $mineN++; if ($mineN >= 10) fail('You can have up to 10 keys — delete one first.');
+    $tok = 'lbk_' . bin2hex(random_bytes(20)); $kh = hash('sha256', $tok);
+    $keys[$kh] = array('uid' => $ME['uid'], 'email' => $ME['email'], 'admin' => $IS_ADMIN, 'name' => clean_str(isset($d['name']) && trim($d['name']) !== '' ? $d['name'] : 'CRM', 60), 'tail' => substr($tok, -4), 'created' => time(), 'last' => 0,
+      'cc' => isset($d['cc']) && preg_match('/^\d{1,4}$/', (string)$d['cc']) ? (string)$d['cc'] : '91');
+    jwrite($kf, $keys); @chmod($kf, 0600); $GLOBALS['LB_NEWKEY'] = $tok;
+  }
+  if (!empty($d['del'])) { $id = (string)$d['del']; foreach ($keys as $kh => $k) if (substr($kh, 0, 12) === $id && $k['uid'] === $ME['uid']) unset($keys[$kh]); jwrite($kf, $keys); }
+  $list = array(); foreach ($keys as $kh => $k) if ($k['uid'] === $ME['uid']) $list[] = array('id' => substr($kh, 0, 12), 'name' => $k['name'], 'tail' => $k['tail'], 'created' => $k['created'], 'last' => $k['last'], 'cc' => isset($k['cc']) ? $k['cc'] : '91');
+  out(array('ok' => true, 'keys' => $list, 'endpoint' => $BASE . '/lb-server.php', 'new' => isset($GLOBALS['LB_NEWKEY']) ? $GLOBALS['LB_NEWKEY'] : null));
+}
 
 if ($act === 'ping') out(array('ok' => true, 'base' => $BASE, 'php' => PHP_VERSION, 'uid' => $ME['uid']) + server_ips());
 
