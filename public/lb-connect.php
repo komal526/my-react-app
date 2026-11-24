@@ -54,6 +54,9 @@ function gs_parse($s) {
 }
 function gs_why($code, $j, $err, $DATA) {
   if ($err !== '') return 'Could not reach Google: ' . $err;
+  $gm = isset($j['error']['message']) ? (string)$j['error']['message'] : '';
+  if ($code === 403 && preg_match('/has not been used|is disabled|SERVICE_DISABLED|API has not/i', $gm)) return 'The Google Sheets API is not switched on in your Google Cloud project yet — open console.cloud.google.com → APIs & Services → Library → Google Sheets API → Enable, wait 2 minutes and try again.';
+  if ($code === 403 && $gm !== '' && !preg_match('/permission/i', $gm)) return 'Google: ' . $gm;
   if ($code === 403 || $code === 401) return 'No permission yet — open your sheet → Share → add ' . gs_robot($DATA) . ' as Editor, then try again.';
   if ($code === 404) return 'This sheet was not found — copy the link again from the address bar of your Google Sheet.';
   return isset($j['error']['message']) ? 'Google: ' . $j['error']['message'] : 'Google answered HTTP ' . $code;

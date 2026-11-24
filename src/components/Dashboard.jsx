@@ -381,7 +381,7 @@ export default function Dashboard({ user, onLogout }) {
 
   return (
     <div className={"dash" + (mini && wide ? " mini" : "")} onClick={() => um && setUm(false)}>
-      <Sidebar role={me ? me.role : ""} mini={mini && wide} onMini={() => { const v = !mini; setMini(v); localStorage.setItem("lb_nav_mini", v ? "1" : "0"); }} open={navOpen} onClose={() => setNavOpen(false)} view={view} onView={setView} count={listed.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, followups: fuDue(leads), forms: forms.length, calendar: cal.length }} />
+      <Sidebar role={me ? me.role : ""} mini={mini && wide} onMini={() => { const v = !mini; setMini(v); localStorage.setItem("lb_nav_mini", v ? "1" : "0"); }} open={navOpen} onClose={() => setNavOpen(false)} view={view} onView={setView} count={listed.length} user={user} onLogout={onLogout} badges={{ leads: leads.filter((l) => l.status === "new").length, followups: leads.filter((l) => l.fu && l.fu.at).length,   /* every follow-up still to do (due now + upcoming) */ forms: forms.length, calendar: cal.length }} />
       {navOpen && <div className="nv-ov" onClick={() => setNavOpen(false)} />}
       <section><Suspense fallback={<div className="lazy-load"><span className="pub-spin" /></div>}>
         <div className="mbar"><button className="mbar-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><span /><span /><span /></button>
