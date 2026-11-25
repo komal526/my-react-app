@@ -160,7 +160,7 @@ function lb_claim_site($slug, $ME, $DATA) { $own = lb_owners($DATA); $own[$slug]
 function lb_my_slugs($ME, $DATA, $SITES) {
   $own = lb_owners($DATA); $res = array();
   foreach ($own as $sl => $o) if (lb_is_me($o, $ME)) $res[$sl] = 1;
-  if ($ME['role'] === 'admin') foreach ((array)@scandir($SITES) as $x) if ($x !== '' && $x[0] !== '.' && is_dir($SITES . '/' . $x) && !isset($own[$x])) $res[$x] = 1;
+  if ($ME['role'] === 'admin') foreach ((array)@scandir($SITES) as $x) if ($x !== '' && $x[0] !== '.' && $x[0] !== '_' && is_dir($SITES . '/' . $x) && !isset($own[$x])) $res[$x] = 1;
   return $res;
 }
 function lb_dom_mine($host, $ME, $DATA) { $dw = lb_downers($DATA); return lb_is_me(isset($dw[$host]['uid']) ? $dw[$host]['uid'] : '', $ME); }

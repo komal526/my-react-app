@@ -1,5 +1,5 @@
 // LaunchBuilder v118 — every sidebar page has its own link: crecapo.tech/projects, /forms, /leads …
-export const ROUTES = { pages: "dashboard", projects: "projects", templates: "templates", leads: "leads", finder: "lead-finder", followups: "follow-ups", forms: "forms", calendar: "calendar", lms: "courses", domains: "domains", integrations: "integrations", analytics: "analytics", pixels: "tracking-pixels", settings: "settings", admin: "admin" };
+export const ROUTES = { pages: "dashboard", projects: "projects", templates: "all-templates", leads: "leads", finder: "lead-finder", followups: "follow-ups", forms: "forms", calendar: "calendar", lms: "courses", domains: "domains", integrations: "integrations", analytics: "analytics", pixels: "tracking-pixels", settings: "settings", admin: "admin" };
 const SLUG2V = Object.fromEntries(Object.entries(ROUTES).map(([v, s]) => [s, v]));
 const SECT = new RegExp("/(" + Object.values(ROUTES).join("|") + ")/?$");
 /* the app's own folder, without the section name ("/forms" → "/") — use it to build preview / form / booking links */

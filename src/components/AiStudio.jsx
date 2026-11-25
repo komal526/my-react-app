@@ -2,7 +2,7 @@
 // A full window for creating with AI: describe it (type or speak), add pictures and documents, then "Create page".
 // Opened from: Create new → Create with AI · the AI Consultant's plan · the editor's "Build with AI" button.
 import { useEffect, useRef, useState } from "react";
-import { aiWebsite, aiSection, aiEditPage, callAI, browserAi, serverAiReady, AI_PROVIDERS, pg, aiTts, TTS_VOICES } from "../lib.js";
+import { aiWebsite, aiSection, aiEditPage, callAI, browserAi, serverAiReady, AI_PROVIDERS, pg, aiTts, TTS_VOICES, imgPut } from "../lib.js";
 import { BRAND } from "../brand.js";
 import Robot from "./Robot.jsx";
 
@@ -104,7 +104,7 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
     setErr("");
     for (const f of [...list]) {
       if (files.length >= MAX_FILES) { setErr(`Up to ${MAX_FILES} files.`); break; }
-      try { const r = await shrink(f); setFiles((x) => (x.length >= MAX_FILES ? x : [...x, { kind: "image", name: f.name, mime: r.forAi.slice(5, r.forAi.indexOf(";")), b64: r.forAi.split(",")[1], page: r.forPage, thumb: r.forAi }])); }
+      try { const r = await shrink(f); setFiles((x) => (x.length >= MAX_FILES ? x : [...x, { kind: "image", name: f.name, mime: r.forAi.slice(5, r.forAi.indexOf(";")), b64: r.forAi.split(",")[1], page: r.forPage, thumb: r.forAi, use: /design|replicate|copy|same as|like this|reference/i.test(prompt0Ref.current || "") ? "copy" : "use" }])); }
       catch (e) { setErr(e.message); }
     }
   };
@@ -142,13 +142,18 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
     if (!ready) return setErr("Connect an AI first.");
     setErr(""); setBusy(mode === "editor" && how === "section" ? "Building your section…" : "Building your " + (type === "website" ? "website" : "page") + "…");
     try {
-      const imgs = files.filter((f) => f.kind === "image"), docs = files.filter((f) => f.kind === "doc"), send = files.filter((f) => f.kind !== "doc").map((f) => ({ kind: f.kind, mime: f.mime, b64: f.b64, name: f.name }));
+      /* v118: each picture is either "use" (put this photo in the page) or "copy" (recreate this design) */
+      const refs = files.filter((f) => f.kind === "image" && f.use === "copy"), imgs = files.filter((f) => f.kind === "image" && f.use !== "copy"), docs = files.filter((f) => f.kind === "doc");
+      /* your photos are saved as files on your server first, so the new page only keeps their links (small, never fills the browser) */
+      for (const f of imgs) if (/^data:/.test(f.page)) { try { const u = await imgPut(f.page); if (u) f.page = u; } catch { /* keep it inside the page */ } }
+      const send = [...refs, ...imgs, ...files.filter((f) => f.kind === "pdf")].map((f) => ({ kind: f.kind, mime: f.mime, b64: f.b64, name: f.name }));
       const bn = (prompt.match(/Business name:\s*([^\n.]{2,50})/i) || [])[1];
       const n = name.trim() || (bn && bn.trim()) || prompt.trim().split(/[,.:\n]/)[0].slice(0, 40) || (docs[0] && docs[0].name.replace(/\.\w+$/, "")) || "AI page";
       let brief = (mode === "new" ? `Business / page name: ${n}\n` : "") + `Brief: ${prompt.trim() || "Use the attached information."}`;
       docs.forEach((d) => { brief += `\n\nInformation from the user's document "${d.name}" (use it for real content — names, prices, dates, services):\n${d.text}`; });
       if (files.some((f) => f.kind === "pdf")) brief += `\n\nThe attached PDF is the user's own material — use its real details.`;
-      if (imgs.length) brief += `\n\nThe user attached ${imgs.length} picture(s), in this order: ${imgs.map((f, i) => `${i + 1}) ${f.name}`).join(", ")}. Look at them for content and colours. These are the user's REAL pictures — you MUST use every one of them in the page instead of stock photos: put each where it fits best (logo in the header, the main photo in the hero, products/services cards, gallery, team, about). Write exactly <img src="lb-img:1">, <img src="lb-img:2"> … (or background-image:url('lb-img:1') in CSS). Do not use any other image URLs for those spots.`;
+      if (refs.length) brief += `\n\nDESIGN TO COPY: the first ${refs.length} attached picture(s) (${refs.map((f) => f.name).join(", ")}) are screenshots of a design the user wants. REPLICATE THAT DESIGN AS EXACTLY AS POSSIBLE: the same sections in the same order, the same layout and columns, the same colours (read the exact hex colours from the picture), the same background style and gradients, the same font style and sizes, spacing, corner rounding, shadows, button shapes and colours, card styles, icons, badges, header and footer. Recreate it with real HTML/CSS (fully responsive) — never put these screenshots into the page as images. Keep the visible text from the screenshot unless the brief gives other content; if the brief describes a different business, keep the design and change only the words.${imgs.length ? "" : " For photos inside the design use fitting stock photos."}`;
+      if (imgs.length) brief += `\n\nThe user attached ${imgs.length} photo(s) to use in the page${refs.length ? ` (the attached pictures after the design screenshot${refs.length > 1 ? "s" : ""})` : ""}, in this order: ${imgs.map((f, i) => `${i + 1}) ${f.name}`).join(", ")}. Look at them for content and colours. These are the user's REAL pictures — you MUST use every one of them in the page instead of stock photos: put each where it fits best (logo in the header, the main photo in the hero, products/services cards, gallery, team, about). Write exactly <img src="lb-img:1">, <img src="lb-img:2"> … (or background-image:url('lb-img:1') in CSS). Do not use any other image URLs for those spots.`;
       /* put YOUR pictures into the page: where the AI placed them (lb-img:N) — and any it forgot replace its stock / placeholder
          pictures in order, or (if there are none) go into a gallery before the footer. So every uploaded picture is used. */
       const put = (h) => imgs.reduce((x, f, i) => x.split(`lb-img:${i + 1}`).join(f.page), h);
@@ -156,7 +161,7 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
         const left = imgs.filter((f, i) => !htmls.some((h) => h.includes(`lb-img:${i + 1}`)));
         let out = htmls.map(put); if (!left.length) return out;
         const d = new DOMParser().parseFromString(sectionOnly ? `<!DOCTYPE html><html><body>${out[0]}</body></html>` : out[0], "text/html");
-        const stock = [...d.querySelectorAll("img")].filter((im) => { const src = im.getAttribute("src") || ""; return !/^data:image/.test(src) && !/logo|icon|avatar/i.test((im.getAttribute("alt") || "") + " " + (im.className || "")); });
+        const stock = [...d.querySelectorAll("img")].filter((im) => { const src = im.getAttribute("src") || ""; return !/^data:image|\/sites\/_u\//.test(src) && !/logo|icon|avatar/i.test((im.getAttribute("alt") || "") + " " + (im.className || "")); });
         const rest = [];
         left.forEach((f, k) => { if (stock[k]) { stock[k].setAttribute("src", f.page); stock[k].removeAttribute("srcset"); if (!stock[k].getAttribute("alt")) stock[k].setAttribute("alt", f.name.replace(/\.\w+$/, "")); stock[k].style.objectFit = stock[k].style.objectFit || "cover"; } else rest.push(f); });
         /* background placeholders: url(https://…unsplash/placehold…) */
@@ -217,7 +222,8 @@ export default function AiStudio({ mode = "new", type: type0 = "landing", name: 
                   onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) go(); }} /></div>
             </div>
             {files.length > 0 && <div className="ais-files">{files.map((f, i) => (
-              <span key={i} className={"ais-file " + f.kind}>{f.kind === "image" ? <img src={f.thumb} alt="" /> : <b>{f.kind === "pdf" ? "PDF" : "DOC"}</b>}<small>{f.name}</small>
+              <span key={i} className={"ais-file " + f.kind + (f.kind === "image" ? " " + (f.use === "copy" ? "copy" : "use") : "")}>{f.kind === "image" ? <img src={f.thumb} alt="" /> : <b>{f.kind === "pdf" ? "PDF" : "DOC"}</b>}
+                {f.kind === "image" ? <span className="ais-fr"><small>{f.name}</small><span className="ais-role">{[["use", "📷 Use in page", "Put this photo into the page"], ["copy", "🎨 Copy design", "Recreate this design (layout, colours, fonts) — the picture itself is not added"]].map(([k, l, t]) => <button key={k} type="button" title={t} className={(f.use === "copy" ? "copy" : "use") === k ? "on" : ""} disabled={!!busy} onClick={() => setFiles((x) => x.map((y, j) => (j === i ? { ...y, use: k } : y)))}>{l}</button>)}</span></span> : <small>{f.name}</small>}
                 {!busy && <button onClick={() => setFiles((x) => x.filter((_, k) => k !== i))} aria-label="Remove">✕</button>}</span>))}</div>}
             <div className="ais-bar">
               <span className="ais-hint"><i />{files.length ? `${files.length}/${MAX_FILES} files added` : "Drop pictures or documents here"}<i /></span>

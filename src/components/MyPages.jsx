@@ -4,7 +4,7 @@ import { Thumb } from "./parts.jsx";
 import { tplTabUrl } from "./Rail.jsx";
 import Robot from "./Robot.jsx";
 import { Icon } from "./icons.jsx";
-import { liveAddr, domainState, subsCache, subList, LIMIT, FILE_TEMPLATES, FEATURED_TPL, longThumb, fuDue, aiAvailable, askAI, tplUrl } from "../lib.js";
+import { liveAddr, domainState, subsCache, subList, LIMIT, projLimit, limitText, FILE_TEMPLATES, FEATURED_TPL, longThumb, fuDue, aiAvailable, askAI, tplUrl } from "../lib.js";
 import { metrics, consult, areaName } from "./insights.js";
 import { BRAND } from "../brand.js";
 const Legal = lazy(() => import("./Legal.jsx"));
@@ -438,7 +438,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
 
       {/* stats: light, compact cards — icon tile left, label + number, trend at the bottom */}
       <div className="db-stats fx">
-        {[["Total Projects", st.total, "layers", "green", Math.round((st.total / LIMIT) * 100), st.tTotal ? `↑ +${st.tTotal} this week` : `${st.total}/${LIMIT} used`, !!st.tTotal, null],
+        {[["Total Projects", st.total, "layers", "green", projLimit() === Infinity ? Math.min(100, st.total * 10) : Math.round((st.total / projLimit()) * 100), st.tTotal ? `↑ +${st.tTotal} this week` : `${st.total}/${limitText(projLimit())} used`, !!st.tTotal, null],
           ["Landing Pages", st.landing, "pages", "orange", st.total ? Math.round((st.landing / st.total) * 100) : 0, `${st.total ? Math.round((st.landing / st.total) * 100) : 0}% of projects`, false, "landings"],
           ["Websites", st.website, "globe", "blue", st.total ? Math.round((st.website / st.total) * 100) : 0, `${st.total ? Math.round((st.website / st.total) * 100) : 0}% of projects`, false, "websites"],
           ["Total Leads", st.leads, "users", "purple", st.leads ? Math.round((st.wLeads / st.leads) * 100) : 0, st.tLeads ? `${st.tLeads > 0 ? "↑ +" : "↓ "}${Math.abs(st.tLeads)}%` : `+${st.wLeads} this week`, st.tLeads > 0 || (!st.tLeads && st.wLeads > 0), "leads"],

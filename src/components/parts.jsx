@@ -2,7 +2,7 @@
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
 import { appPath } from "../route.js";
-import { serverAiReady, LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate, formFetch } from "../lib.js";
+import { serverAiReady, LIMIT, projLimit, limitText, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate, formFetch } from "../lib.js";
 import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
 import { cloudOn, lastStatus } from "../cloud.js";
 import { Icon } from "./icons.jsx";
@@ -132,8 +132,8 @@ export function Sidebar({ view, onView, count, user, onLogout, badges = {}, open
           </div>;
         })}
       </div>}
-      <button className="sb3-up" onClick={() => go("settings")} title={mini ? `Upgrade to Pro · ${count}/${LIMIT} projects` : undefined}>
-        <span className="sb3-crown">👑</span><span className="sb3-l"><b>Upgrade to Pro</b><small>{count}/{LIMIT} projects used</small></span></button>
+      <button className="sb3-up" onClick={() => go("settings")} title={mini ? `Upgrade to Pro · ${count}/${limitText(projLimit())} projects` : undefined}>
+        <span className="sb3-crown">👑</span><span className="sb3-l"><b>Upgrade to Pro</b><small>{count}/{limitText(projLimit())} projects used</small></span></button>
       <CloudStatus />
       <div className="sb3-user" title={mini ? user.email : undefined}><span className="av">{(user.name || "U")[0].toUpperCase()}</span>
         <span className="sb3-l"><b>{user.name}</b><small>{user.email}</small></span>
@@ -192,7 +192,7 @@ export async function republishLive(page, integ) {
   const payload = filesForServer(files);
   if (payload.reduce((n, f) => n + f.b64.length, 0) > 60e6) throw new Error("Your site is bigger than 45 MB. Use smaller videos or YouTube links.");
   const r = await phpCall(integ.server, { action: "publish", slug: sl, files: payload });
-  return { status: "published", host: { ...page.host, url: r.url || page.host.url, folder: r.folder || page.host.folder, ts: Date.now() }, versions: [...(page.versions || []), { ts: Date.now(), pages: page.pages }].slice(-5) };
+  return { status: "published", host: { ...page.host, url: r.url || page.host.url, folder: r.folder || page.host.folder, ts: Date.now() }, versions: [...(page.versions || []), { ts: Date.now(), pages: page.pages }].slice(-3) };
 }
 export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains, onInteg, projects = [] }) {
   /* link names your OTHER projects already use — publishing with one of them would replace that project's live site */

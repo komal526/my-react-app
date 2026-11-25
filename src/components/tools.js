@@ -86,8 +86,11 @@ export const cleanNode = (r, exp) => {
 };
 
 /* ---- images are resized (max 1600px) before they are stored, so pages stay light ---- */
-export const readImage = (file, cb) => {
+/* v118: the picture is then saved as a file on your server and the page only keeps its link (window.__lbImgPut, set by the dashboard) —
+   if the server can't be reached, it stays inside the page as before */
+export const readImage = (file, cb0) => {
   if (!file) return;
+  const cb = (u) => { const put = window.__lbImgPut; if (!put || !/^data:image\/(png|jpe?g|webp|gif);/.test(u) || u.length < 2000) return cb0(u); put(u).then((url) => cb0(url || u), () => cb0(u)); };
   const raw = () => { const r = new FileReader(); r.onload = () => cb(r.result); r.readAsDataURL(file); };
   if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) return raw();
   const url = URL.createObjectURL(file), img = new Image();

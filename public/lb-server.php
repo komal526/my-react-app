@@ -993,6 +993,18 @@ if ($act === 'form_pub') {
 /* v118 — second copy of each account's builder data on this server, so every device shows the same (even if Supabase has a problem) */
 function kv_dir($DATA, $uid) { $d = $DATA . '/kv/' . substr(hash('sha256', 'kv:' . $uid), 0, 24); if (!is_dir($d)) @mkdir($d, 0700, true); return $d; }
 function kv_ok($k) { return is_string($k) && preg_match('/^lb_[a-z]+(_[a-z]+)*_$/', $k); }
+/* v118 — a picture inside a page is saved as a file on this server (sites/_u/…) instead of inside the page text,
+   so projects stay small and browsers don't run out of storage */
+if ($act === 'img_put') {
+  $u = isset($d['data']) ? (string)$d['data'] : '';
+  if (!preg_match('#^data:image/(png|jpe?g|webp|gif);base64,([A-Za-z0-9+/=]+)$#', $u, $m)) fail('Only PNG, JPG, WEBP or GIF pictures');
+  $bin = base64_decode($m[2], true); if ($bin === false || strlen($bin) > 12000000) fail('Picture is too big (max 12 MB)');
+  if (function_exists('getimagesizefromstring') && @getimagesizefromstring($bin) === false) fail('This is not a picture');
+  $sub = substr(hash('sha256', 'img:' . $ME['uid']), 0, 16); $dir = $SITES . '/_u/' . $sub; if (!is_dir($dir)) @mkdir($dir, 0755, true);
+  $name = substr(sha1($bin), 0, 24) . '.' . ($m[1] === 'jpeg' ? 'jpg' : $m[1]);
+  if (!file_exists($dir . '/' . $name) && @file_put_contents($dir . '/' . $name, $bin) === false) fail('Could not save the picture on the server');
+  out(array('ok' => true, 'url' => $BASE . '/sites/_u/' . $sub . '/' . $name));
+}
 if ($act === 'kv_put') {
   $dir = kv_dir($DATA, $ME['uid']); $res = array(); $now = round(microtime(true) * 1000);
   foreach (array_slice(isset($d['items']) && is_array($d['items']) ? $d['items'] : array(), 0, 30) as $it) {

@@ -10,6 +10,11 @@ import { cloudToken } from "./cloud.js";
 /* ================= default page (TGAI workshop) ================= */
 // Helpers, default page templates and saving/loading of projects
 export const LIMIT = 10;
+/* v118: how many projects this account may have — admin: unlimited; others: the limit set in Admin → Accounts (0 = unlimited), else 10 */
+let _plim = LIMIT;
+export const projLimit = () => _plim;
+export const setProjLimit = (me) => { _plim = !me ? LIMIT : me.role === "admin" || me.siteLimit === 0 ? Infinity : +me.siteLimit > 0 ? +me.siteLimit : LIMIT; return _plim; };
+export const limitText = (n = _plim) => (n === Infinity ? "∞" : String(n));
 export const uid = () => Math.random().toString(36).slice(2, 9);
 export const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "page";
 export const slugify = slug;
@@ -77,6 +82,21 @@ export const loadProjects = (email) => {
   catch { return []; }
 };
 export const saveProjects = (email, list) => { try { localStorage.setItem(key(email), JSON.stringify(list)); return true; } catch { return false; } };
+/* v118 — keep projects small: pictures inside pages (data:image/…) are saved as files on your server and replaced by their link */
+const DATA_IMG = /data:image\/(?:png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]{2000,}/g;
+export const hasBigImg = (text) => { DATA_IMG.lastIndex = 0; const r = DATA_IMG.test(String(text || "")); DATA_IMG.lastIndex = 0; return r; };
+const _imgUp = new Map();
+export async function imgPut(dataUrl) {
+  if (_imgUp.has(dataUrl)) return _imgUp.get(dataUrl);
+  const r = await phpCall(acctSrv(), { action: "img_put", data: dataUrl }); if (r.url) _imgUp.set(dataUrl, r.url); return r.url;
+}
+export async function offloadImages(text) {
+  DATA_IMG.lastIndex = 0; const found = [...new Set(String(text).match(DATA_IMG) || [])]; let out = String(text), n = 0;
+  for (const u of found) { try { const url = await imgPut(u); if (url) { out = out.split(u).join(url); n++; } } catch { /* server not reachable — keep it inside */ } }
+  return [out, n];
+}
+/* save projects; if the browser is full, drop old versions (undo history) before giving up */
+export const saveProjectsSafe = (email, list) => saveProjects(email, list) || saveProjects(email, list.map((p) => ({ ...p, versions: (p.versions || []).slice(-1) }))) || saveProjects(email, list.map((p) => ({ ...p, versions: [] })));
 
 /* ==================== leads (form submissions) + temporary preview links ==================== */
 // Leads (form submissions) and temporary preview links. Stored in this browser until a backend is added.

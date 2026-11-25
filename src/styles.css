@@ -5040,3 +5040,12 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .dash .ft .ft-c{min-height:0}
 .dash .ft .ft-shot{height:auto!important;min-height:250px!important;flex:1 1 auto!important}
 @media (max-width:1100px){.dash .ft .ft-shot{min-height:300px!important}}
+
+/* v118 — AI Studio: each picture = use it, or copy its design */
+.ais-file.image{max-width:330px;align-items:center}
+.ais-fr{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ais-role{display:inline-flex;background:#eef0f8;border-radius:8px;padding:2px;gap:2px}
+.ais-file .ais-role button{border:0;background:none;color:#4b5375;font-size:11px;font-weight:700;padding:3px 7px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.ais-file .ais-role button.on{background:#0f1238;color:#fff}
+.ais-file.copy .ais-role button.on{background:linear-gradient(135deg,#7c4dff,#5b3df0)}
+.ais-file.copy{border-color:#c9bbff;background:#f6f2ff}

@@ -7,7 +7,7 @@ import { Icon } from "./icons.jsx";
 import { RailView, RI } from "./Rail.jsx";
 import { BRAND } from "../brand.js";
 import { ROUTES, viewFromUrl, urlForView, appUrl } from "../route.js";
-import { formPublish, LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount, FILE_TEMPLATES } from "../lib.js";
+import { formPublish, saveProjectsSafe, hasBigImg, offloadImages, imgPut, setProjLimit, projLimit, limitText, LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount, FILE_TEMPLATES } from "../lib.js";
 import { formHtml, formPageHtml, bookingWidget } from "./tools.js";
 import { resolveEvents } from "./insights.js";
 const Editor = lazy(() => import("./Editor.jsx"));
@@ -167,7 +167,7 @@ export default function Dashboard({ user, onLogout }) {
   /* my account on the server: role (admin / workspace owner / user), free-subdomain limit, paused accounts */
   const [me, setMe] = useState(null), [blocked, setBlocked] = useState(null), [domFocus, setDomFocus] = useState(null);
   useEffect(() => {
-    myAccount().then(setMe).catch((e) => { if (e.code === "ACCOUNT_PAUSED" || e.code === "WRONG_WORKSPACE") setBlocked({ code: e.code, msg: e.message }); });
+    myAccount().then((m) => { setProjLimit(m); setMe(m); }).catch((e) => { if (e.code === "ACCOUNT_PAUSED" || e.code === "WRONG_WORKSPACE") setBlocked({ code: e.code, msg: e.message }); });
     const f = (e) => setBlocked(e.detail); window.addEventListener("lb-blocked", f); return () => window.removeEventListener("lb-blocked", f);
   }, []);
   /* warm up the builder in the background — skipped when the browser asks to save data */
@@ -224,9 +224,27 @@ export default function Dashboard({ user, onLogout }) {
   const saveNow = useRef(null), dirty = useRef(false);
   saveNow.current = () => {
     if (!dirty.current) return; dirty.current = false;   /* nothing changed here → never overwrite what another tab saved */
-    if (!saveProjects(E, projects.filter((p) => !p.unsaved))) alert("Browser storage is full. Delete some projects or use smaller images.");
+    if (!saveProjectsSafe(E, projects.filter((p) => !p.unsaved)) && !offloadAll(true)) alert("Browser storage is full. Delete an old project you don't need (⋯ → Delete), then try again.");
     try { localStorage.setItem(DK, JSON.stringify(projects.filter((p) => p.unsaved).map(({ recovered, ...p }) => p))); } catch { /* storage full: the draft just isn't kept after a reload */ }
   };
+  /* v118: pictures inside projects → saved as files on your server (keeps this browser's storage free, so projects never get lost) */
+  useEffect(() => { window.__lbImgPut = imgPut; return () => { delete window.__lbImgPut; }; }, []);
+  const offBusy = useRef(false), offT = useRef(0);
+  const offloadAll = (now = false) => {
+    const todo = projRef.current.filter((p) => p.id !== openRef.current && hasBigImg(JSON.stringify(p)));
+    if (!todo.length || offBusy.current) return todo.length > 0;
+    offBusy.current = true; if (now) setToast("Moving pictures to your server to free browser storage…");
+    (async () => {
+      for (const p of todo) {
+        const [txt, n] = await offloadImages(JSON.stringify(p)); if (!n) continue;
+        let np; try { np = JSON.parse(txt); } catch { continue; }
+        setProjects((ps) => ps.map((x) => (x.id === p.id && x.updated === p.updated ? np : x)));
+      }
+      offBusy.current = false; if (now) setToast("✓ Pictures moved — your projects are saved");
+    })();
+    return true;
+  };
+  useEffect(() => { clearTimeout(offT.current); offT.current = setTimeout(() => offloadAll(), 2500); return () => clearTimeout(offT.current); }, [projects]); // eslint-disable-line react-hooks/exhaustive-deps
   const firstSave = useRef(true);
   useEffect(() => {
     if (firstSave.current) { firstSave.current = false; return; }   /* just loaded — nothing changed */
@@ -250,7 +268,7 @@ export default function Dashboard({ user, onLogout }) {
   const patch = (id, o) => setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, ...o, updated: Date.now() } : p)));
   const patchHtml = (id, pid, html) => setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, updated: Date.now(), pages: p.pages.map((x) => (x.id === pid ? { ...x, html } : x)) } : p)));
   const patchPages = (id, fn) => setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, updated: Date.now(), pages: fn(p.pages) } : p)));
-  const full = () => projects.filter((p) => !p.unsaved).length >= LIMIT && (alert(`Free plan allows ${LIMIT} projects. Delete one to add another.`), true);
+  const full = () => projects.filter((p) => !p.unsaved).length >= projLimit() && (alert(`Your plan allows ${limitText()} projects. Delete one to add another.`), true);
   /* save = true → goes straight into your projects (import, duplicate, "Save to my projects"); otherwise it opens as an unsaved draft */
   /* ask = true → right after it opens: "Save to projects" or "Keep as draft" */
   const create = (name, pages, type, tpl, { save = false, open = true, ask = true, kept = false } = {}) => {
@@ -265,7 +283,7 @@ export default function Dashboard({ user, onLogout }) {
     setToast("📝 “" + p.name + "” moved to Drafts — open Drafts to save it back");
   };
   const keepDraft = (id) => { setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, kept: true } : p))); setToast("📝 Kept in Drafts — save it to your projects any time"); };
-  const saveDraft = (id) => { if (projects.filter((p) => !p.unsaved).length >= LIMIT) return alert(`Free plan allows ${LIMIT} projects. Delete one to save this one.`), false; setProjects((ps) => ps.map(({ recovered, ...p }) => (p.id === id ? { ...p, unsaved: false, orig: undefined, kept: undefined, updated: Date.now() } : { ...p, ...(recovered ? { recovered } : {}) }))); setToast("✓ Saved to your projects"); return true; };
+  const saveDraft = (id) => { if (projects.filter((p) => !p.unsaved).length >= projLimit()) return alert(`Your plan allows ${limitText()} projects. Delete one to save this one.`), false; setProjects((ps) => ps.map(({ recovered, ...p }) => (p.id === id ? { ...p, unsaved: false, orig: undefined, kept: undefined, updated: Date.now() } : { ...p, ...(recovered ? { recovered } : {}) }))); setToast("✓ Saved to your projects"); return true; };
   const discardDraft = (id) => setProjects((ps) => ps.filter((p) => p.id !== id));
   /* leaving the editor: an untouched new project just disappears; a changed one asks Save / Don't save */
 
