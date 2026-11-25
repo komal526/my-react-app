@@ -62,7 +62,7 @@ function Sec({ title, open: o0 = true, children }) {
 const Seg = ({ value, opts, onChange }) => <div className="fb2-seg">{opts.map(([v, l]) => <button key={String(v)} className={value === v ? "on" : ""} onClick={() => onChange(v)}>{l}</button>)}</div>;
 const Range = ({ label, value, min, max, step = 1, unit = "px", onChange }) => <label className="fb2-range"><span>{label}<b>{value}{unit}</b></span><input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(+e.target.value)} /></label>;
 
-export default function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leads = [], integ, onIntegrations, onLeads }) {
+export default function Builder({ form, onChange, onBack, projects, onAddToPage, usedOn, leads = [], integ, onIntegrations, onLeads, onLive }) {
   const [sel, setSel] = useState(null), [side, setSide] = useState("customize"), [main, setMain] = useState("build"), [dev, setDev] = useState("desktop");
   const [note, setNote] = useState(""), [prev, setPrev] = useState(false), [q, setQ] = useState("");
   const [drop, setDrop] = useState(null), [tb, setTb] = useState(null), [target, setTarget] = useState({ pid: "", page: "" });
@@ -73,6 +73,14 @@ export default function Builder({ form, onChange, onBack, projects, onAddToPage,
   const mailReady = mailIsReady(gem);
   const VARS = ["name", ...form.fields.filter((x) => !/heading|utm/.test(x.type) && x.name !== "name").map((x) => x.name), "form", "all_fields", ...(pay.enabled ? ["amount", "payment_id"] : [])];
   const flash = (t) => { setNote(t); setTimeout(() => setNote(""), 2200); };
+  /* 💾 Save & update live: the form link + every published page using this form get these changes now */
+  const [liveAt, setLiveAt] = useState(form.updated || 0), [going, setGoing] = useState(false), dirty = (form.updated || 0) > liveAt;
+  const goLive = async () => {
+    if (!onLive || going) return; setGoing(true);
+    try { const r = await onLive(form); setLiveAt(form.updated || Date.now()); setNote(r.err ? "⚠ Form link updated, but a page couldn't update: " + r.err : `✓ Saved & live — form link${r.pages ? ` + ${r.pages} live page${r.pages > 1 ? "s" : ""}` : ""} updated`); setTimeout(() => setNote(""), 4500); }
+    catch (e) { window.alert("Couldn't update the live form: " + e.message); }
+    setGoing(false);
+  };
 
   /* every change goes through here → undo / redo (typing is grouped) */
   /* typing in one box (or dragging one slider) is one undo step; every click, drop or theme is its own step */
@@ -284,6 +292,7 @@ export default function Builder({ form, onChange, onBack, projects, onAddToPage,
         <button className="fb2-ib" onClick={onBack} title="Back to Forms"><Icon n="back" s={18} /></button>
         <input className="fb2-name" value={form.name} onChange={(e) => up({ name: e.target.value })} aria-label="Form name" />
         <span className="fb2-saved"><i />Saved</span>
+        {onLive && <button className={"fb2-live" + (dirty ? " on" : "")} onClick={goLive} disabled={going} title="Put your changes on the form link and on every live page that uses this form">{going ? "Updating…" : dirty ? "💾 Save & update live" : "✓ Live"}</button>}
         <div className="fb2-mtabs" role="tablist">{[["build", "Edit"], ["subs", `Submissions${formLeads.length ? " · " + formLeads.length : ""}`], ["share", "Share & embed"]].map(([k, l]) => <button key={k} className={main === k ? "on" : ""} onClick={() => setMain(k)}>{l}</button>)}</div>
         <div className="grow" />
         {main === "build" && <div className="fb2-dev">{[["desktop", "desktop"], ["mobile", "mobile"]].map(([k, ic]) => <button key={k} className={dev === k ? "on" : ""} title={k} onClick={() => setDev(k)}><Icon n={ic} s={16} /></button>)}</div>}

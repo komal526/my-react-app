@@ -99,6 +99,9 @@ function gs_append($DATA, $h, $lead) {
   $fid = isset($lead['formId']) ? (string)$lead['formId'] : ''; $mapped = $fid !== '' && isset($h['maps'][$fid]['cols']) && is_array($h['maps'][$fid]['cols']) && $h['maps'][$fid]['cols'];
   if ($mapped) {
     $nd = array(); foreach ($h['maps'][$fid]['cols'] as $k => $col) { $col = trim((string)$col); if ($col !== '') $nd[$col] = isset($data[$k]) ? $data[$k] : ''; }
+    /* v117: a field added to the form later (not in the saved mapping) gets its own new column, named like the field */
+    $lab = function_exists('form_file') ? jread(form_file($DATA, $fid), array()) : array(); $lab = isset($lab['labels']) && is_array($lab['labels']) ? $lab['labels'] : array();
+    foreach ($data as $k => $v) if (!array_key_exists($k, $h['maps'][$fid]['cols']) && !preg_match('/^(utm_|gclid|fbclid)/', $k)) { $col = isset($lab[$k]) && $lab[$k] !== '' ? $lab[$k] : (string)$k; if (!isset($nd[$col])) $nd[$col] = $v; }
     $data = $nd; if (!$old) $head = array('Date');
   }
   foreach ($data as $k => $v) if (!in_array((string)$k, $head, true)) $head[] = (string)$k;

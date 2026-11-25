@@ -57,13 +57,13 @@ function Gallery({ onPick, onClose, integ, initial = null }) {
   );
 }
 
-export default function Forms({ forms, onSave, projects, leads, onAddToPage, onLeads, integ, onIntegrations }) {
+export default function Forms({ forms, onSave, projects, leads, onAddToPage, onLeads, integ, onIntegrations, onLive }) {
   const [open, setOpen] = useState(null), [gal, setGal] = useState(false), [menu, setMenu] = useState(null);
   const cur = forms.find((x) => x.id === open);
   const countLeads = (f) => leads.filter((l) => l.formId === f.id).length;
   const usedOn = (f) => projects.reduce((n, p) => n + p.pages.filter((pg) => pg.html.includes(`data-lb-form-id="${f.id}"`)).length, 0);
   const put = (f) => onSave(forms.some((x) => x.id === f.id) ? forms.map((x) => (x.id === f.id ? f : x)) : [f, ...forms]);
-  if (cur) return <Builder form={cur} onChange={put} onBack={() => setOpen(null)} projects={projects} onAddToPage={onAddToPage} usedOn={usedOn(cur)} leads={leads} integ={integ} onIntegrations={onIntegrations} onLeads={onLeads} />;
+  if (cur) return <Builder form={cur} onChange={put} onBack={() => setOpen(null)} projects={projects} onAddToPage={onAddToPage} usedOn={usedOn(cur)} leads={leads} integ={integ} onIntegrations={onIntegrations} onLeads={onLeads} onLive={onLive} />;
   return (
     <div onClick={() => setMenu(null)}>
       <div className="top"><div><h1>Forms</h1><p className="mut">Build forms once, use them on any page, and collect every entry in Leads.</p></div><button className="pri big" onClick={() => setGal(true)}>＋ New form</button></div>

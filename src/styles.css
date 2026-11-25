@@ -5024,3 +5024,12 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 /* v115 — phone field: country code */
 .fb2-cc{display:grid;gap:8px;padding:10px 12px;border:1px solid #ecebf5;border-radius:12px;background:#fafaff}
 .fb2-cc .fb2-help{margin:0}
+
+/* v117 — form builder: Save & update live */
+.fb2-live{flex:0 0 auto;border:1px solid #d9f2e3;background:#effaf3;color:#15803d;font-weight:700;font-size:13px;padding:7px 12px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.fb2-live.on{background:#16a34a;border-color:#16a34a;color:#fff;box-shadow:0 6px 16px -8px rgba(22,163,74,.7)}
+.fb2-live.on:hover{background:#15803d}
+.fb2-live:disabled{opacity:.7;cursor:wait}
+@media (max-width:900px){.fb2-live{font-size:12px;padding:6px 9px}}
+.fb2-top .fb2-mtabs button,.fb2-top .fb2-btn{white-space:nowrap}
+@media (max-width:1500px){.fb2-top .fb2-mtabs button{padding-left:10px;padding-right:10px}.fb2-top .fb2-name{min-width:0}}

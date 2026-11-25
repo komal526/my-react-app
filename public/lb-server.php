@@ -986,7 +986,8 @@ if ($act === 'form_pub') {
   $fo = jread($DATA . '/formowners.json', array()); if (isset($fo[$fid]) && $fo[$fid] !== $ME['uid'] && !($IS_ADMIN && $fo[$fid] === 'admin')) fail('This form belongs to another account.');
   $html = isset($d['html']) ? (string)$d['html'] : ''; if ($html === '' || strlen($html) > 600000) fail('Form page is empty or too big');
   lb_remember_forms($ME, $DATA, array($fid));
-  jwrite(form_file($DATA, $fid), array('html' => $html, 'name' => clean_str(isset($d['name']) ? $d['name'] : 'Form', 120), 'uid' => $ME['uid'], 't' => time()));
+  $lab = array(); if (isset($d['labels']) && is_array($d['labels'])) foreach (array_slice($d['labels'], 0, 80, true) as $lk => $lv) $lab[clean_str($lk, 60)] = clean_str($lv, 120);
+  jwrite(form_file($DATA, $fid), array('labels' => $lab, 'html' => $html, 'name' => clean_str(isset($d['name']) ? $d['name'] : 'Form', 120), 'uid' => $ME['uid'], 't' => time()));
   out(array('ok' => true));
 }
 if ($act === 'gs_status') { $c = gs_cfg($DATA); out(array('ok' => true, 'ready' => !empty($c['enc']), 'robot' => isset($c['robot']) ? $c['robot'] : '', 'admin' => $IS_ADMIN)); }

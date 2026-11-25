@@ -6,8 +6,8 @@ import Leads from "./Leads.jsx";
 import { Icon } from "./icons.jsx";
 import { RailView, RI } from "./Rail.jsx";
 import { BRAND } from "../brand.js";
-import { LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount, FILE_TEMPLATES } from "../lib.js";
-import { formHtml, bookingWidget } from "./tools.js";
+import { formPublish, LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount, FILE_TEMPLATES } from "../lib.js";
+import { formHtml, formPageHtml, bookingWidget } from "./tools.js";
 import { resolveEvents } from "./insights.js";
 const Editor = lazy(() => import("./Editor.jsx"));
 const Templates = lazy(() => import("./Templates.jsx"));
@@ -288,6 +288,17 @@ export default function Dashboard({ user, onLogout }) {
     clearTimeout(syncT.current);
     syncT.current = setTimeout(() => setProjects((ps) => ps.map((p) => ({ ...p, pages: p.pages.map((x) => ({ ...x, html: changed.reduce((h, f) => syncFormInHtml(h, f, integ), x.html) })) }))), 500);
   };
+  /* "Save & update live": the form link + every published page that uses this form get the latest version now */
+  const onLiveForm = async (f) => {
+    await formPublish(f, formPageHtml(f, integ));
+    const live = projRef.current.filter((p) => p.host && p.host.slug && p.pages.some((x) => x.html.includes(`data-lb-formbox="${f.id}"`)));
+    let done = 0, err = "";
+    for (const p of live) {
+      const synced = { ...p, pages: p.pages.map((x) => ({ ...x, html: syncFormInHtml(x.html, f, integ) })) };
+      try { const o = await republishLive(synced, integ); patch(p.id, { ...o, pages: synced.pages }); done++; } catch (e) { err = e.message === "NOT_LIVE" ? "" : e.message; }
+    }
+    return { pages: done, total: live.length, err };
+  };
   const addHtmlToPage = (html, pid, pageId) => patchPages(pid, (pages) => pages.map((x) => {
     if (x.id !== pageId) return x;
     const d = new DOMParser().parseFromString(x.html, "text/html"), t = d.createElement("template");
@@ -395,7 +406,7 @@ export default function Dashboard({ user, onLogout }) {
           onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} onConsult={consultOpen} onUseTpl={applyTpl} onDomain={(p) => { setDomFocus({ id: p.id, ts: Date.now() }); setView("domains"); }} />}
         {view === "import" && <ImportPage onBack={() => setView("pages")} onFile={importFile} />}
         {view === "templates" && <Templates mine={myTpl} onDeleteMine={(id) => putTpl(myTpl.filter((x) => x.id !== id))} onUse={(t) => applyTpl(t)} onSave={(t) => applyTpl(t, true)} />}
-        {view === "forms" && <Forms forms={forms} onSave={onSaveForms} projects={listed} leads={leads} onAddToPage={addFormToPage} onLeads={() => setView("leads")} integ={integ} onIntegrations={() => setView("integrations")} />}
+        {view === "forms" && <Forms forms={forms} onSave={onSaveForms} onLive={onLiveForm} projects={listed} leads={leads} onAddToPage={addFormToPage} onLeads={() => setView("leads")} integ={integ} onIntegrations={() => setView("integrations")} />}
         {view === "calendar" && <Calendar events={cal} onSave={onSaveCal} leads={leads} projects={listed} integ={integ} onInteg={onInteg} onAddToPage={addHtmlToPage} onPatchLead={patchLead} onDeleteLead={deleteLead} />}
         {view === "integrations" && <Integrations key={igTile} initial={igTile} integ={integ} onChange={onInteg} />}
         {view === "followups" && <FollowUps leads={leads} setLeads={(list) => { setLeads(list); saveLeads(E, list); }} onPipeline={() => { localStorage.setItem("lb_leads_view", "pipeline"); setView("leads"); }} />}
