@@ -336,7 +336,7 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
   lead={lid:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),form:f.getAttribute('data-lb-form')||'Form',formId:f.getAttribute('data-lb-form-id')||'',page:cur,url:location.href,data:data,ts:Date.now()};
   if(W.__lbGeo)lead.geo=W.__lbGeo;
   if(pay)lead.payment={status:'pending',amount:+pay.amount,mode:pay.mode,currency:'INR'};
-  if(wa&&wa.hook){var ph=phoneOf(data).replace(/\\D/g,'');if(ph.length===10)ph=String(wa.cc||'91')+ph;lead.whatsapp={to:ph,message:fillT(wa.msg,data)}}
+  if(wa&&wa.hook){var ph=phoneOf(data).replace(/\\D/g,'').replace(/^0+/,'');if(ph.length===10)ph=String(wa.cc||'91')+ph;lead.whatsapp={to:ph,message:fillT(wa.msg,data)}}
   if(W.LB_PREVIEW)parent.postMessage({lb:'lead',lead:lead},'*');
   if(W.LB_LEAD_URL)f.__lp=post(W.LB_LEAD_URL,{action:'lead',lead:Object.assign({site:W.LB_SITE||''},lead)});
   try{if(W.fbq)fbq('track','Lead');if(W.gtag){gtag('event','generate_lead');if(W.LB_ADS)gtag('event','conversion',{send_to:W.LB_ADS})}if(W.dataLayer)W.dataLayer.push({event:'lb_lead'})}catch(_){}

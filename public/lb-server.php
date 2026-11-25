@@ -321,7 +321,7 @@ if ($act === 'wasend') {
   if (isset($sent[$lid])) out(array('ok' => true, 'dup' => true)); $sent[$lid] = $now; jwrite($sf, $sent);
   $u = lb_lead_owner($lead, $DATA); if ($u === '') fail('No owner');
   $w = jread(wa_file($DATA, $u), array()); if (empty($w['url'])) fail('WhatsApp webhook is not saved on the server');
-  $to = preg_replace('/\D/', '', (string)(isset($d['to']) ? $d['to'] : '')); $msg = clean_str(isset($d['message']) ? $d['message'] : '', 2000);
+  $to = preg_replace('/\D/', '', (string)(isset($d['to']) ? $d['to'] : '')); $to = ltrim($to, '0'); if (strlen($to) === 10) $to = '91' . $to;   /* 08219025081 → 918219025081 */ $msg = clean_str(isset($d['message']) ? $d['message'] : '', 2000);
   $p = array('event' => 'whatsapp.send', 'to' => $to, 'message' => $msg, 'name' => clean_str(isset($d['name']) ? $d['name'] : '', 120), 'lead' => array('form' => isset($lead['form']) ? $lead['form'] : '', 'data' => isset($lead['data']) ? $lead['data'] : array(), 'page' => isset($lead['page']) ? $lead['page'] : ''));
   list($code, $b, $err) = wa_post($w['url'], $w['hdr'], ai_dec($w['enc'], $DATA), $p, 'lead-' . $lid);   /* same lead = same id → the CRM ignores resends */
   out($code >= 200 && $code < 300 ? array('ok' => true) : array('ok' => false, 'error' => wa_why($code, $b, $err)));
