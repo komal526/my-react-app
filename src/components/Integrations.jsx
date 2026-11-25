@@ -154,8 +154,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
           { id: "sheets", cat: "Automation", ic: "▦", name: "Google Sheets", desc: "Paste your sheet link, match your form fields — every submission becomes a new row.", on: !!(integ.sheets && (integ.sheets.url || integ.sheets.link) && integ.sheets.ok) },
           { id: "email", cat: "Automation", ic: "✉", name: "Email automation", desc: "Auto-reply to every lead and get new-lead alerts — connect your email with just email + password.", on: emOk },
           { id: "places", cat: "Lead Finder", ic: "🔍", name: "Google Places (Lead Finder)", desc: "Connect your own Google key to find local businesses with phone numbers and websites.", on: !!(integ.places && integ.places.ok), extra: integ.places && integ.places.own ? "Your key" : "" },
-          { id: "leadapi", cat: "Automation", ic: "🔑", name: "Lead API (for your CRM)", desc: "Let a CRM like apiautomation.live fetch your leads with a secret key.", on: false },
-          { id: "wa", cat: "Automation", ic: "💬", name: "WhatsApp automation", desc: "Send an automatic WhatsApp message through AiSensy, WATI, Interakt, Pabbly or Make.", on: !!wa.webhook },
+          { id: "wa", cat: "Automation", ic: "💬", name: "WhatsApp automation", desc: "Send leads to your WhatsApp CRM instantly — or let it fetch them with the Lead API.", on: !!wa.webhook },
           { id: "pay", cat: "Payments", ic: "₹", name: "Razorpay & UPI", desc: "Collect payments before registration — cards, UPI, GPay, PhonePe, Paytm.", on: keyOk || upiOk, extra: pay.razorpayKey && pay.razorpayKey.includes("_test_") ? "Test mode" : "" },
           { id: "ai", cat: "AI", ic: "✦", name: "AI builders", desc: "Claude, ChatGPT, Gemini, DeepSeek — plus Lovable and Bolt.new.", on: aiOn, extra: aiOn ? (AI_PROVIDERS.find((p) => p.id === ai.provider) || {}).name : "" },
         ];
@@ -175,11 +174,8 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         <PlacesConnect srv={srv} onDone={(r) => { if (r && r.ok !== undefined && (!!r.ready !== !!(integ.places && integ.places.ok) || !!r.own !== !!(integ.places && integ.places.own))) onChange({ ...integ, places: { ok: !!r.ready, own: !!r.own } }); }} />
       </Card>
 
-      <Card id="leadapi" sel={sel} onClose={close} ic="🔑" t="Lead API" sub="Your CRM pulls your leads (name, phone, email, every form answer) with a secret key. Read-only, only your account." on={false}>
-        <LeadApi />
-      </Card>
-
-      <Card id="wa" sel={sel} onClose={close} ic="💬" t="WhatsApp automation" sub="Send an automatic WhatsApp message to everyone who fills a form." on={!!wa.webhook}>
+      <Card id="wa" sel={sel} onClose={close} ic="💬" t="WhatsApp automation" sub="Connect your WhatsApp CRM — crecapo sends each new lead to it instantly, or your CRM fetches leads with the Lead API." on={!!wa.webhook}>
+        <div className="wa-sec-h"><span>1</span><div><b>WhatsApp automation <em>Push · recommended</em></b><small>crecapo sends every new lead to your CRM's webhook within seconds — your CRM then sends the WhatsApp.</small></div></div>
         <div className="ig-g">
           <label>Your WhatsApp tool<select value={wa.provider} onChange={(e) => set("wa", { provider: e.target.value })}>{WA_PROVIDERS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
           <label>Default country code<input value={wa.country} onChange={(e) => set("wa", { country: e.target.value.replace(/\D/g, "") })} placeholder="91" /></label>
@@ -202,7 +198,11 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         </div>
         <details className="ig-d"><summary>What your webhook receives</summary><pre>{JSON.stringify(SAMPLE, null, 2)}</pre><p className="mut sm">Phone numbers with 10 digits get the country code added. If a form collects payment, the message is sent after payment.</p></details>
         <p className="mut sm">🔒 Never paste a WhatsApp API key here — it would be visible inside your published website. The webhook keeps your keys safe inside your automation tool.</p>
-      </Card>
+              <div className="wa-sec">
+          <div className="wa-sec-h"><span>2</span><div><b>Lead API <em>Advanced</em></b><small>Let your CRM <b>fetch</b> leads from crecapo (also old leads). Only needed if your CRM developer builds this — for instant messages, section 1 above is enough.</small></div></div>
+          <details className="wa-adv"><summary>Show Lead API</summary><LeadApi /></details>
+        </div>
+</Card>
 
       <Card id="pay" sel={sel} onClose={close} ic="₹" t="Razorpay & UPI payments" sub="Take payments before registration — Razorpay (cards, UPI, netbanking, wallets) or direct UPI (GPay, PhonePe, Paytm)." on={keyOk || upiOk}>
         <div className="ig-g">

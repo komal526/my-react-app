@@ -5006,3 +5006,13 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .la-k button{margin-left:auto}
 .la-doc summary{cursor:pointer;font-weight:700;font-size:13px}
 .la-doc pre{white-space:pre-wrap;word-break:break-all;font-size:11.5px;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:12px}
+/* v112 — WhatsApp card: two sections (push + Lead API) */
+.wa-sec{margin-top:18px;padding-top:16px;border-top:1px dashed #dfe3ee}
+.wa-sec-h{display:flex;gap:12px;align-items:flex-start;margin:0 0 12px}
+.wa-sec-h>span{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#11163f;color:#ffd35c;font-weight:800;font-size:12.5px}
+.wa-sec-h>div>b{display:block;font-size:14.5px;color:#0f172a}
+.wa-sec-h small b{display:inline;font-size:inherit}
+.wa-sec-h em{font-style:normal;font-size:11px;font-weight:700;color:#15803d;background:#ecfdf3;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:2px}
+.wa-sec .wa-sec-h em{color:#6d28d9;background:#f3f0ff}
+.wa-sec-h small{display:block;color:#5b6477;font-size:12.5px;line-height:1.5;margin-top:2px}
+.wa-adv>summary{cursor:pointer;font-weight:700;font-size:13px;color:#4338ca;margin-bottom:10px}
