@@ -14,7 +14,7 @@ const tfetch = (url, opts = {}, ms = 12000) => {
 };
 
 /* which saved data belongs to a user (stored in the browser as  prefix + email) */
-const SYNC = ["lb_pages_", "lb_forms_", "lb_leads_sync_", "lb_leads_", "lb_cal_", "lb_events_", "lb_evsync_", "lb_integrations_", "lb_mytpl_", "lb_pipes_", "lb_lms_", "lb_lmsx_", "lb_lf_"];
+const SYNC = ["lb_pages_", "lb_drafts_", "lb_forms_", "lb_leads_sync_", "lb_leads_", "lb_cal_", "lb_events_", "lb_evsync_", "lb_integrations_", "lb_mytpl_", "lb_pipes_", "lb_lms_", "lb_lmsx_", "lb_lf_"];
 const stamps = {}; /* key → last updated_at we know about (to spot changes made on other devices) */
 /* v118: a second copy on your own server (lb-server.php) — devices take the newest copy from Supabase or the server */
 const sstamps = {};
@@ -26,8 +26,14 @@ async function srv(body, t, ms = 20000) {
 const SK = "lb_supa_session";
 
 /* ---------------- session ---------------- */
-const getSession = () => { try { return JSON.parse(localStorage.getItem(SK)); } catch { return null; } };
-const setSession = (s) => { if (s) _set.call(localStorage, SK, JSON.stringify(s)); else _rem.call(localStorage, SK); };
+const getSession = () => { try { return JSON.parse(localStorage.getItem(SK) || sessionStorage.getItem(SK)); } catch { return null; } };
+/* v120: login must never fail because this browser's storage is full — free space and retry; last resort: keep it for this tab only */
+const setSession = (s) => {
+  if (!s) { _rem.call(localStorage, SK); try { sessionStorage.removeItem(SK); } catch { /* ignore */ } return; }
+  const v = JSON.stringify(s);
+  for (const level of [0, 1, 2]) { try { if (level) freeSpace(level === 2); _set.call(localStorage, SK, v); try { sessionStorage.removeItem(SK); } catch { /* ignore */ } return; } catch { /* full — free more */ } }
+  try { sessionStorage.setItem(SK, v); } catch { /* ignore */ }
+};
 /* new Supabase keys (sb_publishable_…) go only in the "apikey" header; the user's login token goes in Authorization */
 const H = (token) => ({ apikey: KEY, ...(token ? { Authorization: "Bearer " + token } : {}), "Content-Type": "application/json" });
 const errMsg = (j, fallback) => (j && (j.msg || j.error_description || j.message || j.error)) || fallback;
@@ -137,6 +143,21 @@ const reason = (m = "") => /does not exist|could not find the table|schema cache
   : m ? "Cloud error: " + m : "Couldn't reach the cloud — will retry.";
 /* remember what was last synced, so an old/empty browser can never overwrite newer work */
 const hash = (v) => { let h = 5381; const t = String(v); for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return t.length + ":" + h; };
+/* v120: free browser storage safely — only removes things that are rebuilt anyway or already saved in the cloud / on your server */
+export function freeSpace(more = false) {
+  const ls = localStorage, keys = []; for (let i = 0; i < ls.length; i++) keys.push(ls.key(i));
+  const me = String(email || (() => { try { return JSON.parse(ls.getItem(SK)).user.email; } catch { return ""; } })() || "").toLowerCase();
+  const saved = (k) => { const v = ls.getItem(k), m = ls.getItem("lb_synced_" + k); return v != null && m != null && m === hash(v); };
+  const rm = (k) => { _rem.call(ls, k); _rem.call(ls, "lb_synced_" + k); };
+  /* 1) short-lived helpers */
+  keys.filter((k) => /^lb_(studio_go|tpl_go|tpl_ai|ai_go|edit_go|subs_cache|aireview_)/.test(k)).forEach((k) => _rem.call(ls, k));
+  /* 2) other accounts' data in this browser that is already in the cloud — it comes back when that account logs in */
+  keys.filter((k) => SYNC.some((p) => k.startsWith(p)) && (!me || !k.endsWith(me)) && saved(k)).forEach(rm);
+  /* 3) old versions (undo history) inside projects and drafts */
+  keys.filter((k) => /^lb_(pages|drafts)_/.test(k)).forEach((k) => { try { const l = JSON.parse(ls.getItem(k) || "[]"); if (Array.isArray(l) && l.some((p) => p && p.versions && p.versions.length)) _set.call(ls, k, JSON.stringify(l.map((p) => ({ ...p, versions: [] })))); } catch { /* ignore */ } });
+  /* 4) still full: big lists of this account that are safely in the cloud (Lead Finder results, activity log) — they reload from the cloud */
+  if (more) keys.filter((k) => /^lb_(lf_|events_|evsync_)/.test(k) && saved(k)).forEach(rm);
+}
 const SYNCED = (k) => "lb_synced_" + k + email;
 const parse = (v) => { try { return JSON.parse(v); } catch { return undefined; } };
 const isEmpty = (x) => x == null || (Array.isArray(x) && !x.length) || (typeof x === "object" && !Array.isArray(x) && !Object.keys(x).length);
@@ -158,7 +179,11 @@ const cloudKey = (k) => { if (!email || !k.endsWith(email)) return null; const p
 
 function patch() {
   if (patched) return; patched = true;
-  Storage.prototype.setItem = function (k, v) { _set.call(this, k, v); if (this === window.localStorage) queue(k, String(v)); };
+  Storage.prototype.setItem = function (k, v) {
+    if (this !== window.localStorage) return _set.call(this, k, v);
+    try { _set.call(this, k, v); } catch (e) { freeSpace(false); try { _set.call(this, k, v); } catch { freeSpace(true); _set.call(this, k, v); } }   // full → free space, try again
+    queue(k, String(v));
+  };
   Storage.prototype.removeItem = function (k) { _rem.call(this, k); if (this === window.localStorage) queue(k, null); };
 }
 function queue(k, v) {
