@@ -276,16 +276,24 @@ if ($act === 'signup') {
 /* v108 — WhatsApp webhook WITH a secret key (e.g. apiautomation.live answers 401 without it).
    The key is stored encrypted on the server and added as a header here; it never goes into published pages. */
 function wa_file($DATA, $uid) { $d = $DATA . '/wa'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . substr(hash('sha256', 'w:' . $uid), 0, 24) . '.json'; }
-function wa_post($url, $hdr, $key, $payload) {
+function wa_post($url, $hdr, $key, $payload, $eventId = '') {
   $h = array('Content-Type: application/json', 'Accept: application/json');
-  if ($key !== '') { if ($hdr === 'bearer') $h[] = 'Authorization: Bearer ' . $key; elseif (preg_match('/^[A-Za-z0-9-]{2,40}$/', $hdr)) $h[] = $hdr . ': ' . $key; }
-  $c = curl_init($url); curl_setopt_array($c, array(CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_HTTPHEADER => $h, CURLOPT_POSTFIELDS => json_encode($payload)));
+  $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);   /* sign exactly the bytes we send */
+  if ($key !== '') {
+    if ($hdr === 'hmac') {   /* signed request (HMAC-SHA256), e.g. apiautomation.live: v1 = hmac(secret, t + "." + body) */
+      $t = time(); $h[] = 'X-SDC-Signature: t=' . $t . ',v1=' . hash_hmac('sha256', $t . '.' . $body, $key);
+      $h[] = 'X-Webhook-Id: ' . ($eventId !== '' ? $eventId : 'lb-' . bin2hex(random_bytes(8)));
+    } elseif ($hdr === 'bearer') $h[] = 'Authorization: Bearer ' . $key;
+    elseif (preg_match('/^[A-Za-z0-9-]{2,40}$/', $hdr)) $h[] = $hdr . ': ' . $key;
+  }
+  $c = curl_init($url); curl_setopt_array($c, array(CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_HTTPHEADER => $h, CURLOPT_POSTFIELDS => $body));
   $b = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); $err = curl_error($c); curl_close($c);
   return array($code, (string)$b, $b === false ? ($err ?: 'no answer') : '');
 }
 function wa_why($code, $body, $err) {
   if ($err !== '') return 'Could not reach the webhook: ' . $err;
-  if ($code === 401 || $code === 403) return 'The webhook said "Unauthorized" (' . $code . ') — the secret key / header is missing or wrong. Copy the webhook secret from your WhatsApp tool and paste it here.';
+  if ($code === 401 || $code === 403) return 'The webhook said "Unauthorized" (' . $code . ') — the secret or the "Send the key as" choice is wrong. For apiautomation.live choose "Signed request (HMAC-SHA256)" and paste the whsec_… secret.';
+  if ($code === 422) return 'The webhook refused the data format (422) — check "Expected format / JSON Schema" on that webhook, or leave it empty.' . ($body !== '' ? ' ' . substr(strip_tags($body), 0, 160) : '');
   if ($code === 404) return 'The webhook URL was not found (404) — copy it again from your WhatsApp tool.';
   return 'The webhook answered HTTP ' . $code . ($body !== '' ? ': ' . substr(strip_tags($body), 0, 160) : '');
 }
@@ -318,7 +326,7 @@ if ($act === 'wasend') {
   $w = jread(wa_file($DATA, $u), array()); if (empty($w['url'])) fail('WhatsApp webhook is not saved on the server');
   $to = preg_replace('/\D/', '', (string)(isset($d['to']) ? $d['to'] : '')); $msg = clean_str(isset($d['message']) ? $d['message'] : '', 2000);
   $p = array('event' => 'whatsapp.send', 'to' => $to, 'message' => $msg, 'name' => clean_str(isset($d['name']) ? $d['name'] : '', 120), 'lead' => array('form' => isset($lead['form']) ? $lead['form'] : '', 'data' => isset($lead['data']) ? $lead['data'] : array(), 'page' => isset($lead['page']) ? $lead['page'] : ''));
-  list($code, $b, $err) = wa_post($w['url'], $w['hdr'], ai_dec($w['enc'], $DATA), $p);
+  list($code, $b, $err) = wa_post($w['url'], $w['hdr'], ai_dec($w['enc'], $DATA), $p, 'lead-' . $lid);   /* same lead = same id → the CRM ignores resends */
   out($code >= 200 && $code < 300 ? array('ok' => true) : array('ok' => false, 'error' => wa_why($code, $b, $err)));
 }
 

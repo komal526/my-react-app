@@ -91,7 +91,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
   };
   const keyOk = /^rzp_(test|live)_[A-Za-z0-9]{8,}$/.test(pay.razorpayKey), upiOk = /^[\w.-]{2,}@[a-zA-Z]{2,}$/.test(pay.upiId);
   /* v108: webhooks that need a secret key (401 Unauthorized) are sent by the server, with the key added there */
-  const [waKey, setWaKey] = useState(""), [waHdr, setWaHdr] = useState("bearer"), [waSrv, setWaSrv] = useState(null), [waBusy, setWaBusy] = useState(false), [waMsg, setWaMsg] = useState(null), [waOpen, setWaOpen] = useState(false);
+  const [waKey, setWaKey] = useState(""), [waHdr, setWaHdr] = useState("hmac"), [waSrv, setWaSrv] = useState(null), [waBusy, setWaBusy] = useState(false), [waMsg, setWaMsg] = useState(null), [waOpen, setWaOpen] = useState(false);
   useEffect(() => { phpCall(srv, { action: "wa_get" }).then((r) => { setWaSrv(r.wa); if (r.wa) { setWaHdr(r.wa.hdr); setWaOpen(true); } }).catch(() => {}); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const waSave = async () => {
     setWaBusy(true); setWaMsg(["wait", "Saving and sending a test…"]);
@@ -189,7 +189,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
           {waOpen && <div className="wa-key-b">
             <p className="mut sm">Copy the <b>secret / API key</b> shown with the webhook in your WhatsApp tool. It's saved encrypted on your server and added to every request there — it never goes into your website.</p>
             <div className="ig-g">
-              <label>Send the key as<select value={waHdr} onChange={(e) => setWaHdr(e.target.value)}><option value="bearer">Authorization: Bearer …</option><option value="x-api-key">x-api-key</option><option value="x-webhook-secret">x-webhook-secret</option><option value="x-webhook-token">x-webhook-token</option><option value="x-auth-token">x-auth-token</option></select></label>
+              <label>Send the key as<select value={waHdr} onChange={(e) => setWaHdr(e.target.value)}><option value="hmac">Signed request (HMAC-SHA256) — apiautomation.live</option><option value="bearer">Authorization: Bearer …</option><option value="x-api-key">x-api-key</option><option value="x-webhook-secret">x-webhook-secret</option><option value="x-webhook-token">x-webhook-token</option><option value="x-auth-token">x-auth-token</option></select></label>
               <label>Secret key<input type="password" value={waKey} onChange={(e) => setWaKey(e.target.value)} placeholder={waSrv ? "•••• saved — type only to change" : "paste the key"} autoComplete="off" /></label>
             </div>
             <div className="row"><button className="pri" disabled={waBusy || !wa.webhook || (!waKey.trim() && !waSrv)} onClick={waSave}>{waBusy ? "Saving…" : "Save key & test"}</button>{waSrv && <button className="xs red" onClick={waRemove}>Remove key</button>}</div>
