@@ -1,5 +1,6 @@
 // LaunchBuilder v66 — lib.js
 import { BRAND } from "./brand.js";
+import { appPath, appUrl } from "./route.js";
 import { DESIGNS } from "./designs.js";
 import { cloudToken } from "./cloud.js";
 // Helpers, page templates, saving/loading projects, leads and preview links
@@ -102,7 +103,7 @@ export const previewToken = (email, pid) => {
   return t;
 };
 export const readToken = (t) => { const v = readAll()[t]; return v ? { ...v, expired: v.exp < Date.now() } : null; };
-export const previewUrl = (token, file = "index.html") => `${location.origin}${location.pathname}#/preview/${token}/${file}`;
+export const previewUrl = (token, file = "index.html") => `${appUrl()}#/preview/${token}/${file}`;
 
 /* ==================== forms (Dashboard → Forms) ==================== */
 const FK = (email) => "lb_forms_" + email;
@@ -136,7 +137,7 @@ export const FORM_TEMPLATES = [
 export const newForm = (tpl) => ({ id: "f" + uid(), name: tpl.key === "blank" ? "Untitled form" : tpl.name, template: tpl.key, fields: tpl.fields(), settings: { ...FORM_DEF, ...tpl.settings }, created: Date.now(), updated: Date.now() });
 export const newField = (type) => f_(type, (FIELD_TYPES.find((t) => t[0] === type) || [, "Field"])[1], { required: !/^(heading|checkboxes|utm)$/.test(type), options: /select|radio|checkboxes/.test(type) ? ["Option 1", "Option 2"] : [] });
 export const findForm = (id) => { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("lb_forms_")) { try { const f = JSON.parse(localStorage.getItem(k)).find((x) => x.id === id); if (f) return { form: f, email: k.slice(9) }; } catch { /* skip */ } } } return null; };
-export const formUrl = (id) => `${location.origin}${location.pathname}#/form/${id}`;
+export const formUrl = (id) => `${appUrl()}#/form/${id}`;
 
 /* ==================== analytics events (recorded in Preview + form links) ==================== */
 const EK = (email) => "lb_events_" + email;
@@ -388,7 +389,7 @@ export const verifyNS = async (domain, servers) => {
 
 /* ==================== your own server (lb-server.php on Hostinger / any PHP hosting) ==================== */
 /* Publishes to https://your-site/sites/<name>/ and collects leads from live sites — no third-party service. */
-export const defaultServerUrl = () => `${location.origin}${location.pathname.replace(/[^/]*$/, "")}lb-server.php`;
+export const defaultServerUrl = () => `${location.origin}${appPath().replace(/[^/]*$/, "")}lb-server.php`;
 export const serverOn = (integ) => !!(integ && integ.server && integ.server.ok && integ.server.key);
 export const accountKey = () => { const e = localStorage.getItem("lb_hostkey_active"); return (e && localStorage.getItem("lb_hostkey_" + e)) || ""; };
 export async function phpCall(srv, body) {
@@ -619,7 +620,7 @@ export const EVENT_TEMPLATES = [
   { key: "tutor", ic: "📚", label: "Tutoring / demo class", note: "Free demo class for students", o: { name: "Free demo class", duration: 40, color: "#2563eb", desc: "Meet the teacher and try a class — free.", start: "16:00", end: "20:00", step: 60, fields: { phone: true, company: false, notes: false, custom: "" }, questions: [{ label: "Class / grade", type: "select", options: "Class 8, Class 9, Class 10, Class 11, Class 12", required: true }, { label: "Subject", type: "text", required: true }] } },
 ];
 export const eventSlug = (e) => (e.slug || slug(e.name) || "event").slice(0, 40);
-export const eventUrl = (e, integ) => (e.host && e.host.url) || `${location.origin}${location.pathname}#/book/${e.id}`;
+export const eventUrl = (e, integ) => (e.host && e.host.url) || `${appUrl()}#/book/${e.id}`;
 export const gcalLink = (title, date, time, mins, details = "") => {
   if (!date || !time) return "";
   const [y, m, d] = date.split("-").map(Number), [hh, mm] = time.split(":").map(Number), a = new Date(y, m - 1, d, hh, mm), b = new Date(a.getTime() + (mins || 30) * 60000);

@@ -990,6 +990,27 @@ if ($act === 'form_pub') {
   jwrite(form_file($DATA, $fid), array('labels' => $lab, 'html' => $html, 'name' => clean_str(isset($d['name']) ? $d['name'] : 'Form', 120), 'uid' => $ME['uid'], 't' => time()));
   out(array('ok' => true));
 }
+/* v118 — second copy of each account's builder data on this server, so every device shows the same (even if Supabase has a problem) */
+function kv_dir($DATA, $uid) { $d = $DATA . '/kv/' . substr(hash('sha256', 'kv:' . $uid), 0, 24); if (!is_dir($d)) @mkdir($d, 0700, true); return $d; }
+function kv_ok($k) { return is_string($k) && preg_match('/^lb_[a-z]+(_[a-z]+)*_$/', $k); }
+if ($act === 'kv_put') {
+  $dir = kv_dir($DATA, $ME['uid']); $res = array(); $now = round(microtime(true) * 1000);
+  foreach (array_slice(isset($d['items']) && is_array($d['items']) ? $d['items'] : array(), 0, 30) as $it) {
+    $k = isset($it['key']) ? $it['key'] : ''; if (!kv_ok($k)) continue;
+    if (!array_key_exists('value', $it) || $it['value'] === null) { @unlink($dir . '/' . $k . '.txt'); $res[$k] = 0; continue; }
+    $v = (string)$it['value']; if (strlen($v) > 40000000) continue;
+    $tmp = $dir . '/' . $k . '.tmp' . bin2hex(random_bytes(3)); if (@file_put_contents($tmp, $v) === false) continue; @rename($tmp, $dir . '/' . $k . '.txt'); @touch($dir . '/' . $k . '.txt');
+    $res[$k] = $now;
+  }
+  if ($res) jmutate($dir . '/_t.json', array(), function (&$t) use ($res) { foreach ($res as $k => $v) { if ($v) $t[$k] = $v; else unset($t[$k]); } });
+  out(array('ok' => true, 'saved' => $res));
+}
+if ($act === 'kv_get') {
+  $dir = kv_dir($DATA, $ME['uid']); $want = isset($d['keys']) && is_array($d['keys']) ? $d['keys'] : null; $rows = array(); clearstatcache(); $ts = jread($dir . '/_t.json', array());
+  foreach (glob($dir . '/*.txt') as $f) { $k = basename($f, '.txt'); if (!kv_ok($k) || ($want !== null && !in_array($k, $want, true))) continue;
+    $row = array('key' => $k, 't' => isset($ts[$k]) ? $ts[$k] : filemtime($f) * 1000); if (empty($d['list'])) $row['value'] = (string)file_get_contents($f); $rows[] = $row; }
+  out(array('ok' => true, 'rows' => $rows));
+}
 if ($act === 'gs_status') { $c = gs_cfg($DATA); out(array('ok' => true, 'ready' => !empty($c['enc']), 'robot' => isset($c['robot']) ? $c['robot'] : '', 'admin' => $IS_ADMIN)); }
 if ($act === 'gs_setup') {
   if (!$IS_ADMIN) fail('Only the admin can add the Google robot.');

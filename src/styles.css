@@ -5033,3 +5033,10 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 @media (max-width:900px){.fb2-live{font-size:12px;padding:6px 9px}}
 .fb2-top .fb2-mtabs button,.fb2-top .fb2-btn{white-space:nowrap}
 @media (max-width:1500px){.fb2-top .fb2-mtabs button{padding-left:10px;padding-right:10px}.fb2-top .fb2-name{min-width:0}}
+.fb2-saved.draft{color:#b45309;background:#fff7e6}
+.fb2-saved.draft i{background:#f59e0b}
+/* v118 — dashboard templates card: the previews fill the whole card (no empty space under them) */
+.dash .ft .ft-row{flex:1 1 auto;min-height:0}
+.dash .ft .ft-c{min-height:0}
+.dash .ft .ft-shot{height:auto!important;min-height:250px!important;flex:1 1 auto!important}
+@media (max-width:1100px){.dash .ft .ft-shot{min-height:300px!important}}

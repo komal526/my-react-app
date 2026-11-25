@@ -1,6 +1,7 @@
 // LaunchBuilder v15 — Editor.jsx
 // The builder: canvas, top bar, left panel (Add / Layers / Pages / Site / Edit)
 import { useState, useRef, useEffect, lazy, Suspense } from "react";
+import { appUrl } from "../route.js";
 import { uid, slug, uniqFile, addr, previewToken, previewUrl, aiSection, aiEditPart, aiEditPage, browserAi, serverAiReady, AI_PROVIDERS } from "../lib.js";
 import { makeZip, EDITOR_CSS, CONT, WIDTH, cleanNode, nameOf, WIDGET_CSS, finalize, readCfg, LIB, PAGE_TPLS, hydrate, STRUCTURES, structureHtml, formHtml, bookingWidget } from "./tools.js";
 import Inspector, { Icon, QuickBar } from "./Inspector.jsx";
@@ -532,7 +533,7 @@ export default function Editor({ page, user, forms = [], events = [], integ, onS
                 <button className="btn pri sm" disabled={aiBusy || aiQ.trim().length < 4 || (aiMode === "part" && !aiTarget())} onClick={runAi}>{aiBusy ? "✨ Working… (20–60 s)" : aiMode === "add" ? "✨ Generate & add" : aiMode === "part" ? "✨ Update section" : "✨ Update the page"}</button>
                 <p className="hint">{aiMode === "add" ? "Added below the selected element." : aiMode === "part" ? "Only this section changes. Ctrl+Z undoes it." : "AI rewrites the whole page with your change. Ctrl+Z undoes it."}</p>
                 <div className="ai-new"><b>Need a brand-new page or website?</b><small>AI Studio builds one from your words, pictures and documents.</small>
-                  <button className="btn sm ai-studio-btn" onClick={() => { try { localStorage.setItem("lb_studio_go", JSON.stringify({ type: page.type === "website" ? "website" : "landing" })); } catch { /* ignore */ } window.open(location.origin + location.pathname + "#/studio", "_blank"); }}>✨ Create new with AI Studio ↗</button></div></div>
+                  <button className="btn sm ai-studio-btn" onClick={() => { try { localStorage.setItem("lb_studio_go", JSON.stringify({ type: page.type === "website" ? "website" : "landing" })); } catch { /* ignore */ } window.open(appUrl() + "#/studio", "_blank"); }}>✨ Create new with AI Studio ↗</button></div></div>
                 : aiReady === null ? <p className="hint pad">Checking AI…</p>
                 : <p className="hint pad">Connect an AI first: Dashboard → <b>Integrations → AI builders</b> → paste your key (a free Gemini key works).</p>)}
             </div>}

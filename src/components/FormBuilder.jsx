@@ -74,10 +74,11 @@ export default function Builder({ form, onChange, onBack, projects, onAddToPage,
   const VARS = ["name", ...form.fields.filter((x) => !/heading|utm/.test(x.type) && x.name !== "name").map((x) => x.name), "form", "all_fields", ...(pay.enabled ? ["amount", "payment_id"] : [])];
   const flash = (t) => { setNote(t); setTimeout(() => setNote(""), 2200); };
   /* 💾 Save & update live: the form link + every published page using this form get these changes now */
-  const [liveAt, setLiveAt] = useState(form.updated || 0), [going, setGoing] = useState(false), dirty = (form.updated || 0) > liveAt;
+  /* form.live = the version that is on the live link (kept in the form, so every device sees the same state) */
+  const [going, setGoing] = useState(false), dirty = !form.live || (form.updated || 0) > form.live;
   const goLive = async () => {
     if (!onLive || going) return; setGoing(true);
-    try { const r = await onLive(form); setLiveAt(form.updated || Date.now()); setNote(r.err ? "⚠ Form link updated, but a page couldn't update: " + r.err : `✓ Saved & live — form link${r.pages ? ` + ${r.pages} live page${r.pages > 1 ? "s" : ""}` : ""} updated`); setTimeout(() => setNote(""), 4500); }
+    try { const r = await onLive(form); onChange({ ...form, live: form.updated || Date.now() }); setNote(r.err ? "⚠ Form link updated, but a page couldn't update: " + r.err : `✓ Saved & live — form link${r.pages ? ` + ${r.pages} live page${r.pages > 1 ? "s" : ""}` : ""} updated`); setTimeout(() => setNote(""), 4500); }
     catch (e) { window.alert("Couldn't update the live form: " + e.message); }
     setGoing(false);
   };
@@ -105,9 +106,8 @@ export default function Builder({ form, onChange, onBack, projects, onAddToPage,
   const html = useMemo(() => formHtml(form, integ), [form, integ]);
   const pageHtml = useMemo(() => (prev ? formPageHtml(form, integ) : ""), [prev, form, integ]);
   const embed = formHtml(form, integ), proj = projects.find((p) => p.id === target.pid);
-  /* the share link page is kept on the server (2.5 s after the last change), so it works for everyone */
-  const shareHtml = useMemo(() => formPageHtml(form, integ), [form, integ]);
-  useEffect(() => { const t = setTimeout(() => { formPublish(form, shareHtml).catch(() => {}); }, 2500); return () => clearTimeout(t); }, [shareHtml]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* a form that was never put live gets its share link once (so Copy link works); after that only "Save & update live" changes it */
+  useEffect(() => { if (!form.live && !onLive) formPublish(form, formPageHtml(form, integ)).catch(() => {}); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const formLeads = leads.filter((l) => l.formId === form.id);
 
   /* canvas: highlight the selected field, make fields draggable, place the toolbar */
@@ -291,7 +291,7 @@ export default function Builder({ form, onChange, onBack, projects, onAddToPage,
       <header className="fb2-top">
         <button className="fb2-ib" onClick={onBack} title="Back to Forms"><Icon n="back" s={18} /></button>
         <input className="fb2-name" value={form.name} onChange={(e) => up({ name: e.target.value })} aria-label="Form name" />
-        <span className="fb2-saved"><i />Saved</span>
+        <span className={"fb2-saved" + (onLive && dirty ? " draft" : "")} title={onLive && dirty ? "Your changes are saved in the builder. Click “Save & update live” to put them on the live form." : "Saved"}><i />{onLive && dirty ? "Draft" : "Saved"}</span>
         {onLive && <button className={"fb2-live" + (dirty ? " on" : "")} onClick={goLive} disabled={going} title="Put your changes on the form link and on every live page that uses this form">{going ? "Updating…" : dirty ? "💾 Save & update live" : "✓ Live"}</button>}
         <div className="fb2-mtabs" role="tablist">{[["build", "Edit"], ["subs", `Submissions${formLeads.length ? " · " + formLeads.length : ""}`], ["share", "Share & embed"]].map(([k, l]) => <button key={k} className={main === k ? "on" : ""} onClick={() => setMain(k)}>{l}</button>)}</div>
         <div className="grow" />
@@ -300,7 +300,7 @@ export default function Builder({ form, onChange, onBack, projects, onAddToPage,
         <button className="fb2-ib" title="Redo (Ctrl+Y)" disabled={!hist.current.future.length} onClick={redo}><Icon n="redo" s={16} /></button>
         <button className="fb2-btn" onClick={() => setPrev(true)}><Icon n="eye" s={15} /> Preview</button>
         <button className="fb2-btn" onClick={() => copy(embed, () => flash("Embed code copied"))}><Icon n="code" s={15} /><span className="fb2-hide">Embed</span></button>
-        <button className="fb2-btn y" onClick={() => copy(formUrl(form.id), () => flash("Share link copied"))}><Icon n="link" s={15} /> Copy link</button>
+        <button className="fb2-btn y" onClick={() => { if (!form.live) goLive(); copy(formUrl(form.id), () => flash("Share link copied")); }}><Icon n="link" s={15} /> Copy link</button>
       </header>
 
       {main === "build" && <div className="fb2-grid">

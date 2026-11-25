@@ -6,6 +6,7 @@ import Leads from "./Leads.jsx";
 import { Icon } from "./icons.jsx";
 import { RailView, RI } from "./Rail.jsx";
 import { BRAND } from "../brand.js";
+import { ROUTES, viewFromUrl, urlForView, appUrl } from "../route.js";
 import { formPublish, LIMIT, uid, slugify, pg, loadProjects, saveProjects, loadLeads, loadForms, saveForms, loadEvents, previewToken, previewUrl, loadInteg, saveInteg, syncServerLeads, serverOn, loadCal, saveCal, saveLeads, loadMyTpl, saveMyTpl, loadTemplateHtml, syncServerEvents, fuDue, myAccount, FILE_TEMPLATES } from "../lib.js";
 import { formHtml, formPageHtml, bookingWidget } from "./tools.js";
 import { resolveEvents } from "./insights.js";
@@ -129,7 +130,7 @@ export default function Dashboard({ user, onLogout }) {
   const [projects, setProjects] = useState(() => { let d = []; try { d = JSON.parse(localStorage.getItem(DK) || "[]"); } catch { d = []; } return [...d.filter((p) => p.kept || pagesHash(p.pages) !== p.orig).map((p) => ({ ...p, recovered: true })), ...loadProjects(E)]; });
   const [toast, setToast] = useState(""); useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 3500); return () => clearTimeout(t); }, [toast]);
   const [forms, setForms] = useState(() => loadForms(E)), [leads, setLeads] = useState(() => loadLeads(E)), [events, setEvents] = useState(() => loadEvents(E));
-  const [view, setView] = useState(() => (/\/admin\/?$/.test(location.pathname) || /^#\/admin/.test(location.hash) ? "admin" : "pages")), [openId, setOpenId] = useState(null), [modal, setModal] = useState(null);
+  const [view, setView] = useState(() => viewFromUrl()), [openId, setOpenId] = useState(null), [modal, setModal] = useState(null);
   const syncT = useRef(0);
   const [integ, setInteg] = useState(() => loadInteg(E));
   const onInteg = (v) => { setInteg(v); saveInteg(E, v); };
@@ -142,16 +143,18 @@ export default function Dashboard({ user, onLogout }) {
   const [ai, setAi] = useState(null);
   const consultOpen = (o = {}) => setAi({ ...o, nonce: Date.now() });
   /* AI Studio opens in its own browser tab: #/studio (the brief is handed over through this browser's storage) */
-  /* Admin panel has its own address: crecapo.tech/admin */
+  /* v118: every sidebar page has its own address — crecapo.tech/projects, /forms, /leads, /admin … (Back / Forward work too) */
+  const firstNav = useRef(true);
   useEffect(() => {
-    const base = location.pathname.replace(/\/admin\/?$/, "/") || "/";
-    if (view === "admin") { if (!/\/admin\/?$/.test(location.pathname)) history.replaceState(null, "", base.replace(/\/$/, "") + "/admin"); }
-    else if (/\/admin\/?$/.test(location.pathname) || /^#\/admin/.test(location.hash)) history.replaceState(null, "", base);
+    const want = urlForView(view), hashNav = /^#\/[\w-]+\/?$/.test(location.hash) && viewFromUrl() === view;
+    if (ROUTES[view] && (location.pathname !== want || hashNav)) history[firstNav.current || hashNav ? "replaceState" : "pushState"](null, "", want + location.search);
+    firstNav.current = false;
   }, [view]);
+  useEffect(() => { const f = () => { if (/^#\/(preview|form|book|tpl|studio)\//.test(location.hash)) return; setView(viewFromUrl()); }; window.addEventListener("popstate", f); return () => window.removeEventListener("popstate", f); }, []);
   useEffect(() => { const g = (e) => { const d = e.detail; if (d && typeof d === "object") { setIgTile(d.card || ""); setView(d.view); } else setView(d); }; window.addEventListener("lb-go", g); return () => window.removeEventListener("lb-go", g); }, []);   /* other screens can jump to a view */
-  useEffect(() => { const h = () => { if (/^#\/admin/.test(location.hash)) setView("admin"); }; window.addEventListener("hashchange", h); return () => window.removeEventListener("hashchange", h); }, []);
+  useEffect(() => { const h = () => { if (/^#\/[\w-]+\/?$/.test(location.hash) && viewFromUrl() !== "pages") setView(viewFromUrl()); }; window.addEventListener("hashchange", h); return () => window.removeEventListener("hashchange", h); }, []);
   const [studio, setStudio] = useState(() => { if (!/^#\/studio/.test(location.hash)) return null; let o = {}; try { o = JSON.parse(localStorage.getItem("lb_studio_go") || "{}"); localStorage.removeItem("lb_studio_go"); } catch { o = {}; } return { type: o.type || "landing", name: o.name || "", prompt: o.prompt || "", tab: true }; });
-  const studioTab = (o = {}) => { try { localStorage.setItem("lb_studio_go", JSON.stringify(o)); } catch { /* ignore */ } const w = window.open(location.origin + location.pathname + "#/studio", "_blank"); if (!w) setStudio(o); };
+  const studioTab = (o = {}) => { try { localStorage.setItem("lb_studio_go", JSON.stringify(o)); } catch { /* ignore */ } const w = window.open(appUrl() + "#/studio", "_blank"); if (!w) setStudio(o); };
   /* the studio finished: save → your projects · editor → opens it (kept in Drafts until saved) · draft → Drafts */
   const studioDone = (n, pages, t, how = "editor") => {
     if (studio && studio.tab) history.replaceState(null, "", location.pathname + location.search);

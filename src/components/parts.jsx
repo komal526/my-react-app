@@ -1,6 +1,7 @@
 // LaunchBuilder v45 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
+import { appPath } from "../route.js";
 import { serverAiReady, LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate, formFetch } from "../lib.js";
 import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
 import { cloudOn, lastStatus } from "../cloud.js";
@@ -383,7 +384,7 @@ export function Preview({ token, file: initFile }) {
   if (!info || info.expired || !proj) return (
     <div className="pv-dead"><div><Icon n="link" s={34} w={1.4} /><h2>{!info ? "This preview link doesn't exist" : info.expired ? "This preview link has expired" : "This project was deleted"}</h2>
       <p>Open the project in the editor and click <b>Preview</b> to get a fresh link. Preview links work in the browser where you're signed in to {BRAND.product}.</p>
-      <a href={location.pathname}>Go to dashboard</a></div></div>
+      <a href={appPath()}>Go to dashboard</a></div></div>
   );
   const hrs = Math.max(0, Math.round((info.exp - Date.now()) / 3600e3));
   const copy = async () => { const u = previewUrl(token, file); try { await navigator.clipboard.writeText(u); flash("Link copied"); } catch { window.prompt("Copy this link", u); } };
@@ -392,7 +393,7 @@ export function Preview({ token, file: initFile }) {
     <>
       <RailView dev={dev} setDev={setDev} pages={[...proj.pages.map((p) => ({ v: p.file, l: p.name })), ...(!pg ? [{ v: file, l: file + " (missing)" }] : [])]} page={file}
         setPage={(v) => { setHash(""); setFile(v); window.history.pushState(null, "", `#/preview/${token}/${v}`); }}
-        actions={[{ ic: RI.edit, l: "Edit", cls: "k-pri", fn: () => { try { localStorage.setItem("lb_edit_go", proj.id); } catch { /* ignore */ } location.href = location.pathname; } }, { ic: RI.link, l: "Copy link", fn: copy }, { ic: RI.reload, l: "Reload", fn: () => setVer((v) => v + 1) }, { ic: RI.home, l: "Dashboard", cls: "k-dash", fn: () => { location.href = location.pathname; } }]}
+        actions={[{ ic: RI.edit, l: "Edit", cls: "k-pri", fn: () => { try { localStorage.setItem("lb_edit_go", proj.id); } catch { /* ignore */ } location.href = appPath(); } }, { ic: RI.link, l: "Copy link", fn: copy }, { ic: RI.reload, l: "Reload", fn: () => setVer((v) => v + 1) }, { ic: RI.home, l: "Dashboard", cls: "k-dash", fn: () => { location.href = appPath(); } }]}
         note={<><i className={"pv-dot" + (pulse ? " pulse" : "")} />Live draft · link expires in {hrs} h</>}>
         <iframe ref={ifr} title="preview" srcDoc={html} sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals" allow="payment; autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; accelerometer; gyroscope; geolocation" />
       </RailView>

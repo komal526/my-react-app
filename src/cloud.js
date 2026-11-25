@@ -2,6 +2,7 @@
 // Supabase login + automatic cloud sync of each user's data (pages, forms, leads, calendars, analytics, integrations).
 // Works with Supabase's standard REST API — no extra npm package needed.
 // Settings come from the .env file:  VITE_SUPABASE_URL  and  VITE_SUPABASE_ANON_KEY
+import { appUrl, appPath } from "./route.js";
 
 const URL0 = import.meta.env.VITE_SUPABASE_URL || "";
 const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
@@ -15,6 +16,13 @@ const tfetch = (url, opts = {}, ms = 12000) => {
 /* which saved data belongs to a user (stored in the browser as  prefix + email) */
 const SYNC = ["lb_pages_", "lb_forms_", "lb_leads_sync_", "lb_leads_", "lb_cal_", "lb_events_", "lb_evsync_", "lb_integrations_", "lb_mytpl_", "lb_pipes_", "lb_lms_", "lb_lmsx_", "lb_lf_"];
 const stamps = {}; /* key → last updated_at we know about (to spot changes made on other devices) */
+/* v118: a second copy on your own server (lb-server.php) — devices take the newest copy from Supabase or the server */
+const sstamps = {};
+const SRV_URL = () => location.origin + appPath().replace(/[^/]*$/, "") + "lb-server.php";
+async function srv(body, t, ms = 20000) {
+  const r = await tfetch(SRV_URL(), { method: "POST", body: JSON.stringify({ ...body, tok: t }) }, ms);
+  const j = await r.json().catch(() => ({})); if (!j.ok) throw new Error(j.error || "server " + r.status); return j;
+}
 const SK = "lb_supa_session";
 
 /* ---------------- session ---------------- */
@@ -34,11 +42,24 @@ async function authFetch(path, body, query = "") {
   return j;
 }
 /* a valid access token (refreshes automatically when it is about to expire) */
+/* v108: one refresh at a time; if Supabase says the login is no longer valid (signed out elsewhere, password changed,
+   session revoked), forget it once and ask the person to log in again — instead of retrying hundreds of times */
+let refreshing = null;
 async function token() {
   const s = getSession(); if (!s) return null;
   if (s.expires_at - Date.now() > 60000) return s.access_token;
-  try { const j = await authFetch("token?grant_type=refresh_token", { refresh_token: s.refresh_token }); const n = toSession(j); setSession(n); return n.access_token; }
-  catch { return null; }
+  if (refreshing) return refreshing;
+  refreshing = (async () => {
+    try {
+      const r = await tfetch(BASE + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: H(), body: JSON.stringify({ refresh_token: s.refresh_token }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.access_token) { const n = toSession(j); setSession(n); return n.access_token; }
+      if (r.status >= 400 && r.status < 500) { setSession(null); window.dispatchEvent(new CustomEvent("lb-session-expired")); }
+      return null;
+    } catch { return null; }   /* offline: keep the login, try again later */
+    finally { setTimeout(() => { refreshing = null; }, 0); }
+  })();
+  return refreshing;
 }
 
 /* the current login token — the LaunchBuilder server checks it to know which account is calling */
@@ -47,7 +68,7 @@ export const cloudToken = () => (cloudOn() ? token() : Promise.resolve(null));
 /* ---------------- login / signup / logout ---------------- */
 export async function cloudSignup(email, password, name) {
   /* the confirmation email brings people back to the address they signed up on (crecapo.tech or a white-label app) */
-  const j = await authFetch("signup", { email, password, data: { name } }, "?redirect_to=" + encodeURIComponent(location.origin + location.pathname));
+  const j = await authFetch("signup", { email, password, data: { name } }, "?redirect_to=" + encodeURIComponent(appUrl()));
   if (j.access_token) { const s = toSession(j); setSession(s); return { user: s.user, session: true }; }
   return { user: j.user || j, session: false };          // email confirmation is switched on
 }
@@ -66,7 +87,7 @@ export async function cloudLogout() {
 export const cloudUser = () => { const s = getSession(); return s && s.user ? s.user : null; };
 
 /* ---------------- v103: forgot password · Google sign-in · links that come back with a login ---------------- */
-const back = () => location.origin + location.pathname;
+const back = () => appUrl();
 /* which sign-in methods are switched on in Supabase (Authentication → Providers) */
 export async function cloudSettings() {
   try { const r = await tfetch(BASE + "/auth/v1/settings", { headers: H() }, 6000); return r.ok ? await r.json() : {}; } catch { return {}; }
@@ -150,33 +171,40 @@ export async function flush() {
   clearTimeout(timer); if (!pending.size || !uid) return;
   const items = [...pending.entries()]; pending.clear();
   const t = await token(); if (!t) { status("offline", reason("jwt expired")); items.forEach(([k, v]) => pending.set(k, v)); return; }
+  const up = items.filter(([, v]) => v !== null).map(([key, value]) => ({ user_id: uid, key, value, updated_at: new Date().toISOString() }));
+  const del = items.filter(([, v]) => v === null).map(([k]) => k);
+  let okS = false, okV = false, err = "";
   try {
-    const up = items.filter(([, v]) => v !== null).map(([key, value]) => ({ user_id: uid, key, value, updated_at: new Date().toISOString() }));
-    const del = items.filter(([, v]) => v === null).map(([k]) => k);
     if (up.length) {
       const r = await tfetch(BASE + "/rest/v1/lb_user_data?on_conflict=user_id,key", { method: "POST", headers: { ...H(t), Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(up) });
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || "save failed");
     }
     for (const k of del) await tfetch(BASE + `/rest/v1/lb_user_data?user_id=eq.${uid}&key=eq.${encodeURIComponent(k)}`, { method: "DELETE", headers: H(t) });
-    up.forEach((x) => { _set.call(localStorage, SYNCED(x.key), hash(x.value)); stamps[x.key] = x.updated_at; });
-    status("saved");
-  } catch (e) {
-    items.forEach(([k, v]) => { if (!pending.has(k)) pending.set(k, v); });
-    status("offline", reason(e.message)); clearTimeout(timer); timer = setTimeout(flush, 10000);   // try again later
-  }
+    okS = true; up.forEach((x) => { stamps[x.key] = x.updated_at; });
+  } catch (e) { err = e.message; }
+  try { const j = await srv({ action: "kv_put", items: items.map(([key, value]) => ({ key, value })) }, t, 60000); Object.entries(j.saved || {}).forEach(([k, v]) => { sstamps[k] = v; }); okV = true; } catch { /* server copy failed — Supabase still has it */ }
+  if (okS || okV) { up.forEach((x) => _set.call(localStorage, SYNCED(x.key), hash(x.value))); status("saved"); return; }
+  items.forEach(([k, v]) => { if (!pending.has(k)) pending.set(k, v); });
+  status("offline", reason(err)); clearTimeout(timer); timer = setTimeout(flush, 10000);   // try again later
 }
 /* call after login (or when the app opens): downloads everything, then keeps saving changes */
 export async function startCloud(user) {
   uid = user.id; email = (user.email || "").toLowerCase(); patch(); status("loading");
   const t = await token(); if (!t) { status("offline", reason("jwt expired")); return false; }
-  let rows = [];
+  let rows = [], supaErr = "", srows = null;
   try {
     const r = await tfetch(BASE + "/rest/v1/lb_user_data?select=key,value,updated_at", { headers: H(t) }, 15000);
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.message || j.code || "HTTP " + r.status); }
     rows = await r.json();
-  } catch (e) { status("offline", reason(e.message)); console.warn("cloud load:", e.message); return false; }
-  const cloud = new Map(rows.map((x) => [x.key, x.value])); let changed = false;
-  rows.forEach((x) => { stamps[x.key] = x.updated_at; });
+  } catch (e) { supaErr = e.message; console.warn("cloud load:", e.message); }
+  try { srows = (await srv({ action: "kv_get" }, t, 30000)).rows || []; } catch (e) { console.warn("server copy:", e.message); }
+  if (supaErr && !srows) { status("offline", reason(supaErr)); return false; }
+  rows.forEach((x) => { stamps[x.key] = x.updated_at; }); (srows || []).forEach((x) => { sstamps[x.key] = x.t; });
+  /* newest copy of each item, from Supabase or from your server */
+  const supaVal = new Map(rows.map((x) => [x.key, x.value])), srvVal = new Map((srows || []).map((x) => [x.key, x.value]));
+  const cloud = new Map(supaVal), ctime = new Map(rows.map((x) => [x.key, Date.parse(x.updated_at) || 0]));
+  (srows || []).forEach((x) => { if (!cloud.has(x.key) || x.t > (ctime.get(x.key) || 0)) cloud.set(x.key, x.value); });
+  let changed = false;
   SYNC.forEach((p) => {
     const lv = localStorage.getItem(p + email), cv = cloud.has(p) ? cloud.get(p) : null, last = localStorage.getItem(SYNCED(p));
     let next;
@@ -185,7 +213,7 @@ export async function startCloud(user) {
     else next = mergeVals(cv, lv);                               // both changed → keep everything
     if (next == null) return;
     if (next !== lv) { changed = true; try { _set.call(localStorage, p + email, next); } catch (e) { console.warn("browser storage full", e); } }
-    if (next !== cv) pending.set(p, next); else _set.call(localStorage, SYNCED(p), hash(next));
+    if (next !== cv || (!supaErr && supaVal.get(p) !== next) || (srows && srvVal.get(p) !== next)) pending.set(p, next); else _set.call(localStorage, SYNCED(p), hash(next));
   });
   if (pending.size) await flush(); else status("saved");
   startLive();
@@ -198,23 +226,31 @@ export async function pullCloud() {
   pulling = true;
   try {
     const t = await token(); if (!t) return [];
-    const r = await tfetch(BASE + "/rest/v1/lb_user_data?select=key,updated_at", { headers: H(t) }, 8000);
-    if (!r.ok) return [];
-    const list = await r.json();
-    const keys = list.filter((x) => SYNC.includes(x.key) && x.updated_at !== stamps[x.key]).map((x) => x.key);
-    if (!keys.length) return [];
-    const r2 = await tfetch(BASE + `/rest/v1/lb_user_data?select=key,value,updated_at&key=in.(${keys.map(encodeURIComponent).join(",")})`, { headers: H(t) }, 15000);
-    if (!r2.ok) return [];
+    const got = new Map();   /* key → { value, time } — the newest copy from either place */
+    const take = (key, value, time) => { const o = got.get(key); if (value != null && (!o || time > o.time)) got.set(key, { value, time }); };
+    try {
+      const r = await tfetch(BASE + "/rest/v1/lb_user_data?select=key,updated_at", { headers: H(t) }, 8000);
+      if (r.ok) {
+        const keys = (await r.json()).filter((x) => SYNC.includes(x.key) && x.updated_at !== stamps[x.key]).map((x) => x.key);
+        if (keys.length) {
+          const r2 = await tfetch(BASE + `/rest/v1/lb_user_data?select=key,value,updated_at&key=in.(${keys.map(encodeURIComponent).join(",")})`, { headers: H(t) }, 15000);
+          if (r2.ok) for (const x of await r2.json()) { stamps[x.key] = x.updated_at; take(x.key, x.value, Date.parse(x.updated_at) || 0); }
+        }
+      }
+    } catch { /* Supabase not reachable — the server copy still works */ }
+    try {
+      const keys = ((await srv({ action: "kv_get", list: 1 }, t, 8000)).rows || []).filter((x) => SYNC.includes(x.key) && x.t !== sstamps[x.key]).map((x) => x.key);
+      if (keys.length) for (const x of (await srv({ action: "kv_get", keys }, t, 30000)).rows || []) { sstamps[x.key] = x.t; take(x.key, x.value, x.t); }
+    } catch { /* server not reachable */ }
     const changed = [];
-    for (const x of await r2.json()) {
-      stamps[x.key] = x.updated_at;
-      if (pending.has(x.key) || x.value == null) continue;               // you're editing it right now — keep yours
-      const lv = localStorage.getItem(x.key + email), last = localStorage.getItem(SYNCED(x.key));
+    for (const [key, x] of got) {
+      if (pending.has(key)) continue;               // you're editing it right now — keep yours
+      const lv = localStorage.getItem(key + email), last = localStorage.getItem(SYNCED(key));
       const next = lv == null || (last && last === hash(lv)) ? x.value : mergeVals(x.value, lv);
       if (next === lv) continue;
-      try { _set.call(localStorage, x.key + email, next); } catch { continue; }
-      _set.call(localStorage, SYNCED(x.key), hash(next)); changed.push(x.key);
-      if (next !== x.value) pending.set(x.key, next);
+      try { _set.call(localStorage, key + email, next); } catch { continue; }
+      _set.call(localStorage, SYNCED(key), hash(next)); changed.push(key);
+      if (next !== x.value) pending.set(key, next);
     }
     if (pending.size) flush();
     if (changed.length) window.dispatchEvent(new CustomEvent("lb-cloud-pull", { detail: changed }));

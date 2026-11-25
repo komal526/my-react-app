@@ -1,6 +1,7 @@
 // LaunchBuilder v87 — Rail.jsx: full-screen preview with a slim action bar on the right.
 // Used by: project preview (click a project), template preview, the preview link in a new tab, and a template opened in a new tab.
 import { useEffect, useState } from "react";
+import { appPath, appUrl } from "../route.js";
 import { Icon } from "./icons.jsx";
 import { FILE_TEMPLATES, tplUrl } from "../lib.js";
 
@@ -50,14 +51,14 @@ export function RailView({ dev, children, ...rail }) {
 }
 
 /* a template opened in its own tab: #/tpl/<key> */
-export const tplTabUrl = (t) => location.origin + location.pathname + "#/tpl/" + encodeURIComponent(t.key);
+export const tplTabUrl = (t) => appUrl() + "#/tpl/" + encodeURIComponent(t.key);
 export function TplView({ k }) {
   const t = FILE_TEMPLATES.find((x) => x.key === k), [dev, setDev] = useState("desktop");
   useEffect(() => { document.title = t ? t.name + " · template" : "Template"; }, [t]);
-  if (!t) return <div className="pv-dead"><div><h2>This template doesn't exist</h2><a href={location.pathname}>Go to dashboard</a></div></div>;
-  const use = () => { try { localStorage.setItem("lb_tpl_go", t.key); } catch { /* ignore */ } location.href = location.pathname; };
+  if (!t) return <div className="pv-dead"><div><h2>This template doesn't exist</h2><a href={appPath()}>Go to dashboard</a></div></div>;
+  const use = () => { try { localStorage.setItem("lb_tpl_go", t.key); } catch { /* ignore */ } location.href = appPath(); };
   return (
-    <RailView dev={dev} setDev={setDev} actions={[{ ic: RI.edit, l: "Use", cls: "k-pri", fn: use }, { ic: RI.home, l: "Dashboard", fn: () => { location.href = location.pathname; } }]}>
+    <RailView dev={dev} setDev={setDev} actions={[{ ic: RI.edit, l: "Use", cls: "k-pri", fn: use }, { ic: RI.home, l: "Dashboard", fn: () => { location.href = appPath(); } }]}>
       <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
     </RailView>
   );
