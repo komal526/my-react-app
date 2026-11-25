@@ -205,6 +205,8 @@ function lb_forward_lead($lead, $DATA) {
     $h = jread($hf, $h); $h['last'] = array('t' => time(), 'code' => $e === '' ? 200 : 0, 'err' => $e !== '' ? $e : $e2); jwrite($hf, $h); return;
   }
   if (empty($h['url'])) return;
+  /* same URL as the WhatsApp webhook (which is already sent signed) → don't send an unsigned copy */
+  $w0 = jread(wa_file($DATA, $u), array()); if (!empty($w0['url']) && rtrim(trim($w0['url']), '/') === rtrim(trim($h['url']), '/')) return;
   list($code, $b, $err) = lb_hook_post($h['url'], lb_hook_payload($lead, $h), false);
   $h['last'] = array('t' => time(), 'code' => $code, 'err' => $err); jwrite($hf, $h);
 }
