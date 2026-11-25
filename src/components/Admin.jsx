@@ -89,7 +89,8 @@ function Users({ me }) {
   const [d, setD] = useState(null), [err, setErr] = useState(""), [q, setQ] = useState(""), [f, setF] = useState("all"), [ws, setWs] = useState(""), [busy, setBusy] = useState(""), [nw, setNew] = useState(false);
   const load = () => admin("users").then((r) => { setD(r); setErr(""); }).catch((e) => setErr(e.message));
   useEffect(() => { load(); const t = setInterval(load, 60000); return () => clearInterval(t); }, []);
-  const set = async (u, o) => { setBusy(u.uid); try { await admin("user", { uid: u.uid, ...o }); await load(); } catch (e) { window.alert(e.message); } setBusy(""); };
+  const [ok, setOk] = useState("");
+  const set = async (u, o) => { setBusy(u.uid); try { await admin("user", { uid: u.uid, ...o }); await load(); const k = Object.keys(o)[0]; setOk(u.uid + k); setTimeout(() => setOk(""), 2500); } catch (e) { window.alert(e.message); } setBusy(""); };
   const list = useMemo(() => {
     if (!d) return [];
     const now = Date.now() / 1000, s = q.trim().toLowerCase();
@@ -120,20 +121,20 @@ function Users({ me }) {
       </div>
       {nw && createPortal(<div className="adm-modal" onMouseDown={(e) => e.target === e.currentTarget && setNew(false)}><div className="adm-mbox"><button className="adm-mx" onClick={() => setNew(false)} title="Close">✕</button>
         <NewAccount me={me} tenants={wsList} onDone={() => { setNew(false); load(); }} /></div></div>, document.querySelector(".dash") || document.body)}
-      <p className="mut sm adm-hint">Limits: type a number in the boxes (empty = default, 0 = unlimited). Websites = live websites · Own domains = connected domains · Subdomains = free name.{me.subBase || "domain"}.</p>
+      <p className="mut sm adm-hint">Limits: type a number in a box and press Enter — it stays until you change it (empty = default, 0 = unlimited). Works for accounts that haven't opened the builder yet too. Websites = live websites · Own domains = connected domains · Subdomains = free name.{me.subBase || "domain"}.</p>
       {!d.serviceKey && me.role === "admin" && <p className="mut sm adm-hint">Shows accounts that opened the builder. To also list accounts that only signed up, add the Supabase secret key when running <code>lb-saas-setup.sh</code>.</p>}
       <div className="adm-table"><div className="adm-th"><b>Accounts</b><span>Total: {list.length} account{list.length === 1 ? "" : "s"}</span></div><table>
         <thead><tr><th>Account</th>{me.role === "admin" && <th>Workspace</th>}<th>Signed up</th><th>Last login</th><th>Last active</th><th title="used / allowed">Websites</th><th title="used / allowed">Own domains</th><th title="used / allowed">Subdomains</th><th>Status</th></tr></thead>
         <tbody>{list.map((u) => (
           <tr key={u.uid} className={u.disabled ? "off" : ""}>
             <td><div className="adm-who"><span className="av">{(u.name || u.email || "?")[0].toUpperCase()}</span><div><b>{u.name || u.email.split("@")[0]}</b><small>{u.email}</small>
-              <div className="adm-tags">{u.admin && <em className="t-adm">Admin</em>}{u.never && <em>Never opened</em>}{u.confirmed === false && <em>Email not confirmed</em>}</div></div></div></td>
+              <div className="adm-tags">{u.admin && <em className="t-adm">Admin</em>}{u.never && !u.last_login && <em>Never opened</em>}{u.confirmed === false && <em>Email not confirmed</em>}</div></div></div></td>
             {me.role === "admin" && <td>{u.tenantName || <span className="mut">Main</span>}</td>}
             <td>{day(u.created)}</td><td>{since(u.last_login)}</td>
             <td>{since(u.last_seen)}{u.dev && <small className="mut"> · {u.dev}</small>}{u.ip && <small className="mut adm-ip">{u.ip}</small>}</td>
             {[["sites", "site_limit", "∞", "Live websites"], ["domains", "dom_limit", "∞", "Own domains"], ["subs", "sub_limit", "5", "Free subdomains"]].map(([n, lk, ph, t]) => (
-              <td key={lk}><b>{u[n]}</b> / {!u.admin ? <input key={u.uid + lk + (u[lk] ?? "")} className="adm-lim" type="number" min="0" defaultValue={u[lk] ?? ""} placeholder={ph} title={t + " allowed for this account (empty = default, 0 = unlimited)"} onBlur={(e) => { const v = e.target.value; if (String(v) !== String(u[lk] ?? "")) set(u, { [lk]: v === "" ? null : +v }); }} /> : "∞"}</td>))}
-            <td>{u.disabled ? <span className="adm-pill off">● Paused</span> : <span className="adm-pill">● Active</span>}{!(u.admin || u.never || u.email === me.email) && <> <button className={"xs " + (u.disabled ? "pri" : "red")} disabled={busy === u.uid} onClick={() => { if (u.disabled || window.confirm(`Pause ${u.email}? They can't publish or change anything until you switch them back on. Their live websites keep working.`)) set(u, { disabled: !u.disabled }); }}>{u.disabled ? "▶ Switch on" : "⏸ Pause"}</button></>}</td>
+              <td key={lk}><b>{u[n]}</b> / {!u.admin ? <><input key={u.uid + lk + (u[lk] ?? "")} className={"adm-lim" + (ok === u.uid + lk ? " saved" : "")} type="number" min="0" defaultValue={u[lk] ?? ""} placeholder={ph} disabled={busy === u.uid} title={t + " allowed for this account (empty = default, 0 = unlimited). Press Enter to save."} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} onBlur={(e) => { const v = e.target.value; if (String(v) !== String(u[lk] ?? "")) set(u, { [lk]: v === "" ? null : +v }); }} />{ok === u.uid + lk && <small className="adm-saved">✓ Saved</small>}</> : "∞"}</td>))}
+            <td>{u.disabled ? <span className="adm-pill off">● Paused</span> : <span className="adm-pill">● Active</span>}{!(u.admin || u.email === me.email) && <> <button className={"xs " + (u.disabled ? "pri" : "red")} disabled={busy === u.uid} onClick={() => { if (u.disabled || window.confirm(`Pause ${u.email}? They can't publish or change anything until you switch them back on. Their live websites keep working.`)) set(u, { disabled: !u.disabled }); }}>{u.disabled ? "▶ Switch on" : "⏸ Pause"}</button></>}</td>
           </tr>))}
           {!list.length && <tr><td colSpan="9" className="mut adm-none">No accounts match.</td></tr>}
         </tbody></table></div>

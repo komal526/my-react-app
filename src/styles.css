@@ -5016,3 +5016,7 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .wa-sec .wa-sec-h em{color:#6d28d9;background:#f3f0ff}
 .wa-sec-h small{display:block;color:#5b6477;font-size:12.5px;line-height:1.5;margin-top:2px}
 .wa-adv>summary{cursor:pointer;font-weight:700;font-size:13px;color:#4338ca;margin-bottom:10px}
+
+/* v114 — admin limits: saved feedback */
+.adm-lim.saved{border-color:#16a34a!important;box-shadow:0 0 0 3px rgba(22,163,74,.15)}
+.adm-saved{display:block;color:#16a34a;font-weight:700;font-size:11px;margin-top:3px}

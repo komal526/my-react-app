@@ -45,11 +45,17 @@ if (!function_exists('lb_saas')) {
 
 function lb_j($f, $def) { if (!file_exists($f)) return $def; $j = json_decode((string)@file_get_contents($f), true); return is_array($j) ? $j : $def; }
 function lb_w($f, $v) {
-  $fp = @fopen($f, 'c+'); if (!$fp) return false;
-  flock($fp, LOCK_EX); ftruncate($fp, 0); rewind($fp);
-  fwrite($fp, json_encode($v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-  fflush($fp); flock($fp, LOCK_UN); fclose($fp); return true;
+  /* v114: temp file + swap → readers never see an empty file (that wiped accounts and their limits before) */
+  $j = json_encode($v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | (defined('JSON_INVALID_UTF8_SUBSTITUTE') ? JSON_INVALID_UTF8_SUBSTITUTE : 0));
+  if ($j === false) return false;
+  $tmp = $f . '.tmp' . bin2hex(random_bytes(4));
+  if (@file_put_contents($tmp, $j) === false) { @unlink($tmp); return false; }
+  @chmod($tmp, file_exists($f) ? (fileperms($f) & 0777) : 0644);
+  if (!@rename($tmp, $f)) { @unlink($tmp); return false; }
+  return true;
 }
+function lb_lock($f) { $h = @fopen($f . '.lock', 'c'); if ($h) flock($h, LOCK_EX); return $h; }
+function lb_unlock($h) { if ($h) { flock($h, LOCK_UN); fclose($h); } }
 /* /etc/launchbuilder/saas.json → { supabase_url, anon_key, service_key?, admins:[emails], main_domain, sub_limit } */
 function lb_saas() {
   static $s = null; if ($s !== null) return $s;
@@ -110,27 +116,30 @@ function lb_ip() { return isset($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_R
 
 /* remembers every account the first time it opens the builder, and when it was last active */
 function lb_register($u, $DATA, $hostTenant) {
-  $f = $DATA . '/users.json'; $all = lb_j($f, array()); $id = $u['id']; $now = time();
+  $f = $DATA . '/users.json'; $LK = lb_lock($f); $all = lb_j($f, array()); $id = $u['id']; $now = time();
   $admin = lb_is_admin_email($u['email']);
   $r = isset($all[$id]) ? $all[$id] : null; $isNew = !$r; $tenants = lb_tenants($DATA);
   if ($isNew) {
     if ($hostTenant !== '' && !$admin) {
       $t = $tenants[$hostTenant]; $max = isset($t['max_users']) ? (int)$t['max_users'] : 0;
-      if ($max > 0) { $n = 0; foreach ($all as $x) if (isset($x['tenant']) && $x['tenant'] === $hostTenant) $n++; if ($n >= $max) return array('error' => 'WORKSPACE_FULL: This workspace has reached its account limit. Please contact the owner.'); }
+      if ($max > 0) { $n = 0; foreach ($all as $x) if (isset($x['tenant']) && $x['tenant'] === $hostTenant) $n++; if ($n >= $max) { lb_unlock($LK); return array('error' => 'WORKSPACE_FULL: This workspace has reached its account limit. Please contact the owner.'); } }
     }
     $r = array('email' => $u['email'], 'name' => $u['name'], 'tenant' => $admin ? '' : $hostTenant, 'created' => $u['created'] ?: $now, 'first_seen' => $now, 'seen' => 0, 'disabled' => false);
   }
+  /* made by the admin before the first login (limits set early): it joins the workspace it logs in on, unless the admin chose one */
+  if (!empty($r['pre'])) { if (empty($r['tenant_fixed'])) $r['tenant'] = $admin ? '' : $hostTenant; unset($r['pre'], $r['tenant_fixed'], $r['never']); $r['first_seen'] = $now; $isNew = true; }
   $tn = isset($r['tenant']) ? $r['tenant'] : '';
   /* an account belongs to one workspace: it logs in on that workspace's address */
   if (!$admin && $tn !== $hostTenant) {
     $where = $tn !== '' && isset($tenants[$tn]['app_domain']) ? $tenants[$tn]['app_domain'] : lb_main_domain($DATA);
-    return array('error' => 'WRONG_WORKSPACE: This account belongs to another workspace. Log in at https://' . $where);
+    lb_unlock($LK); return array('error' => 'WRONG_WORKSPACE: This account belongs to another workspace. Log in at https://' . $where);
   }
   $r['email'] = $u['email']; if ($u['name'] !== '') $r['name'] = $u['name']; if ($u['last_login']) $r['last_login'] = $u['last_login'];
   if ($isNew || $now - (isset($r['last_seen']) ? (int)$r['last_seen'] : 0) > 60) {
     $r['last_seen'] = $now; $r['seen'] = (isset($r['seen']) ? (int)$r['seen'] : 0) + 1; $r['ip'] = lb_ip(); $r['dev'] = lb_device();
     $all[$id] = $r; lb_w($f, $all); @chmod($f, 0600);
   }
+  lb_unlock($LK);
   $role = $admin ? 'admin' : ($tn !== '' && isset($tenants[$tn]['owner_email']) && strtolower($tenants[$tn]['owner_email']) === $u['email'] ? 'owner' : 'user');
   return array('uid' => $id, 'email' => $u['email'], 'name' => isset($r['name']) ? $r['name'] : '', 'role' => $role, 'tenant' => $tn,
     'disabled' => !empty($r['disabled']), 'sub_limit' => isset($r['sub_limit']) ? $r['sub_limit'] : null,

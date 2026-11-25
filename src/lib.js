@@ -414,6 +414,12 @@ export async function phpCall(srv, body) {
 
 /* ==================== accounts (v66): my account, free subdomains, admin panel ==================== */
 export const acctSrv = () => ({ url: defaultServerUrl(), key: accountKey() });
+/* v114: keep a form's share page on the server, so its link works in every browser and its leads go to Sheets / WhatsApp / email */
+export const formPublish = (form, html) => phpCall(acctSrv(), { action: "form_pub", fid: form.id, name: form.name, html });
+export async function formFetch(id) {
+  const r = await fetch(defaultServerUrl(), { method: "POST", body: JSON.stringify({ action: "form_get", fid: id }) });
+  const j = await r.json().catch(() => ({})); if (!j.ok) throw new Error(j.error || "not found"); return j;
+}
 let _me = null;
 export const myAccount = (fresh = false) => { if (fresh || !_me) _me = phpCall(acctSrv(), { action: "me" }).catch((e) => { _me = null; throw e; }); return _me; };
 /* free subdomains are remembered on this device too, so project cards show them instantly */

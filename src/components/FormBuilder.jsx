@@ -2,7 +2,7 @@
 // Drag & drop form builder: element panel · live canvas (the real form) · Styles & Options (Customize · Themes · Advanced)
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FormSheet } from "./EasyConnect.jsx";
-import { FIELD_TYPES, newField, uid, formUrl, ago, mailReady as mailIsReady } from "../lib.js";
+import { FIELD_TYPES, newField, uid, formUrl, ago, mailReady as mailIsReady, formPublish } from "../lib.js";
 import { formHtml, formPageHtml, FORM_STYLE_DEF, FORM_FONTS } from "./tools.js";
 import { Icon } from "./icons.jsx";
 
@@ -97,6 +97,9 @@ export default function Builder({ form, onChange, onBack, projects, onAddToPage,
   const html = useMemo(() => formHtml(form, integ), [form, integ]);
   const pageHtml = useMemo(() => (prev ? formPageHtml(form, integ) : ""), [prev, form, integ]);
   const embed = formHtml(form, integ), proj = projects.find((p) => p.id === target.pid);
+  /* the share link page is kept on the server (2.5 s after the last change), so it works for everyone */
+  const shareHtml = useMemo(() => formPageHtml(form, integ), [form, integ]);
+  useEffect(() => { const t = setTimeout(() => { formPublish(form, shareHtml).catch(() => {}); }, 2500); return () => clearTimeout(t); }, [shareHtml]); // eslint-disable-line react-hooks/exhaustive-deps
   const formLeads = leads.filter((l) => l.formId === form.id);
 
   /* canvas: highlight the selected field, make fields draggable, place the toolbar */

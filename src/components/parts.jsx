@@ -1,7 +1,7 @@
 // LaunchBuilder v45 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
 import { useState, useEffect, useMemo, useRef } from "react";
-import { serverAiReady, LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate } from "../lib.js";
+import { serverAiReady, LIMIT, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate, formFetch } from "../lib.js";
 import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
 import { cloudOn, lastStatus } from "../cloud.js";
 import { Icon } from "./icons.jsx";
@@ -404,20 +404,30 @@ export function Preview({ token, file: initFile }) {
 
 /* ==================== Form share link: #/form/<id> ==================== */
 export function FormPage({ id }) {
+  /* v114: in the owner's browser the latest form is used; anyone else gets the copy kept on the server.
+     Either way every submission goes to the server → Google Sheet, WhatsApp and email automations run. */
   const found = useMemo(() => findForm(id), [id]);
-  const [html, setHtml] = useState(""), [done, setDone] = useState(false), ifr = useRef();
-  useEffect(() => { if (found) { finalize(formPageHtml(found.form, loadInteg(found.email)), { mode: "blob", preview: true, page: "form" }).then((r) => setHtml(r.html)); document.title = found.form.name; addEvent(found.email, { t: "fview", formId: id, page: "form link" }); } }, [found, id]);
+  const [html, setHtml] = useState(""), [done, setDone] = useState(false), [miss, setMiss] = useState(false), ifr = useRef();
+  useEffect(() => {
+    let gone = false; const opt = { mode: "blob", preview: true, live: true, page: "form", leadUrl: defaultServerUrl(), site: "" };
+    if (found) { finalize(formPageHtml(found.form, loadInteg(found.email)), opt).then((r) => !gone && setHtml(r.html)); document.title = found.form.name; addEvent(found.email, { t: "fview", formId: id, page: "form link" }); }
+    else formFetch(id).then((j) => { document.title = j.name || "Form"; return finalize(j.html, opt); }).then((r) => !gone && setHtml(r.html)).catch(() => !gone && setMiss(true));
+    return () => { gone = true; };
+  }, [found, id]);
   useEffect(() => {
     const f = (e) => {
-      if (!found || !ifr.current || e.source !== ifr.current.contentWindow || !e.data) return;
-      if (e.data.lb === "lead") { addLead(found.email, { ...e.data.lead, formId: id, projectId: "", projectName: "Form link", page: "share link", source: "form-link" }); addEvent(found.email, { t: "lead", formId: id, form: found.form.name }); setDone(true); }
-      if (e.data.lb === "lead-pay") payLead(found.email, e.data.lid, e.data.payment);
+      if (!ifr.current || e.source !== ifr.current.contentWindow || !e.data) return;
+      if (e.data.lb === "lead") { if (found) { addLead(found.email, { ...e.data.lead, formId: id, projectId: "", projectName: "Form link", page: "share link", source: "form-link" }); addEvent(found.email, { t: "lead", formId: id, form: found.form.name }); } setDone(true); }
+      if (e.data.lb === "lead-pay" && found) payLead(found.email, e.data.lid, e.data.payment);
       if (e.data.lb === "nav" && /^https?:/.test(e.data.href)) location.href = e.data.href;
     };
     window.addEventListener("message", f); return () => window.removeEventListener("message", f);
   }, [found, id]);
-  if (!found) return <div className="pv-dead"><div><h2>This form isn't available</h2><p>The link may be wrong, or the form was deleted. Form links work in the browser where the form was created until a backend is added.</p></div></div>;
-  return <div className="fpage"><iframe ref={ifr} title={found.form.name} srcDoc={html} sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals" allow="payment" />{done && <div className="toast pv-toast">✓ Submission saved to Leads</div>}</div>;
+  if (miss) return <div className="pv-dead"><div><h2>This form isn't available</h2><p>The link may be wrong, or the form was deleted. (Form owner: open the form in the builder once, so its link is saved on the server.)</p></div></div>;
+  if (!html) return <div className="lazy-load"><span className="pub-spin" /></div>;
+  /* someone else's form runs sandboxed (no access to this site's storage) */
+  const sb = found ? "allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals" : "allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals";
+  return <div className="fpage"><iframe ref={ifr} title="Form" srcDoc={html} sandbox={sb} allow="payment" />{done && <div className="toast pv-toast">✓ Submission saved{found ? " to Leads" : ""}</div>}</div>;
 }
 
 

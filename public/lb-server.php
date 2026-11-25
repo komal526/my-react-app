@@ -43,10 +43,21 @@ function out($a)  { while (ob_get_level()) ob_end_clean(); $j = json_encode($a, 
 function fail($m) { out(array('ok' => false, 'error' => $m)); }
 function jread($f, $def) { if (!file_exists($f)) return $def; $j = json_decode((string)@file_get_contents($f), true); return is_array($j) ? $j : $def; }
 function jwrite($f, $v) {
-  $fp = @fopen($f, 'c+'); if (!$fp) return false;
-  flock($fp, LOCK_EX); ftruncate($fp, 0); rewind($fp);
-  fwrite($fp, json_encode($v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-  fflush($fp); flock($fp, LOCK_UN); fclose($fp); return true;
+  /* v114: write a temp file, then swap it in — a reader never sees a half-written (empty) file, so data can't be wiped */
+  $j = json_encode($v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined('JSON_INVALID_UTF8_SUBSTITUTE') ? JSON_INVALID_UTF8_SUBSTITUTE : 0));
+  if ($j === false) return false;
+  $tmp = $f . '.tmp' . bin2hex(random_bytes(4));
+  if (@file_put_contents($tmp, $j) === false) { @unlink($tmp); return false; }
+  @chmod($tmp, file_exists($f) ? (fileperms($f) & 0777) : 0644);
+  if (!@rename($tmp, $f)) { @unlink($tmp); return false; }
+  return true;
+}
+/* read → change → save while holding a lock, so two requests at the same time can't overwrite each other */
+function jmutate($f, $def, $fn) {
+  $lk = @fopen($f . '.lock', 'c'); if ($lk) flock($lk, LOCK_EX);
+  $v = jread($f, $def); $r = $fn($v); jwrite($f, $v);
+  if ($lk) { flock($lk, LOCK_UN); fclose($lk); }
+  return $r;
 }
 function rrmdir($d) {
   if (!is_dir($d)) return;
@@ -219,10 +230,7 @@ if ($act === 'lead') {
     'data' => $data, 'ts' => round(microtime(true) * 1000), 'source' => 'live-site',
   );
   if (isset($l['payment']) && is_array($l['payment'])) $lead['payment'] = array('status' => 'pending', 'amount' => (float)(isset($l['payment']['amount']) ? $l['payment']['amount'] : 0), 'mode' => clean_str(isset($l['payment']['mode']) ? $l['payment']['mode'] : '', 20));
-  $all = jread($DATA . '/leads.json', array());
-  $all[] = $lead;
-  if (count($all) > 20000) $all = array_slice($all, -20000);
-  jwrite($DATA . '/leads.json', $all);
+  jmutate($DATA . '/leads.json', array(), function (&$all) use ($lead) { $all[] = $lead; if (count($all) > 20000) $all = array_slice($all, -20000); });
   /* answer the visitor first, then send the lead to the owner's Google Sheet / email (if connected) */
   header('Content-Type: application/json'); echo json_encode(array('ok' => true));
   if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
@@ -230,6 +238,13 @@ if ($act === 'lead') {
   exit;
 }
 
+/* v114: a form's share link works in any browser — the page is kept on the server (public read, shown in a sandbox) */
+function form_file($DATA, $fid) { $d = $DATA . '/forms'; if (!is_dir($d)) @mkdir($d, 0755, true); return $d . '/' . $fid . '.json'; }
+if ($act === 'form_get') {
+  $fid = isset($d['fid']) ? (string)$d['fid'] : ''; if (!preg_match('/^[\w-]{3,40}$/', $fid)) fail('Bad form');
+  $f = jread(form_file($DATA, $fid), array()); if (empty($f['html'])) fail('NOT_FOUND');
+  out(array('ok' => true, 'html' => $f['html'], 'name' => isset($f['name']) ? $f['name'] : 'Form'));
+}
 /* booked times for a calendar event, so the same slot can't be booked twice */
 if ($act === 'busy') {
   $fid = clean_str(isset($d['formId']) ? $d['formId'] : '', 40);
@@ -244,11 +259,11 @@ if ($act === 'leadpay') {
   $lid = preg_replace('/[^A-Za-z0-9]/', '', clean_str(isset($d['lid']) ? $d['lid'] : '', 40));
   $p = isset($d['payment']) && is_array($d['payment']) ? $d['payment'] : array();
   $st = in_array(isset($p['status']) ? $p['status'] : '', array('paid', 'claimed', 'pending'), true) ? $p['status'] : 'pending';
-  $all = jread($DATA . '/leads.json', array());
-  foreach ($all as $i => $l) if ($l['lid'] === $lid && $lid !== '') {
-    $all[$i]['payment'] = array_merge(isset($l['payment']) ? $l['payment'] : array(), array('status' => $st, 'id' => clean_str(isset($p['id']) ? $p['id'] : '', 80), 'ref' => clean_str(isset($p['ref']) ? $p['ref'] : '', 80), 'ts' => round(microtime(true) * 1000)));
-  }
-  jwrite($DATA . '/leads.json', $all);
+  jmutate($DATA . '/leads.json', array(), function (&$all) use ($lid, $st, $p) {
+    foreach ($all as $i => $l) if ($l['lid'] === $lid && $lid !== '') {
+      $all[$i]['payment'] = array_merge(isset($l['payment']) ? $l['payment'] : array(), array('status' => $st, 'id' => clean_str(isset($p['id']) ? $p['id'] : '', 80), 'ref' => clean_str(isset($p['ref']) ? $p['ref'] : '', 80), 'ts' => round(microtime(true) * 1000)));
+    }
+  });
   out(array('ok' => true));
 }
 
@@ -296,24 +311,6 @@ function wa_why($code, $body, $err) {
   if ($code === 422) return 'The webhook refused the data format (422) — check "Expected format / JSON Schema" on that webhook, or leave it empty.' . ($body !== '' ? ' ' . substr(strip_tags($body), 0, 160) : '');
   if ($code === 404) return 'The webhook URL was not found (404) — copy it again from your WhatsApp tool.';
   return 'The webhook answered HTTP ' . $code . ($body !== '' ? ': ' . substr(strip_tags($body), 0, 160) : '');
-}
-if ($act === 'wa_get') { $w = jread(wa_file($DATA, $ME['uid']), array()); out(array('ok' => true, 'wa' => $w ? array('url' => $w['url'], 'hdr' => $w['hdr'], 'tail' => $w['tail']) : null)); }
-if ($act === 'wa_save') {
-  $f = wa_file($DATA, $ME['uid']); $old = jread($f, array());
-  if (!empty($d['remove'])) { @unlink($f); out(array('ok' => true, 'wa' => null)); }
-  $url = trim((string)(isset($d['url']) ? $d['url'] : '')); if (!preg_match(getenv('LB_WA_HTTP') ? '#^https?://\S{8,500}$#' : '#^https://\S{8,500}$#', $url)) fail('Paste the webhook URL (it starts with https://).');
-  $hdr = isset($d['hdr']) ? (string)$d['hdr'] : 'bearer'; if ($hdr !== 'bearer' && !preg_match('/^[A-Za-z0-9-]{2,40}$/', $hdr)) fail('Header name can only use letters, numbers and -');
-  $key = trim((string)(isset($d['wkey']) ? $d['wkey'] : '')); if ($key === '' && !empty($old['enc']) && $old['url'] === $url) $key = ai_dec($old['enc'], $DATA);
-  if ($key === '') fail('Paste the secret key / API key of the webhook.');
-  $w = array('url' => $url, 'hdr' => $hdr, 'enc' => ai_enc($key, $DATA), 'tail' => substr($key, -4), 'saved' => time());
-  jwrite($f, $w); @chmod($f, 0600); if ($IS_ADMIN) { jwrite(wa_file($DATA, 'admin'), $w); @chmod(wa_file($DATA, 'admin'), 0600); }
-  out(array('ok' => true, 'wa' => array('url' => $url, 'hdr' => $hdr, 'tail' => $w['tail'])));
-}
-if ($act === 'wa_test') {
-  $w = jread(wa_file($DATA, $ME['uid']), array()); if (empty($w['url'])) fail('Save the webhook URL and secret first.');
-  $p = isset($d['payload']) && is_array($d['payload']) ? $d['payload'] : array(); $p['test'] = true;
-  list($code, $b, $err) = wa_post($w['url'], $w['hdr'], ai_dec($w['enc'], $DATA), $p);
-  if ($code >= 200 && $code < 300) out(array('ok' => true, 'code' => $code)); fail(wa_why($code, $b, $err));
 }
 /* a live page asks the server to send its WhatsApp (only for a real lead saved in the last 3 hours, once per lead) */
 if ($act === 'wasend') {
@@ -403,6 +400,26 @@ if ($ME['tenant'] !== '' && $ME['role'] !== 'admin') { $t0 = lb_tenants($DATA); 
 $KID = $LEGACY ? substr(hash('sha256', $key), 0, 16) : substr(hash('sha256', 'uid:' . $ME['uid']), 0, 16);
 $IS_ADMIN = $ME['role'] === 'admin';
 
+/* v114: WhatsApp key — only for a logged-in account (these ran before the login check, so the key was saved under no account) */
+if ($IS_ADMIN && !file_exists(wa_file($DATA, $ME['uid'])) && file_exists(wa_file($DATA, ''))) { $w0 = jread(wa_file($DATA, ''), array()); if (!empty($w0['enc'])) { jwrite(wa_file($DATA, $ME['uid']), $w0); jwrite(wa_file($DATA, 'admin'), $w0); @chmod(wa_file($DATA, $ME['uid']), 0600); } @unlink(wa_file($DATA, '')); }
+if ($act === 'wa_get') { $w = jread(wa_file($DATA, $ME['uid']), array()); out(array('ok' => true, 'wa' => $w ? array('url' => $w['url'], 'hdr' => $w['hdr'], 'tail' => $w['tail']) : null)); }
+if ($act === 'wa_save') {
+  $f = wa_file($DATA, $ME['uid']); $old = jread($f, array());
+  if (!empty($d['remove'])) { @unlink($f); out(array('ok' => true, 'wa' => null)); }
+  $url = trim((string)(isset($d['url']) ? $d['url'] : '')); if (!preg_match(getenv('LB_WA_HTTP') ? '#^https?://\S{8,500}$#' : '#^https://\S{8,500}$#', $url)) fail('Paste the webhook URL (it starts with https://).');
+  $hdr = isset($d['hdr']) ? (string)$d['hdr'] : 'bearer'; if ($hdr !== 'bearer' && !preg_match('/^[A-Za-z0-9-]{2,40}$/', $hdr)) fail('Header name can only use letters, numbers and -');
+  $key = trim((string)(isset($d['wkey']) ? $d['wkey'] : '')); if ($key === '' && !empty($old['enc']) && $old['url'] === $url) $key = ai_dec($old['enc'], $DATA);
+  if ($key === '') fail('Paste the secret key / API key of the webhook.');
+  $w = array('url' => $url, 'hdr' => $hdr, 'enc' => ai_enc($key, $DATA), 'tail' => substr($key, -4), 'saved' => time());
+  jwrite($f, $w); @chmod($f, 0600); if ($IS_ADMIN) { jwrite(wa_file($DATA, 'admin'), $w); @chmod(wa_file($DATA, 'admin'), 0600); }
+  out(array('ok' => true, 'wa' => array('url' => $url, 'hdr' => $hdr, 'tail' => $w['tail'])));
+}
+if ($act === 'wa_test') {
+  $w = jread(wa_file($DATA, $ME['uid']), array()); if (empty($w['url'])) fail('Save the webhook URL and secret first.');
+  $p = isset($d['payload']) && is_array($d['payload']) ? $d['payload'] : array(); $p['test'] = true;
+  list($code, $b, $err) = wa_post($w['url'], $w['hdr'], ai_dec($w['enc'], $DATA), $p);
+  if ($code >= 200 && $code < 300) out(array('ok' => true, 'code' => $code)); fail(wa_why($code, $b, $err));
+}
 /* Lead API keys (Integrations → Lead API). Only a hash is stored; the key is shown once. */
 if ($act === 'apikeys') {
   $kf = $DATA . '/api-keys.json'; $keys = jread($kf, array());
@@ -959,9 +976,16 @@ if ($act === 'subdel') {
 
 /* ---------- Google Sheets + email alerts: save / test ---------- */
 function lb_remember_forms($ME, $DATA, $ids) {
-  if (!$ids) return; $f = $DATA . '/formowners.json'; $fo = jread($f, array()); $ch = false;
-  foreach (array_slice($ids, 0, 2000) as $fid) if (is_string($fid) && preg_match('/^[\w-]{3,40}$/', $fid) && !isset($fo[$fid])) { $fo[$fid] = $ME['uid']; $ch = true; }
-  if ($ch) jwrite($f, $fo);
+  if (!$ids) return; $uid = $ME['uid'];
+  jmutate($DATA . '/formowners.json', array(), function (&$fo) use ($ids, $uid) { foreach (array_slice($ids, 0, 2000) as $fid) if (is_string($fid) && preg_match('/^[\w-]{3,40}$/', $fid) && !isset($fo[$fid])) $fo[$fid] = $uid; });
+}
+if ($act === 'form_pub') {
+  $fid = isset($d['fid']) ? (string)$d['fid'] : ''; if (!preg_match('/^[\w-]{3,40}$/', $fid)) fail('Bad form');
+  $fo = jread($DATA . '/formowners.json', array()); if (isset($fo[$fid]) && $fo[$fid] !== $ME['uid'] && !($IS_ADMIN && $fo[$fid] === 'admin')) fail('This form belongs to another account.');
+  $html = isset($d['html']) ? (string)$d['html'] : ''; if ($html === '' || strlen($html) > 600000) fail('Form page is empty or too big');
+  lb_remember_forms($ME, $DATA, array($fid));
+  jwrite(form_file($DATA, $fid), array('html' => $html, 'name' => clean_str(isset($d['name']) ? $d['name'] : 'Form', 120), 'uid' => $ME['uid'], 't' => time()));
+  out(array('ok' => true));
 }
 if ($act === 'gs_status') { $c = gs_cfg($DATA); out(array('ok' => true, 'ready' => !empty($c['enc']), 'robot' => isset($c['robot']) ? $c['robot'] : '', 'admin' => $IS_ADMIN)); }
 if ($act === 'gs_setup') {
@@ -1162,7 +1186,7 @@ if ($act === 'adm_users') {
     $ls = isset($u['last_seen']) ? (int)$u['last_seen'] : 0; if ($ls > $now - 7 * 86400) $act7++;
     $list[] = array('uid' => $id, 'email' => isset($u['email']) ? $u['email'] : '', 'name' => isset($u['name']) ? $u['name'] : '', 'tenant' => $t, 'tenantName' => $t !== '' && isset($tn[$t]) ? $tn[$t]['name'] : '',
       'created' => isset($u['created']) ? (int)$u['created'] : 0, 'last_login' => isset($u['last_login']) ? (int)$u['last_login'] : 0, 'last_seen' => $ls, 'seen' => isset($u['seen']) ? (int)$u['seen'] : 0,
-      'ip' => $OWN_T === null && isset($u['ip']) ? $u['ip'] : '', 'dev' => isset($u['dev']) ? $u['dev'] : '', 'disabled' => !empty($u['disabled']), 'never' => !empty($u['never']), 'confirmed' => isset($u['confirmed']) ? $u['confirmed'] : null,
+      'ip' => $OWN_T === null && isset($u['ip']) ? $u['ip'] : '', 'dev' => isset($u['dev']) ? $u['dev'] : '', 'disabled' => !empty($u['disabled']), 'never' => !empty($u['never']) || !empty($u['pre']), 'confirmed' => isset($u['confirmed']) ? $u['confirmed'] : null,
       'sub_limit' => isset($u['sub_limit']) ? $u['sub_limit'] : null, 'site_limit' => isset($u['site_limit']) ? $u['site_limit'] : null, 'dom_limit' => isset($u['dom_limit']) ? $u['dom_limit'] : null, 'admin' => lb_is_admin_email(isset($u['email']) ? $u['email'] : '')) + $k;
   }
   usort($list, function ($a, $b) { return max($b['last_seen'], $b['last_login']) - max($a['last_seen'], $a['last_login']); });
@@ -1170,14 +1194,21 @@ if ($act === 'adm_users') {
   out(array('ok' => true, 'users' => $list, 'totals' => $tot, 'warn' => $sbErr, 'serviceKey' => !empty($S['service_key']), 'role' => $ME['role']));
 }
 if ($act === 'adm_user') {
-  $id = isset($d['uid']) ? (string)$d['uid'] : ''; $f = $DATA . '/users.json'; $users = jread($f, array());
-  if (!isset($users[$id])) fail('This account hasn\'t opened the builder yet — it can be changed after its first login.');
-  if ($OWN_T !== null && (isset($users[$id]['tenant']) ? $users[$id]['tenant'] : '') !== $OWN_T) fail('Not your workspace.');
-  if (lb_is_admin_email(isset($users[$id]['email']) ? $users[$id]['email'] : '')) fail('Admin accounts can\'t be changed here.');
+  $id = isset($d['uid']) ? (string)$d['uid'] : ''; $f = $DATA . '/users.json'; $LK = lb_lock($f); $users = jread($f, array());
+  if (!isset($users[$id])) {
+    /* v114: an account that signed up but hasn't opened the builder yet → keep its limits ready for its first login */
+    $S = lb_saas(); if ($OWN_T !== null || empty($S['service_key']) || !preg_match('/^[0-9A-Za-z-]{3,64}$/', $id)) { lb_unlock($LK); fail('This account hasn\'t opened the builder yet — it can be changed after its first login.'); }
+    $sk = $S['service_key']; $h = array('apikey: ' . $sk); if (strpos($sk, 'sb_') !== 0) $h[] = 'Authorization: Bearer ' . $sk;
+    list($code, $b) = lb_http(rtrim($S['supabase_url'], '/') . '/auth/v1/admin/users/' . $id, $h, 12); $su = json_decode($b, true);
+    if ($code !== 200 || empty($su['id'])) { lb_unlock($LK); fail('Could not find this account in Supabase (HTTP ' . $code . ').'); }
+    $users[$id] = array('email' => strtolower(isset($su['email']) ? $su['email'] : ''), 'name' => isset($su['user_metadata']['name']) ? $su['user_metadata']['name'] : (isset($su['user_metadata']['full_name']) ? $su['user_metadata']['full_name'] : ''), 'tenant' => '', 'created' => strtotime($su['created_at']), 'seen' => 0, 'disabled' => false, 'pre' => true, 'never' => true);
+  }
+  if ($OWN_T !== null && (isset($users[$id]['tenant']) ? $users[$id]['tenant'] : '') !== $OWN_T) { lb_unlock($LK); fail('Not your workspace.'); }
+  if (lb_is_admin_email(isset($users[$id]['email']) ? $users[$id]['email'] : '')) { lb_unlock($LK); fail('Admin accounts can\'t be changed here.'); }
   if (isset($d['disabled'])) $users[$id]['disabled'] = (bool)$d['disabled'];
   foreach (array('sub_limit', 'site_limit', 'dom_limit') as $lk) if (array_key_exists($lk, $d)) { $v = $d[$lk]; if ($v === null || $v === '') unset($users[$id][$lk]); else $users[$id][$lk] = max(0, min(1000, (int)$v)); }
-  if (isset($d['tenant']) && $OWN_T === null) { $tn = lb_tenants($DATA); $tv = (string)$d['tenant']; if ($tv !== '' && !isset($tn[$tv])) fail('Unknown workspace'); $users[$id]['tenant'] = $tv; }
-  lb_w($f, $users);
+  if (isset($d['tenant']) && $OWN_T === null) { $tn = lb_tenants($DATA); $tv = (string)$d['tenant']; if ($tv !== '' && !isset($tn[$tv])) { lb_unlock($LK); fail('Unknown workspace'); } $users[$id]['tenant'] = $tv; if (!empty($users[$id]['pre'])) $users[$id]['tenant_fixed'] = true; }
+  lb_w($f, $users); lb_unlock($LK);
   out(array('ok' => true));
 }
 /* create a login for a client (email + password) — needs the Supabase secret key in saas.json */
@@ -1196,7 +1227,7 @@ if ($act === 'adm_create_user') {
   if ($code >= 300 || empty($j['id'])) { $m = isset($j['msg']) ? $j['msg'] : (isset($j['message']) ? $j['message'] : (isset($j['error_description']) ? $j['error_description'] : 'HTTP ' . $code)); fail(preg_match('/already|exists|registered/i', $m) ? 'An account with this email already exists.' : 'Supabase: ' . $m); }
   $r = array('email' => $em, 'name' => $nm, 'tenant' => $tid, 'created' => time(), 'first_seen' => 0, 'seen' => 0, 'disabled' => false, 'by' => $ME['email']);
   foreach (array('sub_limit', 'site_limit', 'dom_limit') as $lk) if (isset($d[$lk]) && $d[$lk] !== '' && $d[$lk] !== null) $r[$lk] = max(0, min(1000, (int)$d[$lk]));
-  $users[$j['id']] = $r; lb_w($DATA . '/users.json', $users);
+  $LK = lb_lock($DATA . '/users.json'); $users = jread($DATA . '/users.json', array()); $users[$j['id']] = $r; lb_w($DATA . '/users.json', $users); lb_unlock($LK);
   $where = $tid !== '' && !empty($tn[$tid]['app_domain']) ? $tn[$tid]['app_domain'] : lb_main_domain($DATA);
   out(array('ok' => true, 'uid' => $j['id'], 'login' => 'https://' . $where));
 }
