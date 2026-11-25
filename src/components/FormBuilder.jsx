@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FormSheet } from "./EasyConnect.jsx";
 import { FIELD_TYPES, newField, uid, formUrl, ago, mailReady as mailIsReady, formPublish } from "../lib.js";
-import { formHtml, formPageHtml, FORM_STYLE_DEF, FORM_FONTS } from "./tools.js";
+import { formHtml, formPageHtml, FORM_STYLE_DEF, FORM_FONTS, COUNTRIES } from "./tools.js";
 import { Icon } from "./icons.jsx";
 
 const copy = async (t, done) => { try { await navigator.clipboard.writeText(t); done && done(); } catch { window.prompt("Copy this:", t); } };
@@ -149,6 +149,11 @@ export default function Builder({ form, onChange, onBack, projects, onAddToPage,
       {f.type !== "heading" && <>
         {!/radio|checkboxes|consent/.test(f.type) && <label>Placeholder<input value={f.placeholder} onChange={(e) => setF(f.id, { placeholder: e.target.value })} /></label>}
         {/select|radio|checkboxes/.test(f.type) && <label>Options <small>(one per line)</small><textarea rows={5} value={f.options.join("\n")} onChange={(e) => setF(f.id, { options: e.target.value.split("\n") })} onBlur={(e) => setF(f.id, { options: e.target.value.split("\n").map((o) => o.trim()).filter(Boolean) })} /></label>}
+        {f.type === "tel" && <div className="fb2-cc">
+          <label>Country code<select value={f.cc || ""} onChange={(e) => setF(f.id, { cc: e.target.value })}><option value="">Default (+{gwa.country || "91"})</option>{COUNTRIES.map((c) => <option key={c[0]} value={c[0]}>{c[1]} +{c[0]} {c[2]}</option>)}</select></label>
+          <label className="fb2-tog"><input type="checkbox" checked={!f.ccLock} onChange={(e) => setF(f.id, { ccLock: !e.target.checked })} /><i />Visitors can choose another country</label>
+          <p className="fb2-help">The number is checked for the right length (India = 10 digits) and saved as <b>+91 98765 43210</b> — so WhatsApp, Sheets and your CRM always get the full number.</p>
+        </div>}
         <label>Help text<input value={f.help} placeholder="Shown under the field" onChange={(e) => setF(f.id, { help: e.target.value })} /></label>
         <div className="fb2-two">{f.type !== "checkboxes" && <label className="fb2-tog"><input type="checkbox" checked={f.required} onChange={(e) => setF(f.id, { required: e.target.checked })} /><i />Required</label>}</div>
         <span className="fb2-lab">Width</span><Seg value={f.width} opts={[["full", "Full"], ["half", "Half"]]} onChange={(v) => setF(f.id, { width: v })} />

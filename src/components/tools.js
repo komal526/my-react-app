@@ -254,6 +254,12 @@ const SITE_CSS = `.lb-run [data-lb-anim]{opacity:0;transition:opacity .8s ease,t
 @media(max-width:860px){.lb-run .lbw-book.lb-step2 .lbw-bk-form{grid-column:1}}`;
 
 /* Plain JS (no ${} inside!) — runs on the live site and in Preview */
+/* v115 — Phone / WhatsApp field: country code + the right number length for that country */
+export const COUNTRIES = [["91", "🇮🇳", "India", [10]], ["1", "🇺🇸", "USA / Canada", [10]], ["44", "🇬🇧", "United Kingdom", [10]], ["971", "🇦🇪", "UAE", [9]], ["966", "🇸🇦", "Saudi Arabia", [9]], ["974", "🇶🇦", "Qatar", [8]], ["968", "🇴🇲", "Oman", [8]], ["965", "🇰🇼", "Kuwait", [8]], ["973", "🇧🇭", "Bahrain", [8]],
+  ["61", "🇦🇺", "Australia", [9]], ["64", "🇳🇿", "New Zealand", [8, 9, 10]], ["65", "🇸🇬", "Singapore", [8]], ["60", "🇲🇾", "Malaysia", [9, 10]], ["977", "🇳🇵", "Nepal", [10]], ["880", "🇧🇩", "Bangladesh", [10]], ["94", "🇱🇰", "Sri Lanka", [9]], ["92", "🇵🇰", "Pakistan", [10]],
+  ["49", "🇩🇪", "Germany", [10, 11]], ["33", "🇫🇷", "France", [9]], ["39", "🇮🇹", "Italy", [9, 10]], ["34", "🇪🇸", "Spain", [9]], ["31", "🇳🇱", "Netherlands", [9]], ["353", "🇮🇪", "Ireland", [9]], ["27", "🇿🇦", "South Africa", [9]], ["234", "🇳🇬", "Nigeria", [10]], ["254", "🇰🇪", "Kenya", [9]],
+  ["62", "🇮🇩", "Indonesia", [9, 10, 11, 12]], ["63", "🇵🇭", "Philippines", [10]], ["66", "🇹🇭", "Thailand", [9]], ["84", "🇻🇳", "Vietnam", [9, 10]], ["86", "🇨🇳", "China", [11]], ["81", "🇯🇵", "Japan", [10]], ["82", "🇰🇷", "South Korea", [9, 10]], ["55", "🇧🇷", "Brazil", [10, 11]], ["52", "🇲🇽", "Mexico", [10]]];
+const CC_LEN = JSON.stringify(Object.fromEntries(COUNTRIES.map((c) => [c[0], c[3]])));
 const RUNTIME = `(function(){
 var d=document,W=window;d.documentElement.classList.add('lb-run');
 function all(s,r){return Array.prototype.slice.call((r||d).querySelectorAll(s))}
@@ -326,12 +332,18 @@ function post(u,o){try{if(u&&W.fetch)return fetch(u,{method:'POST',mode:'no-cors
 function fillT(t,data){return String(t||'').replace(/\\{\\{\\s*([\\w-]+)\\s*\\}\\}/g,function(m,k){return data[k]!=null?data[k]:''})}
 function phoneOf(data){for(var k in data){if(/phone|tel|mobile|whats/i.test(k))return String(data[k])}return ''}
 function jattr(f,a){try{return JSON.parse(f.getAttribute(a)||'null')}catch(x){return null}}
+var CCL=${CC_LEN};
+function ccOf(i){var s=i.parentNode&&i.parentNode.querySelector('[data-lb-cc]');return s?s.value:(i.getAttribute('data-lb-phone')||'')}
+function natOf(i){var cc=ccOf(i),v=i.value.replace(/\\D/g,''),L=CCL[cc];if(v.indexOf(cc)===0&&(L?L.indexOf(v.length-cc.length)>-1:v.length-cc.length>=6))v=v.slice(cc.length);return v.replace(/^0+/,'')}
+function phoneBad(i){var v=natOf(i);if(!v)return '';var L=CCL[ccOf(i)];if(L?L.indexOf(v.length)<0:(v.length<6||v.length>14))return 'Enter a valid '+(L?L.join(' or ')+'-digit ':'')+'number for +'+ccOf(i);return ''}
+d.addEventListener('input',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-lb-phone')){t.setCustomValidity('');var c=t.value.replace(/[^\\d+\\s-]/g,'');if(c!==t.value)t.value=c}});
 function esc(v){return String(v==null?'':v).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.hasAttribute('data-lb-form'))return;e.preventDefault();
  var btn=f.querySelector('[type=submit]'),pay=jattr(f,'data-lb-pay'),wa=jattr(f,'data-lb-wa'),hook=f.getAttribute('data-lb-webhook');
  if(pay&&!(+pay.amount>0))pay=null;
+ if(!f.__lead){var bad=null;Array.prototype.forEach.call(f.querySelectorAll('[data-lb-phone]'),function(i){var m=phoneBad(i);i.setCustomValidity(m);if(m&&!bad)bad=i});if(bad){bad.reportValidity();return}}
  var lead=f.__lead;
- if(!lead){var data={};Array.prototype.forEach.call(f.elements,function(el,i){if(!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)||/^(submit|button|reset|file|password)$/.test(el.type))return;var k=el.name||labelOf(el,i);
+ if(!lead){var data={};Array.prototype.forEach.call(f.elements,function(el,i){if(!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)||/^(submit|button|reset|file|password)$/.test(el.type))return;if(el.hasAttribute('data-lb-cc'))return;var k=el.name||labelOf(el,i);if(el.hasAttribute('data-lb-phone')){var nn=natOf(el);if(nn)data[k]='+'+ccOf(el)+' '+nn;return}
   if(el.type==='checkbox'||el.type==='radio'){if(el.checked)data[k]=data[k]?data[k]+', '+(el.value==='on'?'Yes':el.value):(el.value==='on'?'Yes':el.value)}else if(el.value!=='')data[k]=el.value});
   lead={lid:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),form:f.getAttribute('data-lb-form')||'Form',formId:f.getAttribute('data-lb-form-id')||'',page:cur,url:location.href,data:data,ts:Date.now()};
   if(W.__lbGeo)lead.geo=W.__lbGeo;
@@ -672,6 +684,11 @@ export const formHtml = (form, integ) => {
       case "consent": return box(f, `<label style="${opt};margin-top:0"><input type="checkbox" name="${n}"${rq} style="width:18px;height:18px;accent-color:${C}">${esc(f.label)}</label>`);
       /* ad tracking: hidden fields filled from the page link (?utm_source=…) so every lead shows where it came from */
       case "utm": return `<div data-lb-fid="${esc(f.id)}" data-lb-utmbox style="flex:1 1 100%;height:0;overflow:hidden">${["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid"].map((k) => `<input type="hidden" name="${k}" data-lb-utm="${k}">`).join("")}</div>`;
+      case "tel": {
+        const cc = String(f.cc || gwa.country || "91").replace(/\D/g, "") || "91", list = COUNTRIES.some((c) => c[0] === cc) ? COUNTRIES : [[cc, "🌐", "", []], ...COUNTRIES];
+        const sel = `<select data-lb-cc aria-label="Country code"${f.ccLock ? " disabled" : ""} style="${inp};margin-top:0;width:auto;flex:0 0 auto;padding-right:4px">${list.map((c) => `<option value="${c[0]}"${c[0] === cc ? " selected" : ""}>${c[1]} +${c[0]}</option>`).join("")}</select>`;
+        return box(f, `<label style="${lab}">${esc(f.label)}${star(f)}<span style="display:flex;gap:8px;margin-top:6px">${sel}<input type="tel" inputmode="tel" autocomplete="tel-national" name="${n}" data-lb-phone="${cc}"${ph}${rq} style="${inp};margin-top:0;flex:1 1 auto;min-width:0"></span></label>`);
+      }
       default: return box(f, `<label style="${lab}">${esc(f.label)}${star(f)}<input type="${f.type}" name="${n}"${ph}${rq} style="${inp}"></label>`);
     }
   };

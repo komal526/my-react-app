@@ -5020,3 +5020,7 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 /* v114 — admin limits: saved feedback */
 .adm-lim.saved{border-color:#16a34a!important;box-shadow:0 0 0 3px rgba(22,163,74,.15)}
 .adm-saved{display:block;color:#16a34a;font-weight:700;font-size:11px;margin-top:3px}
+
+/* v115 — phone field: country code */
+.fb2-cc{display:grid;gap:8px;padding:10px 12px;border:1px solid #ecebf5;border-radius:12px;background:#fafaff}
+.fb2-cc .fb2-help{margin:0}
