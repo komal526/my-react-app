@@ -1,5 +1,6 @@
-// LaunchBuilder v67 — Domains.jsx (free subdomains · your own domains · admin panel at the bottom)
+// LaunchBuilder v67 — Domains.jsx (free subdomains · your own domains · admin panel at the top)
 import { useState, useEffect } from "react";
+import { urlForView } from "../route.js";
 import { addr, HOSTS, cleanDomain, validDomain, dnsRecords, verifyDomain, isApex, rootDomain, ago, serverCall, publishReady, verifyNS, NETLIFY_A, serverOn, phpCall, dnsLookup, HOSTINGER_NS, defaultServerUrl, subUrl, subList, subClaim, subDelete, subsCache, liveAddr, domainState } from "../lib.js";
 import { BRAND } from "../brand.js";
 
@@ -486,6 +487,7 @@ export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ,
       <div className="top"><div><h1>Domains</h1><p className="mut">Give every website — or a single page — its own domain (as many as you like). Add 2 DNS records; {BRAND.product} does the rest, including free https.</p></div></div>
       {vps && <div className="mode-note ok"><b>Your server:</b> point domains to <code>{vps.ip || "your VPS IP"}</code> <Copy v={vps.ip || ""} /></div>}
       {me && me.role !== "admin" && (me.siteLimit > 0 || me.domLimit > 0) && <div className="plan-note">Your plan: {me.siteLimit > 0 ? <><b>{me.sitesUsed}/{me.siteLimit}</b> live websites · </> : null}<b>{me.subsUsed}/{me.subLimit}</b> free subdomains{me.domLimit > 0 ? <> · <b>{me.domsUsed}/{me.domLimit}</b> own domains</> : null}</div>}
+      {isAdmin && <a className="adm-jump top" href={urlForView("admin")}><span>🔒</span><div><b>{me.role === "owner" ? "My clients" : "Admin panel"}</b><small>Accounts, all domains, white-label clients — now on its own page: {location.host}/admin</small></div><em>Open →</em></a>}
       <FreeSubs projects={projects} me={me} onPublish={onPublish} />
       {serverOn(integ) && me && me.role === "admin" && (vps.sitesDomain || (integ.server && integ.server.sitesDomain)) && <AutoSub integ={integ} onInteg={onInteg} projects={projects} info={vps} />}
       <div className="stats">
@@ -505,7 +507,6 @@ export default function Domains({ projects, onPatch, onPatchPage, onOpen, integ,
             <span className={"dm-tag " + st(p)}>{st(p) === "connected" ? "● Connected · " + liveAddr(p, subs).replace(/^https?:\/\//, "").replace(/\/$/, "") : st(p) === "needs" ? "Needs a domain" : "Not published"}</span>
             {p.host ? <ServerCard p={p} onPatch={onPatch} onPatchPage={onPatchPage} onOpen={onOpen} integ={integ} onSetup={onSetup} vps={vps} subs={subs} /> : p.netlify ? <DomainCard p={p} onPatch={onPatch} onOpen={onOpen} integ={integ} onSetup={onSetup} onPublish={onPublish} /> : <PublishFirst p={p} onPublish={onPublish} />}</div>; })}
       </>}
-      {isAdmin && <a className="adm-jump" href="#/admin"><span>🔒</span><div><b>{me.role === "owner" ? "My clients" : "Admin panel"}</b><small>Accounts, all domains, white-label clients — now on its own page: {location.host}/admin</small></div><em>Open →</em></a>}
     </>
   );
 }

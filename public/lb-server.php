@@ -1005,6 +1005,42 @@ if ($act === 'img_put') {
   if (!file_exists($dir . '/' . $name) && @file_put_contents($dir . '/' . $name, $bin) === false) fail('Could not save the picture on the server');
   out(array('ok' => true, 'url' => $BASE . '/sites/_u/' . $sub . '/' . $name));
 }
+/* v122 — read a reference website the user pasted in AI Studio (its HTML + CSS go to the AI as a design / content reference) */
+function ref_public_url($u) {
+  $p = @parse_url($u); if (!$p || !in_array(strtolower(isset($p['scheme']) ? $p['scheme'] : ''), array('http', 'https'), true) || empty($p['host'])) return false;
+  $ips = @gethostbynamel($p['host']); if (!$ips) return false;
+  foreach ($ips as $ip) if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) return false;   // no private / internal addresses
+  return $ips[0];
+}
+function ref_get($u, $max) {
+  $ip = ref_public_url($u); if (!$ip) return array(0, '');
+  $p = parse_url($u); $port = isset($p['port']) ? $p['port'] : (strtolower($p['scheme']) === 'https' ? 443 : 80);
+  $ch = curl_init($u); $buf = '';
+  curl_setopt_array($ch, array(CURLOPT_RESOLVE => array($p['host'] . ':' . $port . ':' . $ip), CURLOPT_FOLLOWLOCATION => false, CURLOPT_TIMEOUT => 15, CURLOPT_CONNECTTIMEOUT => 6, CURLOPT_USERAGENT => 'Mozilla/5.0 (LaunchBuilder reference reader)',
+    CURLOPT_SSL_VERIFYPEER => true, CURLOPT_HTTPHEADER => array('Accept: text/html,text/css,*/*'),
+    CURLOPT_WRITEFUNCTION => function ($c, $d) use (&$buf, $max) { $buf .= $d; return strlen($buf) > $max ? 0 : strlen($d); }));
+  curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); $loc = curl_getinfo($ch, CURLINFO_REDIRECT_URL); curl_close($ch);
+  return array($code, $buf, $loc);
+}
+if ($act === 'ref_fetch') {
+  $u = trim(isset($d['url']) ? (string)$d['url'] : ''); if (!preg_match('#^https?://#i', $u)) $u = 'https://' . $u;
+  $html = ''; $code = 0;
+  for ($hop = 0; $hop < 4; $hop++) { list($code, $html, $loc) = ref_get($u, 1500000); if ($code >= 300 && $code < 400 && $loc) { $u = $loc; continue; } break; }
+  if ($code < 200 || $code >= 300 || $html === '') fail('Could not open ' . $u . ($code ? ' (HTTP ' . $code . ')' : '') . '. Check the link, or add a screenshot of the page instead.');
+  /* the CSS of the page: inline <style> + the first linked stylesheets */
+  $css = ''; if (preg_match_all('#<style[^>]*>(.*?)</style>#is', $html, $m)) $css .= implode("\n", $m[1]);
+  if (preg_match_all('#<link[^>]+rel=["\']?stylesheet[^>]*>#i', $html, $m)) foreach (array_slice($m[0], 0, 4) as $lt) {
+    if (!preg_match('#href=["\']([^"\']+)#i', $lt, $h)) continue; $href = html_entity_decode($h[1]);
+    if (strpos($href, '//') === 0) $href = 'https:' . $href; elseif (!preg_match('#^https?://#i', $href)) { $b = parse_url($u); $href = $b['scheme'] . '://' . $b['host'] . ($href[0] === '/' ? '' : rtrim(dirname(isset($b['path']) ? $b['path'] : '/'), '/') . '/') . $href; }
+    if (preg_match('#fonts\.googleapis#', $href)) { $css .= "\n/* font: $href */"; continue; }
+    list($c2, $t2) = ref_get($href, 400000); if ($c2 >= 200 && $c2 < 300) $css .= "\n" . $t2;
+    if (strlen($css) > 60000) break;
+  }
+  /* page structure + text, without scripts / tracking / huge inline data */
+  $body = preg_replace(array('#<script\b.*?</script>#is', '#<noscript\b.*?</noscript>#is', '#<style\b.*?</style>#is', '#<!--.*?-->#s', '#<svg\b.*?</svg>#is', '#data:[a-z/+.-]+;base64,[A-Za-z0-9+/=]+#i', '#\s(on\w+)=("[^"]*"|\'[^\']*\')#i', '#\s{2,}#'), array('', '', '', '', '<svg/>', 'data:…', '', ' '), $html);
+  $title = preg_match('#<title[^>]*>(.*?)</title>#is', $html, $t) ? trim(html_entity_decode(strip_tags($t[1]))) : '';
+  out(array('ok' => true, 'url' => $u, 'title' => mb_substr($title, 0, 200), 'html' => mb_substr($body, 0, 45000), 'css' => mb_substr(preg_replace('#\s{2,}#', ' ', $css), 0, 30000)));
+}
 if ($act === 'kv_put') {
   $dir = kv_dir($DATA, $ME['uid']); $res = array(); $now = round(microtime(true) * 1000);
   foreach (array_slice(isset($d['items']) && is_array($d['items']) ? $d['items'] : array(), 0, 30) as $it) {
@@ -1023,7 +1059,8 @@ if ($act === 'kv_get') {
     $row = array('key' => $k, 't' => isset($ts[$k]) ? $ts[$k] : filemtime($f) * 1000); if (empty($d['list'])) $row['value'] = (string)file_get_contents($f); $rows[] = $row; }
   out(array('ok' => true, 'rows' => $rows));
 }
-if ($act === 'gs_status') { $c = gs_cfg($DATA); out(array('ok' => true, 'ready' => !empty($c['enc']), 'robot' => isset($c['robot']) ? $c['robot'] : '', 'admin' => $IS_ADMIN)); }
+if ($act === 'gs_status') { $c = gs_cfg($DATA); $hk = jread(lb_hook_file($DATA, $ME['uid']), array()); $nS = (isset($hk['maps']) && is_array($hk['maps']) ? count($hk['maps']) : 0) + (!empty($hk['link']) || !empty($hk['url']) ? 1 : 0);
+  out(array('ok' => true, 'ready' => !empty($c['enc']), 'robot' => isset($c['robot']) ? $c['robot'] : '', 'admin' => $IS_ADMIN, 'sheets' => $nS)); }
 if ($act === 'gs_setup') {
   if (!$IS_ADMIN) fail('Only the admin can add the Google robot.');
   if (!empty($d['remove'])) { @unlink(gs_file($DATA)); out(array('ok' => true, 'ready' => false)); }

@@ -1,6 +1,6 @@
 // LaunchBuilder v102 — Integrations.jsx
 import { BRAND } from "../brand.js";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SheetsCard from "./SheetsCard.jsx";
 import { EmailEasy, PlacesConnect, LeadApi } from "./EasyConnect.jsx";
 import { WA_PROVIDERS, AI_PROVIDERS, callAI, detectAI, listModels, serverCall, serverUrl, phpCall, defaultServerUrl, lovableUrl, boltText, mailReady } from "../lib.js";
@@ -76,6 +76,12 @@ export default function Integrations({ integ, onChange, initial = "" }) {
   const wa = integ.wa, pay = integ.pay, ai = integ.ai, em = integ.email || {};
   const emOk = mailReady(em);
   /* the Lead Finder tile shows the real state from the server */
+  const [view, setView0] = useState(() => { try { return localStorage.getItem("lb_ig_view") || "flow"; } catch { return "flow"; } });
+  const setView = (v) => { setView0(v); try { localStorage.setItem("lb_ig_view", v); } catch { /* ignore */ } };
+  const [narrow, setNarrow] = useState(() => window.innerWidth < 900);
+  useEffect(() => { const f = () => setNarrow(window.innerWidth < 900); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
+  const [gsN, setGsN] = useState(0);
+  useEffect(() => { phpCall(srv, { action: "gs_status" }).then((r) => setGsN(+r.sheets || 0)).catch(() => {}); }, [sel]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { phpCall(srv, { action: "lf_status" }).then((r) => { const ok = !!r.ready, own = !!r.own; if (ok !== !!(integ.places && integ.places.ok) || own !== !!(integ.places && integ.places.own)) onChange({ ...integ, places: { ok, own } }); }).catch(() => {}); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [emWay, setEmWay] = useState(null), emP = emWay || (em.provider === "gmail" && !em.webhook ? "smtp" : em.provider || "smtp");
   const pub = integ.publish || {}, [pubTest, setPubTest] = useState("");
@@ -146,12 +152,12 @@ export default function Integrations({ integ, onChange, initial = "" }) {
 
   return (
     <>
-      <div className="top"><div><h1>Integrations</h1><p className="mut">Connect the tools you already use. Everything is saved in this browser.</p></div>{note && <span className="fb-note">{note}</span>}</div>
+      <div className="top"><div><h1>Integrations</h1><p className="mut">Connect the tools you already use — every new lead flows to them automatically.</p></div>{note && <span className="fb-note">{note}</span>}</div>
       {(() => {
         const aiOn = AI_PROVIDERS.some((p) => (ai.keys || {})[p.id]), hostOn = !!(serverUrl(integ) && pub.key && pub.ok);
         const APPS = [
           /* Netlify removed from the list — websites publish to your own server */
-          { id: "sheets", cat: "Automation", ic: "▦", name: "Google Sheets", desc: "Paste your sheet link, match your form fields — every submission becomes a new row.", on: !!(integ.sheets && (integ.sheets.url || integ.sheets.link) && integ.sheets.ok) },
+          { id: "sheets", cat: "Automation", ic: "▦", name: "Google Sheets", desc: "Paste your sheet link, match your form fields — every submission becomes a new row.", on: !!(integ.sheets && (integ.sheets.url || integ.sheets.link) && integ.sheets.ok) || gsN > 0, extra: gsN ? gsN + (gsN > 1 ? " sheets" : " sheet") : "" },
           { id: "email", cat: "Automation", ic: "✉", name: "Email automation", desc: "Auto-reply to every lead and get new-lead alerts — connect your email with just email + password.", on: emOk },
           { id: "places", cat: "Lead Finder", ic: "🔍", name: "Google Places (Lead Finder)", desc: "Connect your own Google key to find local businesses with phone numbers and websites.", on: !!(integ.places && integ.places.ok), extra: integ.places && integ.places.own ? "Your key" : "" },
           { id: "wa", cat: "Automation", ic: "💬", name: "WhatsApp automation", desc: "Send leads to your WhatsApp CRM instantly — or let it fetch them with the Lead API.", on: !!wa.webhook },
@@ -160,13 +166,14 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         ];
         const n = APPS.filter((a) => a.on).length, total = APPS.filter((a) => !a.free).length;
         return <>
-          <div className="ig-sum"><div><b>{n} of {total} connected</b><span className="mut">Click an integration to set it up — each takes 2–5 minutes.</span></div><div className="ig-bar"><i style={{ width: (n / total) * 100 + "%" }} /></div></div>
-          <div className="ig-tiles">{APPS.map((a) => (
+          <div className="ig-sum"><div><b>{n} of {total} connected</b><span className="mut">Click a box to set it up — drag boxes to arrange your flow.</span></div><div className="ig-bar"><i style={{ width: (n / total) * 100 + "%" }} /></div>
+            <div className="igf-view">{[["flow", "Flow"], ["cards", "Cards"]].map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div></div>
+          {view === "flow" && !narrow ? <FlowCanvas apps={APPS} sel={sel} onOpen={setSel} /> : <div className="ig-tiles">{APPS.map((a) => (
             <button key={a.id} className={"ig-tile" + (a.on ? " on" : "")} onClick={() => setSel(a.id)}>
               <div className="ig-top"><span className={"igd-ic ic-" + a.id}>{a.ic}</span><span className="ig-cat2">{a.cat}</span></div>
               <div className="ig-tt"><b>{a.name}</b><span className={"ig-st" + (a.on ? " on" : "")}>{a.free ? "No setup needed" : a.on ? "● Connected" + (a.extra ? " · " + a.extra : "") : "Not connected"}</span></div>
               <p>{a.desc}</p><em>{a.free ? "Open →" : a.on ? "Manage →" : "Connect →"}</em>
-            </button>))}</div>
+            </button>))}</div>}
         </>;
       })()}
 
@@ -314,5 +321,65 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         <p className="mut sm">Use it: <b>+ Create new → Create with AI</b> for a full page or website, or in the editor <b>Add → AI section</b>. Keys stay in this browser and are sent only to that AI company. Each generation uses your API credits. If a provider shows a network/CORS error, it doesn't allow browser calls — use another one.</p>
       </Card>
     </>
+  );
+}
+
+
+/* ==================== v123 — Integrations as a flow: drag the boxes, lines show what each new lead goes to ==================== */
+const FLOW_W = 1120, FLOW_H = 600, NODE_W = 236;
+const FLOW_DEF = { hub: [430, 250], sheets: [800, 40], email: [800, 250], wa: [800, 460], pay: [60, 40], places: [60, 250], ai: [60, 460] };
+const FLOW_EDGE = { sheets: "new row", email: "auto-reply", wa: "WhatsApp", pay: "pays first", places: "finds leads", ai: "builds pages" };
+function FlowCanvas({ apps, sel, onOpen }) {
+  const [pos, setPos] = useState(() => { try { return { ...FLOW_DEF, ...(JSON.parse(localStorage.getItem("lb_ig_pos") || "{}")) }; } catch { return { ...FLOW_DEF }; } });
+  const save = (p) => { try { localStorage.setItem("lb_ig_pos", JSON.stringify(p)); } catch { /* ignore */ } };
+  const wrap = useRef(null), drag = useRef(null), [scale, setScale] = useState(1), [dragging, setDragging] = useState("");
+  useEffect(() => { const f = () => { const w = wrap.current ? wrap.current.clientWidth : FLOW_W; setScale(Math.min(1, w / FLOW_W)); }; f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
+  const down = (id) => (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    drag.current = { id, sx: e.clientX, sy: e.clientY, ox: pos[id][0], oy: pos[id][1], moved: false };
+    e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const move = (e) => {
+    const d = drag.current; if (!d) return;
+    const dx = (e.clientX - d.sx) / scale, dy = (e.clientY - d.sy) / scale;
+    if (!d.moved && Math.abs(dx) + Math.abs(dy) < 5) return;
+    d.moved = true; setDragging(d.id);
+    const nw = d.id === "hub" ? 260 : NODE_W;
+    setPos((p) => ({ ...p, [d.id]: [Math.max(0, Math.min(FLOW_W - nw, d.ox + dx)), Math.max(0, Math.min(FLOW_H - 96, d.oy + dy))] }));
+  };
+  const up = () => { const d = drag.current; drag.current = null; setDragging(""); if (!d) return; if (d.moved) setPos((p) => { save(p); return p; }); else if (d.id !== "hub") onOpen(d.id); };
+  const reset = () => { setPos({ ...FLOW_DEF }); try { localStorage.removeItem("lb_ig_pos"); } catch { /* ignore */ } };
+  const hub = pos.hub, HW = 260, HH = 104, NH = 92;
+  const edge = (a) => {
+    const n = pos[a.id], right = n[0] + NODE_W / 2 > hub[0] + HW / 2;
+    const x1 = right ? hub[0] + HW : hub[0], y1 = hub[1] + HH / 2, x2 = right ? n[0] : n[0] + NODE_W, y2 = n[1] + NH / 2, c = Math.max(60, Math.abs(x2 - x1) / 2);
+    const dpath = `M${x1},${y1} C${right ? x1 + c : x1 - c},${y1} ${right ? x2 - c : x2 + c},${y2} ${x2},${y2}`;
+    return { d: dpath, mx: (x1 + x2) / 2, my: (y1 + y2) / 2, x1, y1, x2, y2 };
+  };
+  return (
+    <div className="igf-wrap" ref={wrap}>
+      <div className="igf-tools"><span><i className="on" /> connected</span><span><i /> not connected</span><button onClick={reset}>↺ Reset layout</button></div>
+      <div className="igf-stage" style={{ height: FLOW_H * scale }}>
+        <div className={"igf" + (dragging ? " dragging" : "")} style={{ width: FLOW_W, height: FLOW_H, transform: `scale(${scale})` }} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+          <svg className="igf-lines" width={FLOW_W} height={FLOW_H}>
+            {apps.map((a) => { const e = edge(a); return <g key={a.id} className={"igf-e" + (a.on ? " on" : "") + (sel === a.id ? " sel" : "")}>
+              <path d={e.d} className="bg" /><path d={e.d} className="fg" />
+              <circle cx={e.x1} cy={e.y1} r="5" /><circle cx={e.x2} cy={e.y2} r="5" />
+            </g>; })}
+          </svg>
+          {apps.map((a) => { const e = edge(a); return <span key={a.id + "l"} className={"igf-lab" + (a.on ? " on" : "")} style={{ left: e.mx, top: e.my }}>{FLOW_EDGE[a.id] || ""}</span>; })}
+          <div className="igf-hub" style={{ left: hub[0], top: hub[1], width: HW, height: HH }} onPointerDown={down("hub")}>
+            <span className="igf-hic">⚡</span><div><b>New lead</b><small>from every form &amp; page</small><em>{apps.filter((a) => a.on).length} of {apps.length} connected</em></div>
+          </div>
+          {apps.map((a) => (
+            <div key={a.id} className={"igf-n" + (a.on ? " on" : "") + (sel === a.id ? " sel" : "") + (dragging === a.id ? " drag" : "")} style={{ left: pos[a.id][0], top: pos[a.id][1], width: NODE_W, height: NH }}
+              onPointerDown={down(a.id)} role="button" tabIndex={0} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") onOpen(a.id); }} title={a.desc}>
+              <span className={"igd-ic ic-" + a.id}>{a.ic}</span>
+              <div className="igf-t"><b>{a.name}</b><small className={a.on ? "on" : ""}>{a.on ? "● Connected" + (a.extra ? " · " + a.extra : "") : "Not connected"}</small><em>{a.cat}</em></div>
+              <span className="igf-go">{a.on ? "Manage" : "Connect"} →</span>
+            </div>))}
+        </div>
+      </div>
+    </div>
   );
 }
