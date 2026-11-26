@@ -196,6 +196,66 @@ function lb_hook_mails($DATA, $u, $h, $lead, $sheetUrl) {
   }
   return array($sent, $err);
 }
+/* ==================== v124 — AI agent call: an AI voice agent phones every new lead (Vapi · Retell · Bland · any webhook) ==================== */
+function call_file($DATA, $uid) { $d = $DATA . '/call'; if (!is_dir($d)) @mkdir($d, 0700, true); return $d . '/' . substr(hash('sha256', 'c:' . $uid), 0, 32) . '.json'; }
+function call_phone($lead, $cc) {
+  $data = isset($lead['data']) && is_array($lead['data']) ? $lead['data'] : array(); $ph = '';
+  foreach ($data as $k => $v) if (is_string($v) && preg_match('/phone|mobile|whats|tel|contact|number/i', $k) && preg_match('/\d{6,}/', preg_replace('/\D/', '', $v))) { $ph = $v; break; }
+  if ($ph === '') return '';
+  $plus = strpos(trim($ph), '+') === 0; $dg = ltrim(preg_replace('/\D/', '', $ph), '0');
+  if (!$plus && strlen($dg) === 10) $dg = ($cc !== '' ? $cc : '91') . $dg;
+  return strlen($dg) >= 8 && strlen($dg) <= 15 ? '+' . $dg : '';
+}
+function call_vars($lead) {
+  $data = isset($lead['data']) && is_array($lead['data']) ? $lead['data'] : array(); $v = array(); $name = '';
+  foreach ($data as $k => $x) { if (!is_scalar($x)) continue; $key = strtolower(preg_replace('/[^A-Za-z0-9]+/', '_', $k)); $v[$key] = mb_substr((string)$x, 0, 300);
+    if ($name === '' && preg_match('/^(full_?)?name$|first_?name/i', $key)) $name = (string)$x; }
+  $v['name'] = $name !== '' ? $name : (isset($v['name']) ? $v['name'] : ''); $v['form'] = isset($lead['form']) ? (string)$lead['form'] : ''; $v['page'] = isset($lead['page']) ? (string)$lead['page'] : '';
+  return $v;
+}
+function call_http($url, $hdr, $body) {
+  $ch = curl_init($url); curl_setopt_array($ch, array(CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_CONNECTTIMEOUT => 8,
+    CURLOPT_HTTPHEADER => array_merge(array('Content-Type: application/json', 'Accept: application/json'), $hdr), CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)));
+  $b = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch); return array($code, (string)$b, $err);
+}
+/* place one call — returns array(ok, message) */
+function call_place($DATA, $c, $to, $lead) {
+  $key = !empty($c['enc']) ? ai_dec($c['enc'], $DATA) : ''; $vars = call_vars($lead); $p = isset($c['provider']) ? $c['provider'] : 'vapi'; $agent = isset($c['agent']) ? trim($c['agent']) : ''; $from = isset($c['from']) ? trim($c['from']) : '';
+  if ($p !== 'webhook' && $key === '') return array(false, 'API key missing');
+  $str = array(); foreach ($vars as $k => $x) $str[$k] = (string)$x;
+  if ($p === 'vapi') {
+    if ($agent === '' || $from === '') return array(false, 'Assistant ID and Phone number ID are needed');
+    list($code, $b, $err) = call_http('https://api.vapi.ai/call', array('Authorization: Bearer ' . $key), array('assistantId' => $agent, 'phoneNumberId' => $from, 'customer' => array('number' => $to, 'name' => mb_substr($vars['name'], 0, 40)), 'assistantOverrides' => array('variableValues' => $str), 'metadata' => array('lead_id' => isset($lead['lid']) ? $lead['lid'] : '')));
+  } elseif ($p === 'retell') {
+    if ($from === '') return array(false, 'Your Retell phone number (from) is needed');
+    $body = array('from_number' => $from, 'to_number' => $to, 'retell_llm_dynamic_variables' => $str, 'metadata' => array('lead_id' => isset($lead['lid']) ? $lead['lid'] : '')); if ($agent !== '') $body['override_agent_id'] = $agent;
+    list($code, $b, $err) = call_http('https://api.retellai.com/v2/create-phone-call', array('Authorization: Bearer ' . $key), $body);
+  } elseif ($p === 'bland') {
+    $body = array('phone_number' => $to, 'request_data' => $vars, 'metadata' => array('lead_id' => isset($lead['lid']) ? $lead['lid'] : ''));
+    if ($agent !== '') $body['pathway_id'] = $agent; else $body['task'] = !empty($c['task']) ? $c['task'] : 'You are a friendly assistant calling ' . ($vars['name'] ?: 'a new lead') . ' who just filled the form "' . $vars['form'] . '". Thank them, confirm their interest and answer questions briefly.';
+    if ($from !== '') $body['from'] = $from;
+    list($code, $b, $err) = call_http('https://api.bland.ai/v1/calls', array('authorization: Bearer ' . $key), $body);
+  } else {
+    $url = isset($c['url']) ? trim($c['url']) : ''; if (!preg_match(getenv('LB_WA_HTTP') ? '#^https?://#i' : '#^https://#i', $url)) return array(false, 'Webhook URL (https) is needed');
+    list($code, $b, $err) = call_http($url, $key !== '' ? array('Authorization: Bearer ' . $key) : array(), array('event' => 'ai_call.request', 'to' => $to, 'name' => $vars['name'], 'variables' => $vars, 'lead' => $lead));
+  }
+  if ($code >= 200 && $code < 300) return array(true, 'Call started' . ($p === 'webhook' ? ' (sent to your webhook)' : ''));
+  $j = json_decode($b, true); $m = is_array($j) ? (isset($j['message']) ? (is_array($j['message']) ? implode('; ', $j['message']) : $j['message']) : (isset($j['error']) ? (is_array($j['error']) ? json_encode($j['error']) : $j['error']) : '')) : '';
+  return array(false, ($code ? 'HTTP ' . $code : 'No answer') . ($m !== '' ? ' — ' . mb_substr($m, 0, 200) : ($err !== '' ? ' — ' . $err : '')) . ($code === 401 || $code === 403 ? ' (check the API key)' : ''));
+}
+/* a new lead (or a lead that just paid) → call it once */
+function lb_ai_call($DATA, $lead) {
+  $u = lb_lead_owner($lead, $DATA); if ($u === '') return; $f = call_file($DATA, $u); $c = jread($f, array());
+  if (empty($c['auto']) || empty($c['provider'])) return;
+  $lid = isset($lead['lid']) ? $lead['lid'] : ''; if ($lid !== '' && in_array($lid, isset($c['done']) ? $c['done'] : array(), true)) return;
+  if (!empty($c['forms']) && is_array($c['forms']) && !in_array(isset($lead['formId']) ? $lead['formId'] : '', $c['forms'], true)) return;
+  $to = call_phone($lead, isset($c['cc']) ? $c['cc'] : '91');
+  list($ok, $msg) = $to === '' ? array(false, 'No phone number in this lead') : call_place($DATA, $c, $to, $lead);
+  jmutate($f, array(), function (&$x) use ($lid, $to, $ok, $msg, $lead) {
+    $x['done'] = array_slice(array_merge(isset($x['done']) ? $x['done'] : array(), array($lid)), -500);
+    $x['log'] = array_slice(array_merge(isset($x['log']) ? $x['log'] : array(), array(array('t' => time(), 'to' => $to === '' ? '' : substr($to, 0, -4) . '••••', 'name' => mb_substr((string)(call_vars($lead)['name']), 0, 40), 'ok' => $ok, 'msg' => $msg))), -20);
+  });
+}
 function lb_forward_lead($lead, $DATA) {
   $u = lb_lead_owner($lead, $DATA); if ($u === '') return;
   $hf = lb_hook_file($DATA, $u); $h = jread($hf, array());
@@ -236,6 +296,7 @@ if ($act === 'lead') {
   /* answer the visitor first, then send the lead to the owner's Google Sheet / email (if connected) */
   header('Content-Type: application/json'); echo json_encode(array('ok' => true));
   if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+  if (empty($lead['payment'])) lb_ai_call($DATA, $lead);   /* v124: the AI agent calls the lead (paid forms: after payment) */
   lb_forward_lead($lead, $DATA);
   exit;
 }
@@ -266,6 +327,7 @@ if ($act === 'leadpay') {
       $all[$i]['payment'] = array_merge(isset($l['payment']) ? $l['payment'] : array(), array('status' => $st, 'id' => clean_str(isset($p['id']) ? $p['id'] : '', 80), 'ref' => clean_str(isset($p['ref']) ? $p['ref'] : '', 80), 'ts' => round(microtime(true) * 1000)));
     }
   });
+  if ($st === 'paid') { foreach (jread($DATA . '/leads.json', array()) as $l) if ($l['lid'] === $lid && $lid !== '') { if (function_exists('fastcgi_finish_request')) { header('Content-Type: application/json'); echo json_encode(array('ok' => true)); fastcgi_finish_request(); lb_ai_call($DATA, $l); exit; } lb_ai_call($DATA, $l); break; } }
   out(array('ok' => true));
 }
 
@@ -1058,6 +1120,30 @@ if ($act === 'kv_get') {
   foreach (glob($dir . '/*.txt') as $f) { $k = basename($f, '.txt'); if (!kv_ok($k) || ($want !== null && !in_array($k, $want, true))) continue;
     $row = array('key' => $k, 't' => isset($ts[$k]) ? $ts[$k] : filemtime($f) * 1000); if (empty($d['list'])) $row['value'] = (string)file_get_contents($f); $rows[] = $row; }
   out(array('ok' => true, 'rows' => $rows));
+}
+if ($act === 'call_get') {
+  $c = jread(call_file($DATA, $ME['uid']), array()); $k = !empty($c['enc']) ? ai_dec($c['enc'], $DATA) : '';
+  out(array('ok' => true, 'provider' => isset($c['provider']) ? $c['provider'] : '', 'agent' => isset($c['agent']) ? $c['agent'] : '', 'from' => isset($c['from']) ? $c['from'] : '', 'url' => isset($c['url']) ? $c['url'] : '', 'task' => isset($c['task']) ? $c['task'] : '',
+    'cc' => isset($c['cc']) ? $c['cc'] : '91', 'auto' => !empty($c['auto']), 'has' => $k !== '', 'tail' => $k !== '' ? substr($k, -4) : '', 'log' => array_reverse(isset($c['log']) ? $c['log'] : array())));
+}
+if ($act === 'call_save' || $act === 'call_off') {
+  $f = call_file($DATA, $ME['uid']); $c = jread($f, array());
+  if ($act === 'call_off') { $c = array('log' => isset($c['log']) ? $c['log'] : array(), 'done' => isset($c['done']) ? $c['done'] : array()); }
+  else {
+    $p = isset($d['provider']) && in_array($d['provider'], array('vapi', 'retell', 'bland', 'webhook'), true) ? $d['provider'] : 'vapi';
+    $c['provider'] = $p; foreach (array('agent' => 120, 'from' => 120, 'url' => 400, 'task' => 2000) as $k => $n) $c[$k] = clean_str(isset($d[$k]) ? $d[$k] : '', $n);
+    $c['cc'] = preg_replace('/\D/', '', isset($d['cc']) ? (string)$d['cc'] : '91') ?: '91'; $c['auto'] = !empty($d['auto']);
+    $ck = isset($d['ckey']) ? trim((string)$d['ckey']) : ''; if ($ck !== '') $c['enc'] = ai_enc($ck, $DATA);
+    if ($p !== 'webhook' && empty($c['enc'])) fail('Paste the API key of your ' . ucfirst($p) . ' account.');
+  }
+  jwrite($f, $c); @chmod($f, 0600); if ($IS_ADMIN) { jwrite(call_file($DATA, 'admin'), $c); jwrite(call_file($DATA, 'owner'), $c); }
+  out(array('ok' => true));
+}
+if ($act === 'call_test') {
+  $c = jread(call_file($DATA, $ME['uid']), array()); if (empty($c['provider'])) fail('Save the settings first.');
+  $to = call_phone(array('data' => array('phone' => isset($d['to']) ? (string)$d['to'] : '')), isset($c['cc']) ? $c['cc'] : '91'); if ($to === '') fail('Type the phone number to call (with country code, or 10 digits).');
+  list($ok, $msg) = call_place($DATA, $c, $to, array('lid' => 'test-' . time(), 'form' => 'Test call', 'page' => 'Integrations', 'data' => array('name' => !empty($ME['name']) ? $ME['name'] : 'there', 'phone' => $to)));
+  if (!$ok) fail($msg); out(array('ok' => true, 'msg' => $msg . ' to ' . $to));
 }
 if ($act === 'gs_status') { $c = gs_cfg($DATA); $hk = jread(lb_hook_file($DATA, $ME['uid']), array()); $nS = (isset($hk['maps']) && is_array($hk['maps']) ? count($hk['maps']) : 0) + (!empty($hk['link']) || !empty($hk['url']) ? 1 : 0);
   out(array('ok' => true, 'ready' => !empty($c['enc']), 'robot' => isset($c['robot']) ? $c['robot'] : '', 'admin' => $IS_ADMIN, 'sheets' => $nS)); }

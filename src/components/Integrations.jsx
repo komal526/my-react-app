@@ -81,6 +81,13 @@ export default function Integrations({ integ, onChange, initial = "" }) {
   const [narrow, setNarrow] = useState(() => window.innerWidth < 900);
   useEffect(() => { const f = () => setNarrow(window.innerWidth < 900); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
   const [gsN, setGsN] = useState(0);
+  /* v124 — AI agent call */
+  const [cl, setCl] = useState({ provider: "vapi", agent: "", from: "", url: "", task: "", cc: "91", auto: true, has: false, tail: "", log: [] }), [clKey, setClKey] = useState(""), [clMsg, setClMsg] = useState(null), [clBusy, setClBusy] = useState(false), [clTo, setClTo] = useState("");
+  const clLoad = () => phpCall(srv, { action: "call_get" }).then((r) => r && r.ok && setCl((c) => ({ ...c, ...r, provider: r.provider || c.provider, auto: r.provider ? !!r.auto : c.auto, agent: r.provider ? r.agent : c.agent, from: r.provider ? r.from : c.from, url: r.provider ? r.url : c.url, saved: !!r.provider }))).catch(() => {});
+  useEffect(() => { clLoad(); }, [sel]); // eslint-disable-line react-hooks/exhaustive-deps
+  const clSave = async (auto = cl.auto) => { setClBusy(true); setClMsg(null); try { await phpCall(srv, { action: "call_save", provider: cl.provider, agent: cl.agent, from: cl.from, url: cl.url, task: cl.task, cc: cl.cc, auto, ckey: clKey.trim() }); setClKey(""); setClMsg(["ok", "✓ Saved — " + (auto ? "every new lead gets a call within seconds." : "calls are paused.")]); clLoad(); } catch (e) { setClMsg(["bad", e.message]); } setClBusy(false); };
+  const clTest = async () => { setClBusy(true); setClMsg(null); try { const r = await phpCall(srv, { action: "call_test", to: clTo }); setClMsg(["ok", "✓ " + r.msg + " — your phone should ring now."]); clLoad(); } catch (e) { setClMsg(["bad", e.message]); } setClBusy(false); };
+  const clOff = async () => { if (!window.confirm("Disconnect the AI agent call? No more leads will be called.")) return; await phpCall(srv, { action: "call_off" }).catch(() => {}); setCl((c) => ({ ...c, has: false, saved: false, tail: "" })); clLoad(); };
   useEffect(() => { phpCall(srv, { action: "gs_status" }).then((r) => setGsN(+r.sheets || 0)).catch(() => {}); }, [sel]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { phpCall(srv, { action: "lf_status" }).then((r) => { const ok = !!r.ready, own = !!r.own; if (ok !== !!(integ.places && integ.places.ok) || own !== !!(integ.places && integ.places.own)) onChange({ ...integ, places: { ok, own } }); }).catch(() => {}); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [emWay, setEmWay] = useState(null), emP = emWay || (em.provider === "gmail" && !em.webhook ? "smtp" : em.provider || "smtp");
@@ -152,7 +159,8 @@ export default function Integrations({ integ, onChange, initial = "" }) {
 
   return (
     <>
-      <div className="top"><div><h1>Integrations</h1><p className="mut">Connect the tools you already use — every new lead flows to them automatically.</p></div>{note && <span className="fb-note">{note}</span>}</div>
+      <div className="top ig-top"><div><h1>Integrations</h1><p className="mut">Connect the tools you already use — every new lead flows to them automatically.</p></div>
+        <div className="ig-topr">{note && <span className="fb-note">{note}</span>}{!narrow && <div className="igf-view">{[["flow", "Flow"], ["cards", "Cards"]].map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>}</div></div>
       {(() => {
         const aiOn = AI_PROVIDERS.some((p) => (ai.keys || {})[p.id]), hostOn = !!(serverUrl(integ) && pub.key && pub.ok);
         const APPS = [
@@ -162,12 +170,12 @@ export default function Integrations({ integ, onChange, initial = "" }) {
           { id: "places", cat: "Lead Finder", ic: "🔍", name: "Google Places (Lead Finder)", desc: "Connect your own Google key to find local businesses with phone numbers and websites.", on: !!(integ.places && integ.places.ok), extra: integ.places && integ.places.own ? "Your key" : "" },
           { id: "wa", cat: "Automation", ic: "💬", name: "WhatsApp automation", desc: "Send leads to your WhatsApp CRM instantly — or let it fetch them with the Lead API.", on: !!wa.webhook },
           { id: "pay", cat: "Payments", ic: "₹", name: "Razorpay & UPI", desc: "Collect payments before registration — cards, UPI, GPay, PhonePe, Paytm.", on: keyOk || upiOk, extra: pay.razorpayKey && pay.razorpayKey.includes("_test_") ? "Test mode" : "" },
+          { id: "call", cat: "AI agent", ic: "📞", name: "AI agent call", desc: "An AI voice agent phones every new lead within seconds — Vapi, Retell, Bland or your own calling tool.", on: !!(cl.saved && cl.auto), extra: cl.saved ? ({ vapi: "Vapi", retell: "Retell", bland: "Bland", webhook: "Webhook" })[cl.provider] : "" },
           { id: "ai", cat: "AI", ic: "✦", name: "AI builders", desc: "Claude, ChatGPT, Gemini, DeepSeek — plus Lovable and Bolt.new.", on: aiOn, extra: aiOn ? (AI_PROVIDERS.find((p) => p.id === ai.provider) || {}).name : "" },
         ];
         const n = APPS.filter((a) => a.on).length, total = APPS.filter((a) => !a.free).length;
         return <>
-          <div className="ig-sum"><div><b>{n} of {total} connected</b><span className="mut">Click a box to set it up — drag boxes to arrange your flow.</span></div><div className="ig-bar"><i style={{ width: (n / total) * 100 + "%" }} /></div>
-            <div className="igf-view">{[["flow", "Flow"], ["cards", "Cards"]].map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div></div>
+          {void n}{void total}
           {view === "flow" && !narrow ? <FlowCanvas apps={APPS} sel={sel} onOpen={setSel} /> : <div className="ig-tiles">{APPS.map((a) => (
             <button key={a.id} className={"ig-tile" + (a.on ? " on" : "")} onClick={() => setSel(a.id)}>
               <div className="ig-top"><span className={"igd-ic ic-" + a.id}>{a.ic}</span><span className="ig-cat2">{a.cat}</span></div>
@@ -176,6 +184,26 @@ export default function Integrations({ integ, onChange, initial = "" }) {
             </button>))}</div>}
         </>;
       })()}
+
+      <Card id="call" sel={sel} onClose={close} ic="📞" t="AI agent call" sub="An AI voice agent calls every new lead within seconds — it greets them by name, answers questions and books the next step." on={!!(cl.saved && cl.auto)}>
+        <div className="cl-prov">{[["vapi", "Vapi"], ["retell", "Retell AI"], ["bland", "Bland AI"], ["webhook", "Other tool (webhook)"]].map(([k, l]) => <button key={k} className={cl.provider === k ? "on" : ""} onClick={() => setCl({ ...cl, provider: k })}>{l}</button>)}</div>
+        <p className="mut sm">{({ vapi: "Vapi dashboard → API Keys (private key) · Assistants → copy the Assistant ID · Phone Numbers → copy the Phone Number ID.", retell: "Retell dashboard → API Keys · Agents → copy the Agent ID · Phone Numbers → the number you bought (e.g. +14155550123).", bland: "Bland dashboard → API key · Pathways → copy the Pathway ID (or leave it empty and write what the agent should say). Your Bland number is optional.", webhook: "Any AI calling tool (Synthflow, Air, n8n, Make…) — crecapo sends every new lead to this URL with the phone number and name; your tool places the call." })[cl.provider]}</p>
+        <div className="ig-g">
+          {cl.provider !== "webhook" && <label>API key<input type="password" value={clKey} onChange={(e) => setClKey(e.target.value)} placeholder={cl.has ? "•••• " + cl.tail + " saved — type only to change" : "paste your API key"} autoComplete="off" /></label>}
+          {cl.provider === "webhook" && <label>Webhook URL<input value={cl.url} onChange={(e) => setCl({ ...cl, url: e.target.value.trim() })} placeholder="https://…" /></label>}
+          {cl.provider === "webhook" && <label>Secret <small>(optional — sent as Bearer)</small><input type="password" value={clKey} onChange={(e) => setClKey(e.target.value)} placeholder={cl.has ? "•••• saved" : "optional"} autoComplete="off" /></label>}
+          {cl.provider !== "webhook" && <label>{({ vapi: "Assistant ID", retell: "Agent ID (optional)", bland: "Pathway ID (optional)" })[cl.provider]}<input value={cl.agent} onChange={(e) => setCl({ ...cl, agent: e.target.value.trim() })} placeholder={cl.provider === "vapi" ? "e.g. 5b0a…-…" : "optional"} /></label>}
+          {cl.provider !== "webhook" && <label>{({ vapi: "Phone Number ID", retell: "Your Retell number (from)", bland: "Your Bland number (optional)" })[cl.provider]}<input value={cl.from} onChange={(e) => setCl({ ...cl, from: e.target.value.trim() })} placeholder={cl.provider === "vapi" ? "e.g. 9c3f…-…" : "+1 415 555 0123"} /></label>}
+          <label>Default country code<input value={cl.cc} onChange={(e) => setCl({ ...cl, cc: e.target.value.replace(/\D/g, "") })} placeholder="91" /></label>
+        </div>
+        {cl.provider === "bland" && !cl.agent && <label className="ig-l">What should the agent say? <span className="mut sm">(used when there's no Pathway ID)</span><textarea rows={3} value={cl.task} onChange={(e) => setCl({ ...cl, task: e.target.value })} placeholder="You are Priya from TGAI Academy. Thank {{name}} for registering for the webinar, confirm the date and ask if they have questions." /></label>}
+        <label className="cl-auto"><input type="checkbox" checked={!!cl.auto} onChange={(e) => setCl({ ...cl, auto: e.target.checked })} /><i />Call every new lead automatically <span className="mut sm">(forms with payment: after they pay)</span></label>
+        <div className="row"><button className="pri" disabled={clBusy} onClick={() => clSave()}>{clBusy ? "Saving…" : "Save"}</button>{cl.saved && <button className="xs red" onClick={clOff}>Disconnect</button>}</div>
+        {cl.saved && <div className="cl-test"><input value={clTo} onChange={(e) => setClTo(e.target.value)} placeholder="Your phone for a test call, e.g. 98765 43210" /><button disabled={clBusy || !clTo.trim()} onClick={clTest}>📞 Test call</button></div>}
+        {clMsg && <div className={"gs-msg " + clMsg[0]}>{clMsg[1]}</div>}
+        {cl.log && cl.log.length > 0 && <div className="cl-log"><b>Recent calls</b>{cl.log.slice(0, 8).map((x, i) => <div key={i} className={x.ok ? "ok" : "bad"}><span>{x.ok ? "✓" : "✕"}</span><em>{x.name || "Lead"} {x.to}</em><small>{x.msg} · {new Date(x.t * 1000).toLocaleString()}</small></div>)}</div>}
+        <p className="mut sm">🔒 Your API key is saved encrypted on your server — it never goes into your website. The agent receives the lead's answers as variables (name, email, form… — e.g. {"{{name}}"} in your Vapi/Retell prompt).</p>
+      </Card>
 
       <Card id="places" sel={sel} onClose={close} ic="🔍" t="Google Places — Lead Finder" sub="Search businesses on Google by city and type. Your key is used only for your account." on={!!(integ.places && integ.places.ok)}>
         <PlacesConnect srv={srv} onDone={(r) => { if (r && r.ok !== undefined && (!!r.ready !== !!(integ.places && integ.places.ok) || !!r.own !== !!(integ.places && integ.places.own))) onChange({ ...integ, places: { ok: !!r.ready, own: !!r.own } }); }} />
@@ -325,18 +353,21 @@ export default function Integrations({ integ, onChange, initial = "" }) {
 }
 
 
-/* ==================== v123 — Integrations as a flow: drag the boxes, lines show what each new lead goes to ==================== */
-const FLOW_W = 1120, FLOW_H = 600, NODE_W = 236;
-const FLOW_DEF = { hub: [430, 250], sheets: [800, 40], email: [800, 250], wa: [800, 460], pay: [60, 40], places: [60, 250], ai: [60, 460] };
-const FLOW_EDGE = { sheets: "new row", email: "auto-reply", wa: "WhatsApp", pay: "pays first", places: "finds leads", ai: "builds pages" };
+/* ==================== v124 — Integrations as a flow: drag the boxes anywhere on the dotted area; lines show what each new lead goes to ==================== */
+const FLOW_H = 660, NODE_W = 236, NH = 92, HW = 300, HH = 96, MIN_W = 900;
+const FLOW_EDGE = { sheets: "new row", email: "auto-reply", wa: "WhatsApp", pay: "pays first", places: "finds leads", ai: "builds pages", call: "calls the lead" };
+/* default places — x as a share of the free width, so the layout fills any screen */
+const FLOW_DEF = { hub: [0.5, 236], pay: [0, 34], places: [0, 270], ai: [0, 506], sheets: [1, 34], email: [1, 270], wa: [1, 506], call: [0.5, 520] };
 function FlowCanvas({ apps, sel, onOpen }) {
-  const [pos, setPos] = useState(() => { try { return { ...FLOW_DEF, ...(JSON.parse(localStorage.getItem("lb_ig_pos") || "{}")) }; } catch { return { ...FLOW_DEF }; } });
-  const save = (p) => { try { localStorage.setItem("lb_ig_pos", JSON.stringify(p)); } catch { /* ignore */ } };
-  const wrap = useRef(null), drag = useRef(null), [scale, setScale] = useState(1), [dragging, setDragging] = useState("");
-  useEffect(() => { const f = () => { const w = wrap.current ? wrap.current.clientWidth : FLOW_W; setScale(Math.min(1, w / FLOW_W)); }; f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
+  const wrap = useRef(null), drag = useRef(null), [ww, setWw] = useState(1100), [dragging, setDragging] = useState("");
+  const cw = Math.max(MIN_W, ww), scale = Math.min(1, ww / MIN_W), PAD = 34;
+  const [rel, setRel] = useState(() => { try { return { ...FLOW_DEF, ...(JSON.parse(localStorage.getItem("lb_ig_pos2") || "{}")) }; } catch { return { ...FLOW_DEF }; } });
+  useEffect(() => { const f = () => setWw(wrap.current ? wrap.current.clientWidth - 28 : 1100); f(); const ro = window.ResizeObserver ? new ResizeObserver(f) : null; if (ro && wrap.current) ro.observe(wrap.current); window.addEventListener("resize", f); return () => { window.removeEventListener("resize", f); if (ro) ro.disconnect(); }; }, []);
+  const wOf = (id) => (id === "hub" ? HW : NODE_W), hOf = (id) => (id === "hub" ? HH : NH);
+  const px = (id) => { const r = rel[id] || FLOW_DEF[id] || [0.5, 0]; return [PAD + r[0] * (cw - 2 * PAD - wOf(id)), r[1]]; };
   const down = (id) => (e) => {
     if (e.button !== undefined && e.button !== 0) return;
-    drag.current = { id, sx: e.clientX, sy: e.clientY, ox: pos[id][0], oy: pos[id][1], moved: false };
+    const [x, y] = px(id); drag.current = { id, sx: e.clientX, sy: e.clientY, ox: x, oy: y, moved: false };
     e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
   };
   const move = (e) => {
@@ -344,40 +375,44 @@ function FlowCanvas({ apps, sel, onOpen }) {
     const dx = (e.clientX - d.sx) / scale, dy = (e.clientY - d.sy) / scale;
     if (!d.moved && Math.abs(dx) + Math.abs(dy) < 5) return;
     d.moved = true; setDragging(d.id);
-    const nw = d.id === "hub" ? 260 : NODE_W;
-    setPos((p) => ({ ...p, [d.id]: [Math.max(0, Math.min(FLOW_W - nw, d.ox + dx)), Math.max(0, Math.min(FLOW_H - 96, d.oy + dy))] }));
+    const free = cw - 2 * PAD - wOf(d.id), x = Math.max(PAD, Math.min(cw - PAD - wOf(d.id), d.ox + dx)), y = Math.max(8, Math.min(FLOW_H - hOf(d.id) - 8, d.oy + dy));
+    setRel((r) => ({ ...r, [d.id]: [free > 0 ? (x - PAD) / free : 0.5, y] }));
   };
-  const up = () => { const d = drag.current; drag.current = null; setDragging(""); if (!d) return; if (d.moved) setPos((p) => { save(p); return p; }); else if (d.id !== "hub") onOpen(d.id); };
-  const reset = () => { setPos({ ...FLOW_DEF }); try { localStorage.removeItem("lb_ig_pos"); } catch { /* ignore */ } };
-  const hub = pos.hub, HW = 260, HH = 104, NH = 92;
+  const up = () => { const d = drag.current; drag.current = null; setDragging(""); if (!d) return; if (d.moved) setRel((r) => { try { localStorage.setItem("lb_ig_pos2", JSON.stringify(r)); } catch { /* ignore */ } return r; }); else if (d.id !== "hub") onOpen(d.id); };
+  const reset = () => { setRel({ ...FLOW_DEF }); try { localStorage.removeItem("lb_ig_pos2"); } catch { /* ignore */ } };
+  const hub = px("hub"), hcx = hub[0] + HW / 2, hcy = hub[1] + HH / 2;
   const edge = (a) => {
-    const n = pos[a.id], right = n[0] + NODE_W / 2 > hub[0] + HW / 2;
-    const x1 = right ? hub[0] + HW : hub[0], y1 = hub[1] + HH / 2, x2 = right ? n[0] : n[0] + NODE_W, y2 = n[1] + NH / 2, c = Math.max(60, Math.abs(x2 - x1) / 2);
-    const dpath = `M${x1},${y1} C${right ? x1 + c : x1 - c},${y1} ${right ? x2 - c : x2 + c},${y2} ${x2},${y2}`;
-    return { d: dpath, mx: (x1 + x2) / 2, my: (y1 + y2) / 2, x1, y1, x2, y2 };
+    const n = px(a.id), ncx = n[0] + NODE_W / 2, ncy = n[1] + NH / 2;
+    if (Math.abs(ncx - hcx) < HW / 2 && Math.abs(ncy - hcy) > HH / 2 + 20) {   /* straight above / below the hub */
+      const down = ncy > hcy, x1 = hcx, y1 = down ? hub[1] + HH : hub[1], x2 = ncx, y2 = down ? n[1] : n[1] + NH, c = Math.max(40, Math.abs(y2 - y1) / 2);
+      return { d: `M${x1},${y1} C${x1},${down ? y1 + c : y1 - c} ${x2},${down ? y2 - c : y2 + c} ${x2},${y2}`, mx: (x1 + x2) / 2, my: (y1 + y2) / 2, x1, y1, x2, y2 };
+    }
+    const right = ncx > hcx, x1 = right ? hub[0] + HW - 6 : hub[0] + 6, y1 = hcy, x2 = right ? n[0] : n[0] + NODE_W, y2 = ncy, c = Math.max(60, Math.abs(x2 - x1) / 2);
+    return { d: `M${x1},${y1} C${right ? x1 + c : x1 - c},${y1} ${right ? x2 - c : x2 + c},${y2} ${x2},${y2}`, mx: (x1 + x2) / 2, my: (y1 + y2) / 2, x1, y1, x2, y2 };
   };
+  const on = apps.filter((a) => a.on).length;
   return (
     <div className="igf-wrap" ref={wrap}>
-      <div className="igf-tools"><span><i className="on" /> connected</span><span><i /> not connected</span><button onClick={reset}>↺ Reset layout</button></div>
+      <div className="igf-tools"><span><i className="on" /> connected</span><span><i /> not connected</span><span className="igf-cnt">{on} of {apps.length} connected</span><button onClick={reset}>↺ Reset layout</button></div>
       <div className="igf-stage" style={{ height: FLOW_H * scale }}>
-        <div className={"igf" + (dragging ? " dragging" : "")} style={{ width: FLOW_W, height: FLOW_H, transform: `scale(${scale})` }} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
-          <svg className="igf-lines" width={FLOW_W} height={FLOW_H}>
+        <div className={"igf" + (dragging ? " dragging" : "")} style={{ width: cw, height: FLOW_H, transform: `scale(${scale})` }} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+          <svg className="igf-lines" width={cw} height={FLOW_H}>
             {apps.map((a) => { const e = edge(a); return <g key={a.id} className={"igf-e" + (a.on ? " on" : "") + (sel === a.id ? " sel" : "")}>
               <path d={e.d} className="bg" /><path d={e.d} className="fg" />
               <circle cx={e.x1} cy={e.y1} r="5" /><circle cx={e.x2} cy={e.y2} r="5" />
             </g>; })}
           </svg>
           {apps.map((a) => { const e = edge(a); return <span key={a.id + "l"} className={"igf-lab" + (a.on ? " on" : "")} style={{ left: e.mx, top: e.my }}>{FLOW_EDGE[a.id] || ""}</span>; })}
-          <div className="igf-hub" style={{ left: hub[0], top: hub[1], width: HW, height: HH }} onPointerDown={down("hub")}>
-            <span className="igf-hic">⚡</span><div><b>New lead</b><small>from every form &amp; page</small><em>{apps.filter((a) => a.on).length} of {apps.length} connected</em></div>
+          <div className="igf-hub" style={{ left: hub[0], top: hub[1], width: HW, height: HH }} onPointerDown={down("hub")} title="Every form and page sends its new leads here">
+            <span className="igf-hic">⚡</span><div><b>New lead <span>(Webhook)</span></b><small>from every form &amp; page</small></div>
           </div>
-          {apps.map((a) => (
-            <div key={a.id} className={"igf-n" + (a.on ? " on" : "") + (sel === a.id ? " sel" : "") + (dragging === a.id ? " drag" : "")} style={{ left: pos[a.id][0], top: pos[a.id][1], width: NODE_W, height: NH }}
+          {apps.map((a) => { const [x, y] = px(a.id); return (
+            <div key={a.id} className={"igf-n" + (a.on ? " on" : "") + (sel === a.id ? " sel" : "") + (dragging === a.id ? " drag" : "")} style={{ left: x, top: y, width: NODE_W, height: NH }}
               onPointerDown={down(a.id)} role="button" tabIndex={0} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") onOpen(a.id); }} title={a.desc}>
               <span className={"igd-ic ic-" + a.id}>{a.ic}</span>
               <div className="igf-t"><b>{a.name}</b><small className={a.on ? "on" : ""}>{a.on ? "● Connected" + (a.extra ? " · " + a.extra : "") : "Not connected"}</small><em>{a.cat}</em></div>
               <span className="igf-go">{a.on ? "Manage" : "Connect"} →</span>
-            </div>))}
+            </div>); })}
         </div>
       </div>
     </div>
