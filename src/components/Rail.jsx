@@ -40,11 +40,19 @@ export function Rail({ dev, setDev, pages, page, setPage, actions = [], onClose,
 }
 
 /* the whole screen: page on the left, rail on the right. children = the <iframe> */
-export function RailView({ dev, children, ...rail }) {
+/* v123: mobile view = a real phone (notch, status bar, address bar, bottom bar) — the same look everywhere */
+export function PhoneFrame({ url, children }) {
+  const [t, setT] = useState(() => new Date().toTimeString().slice(0, 5));
+  useEffect(() => { const i = setInterval(() => setT(new Date().toTimeString().slice(0, 5)), 30000); return () => clearInterval(i); }, []);
+  return <div className="pk2-phone"><div className="pk2-notch" /><div className="pk2-pbar"><div className="st"><span>{t}</span><span className="sig"><i /><i /><i /><i /><b /></span></div><div className="url">🔒 {String(url || "yourpage").replace(/^https?:\/\//, "").replace(/\/$/, "")}</div></div>
+    <div className="pk2-pscreen">{children}</div>
+    <div className="pk2-pfoot"><span>‹</span><span>›</span><span>⇪</span><span>▯</span><span>⧉</span></div></div>;
+}
+export function RailView({ dev, children, url, ...rail }) {
   useEffect(() => { if (!rail.onClose) return; const k = (e) => e.key === "Escape" && rail.onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [rail.onClose]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="pk2" role="dialog">
-      <div className={"pk2-stage " + dev}>{children}</div>
+      <div className={"pk2-stage " + dev}>{dev === "mobile" ? <PhoneFrame url={url}>{children}</PhoneFrame> : children}</div>
       <Rail dev={dev} {...rail} />
     </div>
   );
@@ -58,7 +66,7 @@ export function TplView({ k }) {
   if (!t) return <div className="pv-dead"><div><h2>This template doesn't exist</h2><a href={appPath()}>Go to dashboard</a></div></div>;
   const use = () => { try { localStorage.setItem("lb_tpl_go", t.key); } catch { /* ignore */ } location.href = appPath(); };
   return (
-    <RailView dev={dev} setDev={setDev} actions={[{ ic: RI.edit, l: "Use", cls: "k-pri", fn: use }, { ic: RI.home, l: "Dashboard", fn: () => { location.href = appPath(); } }]}>
+    <RailView dev={dev} setDev={setDev} url={t.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".crecapo.tech"} actions={[{ ic: RI.edit, l: "Use", cls: "k-pri", fn: use }, { ic: RI.home, l: "Dashboard", fn: () => { location.href = appPath(); } }]}>
       <iframe title={t.name} src={tplUrl(t)} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
     </RailView>
   );

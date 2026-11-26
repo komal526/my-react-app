@@ -5121,3 +5121,20 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .adm-jump.top b{font-size:14.5px}.adm-jump.top small{font-size:12px}
 .adm-jump.top em{padding:7px 14px;font-size:13px}
 .igd-ic.ic-places{background:linear-gradient(135deg,#e0f2fe,#bae6fd)!important}
+/* v123 — project card: yellow mobile-preview button next to ⋯ */
+.dash .pj-mob{position:absolute;top:10px;right:62px;z-index:3;width:34px;height:31px;display:grid;place-items:center;border:0;border-radius:10px;background:linear-gradient(135deg,#ffd43b,#f5b301);color:#1a1a2e;cursor:pointer;box-shadow:0 6px 14px -6px rgba(245,179,1,.9);transition:transform .18s,box-shadow .18s}
+.dash .pj-mob:hover{transform:translateY(-2px);box-shadow:0 10px 18px -6px rgba(245,179,1,1)}
+/* v123 — mobile preview = a real phone */
+.pk2-stage.mobile{align-items:center;padding:14px 0;box-sizing:border-box;background:radial-gradient(circle at 1px 1px,rgba(255,255,255,.07) 1px,transparent 0) 0 0/22px 22px,#0b1024;overflow:auto}
+.pk2-phone{position:relative;flex:none;width:418px;height:min(872px,calc(100vh - 28px));box-sizing:border-box;background:#111318;border-radius:56px;padding:14px;display:flex;flex-direction:column;box-shadow:0 0 0 3px #2d3a52,0 0 0 9px #151a2b,0 30px 70px -20px rgba(0,0,0,.7)}
+.pk2-notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:150px;height:30px;background:#111318;border-radius:0 0 20px 20px;z-index:3}
+.pk2-pbar{height:78px;flex:none;background:#f3f4f6;border-radius:42px 42px 0 0;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding:0 22px 8px;color:#111}
+.pk2-pbar .st{display:flex;justify-content:space-between;align-items:center;font:700 13px/1 -apple-system,system-ui,sans-serif;padding:0 8px}
+.pk2-pbar .sig{display:inline-flex;align-items:flex-end;gap:2px}.pk2-pbar .sig i{display:block;width:3px;background:#111;border-radius:1px}
+.pk2-pbar .sig i:nth-child(1){height:4px}.pk2-pbar .sig i:nth-child(2){height:6px}.pk2-pbar .sig i:nth-child(3){height:8px}.pk2-pbar .sig i:nth-child(4){height:10px}
+.pk2-pbar .sig b{display:block;width:20px;height:10px;border:1.5px solid #111;border-radius:3px;margin-left:5px;background:linear-gradient(90deg,#111 70%,transparent 0) 1px 1px/calc(100% - 2px) calc(100% - 2px) no-repeat;box-sizing:border-box}
+.pk2-pbar .url{background:#e5e7eb;border-radius:10px;padding:7px 10px;font:500 12.5px/1 -apple-system,system-ui,sans-serif;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#374151}
+.pk2-pscreen{flex:1;min-height:0;background:#fff;overflow:hidden;display:flex}
+.pk2-stage.mobile .pk2-pscreen iframe{width:100%!important;height:100%!important;margin:0!important;border-radius:0!important;max-width:none}
+.pk2-pfoot{height:48px;flex:none;background:#f3f4f6;border-radius:0 0 42px 42px;display:flex;justify-content:space-around;align-items:center;color:#2f7bff;font-size:20px;padding-bottom:4px}
+@media (max-width:600px){.pk2-stage.mobile{padding:0}.pk2-phone{width:100%;height:100%;border-radius:0;padding:0;box-shadow:none}.pk2-notch,.pk2-pbar,.pk2-pfoot{display:none}}

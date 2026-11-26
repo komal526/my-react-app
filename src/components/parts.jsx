@@ -330,9 +330,9 @@ export function PublishModal({ page, onDone, onClose, integ, onSetup, onDomains,
 const W = { desktop: "100%", tablet: "768px", mobile: "390px" };
 const notFound = (file, pages) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#f7f6ff;color:#16142b;text-align:center;padding:24px}a{color:#4f46e5;font-weight:600}h1{font-size:64px;margin:0;color:#4f46e5}</style></head><body><div><h1>404</h1><p style="font-size:18px">The link points to <b>${file.replace(/</g, "&lt;")}</b>, which isn't a page in this project.</p><p style="color:#5f5b7d">Pages you have: ${pages.map((p) => `<a href="${p.file}">${p.name}</a>`).join(" · ")}</p><p style="color:#5f5b7d;font-size:14px">Fix it in the editor: select the button or menu item → Link → “Go to a page of this site”.</p></div></body></html>`;
 
-export function Preview({ token, file: initFile }) {
+export function Preview({ token, file: initFile, dev: initDev }) {
   const info = useMemo(() => readToken(token), [token]);
-  const [ver, setVer] = useState(0), [file, setFile] = useState(initFile || "index.html"), [hash, setHash] = useState(""), [dev, setDev] = useState("desktop");
+  const [ver, setVer] = useState(0), [file, setFile] = useState(initFile || "index.html"), [hash, setHash] = useState(""), [dev, setDev] = useState(initDev || "desktop");
   const [html, setHtml] = useState(""), [note, setNote] = useState(""), [pulse, setPulse] = useState(false);
   const ifr = useRef();
   /* saved projects first, then drafts (drafts live in this browser only) */
@@ -391,7 +391,7 @@ export function Preview({ token, file: initFile }) {
 
   return (
     <>
-      <RailView dev={dev} setDev={setDev} pages={[...proj.pages.map((p) => ({ v: p.file, l: p.name })), ...(!pg ? [{ v: file, l: file + " (missing)" }] : [])]} page={file}
+      <RailView dev={dev} setDev={setDev} url={(proj.host && (proj.host.domain || proj.host.url)) || (proj.slug || "yourpage") + ".crecapo.tech"} pages={[...proj.pages.map((p) => ({ v: p.file, l: p.name })), ...(!pg ? [{ v: file, l: file + " (missing)" }] : [])]} page={file}
         setPage={(v) => { setHash(""); setFile(v); window.history.pushState(null, "", `#/preview/${token}/${v}`); }}
         actions={[{ ic: RI.edit, l: "Edit", cls: "k-pri", fn: () => { try { localStorage.setItem("lb_edit_go", proj.id); } catch { /* ignore */ } location.href = appPath(); } }, { ic: RI.link, l: "Copy link", fn: copy }, { ic: RI.reload, l: "Reload", fn: () => setVer((v) => v + 1) }, { ic: RI.home, l: "Dashboard", cls: "k-dash", fn: () => { location.href = appPath(); } }]}
         note={<><i className={"pv-dot" + (pulse ? " pulse" : "")} />Live draft · link expires in {hrs} h</>}>

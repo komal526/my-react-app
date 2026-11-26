@@ -127,7 +127,20 @@ export default function Dashboard({ user, onLogout }) {
   /* new projects (from scratch, a template or AI) stay "unsaved" until you press Save — they live in lb_drafts_ (this browser only).
      After a reload, a draft you changed comes back marked "Not saved"; an untouched one is dropped. */
   const DK = "lb_drafts_" + E;
-  const [projects, setProjects] = useState(() => { let d = []; try { d = JSON.parse(localStorage.getItem(DK) || "[]"); } catch { d = []; } return [...d.filter((p) => p.kept || pagesHash(p.pages) !== p.orig).map((p) => ({ ...p, recovered: true })), ...loadProjects(E)]; });
+  /* v119: drafts are synced like projects (every device of this account shows the same drafts);
+     a draft that is already LIVE is a real project → it moves to Projects automatically */
+  const loadDrafts = () => { let d = []; try { d = JSON.parse(localStorage.getItem(DK) || "[]") || []; } catch { d = []; } return d.filter((p) => p && (p.kept || p.host || pagesHash(p.pages) !== p.orig)).map((p) => ({ ...p, recovered: true })); };
+  const promoted = useRef(false);
+  const combine = (drafts, saved) => {
+    const out = [...saved], at = new Map(saved.map((p, i) => [p.id, i])), asSaved = ({ recovered, orig, kept, ...p }) => ({ ...p, unsaved: false });
+    drafts.forEach((d) => {
+      if (at.has(d.id)) { const i = at.get(d.id); if ((d.updated || 0) > (out[i].updated || 0)) { out[i] = asSaved(d); promoted.current = true; } return; }
+      if (d.status === "published" && d.host) { out.unshift(asSaved(d)); promoted.current = true; } else out.unshift(d);
+    });
+    return out;
+  };
+  const [projects, setProjects] = useState(() => combine(loadDrafts(), loadProjects(E)));
+  useEffect(() => { if (promoted.current) { promoted.current = false; setProjects((ps) => [...ps]); } }); // a promoted draft gets saved as a project
   const [toast, setToast] = useState(""); useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 3500); return () => clearTimeout(t); }, [toast]);
   const [forms, setForms] = useState(() => loadForms(E)), [leads, setLeads] = useState(() => loadLeads(E)), [events, setEvents] = useState(() => loadEvents(E));
   const [view, setView] = useState(() => viewFromUrl()), [openId, setOpenId] = useState(null), [modal, setModal] = useState(null);
@@ -179,7 +192,7 @@ export default function Dashboard({ user, onLogout }) {
   useEffect(() => {
     const f = (e) => {
       const k = e.detail || [], all = k.includes("all"), has = (x) => all || k.includes(x);
-      if (has("lb_pages_") && !openRef.current) setProjects((ps) => [...ps.filter((p) => p.unsaved), ...loadProjects(E)]);
+      if ((has("lb_pages_") || has("lb_drafts_")) && !openRef.current) setProjects(() => combine(loadDrafts(), loadProjects(E)));
       if (has("lb_forms_")) setForms(loadForms(E));
       if (has("lb_leads_")) setLeads(loadLeads(E));
       if (has("lb_events_")) setEvents(loadEvents(E));
@@ -262,7 +275,7 @@ export default function Dashboard({ user, onLogout }) {
     const g = () => f(); window.addEventListener("storage", f); window.addEventListener("lb-leads", g);
     return () => { window.removeEventListener("storage", f); window.removeEventListener("lb-leads", g); };
   }, [E]);
-  const openPreview = (p) => saveNow.current() || window.open(previewUrl(previewToken(E, p.id)), "_blank");
+  const openPreview = (p, dev) => saveNow.current() || window.open(previewUrl(previewToken(E, p.id), "index.html", dev === "mobile" ? "mobile" : ""), "_blank");
 
   /* ---- project actions ---- */
   const patch = (id, o) => setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, ...o, updated: Date.now() } : p)));
@@ -371,7 +384,7 @@ export default function Dashboard({ user, onLogout }) {
   openRef.current = openId;
   const pub = modal && modal.type === "publish" && projects.find((p) => p.id === modal.id);
   const goView = (v, tile = "") => { setModal(null); setOpenId(null); setIgTile(tile); setView(v); };
-  const pubModal = pub && <PublishModal page={pub} projects={projects} integ={integ} onInteg={onInteg} onClose={() => setModal(null)} onDone={(o, keep) => { patch(pub.id, o); if (!keep) setModal(null); }} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onDomains={() => goView("domains")} />;
+  const pubModal = pub && <PublishModal page={pub} projects={projects} integ={integ} onInteg={onInteg} onClose={() => setModal(null)} onDone={(o, keep) => { const wasDraft = (projRef.current.find((x) => x.id === pub.id) || {}).unsaved; patch(pub.id, wasDraft && o && o.status === "published" ? { ...o, unsaved: false, orig: undefined, kept: undefined, recovered: undefined } : o); if (wasDraft && o && o.status === "published") setToast("✓ Live — and saved to your projects"); if (!keep) setModal(null); }} onSetup={(tile) => goView("integrations", typeof tile === "string" ? tile : "server")} onDomains={() => goView("domains")} />;
 
   if (open) return (
     <Suspense fallback={<div className="boot"><span className="pub-spin" />Opening the editor…</div>}>
@@ -423,7 +436,7 @@ export default function Dashboard({ user, onLogout }) {
           onLeads={() => setView("leads")} onSettings={() => setView("settings")} onLogout={onLogout} um={um} setUm={setUm} onGo={setView} projects={listed} forms={forms} cal={cal} onOpenProject={setOpenId} />
         {["pages", "websites", "landings", "projects"].includes(view) && <MyPages onView={(p) => (p.unsaved ? setPeek(p) : openPreview(p))} onViewAll={(w) => setView(w || "projects")} mode={view === "websites" ? "website" : view === "landings" ? "landing" : view === "projects" ? "all" : "dash"} query="" projects={listed} drafts={drafts} kind0={pjKind} onSaveDraft={(p) => saveDraft(p.id)} onToDraft={toDraft} onDiscardDraft={(p) => window.confirm(`Delete the draft "${p.name}"?`) && discardDraft(p.id)} leads={leads} events={evs} user={user}
           onOpen={setOpenId} onNew={startNew} onImport={() => setView("import")} onRename={rename} onDuplicate={duplicate}
-          onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onSaveTpl={saveAsTpl}
+          onPublish={(p) => setModal({ type: "publish", id: p.id })} onUnpublish={(p) => patch(p.id, { status: "draft" })} onDelete={remove} onPreview={openPreview} onMobile={(p) => openPreview(p, "mobile")} onSaveTpl={saveAsTpl}
           onLeads={() => setView("leads")} onAnalytics={() => setView("analytics")} onTemplates={() => setView("templates")} onConsult={consultOpen} onUseTpl={applyTpl} onDomain={(p) => { setDomFocus({ id: p.id, ts: Date.now() }); setView("domains"); }} />}
         {view === "import" && <ImportPage onBack={() => setView("pages")} onFile={importFile} />}
         {view === "templates" && <Templates mine={myTpl} onDeleteMine={(id) => putTpl(myTpl.filter((x) => x.id !== id))} onUse={(t) => applyTpl(t)} onSave={(t) => applyTpl(t, true)} />}

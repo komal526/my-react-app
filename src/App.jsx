@@ -11,7 +11,7 @@ const route = () => {
   const f = location.hash.match(/^#\/form\/([\w-]+)/); if (f) return { form: f[1] };
   const tp = location.hash.match(/^#\/tpl\/([\w%.-]+)/); if (tp) return { tpl: decodeURIComponent(tp[1]) };
   const bk = location.hash.match(/^#\/book\/([\w-]+)/); if (bk) return { book: bk[1] };
-  const m = location.hash.match(/^#\/preview\/([^/]+)\/?(.*)$/); return m ? { token: m[1], file: decodeURIComponent(m[2] || "") || "index.html" } : null;
+  const m = location.hash.match(/^#\/preview\/([^/]+)\/?(.*)$/); if (!m) return null; const [pf, q] = decodeURIComponent(m[2] || "").split("?"); return { token: m[1], file: pf || "index.html", dev: /(^|&)dev=(mobile|tablet)/.test(q || "") ? q.match(/dev=(mobile|tablet)/)[1] : "desktop" };
 };
 
 /* read once, before anything else looks at the address bar */
@@ -24,6 +24,8 @@ export default function App() {
   const [incoming, setIncoming] = useState(INCOMING);   /* used once */
   const login = (u) => { localStorage.setItem("lb_session", JSON.stringify(u)); setIncoming(null); setUser(u); };
   const logout = async () => { if (cloudOn()) await cloudLogout(); localStorage.removeItem("lb_session"); setUser(null); };
+  /* the login expired or was signed out on another device → back to the login page (once, no error loop) */
+  useEffect(() => { const f = () => { localStorage.removeItem("lb_session"); setUser(null); }; window.addEventListener("lb-session-expired", f); return () => window.removeEventListener("lb-session-expired", f); }, []);
   /* Supabase: if this browser already has the data, open instantly and sync in the background */
   const hasLocal = () => { try { return !!(user && localStorage.getItem("lb_pages_" + user.email)); } catch { return false; } };
   const [ready, setReady] = useState(() => !(cloudOn() && user) || hasLocal());
@@ -38,7 +40,7 @@ export default function App() {
   if (pv && pv.form) return <FormPage key={pv.form} id={pv.form} />;
   if (pv && pv.tpl) return <TplView key={pv.tpl} k={pv.tpl} />;
   if (pv && pv.book) return <BookPage key={pv.book} id={pv.book} />;
-  if (pv) return <Preview key={pv.token} token={pv.token} file={pv.file} />;
+  if (pv) return <Preview key={pv.token} token={pv.token} file={pv.file} dev={pv.dev} />;
   if (!ready) return /^#\/studio/.test(location.hash) ? <div className="ais-boot"><span className="pub-spin" /></div> : <div className="boot"><span className="pub-spin" />Loading your workspace…</div>;
   return user ? <Dashboard key={user.email} user={user} onLogout={logout} /> : <Auth onLogin={login} incoming={incoming} />;
 }

@@ -273,6 +273,7 @@ all('a[href]').forEach(function(a){var h=a.getAttribute('href');if(h&&h.indexOf(
 if(W.LB_PREVIEW){
  W.addEventListener('click',function(e){
   var a=e.target.closest&&e.target.closest('a[href],[data-href]');if(!a||a.closest('[data-lb-open]'))return;
+  var af=a.closest('form[data-lb-form]');if(af&&!af.querySelector('[type=submit]'))return;   /* v123: a link styled as the form's button submits the form */
   var h=a.getAttribute('href')||a.getAttribute('data-href')||'',t=a.getAttribute('target')||a.getAttribute('data-target');
   if(!h||/^(mailto:|tel:|sms:|javascript:)/i.test(h))return;
   e.preventDefault();e.stopPropagation();
@@ -341,7 +342,12 @@ function natOf(i){var cc=ccOf(i),v=i.value.replace(/\\D/g,''),L=CCL[cc];if(v.ind
 function phoneBad(i){var v=natOf(i);if(!v)return '';var L=CCL[ccOf(i)];if(L?L.indexOf(v.length)<0:(v.length<6||v.length>14))return 'Enter a valid '+(L?L.join(' or ')+'-digit ':'')+'number for +'+ccOf(i);return ''}
 d.addEventListener('input',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-lb-phone')){t.setCustomValidity('');var c=t.value.replace(/[^\\d+\\s-]/g,'');if(c!==t.value)t.value=c}});
 function esc(v){return String(v==null?'':v).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.hasAttribute('data-lb-form'))return;e.preventDefault();
+d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.hasAttribute('data-lb-form'))return;e.preventDefault();try{lbSubmit(e,f)}catch(err){lbFallback(f,err)}},true);
+/* v123: a form must never fail silently — if anything goes wrong, the lead is still saved and the visitor still sees the thank-you message */
+function lbFallback(f,err){try{console.error('LaunchBuilder form:',err)}catch(_){}try{var data={};Array.prototype.forEach.call(f.elements,function(el){if(el.name&&el.value&&!/^(submit|button|password|file)$/.test(el.type)&&(!/^(checkbox|radio)$/.test(el.type)||el.checked))data[el.name]=el.value});var lead={lid:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),form:f.getAttribute('data-lb-form')||'Form',formId:f.getAttribute('data-lb-form-id')||'',page:cur,url:location.href,data:data,ts:Date.now()};if(W.LB_PREVIEW)parent.postMessage({lb:'lead',lead:lead},'*');if(W.LB_LEAD_URL)post(W.LB_LEAD_URL,{action:'lead',lead:Object.assign({site:W.LB_SITE||''},lead)})}catch(_){}var m=d.createElement('div');m.className='lbw-ok';m.textContent=f.getAttribute('data-lb-success')||'Thank you! We will be in touch soon.';f.style.display='none';f.parentNode.insertBefore(m,f.nextSibling)}
+/* v123: before the browser checks the form — a required field the page design hides can't block it, and a styled button that isn't type=submit still submits */
+d.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('button,input[type=submit],a,[role=button]');if(!b)return;var f=b.form||b.closest('form');if(!f||!f.hasAttribute('data-lb-form'))return;var real=b.tagName!=='A'&&b.type==='submit',fake=false;if(!real){if(f.querySelector('[type=submit]')||!/(regist|submit|join|book|claim|send|apply|sign|enrol|reserve|get|start|download|continue|confirm)/i.test(b.textContent||b.value||''))return;e.preventDefault();fake=true}Array.prototype.forEach.call(f.elements,function(el){if(el.willValidate&&el.type!=='hidden'&&!el.getClientRects().length&&!el.checkValidity()){el.required=false;el.removeAttribute('pattern');el.removeAttribute('minlength');el.setCustomValidity('')}});if(fake){if(f.requestSubmit)f.requestSubmit();else f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}))}},true);
+function lbSubmit(e,f){
  var btn=f.querySelector('[type=submit]'),pay=jattr(f,'data-lb-pay'),wa=jattr(f,'data-lb-wa'),hook=f.getAttribute('data-lb-webhook');
  if(pay&&!(+pay.amount>0))pay=null;
  if(!f.__lead){var bad=null;Array.prototype.forEach.call(f.querySelectorAll('[data-lb-phone]'),function(i){var m=phoneBad(i);i.setCustomValidity(m);if(m&&!bad)bad=i});if(bad){bad.reportValidity();return}}
@@ -396,7 +402,7 @@ d.addEventListener('submit',function(e){var f=e.target;if(!f.hasAttribute||!f.ha
  if(pay.mode==='link'&&pay.link)W.open(pay.link,'_blank','noopener');
  box.querySelector('.lbw-paid').onclick=function(){paid({status:'claimed',mode:pay.mode,ref:box.querySelector('.lbw-utr').value})};
  box.querySelector('.lbw-back').onclick=function(){box.remove();f.style.display=''};
-},true);
+}
 /* ad tracking fields: copy utm_* / gclid / fbclid from the page link (kept for the visit) */
 try{var lbQ=new URLSearchParams(location.search),lbU={};try{lbU=JSON.parse(sessionStorage.getItem('lb_utm')||'{}')}catch(e){}
  ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid'].forEach(function(k){if(lbQ.get(k))lbU[k]=lbQ.get(k)});try{sessionStorage.setItem('lb_utm',JSON.stringify(lbU))}catch(e){}
@@ -713,7 +719,9 @@ export const formHtml = (form, integ) => {
   const ff = s.font && FORM_FONTS.includes(s.font) ? s.font : "";
   const btnBg = bt.grad ? `linear-gradient(135deg,${bt.bg || C},${bt.grad})` : bt.bg || C;
   const ta = s.align === "center" ? "text-align:center;" : "";
+  const fxCss = formFxCss(form, s, C);
   return `<div data-lb-formbox="${esc(form.id)}" data-lb-name="Form: ${esc(form.name)}" style="max-width:${+s.width || 560}px;margin:0 auto;box-sizing:border-box;${ff ? `font-family:'${ff}',system-ui,sans-serif;` : ""}${card}">`
+    + (fxCss ? `<style>${fxCss}</style>` : "")
     + (ff ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(ff)}:wght@400;500;600;700&display=swap">` : "")
     + (s.title || s.subtitle ? `<div data-lb-fid="__title" style="${ta}">` : "")
     + (s.title ? `<h3 style="margin:0 0 6px;font-size:${+s.titleSize || 26}px;color:${T};letter-spacing:-.01em">${esc(s.title)}</h3>` : "")
@@ -723,8 +731,31 @@ export const formHtml = (form, integ) => {
     + (form.fields || []).map(one).join("")
     + `<div data-lb-fid="__submit" style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:10px;justify-content:${bt.align === "left" ? "flex-start" : bt.align === "right" ? "flex-end" : "center"}"><button type="submit" style="${bt.full ? "flex:1 1 100%;" : ""}padding:${pad};border:0;border-radius:${R}px;background:${btnBg};color:${bt.fg || "#fff"};font:inherit;font-size:${fs}px;font-weight:700;cursor:pointer">${esc(btnText)}</button>${bt.extra && bt.extraUrl ? `<a href="${esc(bt.extraUrl)}" target="_blank" rel="noopener" style="${bt.full ? "flex:1 1 100%;box-sizing:border-box;" : ""}display:inline-block;text-align:center;padding:${pad};border-radius:${R}px;border:1.5px solid ${bt.bg || C};color:${bt.bg || C};text-decoration:none;font-size:${fs}px;font-weight:700">${esc(bt.extraText || "Learn more")}</a>` : ""}${payOn && bt.note ? `<div style="flex:1 1 100%;text-align:center;font-size:12.5px;color:${s.muted};margin-top:-2px">🔒 Secure payment via ${payCfg.mode === "razorpay" ? "Razorpay" : payCfg.mode === "upi" ? "UPI (GPay, PhonePe, Paytm)" : "payment link"}</div>` : ""}</div></form></div>`;
 };
+/* v122 — form effects: hover, focus, per-field styles, animation, custom CSS (a small <style> scoped to this form) */
+const cssVal = (v) => (/^[#\w(),.%\s-]{1,60}$/.test(String(v || "")) ? String(v) : "");
+const pageBgCss = (st) => { const fx = st.fx || {}, a = cssVal(st.pageBg) || "#f4f3fb", b = cssVal(fx.pageBg2), img = /^https:\/\/[^\s"'()<>]+$/.test(fx.pageImg || "") ? fx.pageImg : ""; return (img ? `linear-gradient(rgba(0,0,0,${(+fx.pageDim || 0) / 100}),rgba(0,0,0,${(+fx.pageDim || 0) / 100})),url("${img}")` : "") + (img && b ? "," : "") + (b ? `linear-gradient(135deg,${a},${b})` : img ? "" : a); };
+export const FORM_HOVERS = [["lift", "Lift"], ["glow", "Glow"], ["grow", "Grow"], ["darken", "Darken"], ["shine", "Shine"], ["none", "None"]];
+function formFxCss(form, s, C) {
+  const fx = s.fx || {}, S = `[data-lb-formbox="${String(form.id).replace(/[^\w-]/g, "")}"]`, acc = cssVal(fx.focus) || C;
+  const hov = { lift: "transform:translateY(-3px);box-shadow:0 14px 28px -12px " + C, glow: "box-shadow:0 0 0 4px " + C + "33,0 10px 30px -6px " + C, grow: "transform:scale(1.04)", darken: "filter:brightness(.88)", shine: "filter:brightness(1.06)", none: "" }[fx.btnHover || "lift"] || "";
+  let c = `${S} button[type=submit]{position:relative;overflow:hidden;transition:transform .22s ease,box-shadow .22s ease,filter .22s ease,background .22s ease${fx.btnUpper ? ";text-transform:uppercase;letter-spacing:.05em" : ""}${fx.btnShadow ? ";box-shadow:0 12px 26px -12px " + C : ""}${fx.btnRadius !== undefined && fx.btnRadius !== "" ? ";border-radius:" + (+fx.btnRadius || 0) + "px!important" : ""}}`
+    + `${S} button[type=submit]:hover{${hov}${cssVal(fx.btnHoverBg) ? ";background:" + cssVal(fx.btnHoverBg) + "!important" : ""}${cssVal(fx.btnHoverFg) ? ";color:" + cssVal(fx.btnHoverFg) + "!important" : ""}}`
+    + (fx.btnHover === "shine" ? `${S} button[type=submit]::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-20deg);transition:left .6s ease}${S} button[type=submit]:hover::after{left:130%}` : "")
+    + `${S} :is(input,select,textarea){transition:border-color .2s ease,box-shadow .2s ease,background .2s ease}`
+    + (cssVal(fx.hoverBorder) ? `${S} :is(input,select,textarea):hover{border-color:${cssVal(fx.hoverBorder)}!important}` : "")
+    + `${S} :is(input,select,textarea):focus{outline:none;border-color:${acc}!important;box-shadow:0 0 0 3px ${acc}2e!important}`
+    + (cssVal(fx.labelColor) ? `${S} label{color:${cssVal(fx.labelColor)}!important}` : "")
+    + (cssVal(fx.titleColor) ? `${S} h3{color:${cssVal(fx.titleColor)}!important}` : "")
+    + (fx.anim === "fade" ? `${S}{animation:lbfUp .7s ease both}@keyframes lbfUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}` : fx.anim === "zoom" ? `${S}{animation:lbfZoom .6s ease both}@keyframes lbfZoom{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}` : "");
+  (form.fields || []).forEach((f) => { const t = f.st || {}, F = `${S} [data-lb-fid="${String(f.id).replace(/[^\w-]/g, "")}"]`;
+    if (cssVal(t.labelColor)) c += `${F} label,${F} h4,${F} p{color:${cssVal(t.labelColor)}!important}`;
+    const inp = [cssVal(t.inputBg) && "background:" + cssVal(t.inputBg) + "!important", cssVal(t.inputBorder) && "border-color:" + cssVal(t.inputBorder) + "!important", cssVal(t.inputText) && "color:" + cssVal(t.inputText) + "!important", t.size && "font-size:" + (+t.size) + "px!important", t.radius !== undefined && t.radius !== "" && "border-radius:" + (+t.radius || 0) + "px!important"].filter(Boolean).join(";");
+    if (inp) c += `${F} :is(input,select,textarea){${inp}}`; });
+  if (fx.css) c += String(fx.css).replace(/<\/?style/gi, "").replace(/&/g, S).slice(0, 8000);
+  return c + "@media (prefers-reduced-motion:reduce){" + S + "," + S + " *{animation:none!important;transition:none!important}}";
+}
 /* a full page that shows just the form (share link) */
-export const formPageHtml = (form, integ) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(form.name)}</title><style>body{margin:0;min-height:100vh;background:${esc((form.settings || {}).pageBg || "#f4f3fb")};font-family:Inter,system-ui,sans-serif;color:#16142b;display:flex;align-items:center;justify-content:center;padding:40px 16px;box-sizing:border-box}</style></head><body><div style="width:100%">${formHtml(form, integ)}</div></body></html>`;
+export const formPageHtml = (form, integ) => `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(form.name)}</title><style>body{margin:0;min-height:100vh;background:${pageBgCss(form.settings || {})};background-size:cover;background-position:center;background-attachment:fixed;font-family:Inter,system-ui,sans-serif;color:#16142b;display:flex;align-items:center;justify-content:center;padding:40px 16px;box-sizing:border-box}</style></head><body><div style="width:100%">${formHtml(form, integ)}</div></body></html>`;
 
 /* ==================== Elementor-style structures (section with columns) ==================== */
 export const STRUCTURES = [

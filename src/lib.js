@@ -90,6 +90,8 @@ export async function imgPut(dataUrl) {
   if (_imgUp.has(dataUrl)) return _imgUp.get(dataUrl);
   const r = await phpCall(acctSrv(), { action: "img_put", data: dataUrl }); if (r.url) _imgUp.set(dataUrl, r.url); return r.url;
 }
+/* v122: read a reference website for the AI (server fetches it — browsers can't read other sites) */
+export const refFetch = (url) => phpCall(acctSrv(), { action: "ref_fetch", url });
 export async function offloadImages(text) {
   DATA_IMG.lastIndex = 0; const found = [...new Set(String(text).match(DATA_IMG) || [])]; let out = String(text), n = 0;
   for (const u of found) { try { const url = await imgPut(u); if (url) { out = out.split(u).join(url); n++; } } catch { /* server not reachable — keep it inside */ } }
@@ -123,7 +125,7 @@ export const previewToken = (email, pid) => {
   return t;
 };
 export const readToken = (t) => { const v = readAll()[t]; return v ? { ...v, expired: v.exp < Date.now() } : null; };
-export const previewUrl = (token, file = "index.html") => `${appUrl()}#/preview/${token}/${file}`;
+export const previewUrl = (token, file = "index.html", dev = "") => `${appUrl()}#/preview/${token}/${file}${dev ? "?dev=" + dev : ""}`;
 
 /* ==================== forms (Dashboard → Forms) ==================== */
 const FK = (email) => "lb_forms_" + email;
@@ -348,12 +350,24 @@ async function callAI1(ai, system, prompt, maxTokens, files = []) {
   if (!text.trim()) throw new Error("The AI returned an empty answer. Try again or change the model.");
   return text;
 }
-const AI_RULES = `Rules: plain HTML + CSS only, all CSS inside one <style> in <head>, no JavaScript, no external CSS frameworks. Fully responsive (mobile first, use flex/grid and a @media (max-width:767px) block). Use Google Fonts via <link> if you want. Images: use https://placehold.co/WIDTHxHEIGHT/e9e7ff/4f46e5?text=Label. Put each part in its own <section> with a meaningful id (hero, features, pricing, faq, contact…). Every form must be <form data-lb-form="Form name" data-lb-success="Thank-you text"> with name attributes on inputs (name, email, phone…). Buttons that link to sections use href="#id". Write real, specific, persuasive copy for the business described (no lorem ipsum).`;
+const AI_RULES = `TECHNICAL RULES: plain HTML + CSS only, all CSS inside one <style> in <head>, no JavaScript, no external CSS frameworks. Google Fonts via <link> are welcome. Put each part in its own <section> with a meaningful id (hero, features, pricing, faq, contact…). Every form must be <form data-lb-form="Form name" data-lb-success="Thank-you text"> with name attributes on inputs (name, email, phone…). Buttons that link to sections use href="#id". FAQ uses <details><summary>.
+
+DESIGN STANDARD — the page must look like a premium, modern, award-level site made by a top agency, never plain or basic:
+1. COLOURS: choose a bold palette that fits the business (a rich brand colour, one strong accent, neutrals). Use gradients, coloured or dark section backgrounds and alternating section colours. NEVER an all-white page; at most every second section may be light. Define colours as CSS variables in :root.
+2. TYPOGRAPHY: a Google Font pairing (an expressive display font for headings + Inter / DM Sans / Poppins for text). Big confident hero headline with font-size:clamp(2.4rem,6vw,4.6rem), tight line-height, clear hierarchy, short readable paragraphs.
+3. HERO: full-width and eye-catching — background photo with a colour/gradient overlay or a strong gradient, headline, sub-headline, 2 call-to-action buttons, and a trust row (rating stars, numbers, logos or badges). On landing pages add urgency where it fits (date, seats left, offer).
+4. SECTIONS (landing page): hero → trust/stats → benefits/features as cards with icons (inline SVG or emoji) → how it works (numbered steps) → about / who it is for → testimonials with photos and ★★★★★ → offer / pricing with the main plan highlighted → FAQ → final call-to-action band with the form → footer. Websites: every page fully built with the same quality.
+5. PHOTOS: use real photos wherever they help (hero, about, gallery, testimonials, cards): https://loremflickr.com/WIDTH/HEIGHT/KEYWORD1,KEYWORD2?lock=N — 1-2 English keywords that match the business (e.g. yoga,studio · restaurant,food · laptop,office · doctor,clinic · portrait,person for people), and a different lock number (1-999) for every image. object-fit:cover, rounded corners, soft shadows. Never grey placeholder boxes.
+6. ANIMATION (CSS only): @keyframes fade-up / fade-in / zoom for hero elements with staggered animation-delay; smooth hover effects on every button and card (transform:translateY(-4px), bigger shadow, colour shift, transition .25s ease); a subtle float or pulse on badges; an animated gradient or glow in the hero. Add @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}.
+7. COMPONENTS: cards with 16-24px radius and layered soft shadows, glass / blur panels where fitting, pill badges, icon circles, dividers; large buttons (min 48px tall) with a gradient or solid brand colour and a clear hover state; a sticky top bar with logo, links and a CTA button.
+8. SPACING & LAYOUT: generous whitespace (sections padding 96px desktop / 56px mobile), centred container max-width 1200px, CSS grid / flex layouts, visual rhythm.
+9. RESPONSIVE: perfect from 360px phones to large desktops — mobile first, columns stack, fonts with clamp(), images scale, no horizontal scroll, the nav becomes a compact row on mobile, tap targets at least 44px. Include a @media (max-width:767px) block.
+10. CONTENT: use EVERY detail the user gave (names, brand, prices, dates, times, phone, WhatsApp, address, city, offers, features, bonuses, links) exactly as written — never drop or change them. Write specific, persuasive, benefit-led copy for this exact business and audience; invent only realistic supporting details; no lorem ipsum, no "[placeholder]".`;
 export async function aiWebsite(ai, brief, multi, files = []) {
   const sys = multi
-    ? `You are a senior web designer. Create a small multi-page website. Output ONLY the pages, each one a complete HTML document (<!DOCTYPE html>…</html>) preceded by a line exactly like: ===PAGE Home|index.html=== . First page must be index.html. 3 to 5 pages. Every page has the same header with a <nav data-lb-autonav> containing links to every page file, and the same footer. ${AI_RULES}`
-    : `You are a senior web designer. Create ONE high-converting landing page. Output ONLY one complete HTML document (<!DOCTYPE html>…</html>), nothing else. ${AI_RULES}`;
-  const out = await callAI(ai, sys, brief, 16000, files);
+    ? `You are a world-class web designer and copywriter. Create a stunning, fully responsive and animated multi-page website with one consistent premium design across all pages. Output ONLY the pages, each one a complete HTML document (<!DOCTYPE html>…</html>) preceded by a line exactly like: ===PAGE Home|index.html=== . First page must be index.html. 3 to 5 pages. Every page has the same header with a <nav data-lb-autonav> containing links to every page file, and the same footer. ${AI_RULES}`
+    : `You are a world-class web designer and conversion copywriter. Create ONE stunning, high-converting, fully responsive and animated landing page. Output ONLY one complete HTML document (<!DOCTYPE html>…</html>), nothing else — no markdown, no explanation. ${AI_RULES}`;
+  const out = await callAI(ai, sys, brief, 30000, files);
   if (!multi) { const h = strip(out), k = h.search(/<!doctype|<html/i); return [{ name: "Home", file: "index.html", html: k > 0 ? h.slice(k) : h }]; }
   const parts = out.split(/^===PAGE\s+(.+?)\|(.+?)===\s*$/m), pages = [];
   for (let i = 1; i < parts.length; i += 3) pages.push({ name: parts[i].trim(), file: parts[i + 1].trim().replace(/[^\w.-]/g, "-"), html: strip(parts[i + 2]) });
@@ -597,8 +611,8 @@ export const aiSaveKey = (integ, provider, apikey, model, test = true) => phpCal
 export const aiRemoveKey = (integ) => phpCall(srvFor(integ), { action: "aikey", remove: 1 });
 /* turn an AI answer into pages (same format as "Create with AI") */
 export const AI_PAGE_SYS = (multi) => (multi
-  ? `You are a senior web designer. Create a small multi-page website. Output ONLY the pages, each one a complete HTML document (<!DOCTYPE html>…</html>) preceded by a line exactly like: ===PAGE Home|index.html=== . First page must be index.html. 3 to 5 pages. Every page has the same header with a <nav data-lb-autonav> containing links to every page file, and the same footer. ${AI_RULES}`
-  : `You are a senior web designer. Create ONE high-converting landing page. Output ONLY one complete HTML document (<!DOCTYPE html>…</html>), nothing else. ${AI_RULES}`);
+  ? `You are a world-class web designer and copywriter. Create a stunning, fully responsive and animated multi-page website with one consistent premium design across all pages. Output ONLY the pages, each one a complete HTML document (<!DOCTYPE html>…</html>) preceded by a line exactly like: ===PAGE Home|index.html=== . First page must be index.html. 3 to 5 pages. Every page has the same header with a <nav data-lb-autonav> containing links to every page file, and the same footer. ${AI_RULES}`
+  : `You are a world-class web designer and conversion copywriter. Create ONE stunning, high-converting, fully responsive and animated landing page. Output ONLY one complete HTML document (<!DOCTYPE html>…</html>), nothing else — no markdown, no explanation. ${AI_RULES}`);
 export function parseAiPages(out, multi) {
   if (!multi) { const h = strip(out), k = h.search(/<!doctype|<html/i); return [{ name: "Home", file: "index.html", html: k > 0 ? h.slice(k) : h }]; }
   const parts = out.split(/^===PAGE\s+(.+?)\|(.+?)===\s*$/m), pages = [];

@@ -311,7 +311,7 @@ function DashFooter({ onNew, onGo, onTemplates, onLeads, onAnalytics, onConsult 
 
 /* hovering a project card starts loading the editor, so Edit opens at once */
 let warmed = false; const warm = () => { if (!warmed) { warmed = true; import("./Editor.jsx"); } };
-export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl, onDomain, onView, onSaveDraft, onDiscardDraft, drafts = [], kind0, onAiEdit, onToDraft }) {
+export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onMobile, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl, onDomain, onView, onSaveDraft, onDiscardDraft, drafts = [], kind0, onAiEdit, onToDraft }) {
   /* free subdomains (slug → name.crecapo.tech) so each card shows its real live address */
   const [subs, setSubs] = useState(subsCache);
   useEffect(() => {
@@ -374,7 +374,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
               {p.unsaved ? <div className="db-cardbtns" onClick={(e) => e.stopPropagation()}>
                 <button onClick={() => onOpen(p.id)}><Icon n="pen" s={14} /> Edit</button>
                 {onSaveDraft && <button className="pri" onClick={() => onSaveDraft(p)}>💾 Save to projects</button>}
-                {onDiscardDraft && <button className="del" onClick={() => onDiscardDraft(p)} title="Delete this draft">🗑</button>}
+                {onDiscardDraft && <button className="del" onClick={() => onDiscardDraft(p)} title="Delete this draft" aria-label="Delete this draft"><Icon n="trash" s={16} /></button>}
               </div> : <div className="db-cardbtns" onClick={(e) => e.stopPropagation()}>
                 <button onClick={() => onOpen(p.id)}><Icon n="pen" s={14} /> Edit</button>
                 {onPreview && <button onClick={act(onPreview, p)}><Icon n="eye" s={14} /> Preview</button>}
@@ -382,6 +382,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
                 <button className="pri" onClick={act(onPublish, p)}>🚀 {p.status === "published" ? "Update" : "Publish"}</button>
               </div>}
             </div>
+            {!p.unsaved && onMobile && <button className="pj-mob" title="Mobile preview (opens in a new tab)" aria-label="Mobile preview" onClick={(e) => { e.stopPropagation(); onMobile(p); }}><svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><rect x="6" y="2" width="12" height="20" rx="3" /><path d="M11 18h2" /></svg></button>}
             {!p.unsaved && <button className="dots" onClick={(e) => { e.stopPropagation(); setMenu(menu === p.id ? null : p.id); }}>⋯</button>}
             {menu === p.id && (
               <div className="menu" onClick={(e) => e.stopPropagation()}>
