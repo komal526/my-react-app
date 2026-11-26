@@ -1,7 +1,9 @@
 // LaunchBuilder v48 — MyPages.jsx (Dashboard · Websites · Landing pages)
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { Thumb } from "./parts.jsx";
-import { tplTabUrl } from "./Rail.jsx";
+import { tplTabUrl, PhoneFrame } from "./Rail.jsx";
+import { createPortal } from "react-dom";
+import { finalize } from "./tools.js";
 import Robot from "./Robot.jsx";
 import { Icon } from "./icons.jsx";
 import { liveAddr, domainState, subsCache, subList, LIMIT, projLimit, limitText, FILE_TEMPLATES, FEATURED_TPL, longThumb, fuDue, aiAvailable, askAI, tplUrl } from "../lib.js";
@@ -311,6 +313,26 @@ function DashFooter({ onNew, onGo, onTemplates, onLeads, onAnalytics, onConsult 
 
 /* hovering a project card starts loading the editor, so Edit opens at once */
 let warmed = false; const warm = () => { if (!warmed) { warmed = true; import("./Editor.jsx"); } };
+/* v126 — mobile view pop-up: the page inside a phone, scroll and tap it like on a real phone; ✕ or Esc closes */
+function MobilePop({ p, subs, onClose, onTab }) {
+  const [pi, setPi] = useState(0), [html, setHtml] = useState("");
+  const pg = p.pages[pi] || p.pages[0];
+  useEffect(() => { let gone = false; setHtml(""); finalize(pg.html, { mode: "blob", preview: true, page: pg.file }).then((r) => !gone && setHtml(r.html)).catch(() => !gone && setHtml(pg.html)); return () => { gone = true; }; }, [pg]);
+  useEffect(() => { const k = (e) => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", k); document.body.style.overflow = "hidden"; return () => { window.removeEventListener("keydown", k); document.body.style.overflow = ""; }; }, [onClose]);
+  const live = p.status === "published" ? liveAddr(p, subs) : "";
+  return createPortal(<div className="mpop" onClick={onClose}>
+    <div className="mpop-in" onClick={(e) => e.stopPropagation()}>
+      <div className="mpop-h">
+        <div><b>{p.name}</b><small>{live ? <><i className="on" />Live · {live.replace(/^https?:\/\//, "").replace(/\/$/, "")}</> : <><i />Not live yet</>}</small></div>
+        {p.pages.length > 1 && <select value={pi} onChange={(e) => setPi(+e.target.value)}>{p.pages.map((x, i) => <option key={x.id} value={i}>{x.name}</option>)}</select>}
+        {onTab && <button className="mpop-tab" onClick={() => onTab(p)} title="Open the mobile view in a new tab">↗</button>}
+        <button className="mpop-x" onClick={onClose} aria-label="Close" title="Close (Esc)">✕</button>
+      </div>
+      <PhoneFrame url={live || (p.slug || "yourpage") + ".crecapo.tech"}>{html ? <iframe title="Mobile view" srcDoc={html} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" /> : <div className="mpop-load"><span className="pub-spin" /></div>}</PhoneFrame>
+    </div>
+  </div>, document.body);
+}
+
 export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, onRename, onDuplicate, onPublish, onUnpublish, onDelete, onPreview, onMobile, onSaveTpl, leads = [], events = [], user = {}, mode = "dash", query = "", onLeads, onAnalytics, onTemplates, onConsult, onUseTpl, onDomain, onView, onSaveDraft, onDiscardDraft, drafts = [], kind0, onAiEdit, onToDraft }) {
   /* free subdomains (slug → name.crecapo.tech) so each card shows its real live address */
   const [subs, setSubs] = useState(subsCache);
@@ -326,6 +348,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
   const nWeb = projects.filter((p) => p.type === "website").length, nLand = projects.length - nWeb;
   const nDom = projects.filter((p) => domainState(p, subs) === "connected").length;
   const typed = mode === "all" && kind === "drafts" ? drafts : mode === "all" && kind === "domain" ? projects.filter((p) => domainState(p, subs) === "connected") : mode === "website" || (mode === "all" && kind === "website") ? projects.filter((p) => p.type === "website") : mode === "landing" || (mode === "all" && kind === "landing") ? projects.filter((p) => p.type !== "website") : projects;
+  const [mob, setMob] = useState(null);   /* v126: the mobile-view pop-up */
   const phones = mode === "landing" || (mode === "all" && kind === "landing");   /* v125: Landing pages tab → each page shown in a phone */
   const matching = typed.filter((p) => (filter === "All" || (filter === "Published" ? p.status === "published" : p.status !== "published")) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
   const shown = mode === "dash" && !query ? [...matching].sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 3) : matching;
@@ -363,7 +386,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
         <div className="empty"><b>{typed.length ? "Nothing matches" : mode === "website" ? "No websites yet" : mode === "landing" ? "No landing pages yet" : "Nothing here yet"}</b><p className="mut">Create one from a template, with AI, or import an existing HTML file.</p>
           <button className="pri" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ Create new</button> <button onClick={onImport}>Import HTML</button></div>
       ) : (
-        <div className={(mode === "dash" && !query ? "grid pc-grid" : "grid") + (phones ? " pj-phones" : "")}>{shown.slice(0, limit).map((p) => (
+        <div className={(mode === "dash" && !query ? "grid pc-grid" : "grid") + (phones ? " pj-phones" : "")}>{mob && <MobilePop p={mob} subs={subs} onClose={() => setMob(null)} onTab={onMobile} />}{shown.slice(0, limit).map((p) => (
           <div key={p.id} className="card" onPointerEnter={warm} onClick={() => (onView ? onView(p) : onOpen(p.id))} onContextMenu={(e) => { e.preventDefault(); setMenu(p.id); }} title="Click to preview · right-click for more">
             {phones ? <div className="pj-phone"><div className="pj-notch" /><div className="pj-sb"><span>9:41</span><span className="pj-sig"><i /><i /><i /><i /><b /></span></div><Thumb html={p.pages[0].html} mobile /></div> : <Thumb html={p.pages[0].html} img={tplImg(p)} />}
             <div className="cb">
@@ -383,7 +406,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
                 <button className="pri" onClick={act(onPublish, p)}>🚀 {p.status === "published" ? "Update" : "Publish"}</button>
               </div>}
             </div>
-            {!p.unsaved && onMobile && <button className="pj-mob" title="Mobile preview (opens in a new tab)" aria-label="Mobile preview" onClick={(e) => { e.stopPropagation(); onMobile(p); }}><svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><rect x="6" y="2" width="12" height="20" rx="3" /><path d="M11 18h2" /></svg></button>}
+            <button className="pj-mob2" title="See it on a phone" aria-label="Mobile view" onClick={(e) => { e.stopPropagation(); setMob(p); }}><svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><rect x="6" y="2" width="12" height="20" rx="3" /><path d="M11 18h2" /></svg><span>Mobile</span></button>
             {!p.unsaved && <button className="dots" onClick={(e) => { e.stopPropagation(); setMenu(menu === p.id ? null : p.id); }}>⋯</button>}
             {menu === p.id && (
               <div className="menu" onClick={(e) => e.stopPropagation()}>
