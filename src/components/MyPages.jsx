@@ -326,6 +326,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
   const nWeb = projects.filter((p) => p.type === "website").length, nLand = projects.length - nWeb;
   const nDom = projects.filter((p) => domainState(p, subs) === "connected").length;
   const typed = mode === "all" && kind === "drafts" ? drafts : mode === "all" && kind === "domain" ? projects.filter((p) => domainState(p, subs) === "connected") : mode === "website" || (mode === "all" && kind === "website") ? projects.filter((p) => p.type === "website") : mode === "landing" || (mode === "all" && kind === "landing") ? projects.filter((p) => p.type !== "website") : projects;
+  const phones = mode === "landing" || (mode === "all" && kind === "landing");   /* v125: Landing pages tab → each page shown in a phone */
   const matching = typed.filter((p) => (filter === "All" || (filter === "Published" ? p.status === "published" : p.status !== "published")) && (!query || p.name.toLowerCase().includes(query.toLowerCase())));
   const shown = mode === "dash" && !query ? [...matching].sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 3) : matching;
   /* draw 12 cards first, the rest as you scroll (keeps the page instant with many projects) */
@@ -362,9 +363,9 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
         <div className="empty"><b>{typed.length ? "Nothing matches" : mode === "website" ? "No websites yet" : mode === "landing" ? "No landing pages yet" : "Nothing here yet"}</b><p className="mut">Create one from a template, with AI, or import an existing HTML file.</p>
           <button className="pri" onClick={() => onNew(mode === "website" ? "website" : "landing")}>＋ Create new</button> <button onClick={onImport}>Import HTML</button></div>
       ) : (
-        <div className={mode === "dash" && !query ? "grid pc-grid" : "grid"}>{shown.slice(0, limit).map((p) => (
+        <div className={(mode === "dash" && !query ? "grid pc-grid" : "grid") + (phones ? " pj-phones" : "")}>{shown.slice(0, limit).map((p) => (
           <div key={p.id} className="card" onPointerEnter={warm} onClick={() => (onView ? onView(p) : onOpen(p.id))} onContextMenu={(e) => { e.preventDefault(); setMenu(p.id); }} title="Click to preview · right-click for more">
-            <Thumb html={p.pages[0].html} img={tplImg(p)} />
+            {phones ? <div className="pj-phone"><div className="pj-notch" /><div className="pj-sb"><span>9:41</span><span className="pj-sig"><i /><i /><i /><i /><b /></span></div><Thumb html={p.pages[0].html} mobile /></div> : <Thumb html={p.pages[0].html} img={tplImg(p)} />}
             <div className="cb">
               <div className="ct"><b>{p.name}</b></div>
               {(() => { const live = p.status === "published" ? liveAddr(p, subs) : "", ds = domainState(p, subs);

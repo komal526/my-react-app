@@ -63,7 +63,7 @@ export const thumbHtml = (h) => {
 const TQ = { busy: 0, wait: [] };
 const tqNext = () => { while (TQ.busy < 3 && TQ.wait.length) { TQ.wait.sort((a, b) => a.y() - b.y()); const j = TQ.wait.shift(); TQ.busy++; j.go(); } };
 const tqDone = () => { TQ.busy = Math.max(0, TQ.busy - 1); tqNext(); };
-export function Thumb({ html, img }) {
+export function Thumb({ html, img, mobile }) {
   const ref = useRef(null), [on, setOn] = useState(false), done = useRef(false);
   useEffect(() => {
     const el = ref.current; if (!el || on) return;
@@ -80,6 +80,12 @@ export function Thumb({ html, img }) {
   /* the preview is drawn long before every photo arrives — show it after a moment instead of waiting for "load" */
   useEffect(() => { if (!on) return; const t = setTimeout(loaded, 350); return () => clearTimeout(t); }, [on]); // eslint-disable-line react-hooks/exhaustive-deps
   const src = useMemo(() => (on ? thumbHtml(html) : ""), [on, html]);
+  /* v125: mobile = the page drawn at phone width (390px) inside a phone — used by Projects → Landing pages */
+  if (mobile) {
+    /* scripts stay off; same-origin only to measure the page height, so the hover scroll stops exactly at the end of the page */
+    const fit = (e) => { loaded(); try { const f = e.currentTarget, b = f.contentDocument.body, h = Math.max(0, ...[...b.children].map((x) => x.getBoundingClientRect().bottom)), box = f.parentNode.clientHeight / 0.523; f.style.setProperty("--sc", -Math.max(0, Math.min(h, 2600) - box) + "px"); f.style.setProperty("--sd", Math.max(2, Math.min(9, (h - box) / 400)) + "s"); } catch { /* ignore */ } };
+    return <div className="thumb m" ref={ref}><div className="thumb-ph" />{on && <iframe ref={fr} title="mobile preview" srcDoc={src} sandbox="allow-same-origin" tabIndex={-1} loading="eager" onLoad={fit} />}</div>;
+  }
   return <div className="thumb" ref={ref}>{img ? <img className="thumb-img" src={img} alt="" decoding="async" /> : <div className="thumb-ph" />}{on && <iframe ref={fr} title="preview" srcDoc={src} sandbox="" tabIndex={-1} loading="eager" onLoad={loaded} />}</div>;
 }
 
