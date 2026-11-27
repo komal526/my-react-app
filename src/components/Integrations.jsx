@@ -159,7 +159,8 @@ export default function Integrations({ integ, onChange, initial = "" }) {
 
   return (
     <>
-      <div className="top ig-top"><div><h1>Integrations</h1><p className="mut">Connect the tools you already use — every new lead flows to them automatically.</p></div>
+      <div className="top ig-top">
+        {/* <div><h1>Integrations</h1><p className="mut">Connect the tools you already use — every new lead flows to them automatically.</p></div> */}
         <div className="ig-topr">{note && <span className="fb-note">{note}</span>}{!narrow && view !== "flow" && <div className="igf-view">{[["flow", "Flow"], ["cards", "Cards"]].map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>}</div></div>
       {(() => {
         const aiOn = AI_PROVIDERS.some((p) => (ai.keys || {})[p.id]), hostOn = !!(serverUrl(integ) && pub.key && pub.ok);
