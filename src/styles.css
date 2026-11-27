@@ -5276,9 +5276,9 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .dash .pj-scr{position:relative;height:300px;border-radius:18px;overflow:hidden;background:#0b1024;border:2px solid var(--g);box-shadow:0 0 0 1px rgba(255,255,255,.06) inset,0 10px 30px -10px var(--g),0 0 22px -6px var(--g)}
 .dash .pj-scr::after{content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.28),transparent 22%);z-index:1}
 .dash .pj-scr .thumb.m{position:absolute;inset:0;height:auto;border:0;background:#0b1024}
-.dash .pj-scr .thumb.m iframe{width:390px;height:2600px;transform:scale(var(--s,.55));transform-origin:0 0;transition:transform var(--sd,5s) ease-in-out}
-.dash .pj-phones .card:hover .pj-scr .thumb.m iframe{transform:scale(var(--s,.55)) translateY(var(--sc,0px))}
-@media (prefers-reduced-motion:reduce){.dash .pj-phones .card:hover .pj-scr .thumb.m iframe{transform:scale(var(--s,.55))}}
+.dash .pj-scr .thumb.m iframe{width:390px;height:2600px;transform:none;transform-origin:0 0;scale:var(--s,.55);translate:0 0;transition:translate var(--sd,5s) ease-in-out}
+.dash .pj-phones .card:hover .pj-scr .thumb.m iframe{transform:none;translate:0 calc(var(--sc,0px) * var(--s,.55))}
+@media (prefers-reduced-motion:reduce){.dash .pj-phones .card:hover .pj-scr .thumb.m iframe{translate:0 0}}
 .dash .pj-phones .pj-mob2{left:20px;top:20px;background:rgba(10,12,40,.6)}
 .dash .pj-phones .dots{top:18px!important;right:18px!important;border-radius:50%!important;width:34px;height:34px;padding:0!important;background:#fff!important;box-shadow:0 6px 14px -6px rgba(0,0,0,.5)}
 .dash .pj-phones .cb{padding:12px 4px 2px}
@@ -5289,7 +5289,5 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .dash .pj-phones .db-cardbtns button:nth-child(4),.dash .pj-phones .db-cardbtns button.pc-up{background:linear-gradient(135deg,#8b5cf6,#6d28d9)!important;color:#fff!important;border:0!important}
 .dash .pj-phones .pc-need{display:none}
 /* v131: no zoom animation on load — only the hover scroll moves */
-.dash .pj-scr .thumb.m iframe{transition:none}
-.dash .pj-phones .card:hover .pj-scr .thumb.m iframe{transition:transform var(--sd,5s) ease-in-out}
-.dash .pj-phones .card .pj-scr .thumb.m iframe{transition:transform var(--sd,5s) ease-in-out}
+/* v132: only the hover scroll moves; the zoom never animates, so the page is filled from the very first frame */
 .dash .pj-scr .thumb.m iframe:not(.on){transition:none}
