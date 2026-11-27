@@ -277,7 +277,7 @@ function FeaturedTpl({ onUse, onAll }) {
               <a className="ft-pv" href={tplTabUrl(t)} target="_blank" rel="noopener" aria-label={"Preview " + t.name + " in a new tab"}>Preview</a>
             </div>
           </div>
-          <b>{t.name}</b><small>{t.cat}</small>
+          <div className="ft-meta"><b>{t.name}</b><small>{t.cat}</small></div>
         </div>))}</div>
     </div>
   );

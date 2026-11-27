@@ -57,28 +57,30 @@ export const thumbHtml = (h) => {
   h = String(h || ""); const k = h.length + ":" + h.slice(0, 80) + h.slice(-80);
   if (TH_CACHE.has(k)) return TH_CACHE.get(k);
   const out = trimBody(h).replace(/@import\s+url\([^)]*fonts\.googleapis[^)]*\);?/gi, "").replace(/<\/head>/i, THUMB_CSS + "</head>");
-  if (TH_CACHE.size > 60) TH_CACHE.delete(TH_CACHE.keys().next().value);
+  if (TH_CACHE.size > 200) TH_CACHE.delete(TH_CACHE.keys().next().value);
   TH_CACHE.set(k, out); return out;
 };
-const TQ = { busy: 0, wait: [] };
-const tqNext = () => { while (TQ.busy < 3 && TQ.wait.length) { TQ.wait.sort((a, b) => a.y() - b.y()); const j = TQ.wait.shift(); TQ.busy++; j.go(); } };
+const TQ = { busy: 0, wait: [] }, TH_SEEN = new Set();
+const tqNext = () => { while (TQ.busy < 6 && TQ.wait.length) { TQ.wait.sort((a, b) => a.y() - b.y()); const j = TQ.wait.shift(); TQ.busy++; j.go(); } };
 const tqDone = () => { TQ.busy = Math.max(0, TQ.busy - 1); tqNext(); };
 export function Thumb({ html, img, mobile }) {
-  const ref = useRef(null), [on, setOn] = useState(false), done = useRef(false);
+  /* v129: a preview already drawn once in this visit shows instantly (no waiting in the queue) */
+  const hk = String(html || "").length + ":" + String(html || "").slice(0, 60);
+  const ref = useRef(null), [on, setOn] = useState(() => TH_SEEN.has(hk)), done = useRef(TH_SEEN.has(hk));
   useEffect(() => {
     const el = ref.current; if (!el || on) return;
     let job = null;
     const start = () => { job = { y: () => (ref.current ? ref.current.getBoundingClientRect().top : 1e9), go: () => setOn(true) }; TQ.wait.push(job); tqNext(); };
     if (!("IntersectionObserver" in window)) { start(); return; }
-    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); start(); } }, { rootMargin: "300px" });
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); start(); } }, { rootMargin: "700px" });
     io.observe(el);
     return () => { io.disconnect(); if (job) { const i = TQ.wait.indexOf(job); if (i >= 0) TQ.wait.splice(i, 1); } };
   }, [on]);
   useEffect(() => () => { if (on && !done.current) tqDone(); }, [on]);
   const fr = useRef(null);
-  const loaded = () => { if (fr.current) fr.current.classList.add("on"); if (!done.current) { done.current = true; tqDone(); } };
+  const loaded = () => { if (fr.current) fr.current.classList.add("on"); TH_SEEN.add(hk); if (!done.current) { done.current = true; tqDone(); } };
   /* the preview is drawn long before every photo arrives — show it after a moment instead of waiting for "load" */
-  useEffect(() => { if (!on) return; const t = setTimeout(loaded, 350); return () => clearTimeout(t); }, [on]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!on) return; const t = setTimeout(loaded, 180); return () => clearTimeout(t); }, [on]); // eslint-disable-line react-hooks/exhaustive-deps
   const src = useMemo(() => (on ? thumbHtml(html) : ""), [on, html]);
   /* v125: mobile = the page drawn at phone width (390px) inside a phone — used by Projects → Landing pages */
   if (mobile) {

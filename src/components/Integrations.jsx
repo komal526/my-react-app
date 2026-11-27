@@ -160,7 +160,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
   return (
     <>
       <div className="top ig-top"><div><h1>Integrations</h1><p className="mut">Connect the tools you already use — every new lead flows to them automatically.</p></div>
-        <div className="ig-topr">{note && <span className="fb-note">{note}</span>}{!narrow && <div className="igf-view">{[["flow", "Flow"], ["cards", "Cards"]].map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>}</div></div>
+        <div className="ig-topr">{note && <span className="fb-note">{note}</span>}{!narrow && view !== "flow" && <div className="igf-view">{[["flow", "Flow"], ["cards", "Cards"]].map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>}</div></div>
       {(() => {
         const aiOn = AI_PROVIDERS.some((p) => (ai.keys || {})[p.id]), hostOn = !!(serverUrl(integ) && pub.key && pub.ok);
         const APPS = [
@@ -176,7 +176,7 @@ export default function Integrations({ integ, onChange, initial = "" }) {
         const n = APPS.filter((a) => a.on).length, total = APPS.filter((a) => !a.free).length;
         return <>
           {void n}{void total}
-          {view === "flow" && !narrow ? <FlowCanvas apps={APPS} sel={sel} onOpen={setSel} /> : <div className="ig-tiles">{APPS.map((a) => (
+          {view === "flow" && !narrow ? <FlowCanvas apps={APPS} sel={sel} onOpen={setSel} view={view} setView={setView} /> : <div className="ig-tiles">{APPS.map((a) => (
             <button key={a.id} className={"ig-tile" + (a.on ? " on" : "")} onClick={() => setSel(a.id)}>
               <div className="ig-top"><span className={"igd-ic ic-" + a.id}>{a.ic}</span><span className="ig-cat2">{a.cat}</span></div>
               <div className="ig-tt"><b>{a.name}</b><span className={"ig-st" + (a.on ? " on" : "")}>{a.free ? "No setup needed" : a.on ? "● Connected" + (a.extra ? " · " + a.extra : "") : "Not connected"}</span></div>
@@ -353,65 +353,63 @@ export default function Integrations({ integ, onChange, initial = "" }) {
 }
 
 
-/* ==================== v124 — Integrations as a flow: drag the boxes anywhere on the dotted area; lines show what each new lead goes to ==================== */
-const FLOW_H = 660, NODE_W = 236, NH = 92, HW = 300, HH = 96, MIN_W = 900;
-const FLOW_EDGE = { sheets: "new row", email: "auto-reply", wa: "WhatsApp", pay: "pays first", places: "finds leads", ai: "builds pages", call: "calls the lead" };
-/* default places — x as a share of the free width, so the layout fills any screen */
-const FLOW_DEF = { hub: [0.5, 236], pay: [0, 34], places: [0, 270], ai: [0, 506], sheets: [1, 34], email: [1, 270], wa: [1, 506], call: [0.5, 520] };
-function FlowCanvas({ apps, sel, onOpen }) {
+/* ==================== v129 — Integrations flow: round "New Lead" hub in the middle, tools around it, drag anywhere ==================== */
+const FLOW_H = 640, NODE_W = 262, NH = 104, HUB = 196, MIN_W = 980;
+const FLOW_EDGE = { sheets: "New Row", email: "Auto-reply", wa: "WhatsApp", pay: "Payment", places: "Find Leads", ai: "Build Pages", call: "Calls enabled" };
+const FLOW_DEF = { hub: [0.5, 186], pay: [0.04, 78], places: [0, 288], ai: [0.07, 494], sheets: [0.98, 66], email: [1, 280], call: [1, 456], wa: [0.6, 520] };
+const FLOW_COL = { pay: "#2563eb", places: "#0ea5e9", ai: "#06b6d4", sheets: "#16a34a", email: "#f97316", call: "#a855f7", wa: "#10b981" };
+function FlowCanvas({ apps, sel, onOpen, view, setView }) {
   const wrap = useRef(null), drag = useRef(null), [ww, setWw] = useState(1100), [dragging, setDragging] = useState("");
-  const cw = Math.max(MIN_W, ww), scale = Math.min(1, ww / MIN_W), PAD = 34;
-  const [rel, setRel] = useState(() => { try { return { ...FLOW_DEF, ...(JSON.parse(localStorage.getItem("lb_ig_pos2") || "{}")) }; } catch { return { ...FLOW_DEF }; } });
-  useEffect(() => { const f = () => setWw(wrap.current ? wrap.current.clientWidth - 28 : 1100); f(); const ro = window.ResizeObserver ? new ResizeObserver(f) : null; if (ro && wrap.current) ro.observe(wrap.current); window.addEventListener("resize", f); return () => { window.removeEventListener("resize", f); if (ro) ro.disconnect(); }; }, []);
-  const wOf = (id) => (id === "hub" ? HW : NODE_W), hOf = (id) => (id === "hub" ? HH : NH);
+  const cw = Math.max(MIN_W, ww), scale = Math.min(1, ww / MIN_W), PAD = 30;
+  const [rel, setRel] = useState(() => { try { return { ...FLOW_DEF, ...(JSON.parse(localStorage.getItem("lb_ig_pos3") || "{}")) }; } catch { return { ...FLOW_DEF }; } });
+  useEffect(() => { const f = () => setWw(wrap.current ? wrap.current.clientWidth : 1100); f(); const ro = window.ResizeObserver ? new ResizeObserver(f) : null; if (ro && wrap.current) ro.observe(wrap.current); window.addEventListener("resize", f); return () => { window.removeEventListener("resize", f); if (ro) ro.disconnect(); }; }, []);
+  const wOf = (id) => (id === "hub" ? HUB : NODE_W), hOf = (id) => (id === "hub" ? HUB : NH);
   const px = (id) => { const r = rel[id] || FLOW_DEF[id] || [0.5, 0]; return [PAD + r[0] * (cw - 2 * PAD - wOf(id)), r[1]]; };
-  const down = (id) => (e) => {
-    if (e.button !== undefined && e.button !== 0) return;
-    const [x, y] = px(id); drag.current = { id, sx: e.clientX, sy: e.clientY, ox: x, oy: y, moved: false };
-    e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
-  };
+  const down = (id) => (e) => { if (e.button !== undefined && e.button !== 0) return; const [x, y] = px(id); drag.current = { id, sx: e.clientX, sy: e.clientY, ox: x, oy: y, moved: false }; e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId); };
   const move = (e) => {
     const d = drag.current; if (!d) return;
-    const dx = (e.clientX - d.sx) / scale, dy = (e.clientY - d.sy) / scale;
-    if (!d.moved && Math.abs(dx) + Math.abs(dy) < 5) return;
+    const dx = (e.clientX - d.sx) / scale, dy = (e.clientY - d.sy) / scale; if (!d.moved && Math.abs(dx) + Math.abs(dy) < 5) return;
     d.moved = true; setDragging(d.id);
-    const free = cw - 2 * PAD - wOf(d.id), x = Math.max(PAD, Math.min(cw - PAD - wOf(d.id), d.ox + dx)), y = Math.max(8, Math.min(FLOW_H - hOf(d.id) - 8, d.oy + dy));
+    const free = cw - 2 * PAD - wOf(d.id), x = Math.max(PAD, Math.min(cw - PAD - wOf(d.id), d.ox + dx)), y = Math.max(70, Math.min(FLOW_H - hOf(d.id) - 10, d.oy + dy));
     setRel((r) => ({ ...r, [d.id]: [free > 0 ? (x - PAD) / free : 0.5, y] }));
   };
-  const up = () => { const d = drag.current; drag.current = null; setDragging(""); if (!d) return; if (d.moved) setRel((r) => { try { localStorage.setItem("lb_ig_pos2", JSON.stringify(r)); } catch { /* ignore */ } return r; }); else if (d.id !== "hub") onOpen(d.id); };
-  const reset = () => { setRel({ ...FLOW_DEF }); try { localStorage.removeItem("lb_ig_pos2"); } catch { /* ignore */ } };
-  const hub = px("hub"), hcx = hub[0] + HW / 2, hcy = hub[1] + HH / 2;
+  const up = () => { const d = drag.current; drag.current = null; setDragging(""); if (!d) return; if (d.moved) setRel((r) => { try { localStorage.setItem("lb_ig_pos3", JSON.stringify(r)); } catch { /* ignore */ } return r; }); else if (d.id !== "hub") onOpen(d.id); };
+  const reset = () => { setRel({ ...FLOW_DEF }); try { localStorage.removeItem("lb_ig_pos3"); } catch { /* ignore */ } };
+  const hub = px("hub"), R = HUB / 2, hcx = hub[0] + R, hcy = hub[1] + R;
   const edge = (a) => {
     const n = px(a.id), ncx = n[0] + NODE_W / 2, ncy = n[1] + NH / 2;
-    if (Math.abs(ncx - hcx) < HW / 2 && Math.abs(ncy - hcy) > HH / 2 + 20) {   /* straight above / below the hub */
-      const down = ncy > hcy, x1 = hcx, y1 = down ? hub[1] + HH : hub[1], x2 = ncx, y2 = down ? n[1] : n[1] + NH, c = Math.max(40, Math.abs(y2 - y1) / 2);
-      return { d: `M${x1},${y1} C${x1},${down ? y1 + c : y1 - c} ${x2},${down ? y2 - c : y2 + c} ${x2},${y2}`, mx: (x1 + x2) / 2, my: (y1 + y2) / 2, x1, y1, x2, y2 };
-    }
-    const right = ncx > hcx, x1 = right ? hub[0] + HW - 6 : hub[0] + 6, y1 = hcy, x2 = right ? n[0] : n[0] + NODE_W, y2 = ncy, c = Math.max(60, Math.abs(x2 - x1) / 2);
-    return { d: `M${x1},${y1} C${right ? x1 + c : x1 - c},${y1} ${right ? x2 - c : x2 + c},${y2} ${x2},${y2}`, mx: (x1 + x2) / 2, my: (y1 + y2) / 2, x1, y1, x2, y2 };
+    let x2, y2, tx, ty;   /* end point on the box + direction the line arrives from */
+    if (Math.abs(ncx - hcx) < NODE_W / 2 + R * 0.4) { const below = ncy > hcy; x2 = n[0] + 2; y2 = ncy; tx = -1; ty = 0; if (!below) { x2 = ncx; y2 = n[1] + NH; tx = 0; ty = 1; } else { x2 = n[0]; y2 = ncy; } }
+    else if (ncx > hcx) { x2 = n[0]; y2 = ncy; tx = -1; ty = 0; } else { x2 = n[0] + NODE_W; y2 = ncy; tx = 1; ty = 0; }
+    const ang = Math.atan2(y2 - hcy, x2 - hcx), x1 = hcx + Math.cos(ang) * (R + 2), y1 = hcy + Math.sin(ang) * (R + 2);
+    const len = Math.hypot(x2 - x1, y2 - y1), c = Math.max(40, len * 0.45);
+    const d = `M${x1},${y1} C${x1 + Math.cos(ang) * c},${y1 + Math.sin(ang) * c} ${x2 + tx * c},${y2 + ty * c} ${x2},${y2}`;
+    /* label at the middle of the curve */
+    const t = 0.5, mt = 1 - t, c1x = x1 + Math.cos(ang) * c, c1y = y1 + Math.sin(ang) * c, c2x = x2 + tx * c, c2y = y2 + ty * c;
+    return { d, x1, y1, x2, y2, mx: mt ** 3 * x1 + 3 * mt * mt * t * c1x + 3 * mt * t * t * c2x + t ** 3 * x2, my: mt ** 3 * y1 + 3 * mt * mt * t * c1y + 3 * mt * t * t * c2y + t ** 3 * y2 };
   };
-  const on = apps.filter((a) => a.on).length;
   return (
-    <div className="igf-wrap" ref={wrap}>
-      <div className="igf-tools"><span><i className="on" /> connected</span><span><i /> not connected</span><span className="igf-cnt">{on} of {apps.length} connected</span><button onClick={reset}>↺ Reset layout</button></div>
+    <div className="igf-wrap igf2" ref={wrap}>
       <div className="igf-stage" style={{ height: FLOW_H * scale }}>
         <div className={"igf" + (dragging ? " dragging" : "")} style={{ width: cw, height: FLOW_H, transform: `scale(${scale})` }} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+          <div className="igf2-legend"><span className="on"><i />Connected</span><span><i />Not Connected</span></div>
+          <div className="igf2-right">
+            <button className="igf2-reset" onClick={reset} title="Put the boxes back in their places">↺</button>
+            <div className="igf2-view">{[["flow", "Flow", "M4 6h4v4H4zM16 4h4v4h-4zM16 16h4v4h-4zM8 8l8-2M8 9l8 8"], ["cards", "Cards", "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"]].map(([k, l, ic]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round"><path d={ic} /></svg>{l}</button>)}</div>
+          </div>
           <svg className="igf-lines" width={cw} height={FLOW_H}>
             {apps.map((a) => { const e = edge(a); return <g key={a.id} className={"igf-e" + (a.on ? " on" : "") + (sel === a.id ? " sel" : "")}>
-              <path d={e.d} className="bg" /><path d={e.d} className="fg" />
-              <circle cx={e.x1} cy={e.y1} r="5" /><circle cx={e.x2} cy={e.y2} r="5" />
-            </g>; })}
+              <path d={e.d} className="bg" /><path d={e.d} className="fg" /><circle cx={e.x1} cy={e.y1} r="5" /><circle cx={e.x2} cy={e.y2} r="5" /></g>; })}
           </svg>
           {apps.map((a) => { const e = edge(a); return <span key={a.id + "l"} className={"igf-lab" + (a.on ? " on" : "")} style={{ left: e.mx, top: e.my }}>{FLOW_EDGE[a.id] || ""}</span>; })}
-          <div className="igf-hub" style={{ left: hub[0], top: hub[1], width: HW, height: HH }} onPointerDown={down("hub")} title="Every form and page sends its new leads here">
-            <span className="igf-hic">⚡</span><div><b>New lead <span>(Webhook)</span></b><small>from every form &amp; page</small></div>
+          <div className="igf2-hub" style={{ left: hub[0], top: hub[1], width: HUB, height: HUB }} onPointerDown={down("hub")} title="Every form and page sends its new leads here">
+            <span className="igf2-bulb">💡</span><b>New Lead</b><small>Form • Every Form<br />&amp; Page</small>
           </div>
           {apps.map((a) => { const [x, y] = px(a.id); return (
-            <div key={a.id} className={"igf-n" + (a.on ? " on" : "") + (sel === a.id ? " sel" : "") + (dragging === a.id ? " drag" : "")} style={{ left: x, top: y, width: NODE_W, height: NH }}
+            <div key={a.id} className={"igf-n igf2-n" + (a.on ? " on" : "") + (sel === a.id ? " sel" : "") + (dragging === a.id ? " drag" : "")} style={{ left: x, top: y, width: NODE_W, height: NH, "--c": FLOW_COL[a.id] || "#7c4dff" }}
               onPointerDown={down(a.id)} role="button" tabIndex={0} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") onOpen(a.id); }} title={a.desc}>
               <span className={"igd-ic ic-" + a.id}>{a.ic}</span>
-              <div className="igf-t"><b>{a.name}</b><small className={a.on ? "on" : ""}>{a.on ? "● Connected" + (a.extra ? " · " + a.extra : "") : "Not connected"}</small><em>{a.cat}</em></div>
-              <span className="igf-go">{a.on ? "Manage" : "Connect"} →</span>
+              <div className="igf-t"><b>{a.name}</b><small className={a.on ? "on" : ""}><i />{a.on ? "Connected" : "Not connected"}</small><em>{a.cat}</em></div>
             </div>); })}
         </div>
       </div>

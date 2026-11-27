@@ -5218,3 +5218,53 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .dash .pj-notch{top:8px;width:62px;height:16px;border-radius:0 0 11px 11px}
 .dash .pj-sb{top:8px;left:8px;right:8px;height:22px;padding:0 12px;font-size:9px;border-radius:22px 22px 0 0}
 .dash .pj-phone .thumb.m{top:30px;left:8px;right:8px;bottom:8px;border-radius:0 0 22px 22px}
+
+/* v129 — Integrations flow (round New Lead hub) */
+.igf2{background:#fff;border:1px solid #eceaf6;border-radius:26px;padding:0;overflow:hidden;box-shadow:0 20px 50px -34px rgba(30,20,90,.35)}
+.igf2 .igf-stage{border-radius:26px;background:#fbfbff radial-gradient(#dcdaec 1.1px,transparent 1.2px) 0 0/20px 20px}
+.igf2-legend{position:absolute;left:22px;top:18px;z-index:4;display:flex;gap:6px;background:#fff;border-radius:999px;padding:6px;box-shadow:0 10px 26px -16px rgba(30,20,90,.45)}
+.igf2-legend span{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;font-weight:700;font-size:14px;color:#8a87a8}
+.igf2-legend span.on{background:#ecfdf5;color:#059669}
+.igf2-legend i{width:11px;height:11px;border-radius:50%;background:#c9c6de}.igf2-legend span.on i{background:#10b981}
+.igf2-right{position:absolute;right:22px;top:18px;z-index:4;display:flex;align-items:center;gap:8px}
+.igf2-view{display:flex;gap:4px;background:#fff;border-radius:999px;padding:5px;box-shadow:0 10px 26px -16px rgba(30,20,90,.45)}
+.igf2-view button{display:inline-flex;align-items:center;gap:8px;border:0;background:none;border-radius:999px;padding:9px 18px;font-weight:800;font-size:14px;color:#5b5880;cursor:pointer}
+.igf2-view button.on{background:#0f1238;color:#fff;box-shadow:0 8px 18px -8px rgba(15,18,56,.7)}
+.igf2-reset{width:38px;height:38px;border-radius:50%;border:0;background:#fff;color:#5b5880;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 10px 26px -16px rgba(30,20,90,.45)}
+.igf2-reset:hover{color:#0f1238}
+.igf2-hub{position:absolute;box-sizing:border-box;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;cursor:grab;user-select:none;touch-action:none;z-index:2;
+  background:radial-gradient(circle at 50% 30%,#2b2f86,#13164a 70%);border:3px solid #a5b4fc;box-shadow:0 0 0 8px rgba(129,140,248,.18),0 0 40px rgba(99,102,241,.55),0 24px 40px -18px rgba(15,18,56,.8)}
+.igf2-hub:active{cursor:grabbing}
+.igf2-bulb{font-size:46px;line-height:1;filter:drop-shadow(0 0 14px rgba(255,200,40,.8));margin-bottom:6px}
+.igf2-hub b{font-size:21px;font-weight:800}.igf2-hub small{font-size:12.5px;color:#c7c9f5;line-height:1.35;margin-top:3px}
+.igf2 .igf2-n{border:0;border-left:4px solid var(--c);border-radius:22px;padding:14px 16px 14px 18px;gap:16px;box-shadow:0 14px 34px -20px rgba(30,20,90,.45),0 0 0 1px #efedf8}
+.igf2 .igf2-n.sel{box-shadow:0 0 0 3px rgba(124,77,255,.25),0 14px 34px -20px rgba(30,20,90,.5)}
+.igf2 .igf2-n:hover{transform:translateY(-2px)}
+.igf2 .igf2-n .igd-ic{width:58px;height:58px;border-radius:16px;font-size:26px;display:grid;place-items:center}
+.igf2 .igf2-n .igf-t b{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.igf2 .igf2-n .igf-t small{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:#8a87a8;margin:3px 0 6px}
+.igf2 .igf2-n .igf-t small i{width:9px;height:9px;border-radius:50%;background:#c9c6de}
+.igf2 .igf2-n .igf-t small.on{color:#059669}.igf2 .igf2-n .igf-t small.on i{background:#10b981}
+.igf2 .igf2-n .igf-t em{display:inline-block;font-style:normal;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#6b6890;background:#f1f0fa;padding:4px 10px;border-radius:999px}
+.igf2 .igf-lab{font-size:13px;padding:5px 13px;border-radius:999px;box-shadow:0 6px 14px -10px rgba(30,20,90,.4)}
+.igf2 .igf-e .fg{stroke:#cfcde0}
+.igf2 .igf-e.on .fg{stroke:#14b8a6;stroke-width:2.6}
+.igf2 .igf-e.on circle{stroke:#14b8a6}
+
+/* v129 — dashboard "Start with a proven landing page": cleaner cards, buttons on hover */
+.dash .ft .ft-c{display:flex;flex-direction:column;gap:9px}
+.dash .ft .ft-shot{border-radius:18px!important;border:1px solid #ecebf5!important;box-shadow:0 14px 30px -22px rgba(20,16,60,.55)!important;transition:transform .25s ease,box-shadow .25s ease!important;isolation:isolate}
+.dash .ft .ft-c:hover .ft-shot{transform:translateY(-4px);box-shadow:0 24px 40px -22px rgba(20,16,60,.7)!important;border-color:#f5b301!important}
+.dash .ft .ft-shot::after{content:"";position:absolute;inset:auto 0 0 0;height:55%;background:linear-gradient(transparent,rgba(10,12,40,.88));opacity:0;transition:opacity .25s ease;z-index:1;pointer-events:none}
+.dash .ft .ft-c:hover .ft-shot::after,.dash .ft .ft-shot:focus-within::after{opacity:1}
+.dash .ft .ft-tag{position:absolute;left:10px;top:10px;z-index:2;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:rgba(15,18,56,.72);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.03em;padding:5px 10px;border-radius:999px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.dash .ft .ft-acts{z-index:2;left:10px!important;right:10px!important;bottom:10px!important;gap:6px!important;flex-direction:column!important;opacity:0!important;transform:translateY(8px)!important;transition:opacity .22s ease,transform .22s ease!important}
+.dash .ft .ft-c:hover .ft-acts,.dash .ft .ft-shot:focus-within .ft-acts{opacity:1!important;transform:none!important}
+@media (hover:none){.dash .ft .ft-acts{opacity:1!important;transform:none!important}.dash .ft .ft-shot::after{opacity:1}}
+.dash .ft .ft-acts>.ft-use,.dash .ft .ft-acts>.ft-pv{flex:0 0 32px!important;width:100%!important;height:32px!important;border-radius:999px!important;font-size:12.5px!important;font-weight:800!important;box-shadow:0 8px 18px -10px rgba(0,0,0,.6)}
+.dash .ft .ft-acts>.ft-use{background:linear-gradient(135deg,#ffd43b,#f5b301)!important;color:#1b1300!important}
+.dash .ft .ft-acts>.ft-pv{background:rgba(255,255,255,.14)!important;color:#fff!important;border:1px solid rgba(255,255,255,.35)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.dash .ft .ft-acts>.ft-pv:hover{background:#fff!important;color:#0f1238!important}
+.dash .ft .ft-meta{padding:0 4px;min-width:0}
+.dash .ft .ft-meta b{display:block;font-size:13.5px;color:#16142b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash .ft .ft-meta small{display:block;font-size:11.5px;color:#8a87a8;font-weight:600;margin-top:1px}
