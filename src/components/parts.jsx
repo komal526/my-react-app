@@ -83,7 +83,7 @@ export function Thumb({ html, img, mobile }) {
   /* v125: mobile = the page drawn at phone width (390px) inside a phone — used by Projects → Landing pages */
   if (mobile) {
     /* scripts stay off; same-origin only to measure the page height, so the hover scroll stops exactly at the end of the page */
-    const fit = (e) => { loaded(); try { const f = e.currentTarget, b = f.contentDocument.body, h = Math.max(0, ...[...b.children].map((x) => x.getBoundingClientRect().bottom)), box = f.parentNode.clientHeight / 0.523; f.style.setProperty("--sc", -Math.max(0, Math.min(h, 2600) - box) + "px"); f.style.setProperty("--sd", Math.max(2, Math.min(9, (h - box) / 400)) + "s"); } catch { /* ignore */ } };
+    const fit = (e) => { loaded(); try { const f = e.currentTarget, b = f.contentDocument.body, h = Math.max(0, ...[...b.children].map((x) => x.getBoundingClientRect().bottom)), box = f.parentNode.clientHeight / 0.451; f.style.setProperty("--sc", -Math.max(0, Math.min(h, 2600) - box) + "px"); f.style.setProperty("--sd", Math.max(2, Math.min(9, (h - box) / 400)) + "s"); } catch { /* ignore */ } };
     return <div className="thumb m" ref={ref}><div className="thumb-ph" />{on && <iframe ref={fr} title="mobile preview" srcDoc={src} sandbox="allow-same-origin" tabIndex={-1} loading="eager" onLoad={fit} />}</div>;
   }
   return <div className="thumb" ref={ref}>{img ? <img className="thumb-img" src={img} alt="" decoding="async" /> : <div className="thumb-ph" />}{on && <iframe ref={fr} title="preview" srcDoc={src} sandbox="" tabIndex={-1} loading="eager" onLoad={loaded} />}</div>;
