@@ -5288,3 +5288,8 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .dash .pj-phones .db-cardbtns button{height:38px;border-radius:12px!important;font-weight:700}
 .dash .pj-phones .db-cardbtns button:nth-child(4),.dash .pj-phones .db-cardbtns button.pc-up{background:linear-gradient(135deg,#8b5cf6,#6d28d9)!important;color:#fff!important;border:0!important}
 .dash .pj-phones .pc-need{display:none}
+/* v131: no zoom animation on load — only the hover scroll moves */
+.dash .pj-scr .thumb.m iframe{transition:none}
+.dash .pj-phones .card:hover .pj-scr .thumb.m iframe{transition:transform var(--sd,5s) ease-in-out}
+.dash .pj-phones .card .pj-scr .thumb.m iframe{transition:transform var(--sd,5s) ease-in-out}
+.dash .pj-scr .thumb.m iframe:not(.on){transition:none}

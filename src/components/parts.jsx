@@ -1,6 +1,6 @@
 // LaunchBuilder v45 — parts.jsx
 // Shared pieces: Modal, Thumb, Sidebar, NewModal, PublishModal, Preview
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useLayoutEffect } from "react";
 import { appPath } from "../route.js";
 import { serverAiReady, LIMIT, projLimit, limitText, slugify, TEMPLATES, loadProjects, readToken, addLead, previewUrl, addEvent, findForm, payLead, loadInteg, aiWebsite, AI_PROVIDERS, pg, ago, serverCall, publishReady, blobToBase64, serverOn, phpCall, filesForServer, defaultServerUrl, lovableUrl, boltText, autoServer, findEvent, serverUrlFrom, SERVER_HELP, subUrl, pixelsFor, asTemplate, formFetch } from "../lib.js";
 import { finalize, formPageHtml, buildSite, makeZip, bookingPageHtml } from "./tools.js";
@@ -83,9 +83,11 @@ export function Thumb({ html, img, mobile }) {
   useEffect(() => { if (!on) return; const t = setTimeout(loaded, 180); return () => clearTimeout(t); }, [on]); // eslint-disable-line react-hooks/exhaustive-deps
   const src = useMemo(() => (on ? thumbHtml(html) : ""), [on, html]);
   /* v125: mobile = the page drawn at phone width (390px) inside a phone — used by Projects → Landing pages */
+  /* v131: phone width → the right zoom before the page is drawn, so it fills the card at once (no shrink-then-grow) */
+  useLayoutEffect(() => { if (!mobile || !ref.current) return; const el = ref.current, set = () => el.style.setProperty("--s", el.clientWidth / 390); set(); const ro = window.ResizeObserver ? new ResizeObserver(set) : null; if (ro) ro.observe(el); return () => ro && ro.disconnect(); }, [mobile]);
   if (mobile) {
     /* scripts stay off; same-origin only to measure the page height, so the hover scroll stops exactly at the end of the page */
-    const fit = (e) => { loaded(); try { const f = e.currentTarget, b = f.contentDocument.body, h = Math.max(0, ...[...b.children].map((x) => x.getBoundingClientRect().bottom)), k = f.parentNode.clientWidth / 390, box = f.parentNode.clientHeight / k; f.style.setProperty("--s", k); f.style.setProperty("--sc", -Math.max(0, Math.min(h, 2600) - box) + "px"); f.style.setProperty("--sd", Math.max(2, Math.min(9, (h - box) / 400)) + "s"); } catch { /* ignore */ } };
+    const fit = (e) => { loaded(); try { const f = e.currentTarget, b = f.contentDocument.body, h = Math.max(0, ...[...b.children].map((x) => x.getBoundingClientRect().bottom)), k = f.parentNode.clientWidth / 390, box = f.parentNode.clientHeight / k; f.style.setProperty("--sc", -Math.max(0, Math.min(h, 2600) - box) + "px"); f.style.setProperty("--sd", Math.max(2, Math.min(9, (h - box) / 400)) + "s"); } catch { /* ignore */ } };
     return <div className="thumb m" ref={ref}><div className="thumb-ph" />{on && <iframe ref={fr} title="mobile preview" srcDoc={src} sandbox="allow-same-origin" tabIndex={-1} loading="eager" onLoad={fit} />}</div>;
   }
   return <div className="thumb" ref={ref}>{img ? <img className="thumb-img" src={img} alt="" decoding="async" /> : <div className="thumb-ph" />}{on && <iframe ref={fr} title="preview" srcDoc={src} sandbox="" tabIndex={-1} loading="eager" onLoad={loaded} />}</div>;
