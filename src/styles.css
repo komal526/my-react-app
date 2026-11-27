@@ -5268,3 +5268,23 @@ details.pc-adm>summary{list-style:none}details.pc-adm>summary::-webkit-details-m
 .dash .ft .ft-meta{padding:0 4px;min-width:0}
 .dash .ft .ft-meta b{display:block;font-size:13.5px;color:#16142b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dash .ft .ft-meta small{display:block;font-size:11.5px;color:#8a87a8;font-weight:600;margin-top:1px}
+
+/* v130 — Projects → Landing pages: glowing mobile-view cards */
+.dash .grid.pj-phones{grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:20px}
+.dash .pj-phones .card{background:#fff;border:1px solid #ecebf5;border-radius:22px;padding:10px;box-shadow:0 18px 40px -30px rgba(30,20,90,.45);transition:transform .25s ease,box-shadow .25s ease}
+.dash .pj-phones .card:hover{transform:translateY(-4px);box-shadow:0 26px 50px -28px rgba(30,20,90,.55)}
+.dash .pj-scr{position:relative;height:300px;border-radius:18px;overflow:hidden;background:#0b1024;border:2px solid var(--g);box-shadow:0 0 0 1px rgba(255,255,255,.06) inset,0 10px 30px -10px var(--g),0 0 22px -6px var(--g)}
+.dash .pj-scr::after{content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.28),transparent 22%);z-index:1}
+.dash .pj-scr .thumb.m{position:absolute;inset:0;height:auto;border:0;background:#0b1024}
+.dash .pj-scr .thumb.m iframe{width:390px;height:2600px;transform:scale(var(--s,.55));transform-origin:0 0;transition:transform var(--sd,5s) ease-in-out}
+.dash .pj-phones .card:hover .pj-scr .thumb.m iframe{transform:scale(var(--s,.55)) translateY(var(--sc,0px))}
+@media (prefers-reduced-motion:reduce){.dash .pj-phones .card:hover .pj-scr .thumb.m iframe{transform:scale(var(--s,.55))}}
+.dash .pj-phones .pj-mob2{left:20px;top:20px;background:rgba(10,12,40,.6)}
+.dash .pj-phones .dots{top:18px!important;right:18px!important;border-radius:50%!important;width:34px;height:34px;padding:0!important;background:#fff!important;box-shadow:0 6px 14px -6px rgba(0,0,0,.5)}
+.dash .pj-phones .cb{padding:12px 4px 2px}
+.dash .pj-phones .ct b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.dash .pj-phones .pc-st{font-size:12.5px;flex-wrap:nowrap;overflow:hidden}
+.dash .pj-phones .pc-st .pc-live{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash .pj-phones .db-cardbtns button{height:38px;border-radius:12px!important;font-weight:700}
+.dash .pj-phones .db-cardbtns button:nth-child(4),.dash .pj-phones .db-cardbtns button.pc-up{background:linear-gradient(135deg,#8b5cf6,#6d28d9)!important;color:#fff!important;border:0!important}
+.dash .pj-phones .pc-need{display:none}

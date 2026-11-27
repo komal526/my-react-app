@@ -314,6 +314,15 @@ function DashFooter({ onNew, onGo, onTemplates, onLeads, onAnalytics, onConsult 
 /* hovering a project card starts loading the editor, so Edit opens at once */
 let warmed = false; const warm = () => { if (!warmed) { warmed = true; import("./Editor.jsx"); } };
 /* v126 — mobile view pop-up: the page inside a phone, scroll and tap it like on a real phone; ✕ or Esc closes */
+/* v130: the main colour of a page (most used bright colour in its CSS) — used for the card's glow */
+const ACC = new Map();
+function accentOf(html) {
+  const h = String(html || ""), k = h.length + h.slice(0, 40); if (ACC.has(k)) return ACC.get(k);
+  const cnt = {}; (h.slice(0, 60000).match(/#[0-9a-f]{6}\b/gi) || []).forEach((c) => { c = c.toLowerCase(); cnt[c] = (cnt[c] || 0) + 1; });
+  let best = "#7c4dff", score = 0;
+  for (const [c, n] of Object.entries(cnt)) { const r = parseInt(c.slice(1, 3), 16), g = parseInt(c.slice(3, 5), 16), b = parseInt(c.slice(5, 7), 16), mx = Math.max(r, g, b), mn = Math.min(r, g, b), sat = mx ? (mx - mn) / mx : 0; const sc = sat > 0.45 && mx > 120 ? n * sat : 0; if (sc > score) { score = sc; best = c; } }
+  ACC.set(k, best); return best;
+}
 function MobilePop({ p, subs, onClose, onTab }) {
   const [pi, setPi] = useState(0), [html, setHtml] = useState("");
   const pg = p.pages[pi] || p.pages[0];
@@ -388,7 +397,7 @@ export default function MyPages({ onViewAll, projects, onOpen, onNew, onImport, 
       ) : (
         <div className={(mode === "dash" && !query ? "grid pc-grid" : "grid") + (phones ? " pj-phones" : "")}>{mob && <MobilePop p={mob} subs={subs} onClose={() => setMob(null)} onTab={onMobile} />}{shown.slice(0, limit).map((p) => (
           <div key={p.id} className="card" onPointerEnter={warm} onClick={() => (onView ? onView(p) : onOpen(p.id))} onContextMenu={(e) => { e.preventDefault(); setMenu(p.id); }} title="Click to preview · right-click for more">
-            {phones ? <div className="pj-phone"><div className="pj-notch" /><div className="pj-sb"><span>9:41</span><span className="pj-sig"><i /><i /><i /><i /><b /></span></div><Thumb html={p.pages[0].html} mobile /></div> : <Thumb html={p.pages[0].html} img={tplImg(p)} />}
+            {phones ? <div className="pj-scr" style={{ "--g": accentOf(p.pages[0].html) }}><Thumb html={p.pages[0].html} mobile /></div> : <Thumb html={p.pages[0].html} img={tplImg(p)} />}
             <div className="cb">
               <div className="ct"><b>{p.name}</b></div>
               {(() => { const live = p.status === "published" ? liveAddr(p, subs) : "", ds = domainState(p, subs);
